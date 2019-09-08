@@ -1086,7 +1086,10 @@ router.post('/authenticate',(req,resp)=>{
 				respObj.special_role = userArr['special_role'];
 				respObj.google_auth = userArr['google_auth'];
 				respObj.trigger_enable = userArr['trigger_enable'];
+
+				console.log(respObj)
 				resp.send(respObj);
+
 			}else{
 				resp.status(400).send({
 					message: 'username or Password Incorrect'
