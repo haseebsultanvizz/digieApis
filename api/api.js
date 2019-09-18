@@ -1086,10 +1086,7 @@ router.post('/authenticate',(req,resp)=>{
 				respObj.special_role = userArr['special_role'];
 				respObj.google_auth = userArr['google_auth'];
 				respObj.trigger_enable = userArr['trigger_enable'];
-
-				console.log(respObj)
 				resp.send(respObj);
-
 			}else{
 				resp.status(400).send({
 					message: 'username or Password Incorrect'
@@ -1103,13 +1100,8 @@ router.post('/authenticate',(req,resp)=>{
 router.post('/listDashboardData',async (req,resp)=>{
 		let userCoinsArr = await listUserCoins(req.body._id);
 		let userCoin =  (typeof  req.body.userCoin =='undefined')?'':req.body.userCoin; 
-
-		console.log(' userCoin : ',userCoin)
-
-
 		var coin = ( (userCoinsArr.length == 0) || userCoin =='')?'TRXBTC':(userCoin =='')?userCoinsArr[0]['symbol']:userCoin;
-	
-		console.log(' coin : ',coin)
+
 		let currentMarketPriceArr = await listCurrentMarketPrice(coin);
 		var currentMarketPrice = (currentMarketPriceArr.length ==0)?0:currentMarketPriceArr[0]['price'];
 			currentMarketPrice = parseFloat(currentMarketPrice);
@@ -1166,18 +1158,20 @@ function listUserCoins(userId){
 
 
 router.post('/listCurrentmarketPrice',async (req,resp)=>{
-	var urserCoinsArr = await listCurrentMarketPrice(req.body.coin)
+	let exchange = req.body.exchange;
+	var urserCoinsArr = await listCurrentMarketPrice(req.body.coin,exchange)
 	resp.status(200).send({
 		message: urserCoinsArr
 	 });
 })//End of listCurrentmarketPrice
 
-function listCurrentMarketPrice(coin){
+function listCurrentMarketPrice(coin,exchange){
 	return new Promise((resolve)=>{
 		let where = {};		
 		where.coin = coin;
 		conn.then((db)=>{
-			db.collection('market_prices').find(where).limit(1).toArray((err,result)=>{
+			let collectionName = (exchange == 'binance')?'market_prices':'market_prices_'+exchange;
+			db.collection(collectionName).find(where).limit(1).toArray((err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
@@ -1298,11 +1292,14 @@ function listMarketHistory(coin){
 
 
 router.post('/listManualOrderDetail',async (req,resp)=>{
+	let exchange  = req.body.exchange;
 	var urserCoinsPromise = listUserCoins(req.body._id)
-	var currentMarketPricePromise =  listCurrentMarketPrice(req.body.coin);
-	var BTCUSDTPRICEPromise = listCurrentMarketPrice('BTCUSDT');
+	var currentMarketPricePromise =  listCurrentMarketPrice(req.body.coin,exchange);
+	let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
+	var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin,exchange);
 	var marketMinNotationPromise = marketMinNotation(req.body.coin);
 	var promisesResult = await Promise.all([urserCoinsPromise,currentMarketPricePromise,marketMinNotationPromise,BTCUSDTPRICEPromise]);
+
 	var responseReslt = {};
 		responseReslt['userCoinsArr'] = promisesResult[0];
 		responseReslt['CurrentMarkerPriceArr'] = promisesResult[1];
@@ -1316,7 +1313,9 @@ router.post('/listManualOrderDetail',async (req,resp)=>{
 
 router.post('/listAutoOrderDetail',async (req,resp)=>{
 	var urserCoinsPromise = listUserCoins(req.body._id)
-	var BTCUSDTPRICEPromise = listCurrentMarketPrice('BTCUSDT');
+
+	let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
+	var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin);
 	var promisesResult = await Promise.all([urserCoinsPromise,BTCUSDTPRICEPromise]);
 	var marketMinNotationResp = await marketMinNotation(promisesResult[0][0].symbol);
 	var currentMarketPriceArr = await listCurrentMarketPrice(promisesResult[0][0].symbol);
@@ -1334,7 +1333,9 @@ router.post('/listAutoOrderDetail',async (req,resp)=>{
 
 router.post('/listmarketPriceMinNotation',async (req,resp)=>{
 	var marketMinNotationPromise =  marketMinNotation(req.body.coin);
-	var currentMarketPricePromise =  listCurrentMarketPrice(req.body.coin);
+	let exchange = req.body.exchange;
+	let coin = req.body.coin;
+	var currentMarketPricePromise =  listCurrentMarketPrice(coin,exchange);
 	var promisesResult = await Promise.all([marketMinNotationPromise,currentMarketPricePromise]);
 	var responseReslt = {};
 	responseReslt['marketMinNotation'] = promisesResult[0];
@@ -1347,24 +1348,39 @@ router.post('/listmarketPriceMinNotation',async (req,resp)=>{
 router.post('/createManualOrder',(req,resp)=>{
 	conn.then((db)=>{
 		let orders = req.body.orderArr;
+		let orderId = req.body.orderId;
 		let exchnage = orders['exchnage'];
-		console.log('exchnage',exchnage)
 		orders['created_date'] = new Date();
 		orders['modified_date'] = new Date();
 		var collectionName =  (exchnage == 'binance')?'buy_orders':'buy_orders_'+exchnage;
-		db.collection(collectionName).insertOne(orders,(err,result)=>{
+		var where = {};
+			where['_id'] = (orderId == '')?'':new ObjectID(orderId);
+
+		var set = {};	
+			set['$set'] = orders;
+		var upsert = { upsert: true }
+
+		db.collection(collectionName).updateOne(where,set,upsert,(err,result)=>{
 			if(err){
 				resp.status(403).send({
 					message:'some thing went wrong'
 				 });
 			}else{
 				if(req.body.orderArr.auto_sell == 'yes'){
-					let buyOrderId = result.insertedId;
+					let buyOrderId = (result.upsertedId ==null)?orderId:result.upsertedId._id;
 				let tempOrder = req.body.tempOrderArr;
 					tempOrder['created_date'] = new Date();
 					tempOrder['buy_order_id'] = buyOrderId;
 				var tempCollection =  (exchnage == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchnage;
-					db.collection(tempCollection).insertOne(tempOrder,(err,result)=>{
+
+					var where = {};
+					where['buy_order_id'] =  {'$in':[buyOrderId,new ObjectID(buyOrderId)]}; 
+
+					var set = {};	
+					set['$set'] = tempOrder;
+					var upsert = { upsert: true }
+
+					db.collection(tempCollection).updateOne(where,set,upsert,(err,result)=>{
 					if(err){
 						resp.status(403).send({
 							message:'some thing went wrong while Creating order'
@@ -1384,6 +1400,60 @@ router.post('/createManualOrder',(req,resp)=>{
 		})	
 	})
 })//End of createManualOrder
+
+
+
+
+
+router.post('/makeManualOrderSetForSell',(req,resp)=>{
+	conn.then((db)=>{
+		let orders = req.body.orderArr;
+		let orderId = req.body.orderId;
+		let exchange = orders['exchange'];
+		orders['created_date'] = new Date();
+		orders['modified_date'] = new Date();
+
+		var collectionName =  (exchange == 'binance' || exchange =='')?'orders':'orders_'+exchange;
+		var where = {};
+			where['_id'] = (orderId == '')?'':new ObjectID(orderId);
+
+		var set = {};	
+			set['$set'] = orders;
+		var upsert = { upsert: true }
+
+		db.collection(collectionName).updateOne(where,set,upsert,(err,result)=>{
+			if(err){
+				resp.status(403).send({
+					message:'some thing went wrong'
+				 });
+			}else{
+				let sellOrderId = (result.upsertedId ==null)?orderId:result.upsertedId._id;
+				let updArr = {}
+					updArr['modified_date'] = new Date();
+					updArr['sell_order_id'] = new ObjectID(sellOrderId) ;
+					updArr['is_sell_order'] = 'yes';
+					updArr['auto_sell'] = 'yes';
+
+				var collection =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+				var where = {};
+					where['_id'] = new ObjectID(orderId); 
+				var updPrmise = updateOne(where,updArr,collection);
+					updPrmise.then((callback)=>{})
+				var log_msg = "Sell Order was Created";
+				let show_hide_log = 'yes';
+				let type = 'Order Ready For Buy';
+				var promiseLog = recordOrderLog(orderId,log_msg,type,show_hide_log,exchange)
+					promiseLog.then((callback)=>{
+						
+					})
+				resp.status(200).send({
+					message: 'Order successfully Ready for buy'
+				 });
+			
+			}//End of success result	
+		})	
+	})
+})//End of makeManualOrderSetForSell
 
 
 router.post('/createAutoOrder',async (req,resp)=>{
@@ -1694,12 +1764,20 @@ router.post('/listOrderListing',async (req,resp)=>{
 	var orderListing = await listOrderListing(req.body.postData);
 	var customOrderListing = [];
 	for(let index in orderListing){
-		let currentMarketPricePromise =  listCurrentMarketPrice(orderListing[index].symbol);
-		var BTCUSDTPRICEPromise = listCurrentMarketPrice('BTCUSDT');
+		let currentMarketPricePromise =  listCurrentMarketPrice(orderListing[index].symbol,exchange);
+		let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
+		var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin,exchange);
 		var responsePromise = await  Promise.all([currentMarketPricePromise,BTCUSDTPRICEPromise]);
-		var currentMarketPriceArr = responsePromise[0];
-		var BTCUSDTPRICE = responsePromise[1][0].market_value;
-		let currentMarketPrice = currentMarketPriceArr[0].price;
+		
+		var currentMarketPriceArr = (typeof responsePromise[0][0] =='undefined')?[]:responsePromise[0][0];
+		
+
+		let currentMarketPrice = (typeof (currentMarketPriceArr.price) =='undefined')?0:currentMarketPriceArr.price;
+
+
+		var btcPriceArr = (typeof responsePromise[1][0] =='undefined')?[]:responsePromise[1][0];
+		var BTCUSDTPRICE =(exchange == 'binance')?btcPriceArr.market_value:btcPriceArr.price;
+
 		var convertToBtc = orderListing[index].quantity * currentMarketPrice;
 		var coinPriceInBtc = BTCUSDTPRICE*convertToBtc
 		var order = orderListing[index];
@@ -1837,7 +1915,8 @@ function listSellOrderStatus(sellOrderId){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let where  = {};
-				where['_id'] = {'$in':[sellOrderId,new ObjectID(sellOrderId)]};
+			const checkForHexRegExp = new RegExp('^[0-9a-fA-F]{24}$');
+				where['_id'] = (checkForHexRegExp.test(sellOrderId))?{'$in':[sellOrderId,new ObjectID(sellOrderId)]}:'';
 			db.collection('orders').find(where).toArray((err,result)=>{
 				if(err){
 					resolve(err)
@@ -2076,17 +2155,18 @@ function pausePlayParentOrder(orderId,status){
 }//End of listGlobalCoins
 
 
-function recordOrderLog(order_id,log_msg,type,show_hide_log){
+function recordOrderLog(order_id,log_msg,type,show_hide_log,exchange){
     return new Promise((resolve,reject)=>{
         conn.then((db)=>{
-          /** */
+		  /** */
+		  let collectionName = (exchange == 'binance')?'orders_history_log': 'orders_history_log_'+exchange; 
           let insertArr = {};
               insertArr['order_id'] = new ObjectID(order_id);
               insertArr['log_msg'] = log_msg;
               insertArr['type'] = type;
               insertArr['show_error_log'] = show_hide_log;
               insertArr['created_date'] = new Date();
-              db.collection('orders_history_log').insertOne(insertArr,(err,success)=>{
+              db.collection(collectionName).insertOne(insertArr,(err,success)=>{
                   if(err){
                     reject(err)
                   }else{
@@ -2100,8 +2180,8 @@ function recordOrderLog(order_id,log_msg,type,show_hide_log){
 
 router.post('/listOrderDetail',async (req,resp)=>{
 	let orderId = req.body.orderId;
-	var collectionName = 'buy_orders';
-	var ordeResp = await listOrderById(orderId,collectionName); 
+	let exchange = req.body.exchange;
+	var ordeResp = await listOrderById(orderId,exchange); 
 	var orderArr = {} 
 	if(ordeResp.length >0){
 		var orderArr = ordeResp[0];
@@ -2118,7 +2198,7 @@ router.post('/listOrderDetail',async (req,resp)=>{
 
 		var coutnChilds = 0;
 		if(typeof orderArr['parent_status'] !== 'undefined' && orderArr['parent_status'] == 'parent'){
-			var collectionName = 'buy_orders';
+			var collectionName = (exchange =='binance')?'buy_orders':'buy_orders_'+exchange;
 			var filter = {};
 				filter['buy_parent_id'] = new ObjectID(orderId);
 			var coutnChilds = await countCollection(collectionName,filter);
@@ -2133,29 +2213,27 @@ router.post('/listOrderDetail',async (req,resp)=>{
 })//End of listOrderDetail
 //*********************************************************== */
 
-function listOrderById(orderId,collectionName){
+function listOrderById(orderId,exchange){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			var where = {};
 				where['_id'] = new  ObjectID(orderId);
+			var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;	
 			db.collection(collectionName).find(where).toArray((err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
-					if(collectionName == 'orders'){
+					if(result.length >0){
 						resolve(result)
 					}else{
-						if(result.length >0){
-							resolve(result)
-						}else{
-							db.collection('sold_buy_orders').find(where).toArray((err,result)=>{
-								if(err){
-									resolve(err)
-								}else{
-									resolve(result)
-								}
-							})
-						}
+						var collectionName_2 = (exchange == 'binance')?'sold_buy_orders':'sold_buy_orders_'+exchange;
+						db.collection(collectionName_2).find(where).toArray((err,result)=>{
+							if(err){
+								resolve(err)
+							}else{
+								resolve(result)
+							}
+						})
 					}
 				}//End of else of buy order empty
 			})
@@ -2196,11 +2274,14 @@ function deleteOrder(orderId){
 }//End of deleteOrder
 
 router.post('/orderMoveToLth',async (req,resp)=>{
-	var respPromise =  orderMoveToLth(req.body.orderId,req.body.lth_profit);
+	let exchange = req.body.exchange;
+	let orderId = req.body.orderId;
+	let lth_profit = req.body.lth_profit;
+	var respPromise =  orderMoveToLth(orderId,lth_profit,exchange);
 	let show_hide_log = 'yes';	
 	let type = 'move_lth';	
 	let log_msg = 'Buy Order was Moved to <strong> LONG TERM HOLD </strong>  <span style="color:yellow;    font-size: 14px;"><b>Manually</b></span> ';
-	var LogPromise = recordOrderLog(req.body.orderId,log_msg,type,show_hide_log)
+	var LogPromise = recordOrderLog(req.body.orderId,log_msg,type,show_hide_log,exchange)
 	var promiseResponse = await Promise.all([LogPromise,respPromise]);
 	resp.status(200).send({
 		message: promiseResponse
@@ -2209,14 +2290,15 @@ router.post('/orderMoveToLth',async (req,resp)=>{
 })//End of orderMoveToLth
 
 
-function orderMoveToLth(orderId,lth_profit){
+function orderMoveToLth(orderId,lth_profit,exchange){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let filter = {};
 				filter['_id'] = new ObjectID(orderId);
 			let set = {};
 				set['$set'] = {'status':'LTH','lth_profit':lth_profit,'lth_functionality':'yes','modified_date':new Date()}
-			db.collection('buy_orders').updateOne(filter,set,(err,result)=>{
+				let collection = 'buy_orders_'+exchange;
+			db.collection(collection).updateOne(filter,set,(err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
@@ -2231,20 +2313,63 @@ function orderMoveToLth(orderId,lth_profit){
 
 router.post('/listOrderById',async (req,resp)=>{
 	let orderId = req.body.orderId;
-	var ordeResp = await listOrderById(orderId); 
+	let exchange = req.body.exchange;
+	var ordeRespPromise =  listOrderById(orderId,exchange); 
+	var ordrLogPromise =  listOrderLog(orderId,exchange); 
+
+	var resolvepromise = await Promise.all([ordeRespPromise,ordrLogPromise]);
+	var respArr = {};
+		respArr['ordeArr'] = resolvepromise[0];
+	let html = '';
+	let ordeLog = resolvepromise[1];
+	var index = 1;
+		for(let row in ordeLog){
+			index +=parseFloat(row);
+			let date = new Date(ordeLog[row].created_date).toISOString().
+			replace(/T/, ' ').      // replace T with a space
+			replace(/\..+/, '') 
+
+			html +='<tr>';
+			html +='<th scope="row" class="text-danger">'+index+'</th>';
+			html +='<td>'+ordeLog[row].log_msg+'</td>';
+			html +='<td>'+date+'</td>'
+			html +='</tr>';
+		}
+
+		respArr['logHtml'] = html;
+
 	resp.status(200).send({
-		message: ordeResp
+		message: respArr
 	});
 })//End of listOrderById
+
+
+function listOrderLog(orderId,exchange){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			var where = {};
+			    where['order_id'] = {'$in':[orderId,new ObjectID(orderId)]};
+			var collection = (exchange == 'binance')?'orders_history_log':'orders_history_log_'+exchange;
+			db.collection(collection).find(where).sort( { _id: -1 } ).toArray((err,result)=>{
+				if(err){
+					resolve(err);
+				}else{
+					resolve(result);
+				}
+			})
+		})
+	})
+}//End of listOrderLog
+
 
 router.post('/sellOrderManually' , async (req,resp)=>{
 
 	let orderId = req.body.orderId;
 	let currentMarketPrice = req.body.currentMarketPriceByCoin;
-	let collectionName = 'buy_orders';
+	let exchange = req.body.exchange;
+	let collectionName =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 	
-	var ordeResp = await listOrderById(orderId,collectionName); 
-
+	var ordeResp = await listOrderById(orderId,exchange); 
 	if(ordeResp.length >0){
 
 		let buyOrderArr = ordeResp[0];
@@ -2258,11 +2383,11 @@ router.post('/sellOrderManually' , async (req,resp)=>{
 			var trading_ip = await listUsrIp(admin_id);
 
 			var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now';
-			var logPromise = recordOrderLog(buy_order_id,log_msg,'sell_manually','yes');
+			var logPromise = recordOrderLog(buy_order_id,log_msg,'sell_manually','yes',exchange);
 
 
 			var log_msg ='Send Market Orde for sell by Ip: <b>'+trading_ip+'</b> ';
-			var logPromise_2 = recordOrderLog(buy_order_id,log_msg,'order_ip','no');
+			var logPromise_2 = recordOrderLog(buy_order_id,log_msg,'order_ip','no',exchange);
 
 			var update_1 = {};
 			update_1['modified_date'] = new Date(); 
@@ -2270,29 +2395,31 @@ router.post('/sellOrderManually' , async (req,resp)=>{
 			var filter_1 = {};
 			filter_1['_id'] = {$in:[orderId,new ObjectID(orderId)]} 
 
-			var collectionName_1 = 'orders';
+			var collectionName_1 = (exchange == 'binance')?'orders':'orders_'+exchange;
+
+			console.log('collectionName_1 ',collectionName_1)
 			var updatePromise_1 = updateOne(filter_1,update_1,collectionName_1);
 
-			var collectionName_2 = 'buy_orders';
+			var collectionName_2 = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;;
 			update_1['status'] = 'FILLED';
 			var updatePromise_2 = updateOne(filter_1,update_1,collectionName_2);
 			var resolvePromise = Promise.all([updatePromise_1,updatePromise_2,logPromise,logPromise_2]);
 
 			if(application_mode == 'live'){
 				var log_msg = "Market Order Send For Sell On:  "+ parseFloat(currentMarketPrice).toFixed(8);
-				var logPromise_1 = recordOrderLog(buy_order_id,log_msg,'sell_manually','yes');
+				var logPromise_1 = recordOrderLog(buy_order_id,log_msg,'sell_manually','yes',exchange);
 				logPromise_1.then((resp)=>{})
 
-				var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity,currentMarketPrice, coin_symbol,admin_id, buy_order_id,trading_ip, 'barrier_percentile_trigger', 'sell_market_order');
+				var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity,currentMarketPrice, coin_symbol,admin_id, buy_order_id,trading_ip, 'barrier_percentile_trigger', 'sell_market_order',exchange);
 
 				SellOrderResolve.then((resp)=>{})
 			}else{
 				//End of test
 				var log_msg = "Market Order Send For Sell On **:  "+ parseFloat(currentMarketPrice).toFixed(8);
-				var logPromise_1 = recordOrderLog(buy_order_id,log_msg,'sell_manually','yes');
+				var logPromise_1 = recordOrderLog(buy_order_id,log_msg,'sell_manually','yes',exchange);
 				logPromise_1.then((resp)=>{})
 
-				sellTestOrder(sell_order_id,currentMarketPrice, buy_order_id);
+				sellTestOrder(sell_order_id,currentMarketPrice, buy_order_id,exchange);
 				
 			}
 		}//End of if sell order id not empty	
@@ -2347,7 +2474,7 @@ function listUsrIp(admin_id){
 }//End of listUsrIp
 
 
-function readySellOrderbyIp(order_id,quantity,market_price,coin_symbol,admin_id, buy_orders_id,trading_ip,trigger_type,type){
+function readySellOrderbyIp(order_id,quantity,market_price,coin_symbol,admin_id, buy_orders_id,trading_ip,trigger_type,type,exchange){
     return new Promise((resolve)=>{
         conn.then((db)=>{
             var insert_arr  = {};
@@ -2362,8 +2489,9 @@ function readySellOrderbyIp(order_id,quantity,market_price,coin_symbol,admin_id,
             insert_arr['order_type'] = type;
             insert_arr['order_status'] = 'ready';
             insert_arr['global'] = 'global';
-            insert_arr['created_date'] = new Date(); 
-            db.collection('ready_orders_for_sell_ip_based').insertOne(insert_arr,(err,result)=>{
+			insert_arr['created_date'] = new Date(); 
+			let collection = (exchange == 'binance')?'ready_orders_for_sell_ip_based':'ready_orders_for_sell_ip_based_'+exchange;
+            db.collection(collection).insertOne(insert_arr,(err,result)=>{
                 if(err){
                     resolve(err)
                 }else{
@@ -2374,15 +2502,21 @@ function readySellOrderbyIp(order_id,quantity,market_price,coin_symbol,admin_id,
     })
 }//End of readySellOrderbyIp
 
-function sellTestOrder(sell_order_id,currentMarketPrice,buy_order_id){
+function sellTestOrder(sell_order_id,currentMarketPrice,buy_order_id,exchange){
 	 
 		(async ()=>{
-			var collectionName = 'orders';
+			var collectionName =  (exchange == 'binance')?'orders':'orders_'+exchange;
 			var search = {};
 				search['_id'] = new ObjectID(sell_order_id);
-				search['status'] = {'$in':['new','LTH']}
+				//search['status'] = {'$in':['new','LTH']}
+
 			var orderResp = await find(collectionName,search); 	
 			if(orderResp.length >0){
+
+				var orderArr = orderResp[0];
+
+				var quantity = (typeof orderArr['quantity'] =='undefined')?0:orderArr['quantity'];
+				var symbol = (typeof orderArr['symbol'] =='undefined')?'':orderArr['symbol'];
 
 				var update = {};
 					update['market_value'] = currentMarketPrice;
@@ -2394,12 +2528,66 @@ function sellTestOrder(sell_order_id,currentMarketPrice,buy_order_id){
 				var filter = {};
 					filter['_id'] = new ObjectID(sell_order_id)
 		
-				var collectionName = 'orders';
+				var collectionName = (exchange == 'binance')?'orders':'orders_'+exchange;
 				var updatePromise_1 = updateOne(filter,update,collectionName);
 					updatePromise_1.then((resp)=>{})
 				var log_msg = "Sell Market Order was <b>SUBMITTED</b>";
-				var logPromise_1 = recordOrderLog(buy_order_id,log_msg,'sell_order_submitted','yes');
+				var logPromise_1 = recordOrderLog(buy_order_id,log_msg,'sell_order_submitted','yes',exchange);
 					logPromise_1.then((resp)=>{})
+
+
+				//%%%%%%%%%%% Market Filled Process %%%%%%%%%%%%%%%%%%
+				var commission_value = parseFloat(quantity) * (0.001);
+				var commission = commission_value*currentMarketPrice;
+				var commissionAsset = 'BTC';
+
+				let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
+	
+				var USDCURRENTVALUE = await listCurrentMarketPrice(globalCoin,exchange);
+
+				var btcPriceArr = (typeof USDCURRENTVALUE[0] =='undefined')?[]:USDCURRENTVALUE[0];
+		         var BTCUSDTPRICE =(exchange == 'binance')?btcPriceArr.currentMarketPrice:btcPriceArr.price;
+
+
+				let splitArr =   symbol.split('USDT');
+				var sellUsdPrice = (quantity * currentMarketPrice)*BTCUSDTPRICE;
+				var sellUsdPrice = (typeof splitArr[1] !='undefined' && splitArr[1] == '')?quantity:sellUsdPrice;            
+	
+				var upd_data = {};
+					upd_data['is_sell_order'] = 'sold';
+					upd_data['market_sold_price'] = parseFloat(currentMarketPrice);
+					upd_data['status'] = 'FILLED';
+					upd_data['trading_status'] = 'complete';
+					upd_data['market_sold_price_usd'] = sellUsdPrice;
+					upd_data['modified_date'] = new Date();
+				
+					
+				var collectionName = 'buy_orders_'+exchange;
+				var where = {};
+					where['sell_order_id'] = {$in:[new ObjectID(sell_order_id),sell_order_id]};
+				var  updtPromise_1 = updateOne(where,upd_data,collectionName);
+					updtPromise_1.then((callback)=>{})
+	
+	
+				var collectionName = 'orders_'+exchange;
+				var where = {};
+				var updOrder = {};
+					updOrder['status'] = 'FILLED';
+					updOrder['market_value'] = parseFloat(currentMarketPrice);
+					where['_id'] = new ObjectID(sell_order_id)
+				var  updtPromise_1 = updateOne(where,updOrder,collectionName);
+						 updtPromise_1.then((callback)=>{})    
+		 
+		 
+				var log_msg = "Sell Market Order is <b>FILLED</b> at price "+parseFloat(currentMarketPrice).toFixed(8);
+				var logPromise_3 = recordOrderLog(buy_order_id,log_msg,'market_filled','yes',exchange);
+						logPromise_3.then((callback)=>{})
+		
+				var log_msg = "Broker Fee <b>"+parseFloat(commission).toFixed(8)+" From " +commissionAsset +"</b> has token on this Trade";
+				var logPromise_3 = recordOrderLog(buy_order_id,log_msg,'sell_filled','yes',exchange);
+				logPromise_3.then((callback)=>{})
+
+				copySoldOrders(buy_order_id,exchange);
 
 			}	
 		})()
@@ -2418,6 +2606,407 @@ function find(collectionName,search){
 		})
 	})
 }//End of findOne
+
+
+router.post('/buyOrderManually',async (req,resp)=>{
+	var orderId = req.body.orderId;
+	var coin = req.body.coin;
+	var exchange = req.body.exchange;
+	var ordeResp = await listOrderById(orderId,exchange); 
+	
+	if(ordeResp.length >0){
+		var orderArr = ordeResp[0];
+		let admin_id = (typeof orderArr['admin_id'] == undefined)?'':orderArr['admin_id'];
+		let status = (typeof orderArr['status'] == undefined)?'':orderArr['status'];
+		let application_mode = (typeof orderArr['application_mode'] == undefined)?'':orderArr['application_mode'];
+
+		let buy_quantity = (typeof orderArr['quantity'] == undefined)?'':orderArr['quantity'];
+		let symbol = (typeof orderArr['symbol'] == undefined)?'':orderArr['symbol'];
+
+		let buy_trigger_type = (typeof orderArr['trigger_type'] == undefined)?'':orderArr['trigger_type'];
+
+		var trading_ip = await listUsrIp(admin_id);
+
+		if(status == 'new'){
+			var update = {};
+			update['modified_date'] = new Date(); 
+			update['is_manual_buy'] = 'yes';
+			var filter = {};
+			filter['_id'] = new ObjectID(orderId); 
+			let collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+			var updatePromise_1 = updateOne(filter,update,collectionName);
+			var currentMarketPrice =  await listCurrentMarketPrice(symbol,exchange);
+			if(application_mode == 'live'){
+				let buy_trigger_type = '';
+				var respPromise = orderReadyForBuy(orderId,buy_quantity,currentMarketPrice,symbol,admin_id,trading_ip,buy_trigger_type,'buy_market_order',exchange);
+				respPromise.then((callback)=>{})
+			}else{
+				buyTestOrder(orderArr,currentMarketPrice,exchange);
+			}
+		}//End of if status is new
+
+
+		resp.status(200).send({
+			message: 'response comming'
+		});
+
+	}//End of Order length 
+})//End of buyOrderManually
+
+
+
+
+function buyTestOrder(orders,market_value,exchange){
+	(async ()=>{
+		if (orders['status'] == 'new') {
+			var quantity = orders['quantity'];
+			var sell_order_id = (typeof orders['sell_order_id'] =='undefined')?'':orders['sell_order_id'];
+			var symbol = (typeof orders['symbol'] =='undefined')?'':orders['symbol'];
+			var id = (typeof orders['_id'] =='undefined')?'':orders['_id'];
+		
+			
+
+			var symbol = orders['symbol'];
+			let upd = {};
+				upd['market_value'] = market_value;
+				upd['status'] = 'submitted';
+				upd['modified_date'] = new Date();
+				upd['buy_date'] = new Date()
+			var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+			var where = {};
+				where['_id'] = new ObjectID(id)
+			var  updPromise = updateOne(where,upd,collectionName);
+				updPromise.then((callback)=>{})
+			var log_msg = "Buy Market Order was <b>SUBMITTED</b>";
+			var logPromise = recordOrderLog(id,log_msg,'submitted','yes',exchange);
+				logPromise.then((callback)=>{
+					console.log(callback)
+				})
+
+			//%%%%%%%%%%% Market Filled Process %%%%%%%%%%%%%%%%%%
+			var commission = parseFloat(quantity) * (0.001);
+			let splitUSDT =   symbol.split('USDT');
+			let splitBTC =   symbol.split('BTC');
+			var commissionAsset = (typeof splitUSDT[1] == 'undefined')?splitBTC[0]:splitUSDT[0];
+			var sellQty = quantity-commission;
+
+			var log_msg = "Broker Fee <b>" +commission.toFixed(3)+"</b> Has been deducted from sell quantity ";
+			var logPromise_1 = recordOrderLog(id,log_msg,'fee_deduction','yes',exchange);
+			logPromise_1.then((callback)=>{})
+
+
+			var log_msg = "Order Quantity Updated from <b>("+quantity+")</b> To  <b>(" +sellQty+ ')</b> Due to Deduction Binance Fee from buying Coin';
+			var logPromise_2 = recordOrderLog(id,log_msg,'fee_deduction','yes',exchange);
+			logPromise_2.then((callback)=>{})
+
+
+			var USDCURRENTVALUE =  await listCurrentMarketPrice('BTCUSD',exchange);
+			let splitArr =   symbol.split('USDT');
+			var purchaseUsdPrice = (quantity * market_value)*USDCURRENTVALUE;
+			var purchaseUsdPrice = (typeof splitArr[1] !='undefined' && splitArr[1] == '')?quantity:purchaseUsdPrice;
+
+
+			var upd_data = {};
+				upd_data['status'] = 'FILLED';
+				upd_data['market_value'] = parseFloat(market_value);
+				upd_data['purchased_price'] = market_value;
+				upd_data['market_value_usd'] = purchaseUsdPrice;
+				upd_data['modified_date'] = new Date();
+				upd_data['buy_date'] = new Date()
+
+			var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+			var where = {};
+				where['_id'] = new ObjectID(id)
+			var  updtPromise_1 = updateOne(where,upd_data,collectionName);
+				updtPromise_1.then((callback)=>{})
+
+		if(sell_order_id !=''){
+			var updOrder = {};
+				updOrder['purchased_price'] = parseFloat(market_value);
+				updOrder['quantity'] = sellQty;
+
+				var collectionName =  (exchange == 'binance')?'orders':'orders_'+exchange; 
+	
+				var where_1 = {};
+					where_1['_id'] = new ObjectID(sell_order_id)
+				var  updtPromise_1 = updateOne(where_1,updOrder,collectionName);
+					updtPromise_1.then((callback)=>{})
+		}
+
+
+		var log_msg = "Buy Market Order is <b>FILLED</b> at price "+parseFloat(market_value).toFixed(8);
+		var logPromise_3 = recordOrderLog(id,log_msg,'market_filled','yes',exchange);
+				logPromise_3.then((callback)=>{})
+
+		var log_msg = "Broker Fee <b>"+commission.toFixed(8)+" From " +commissionAsset +"</b> has token on this Trade";
+		var logPromise_3 = recordOrderLog(id,log_msg,'market_filled','yes',exchange);
+		logPromise_3.then((callback)=>{})
+
+
+
+		//************ -- Make Order From Auto Sell -- *******
+
+
+		var auto_sell = (typeof orders['auto_sell'] =='undefined')?'':orders['auto_sell'];
+			if(auto_sell == 'yes'){
+				createOrderFromAutoSell(orders,exchange);
+			}//if auto sell is yes
+		
+		//End of Crate Auto Sell 
+
+
+
+		} //End if Order is New
+	
+	})()
+}//End of buyTestOrder
+
+
+function createOrderFromAutoSell (orderArr,exchange){
+	var buy_order_id = orderArr['_id'];
+	var auto_sell = (typeof orderArr['auto_sell'] == 'undefined')?'':orderArr['auto_sell'];
+	var admin_id = (typeof orderArr['admin_id'] == 'undefined')?'':orderArr['admin_id'];
+	var symbol = (typeof orderArr['symbol'] == 'undefined')?'':orderArr['symbol'];
+	var binance_order_id = (typeof orderArr['binance_order_id'] == 'undefined')?'':orderArr['binance_order_id'];
+	var purchased_price = (typeof orderArr['market_value'] == 'undefined')?'':orderArr['market_value'];
+
+	(async()=>{
+	////////////////////////////////////////////////////////////////////////
+		if (auto_sell == 'yes') {
+		var buy_order_check = 'yes';
+		//Get Sell Temp Data
+		var respArr =  await listTempSellOrder(buy_order_id,exchange);
+		var sell_data_arr = (typeof respArr[0] =='undefined')?[]:respArr[0];
+		var profit_type = (typeof sell_data_arr['profit_type'] =='undefined')?'':sell_data_arr['profit_type'];
+		var sell_profit_percent = (typeof sell_data_arr['profit_percent'] =='undefined')?'':sell_data_arr['profit_percent'];
+		var sell_profit_price = (typeof  sell_data_arr['profit_price'] =='undefined')?'':sell_data_arr['profit_price'];
+		var order_type = (typeof sell_data_arr['order_type'] =='undefined')?'':sell_data_arr['order_type'];
+		var trail_check = (typeof  sell_data_arr['trail_check'] == 'undefined')?'':sell_data_arr['trail_check'];
+		var trail_interval = (typeof sell_data_arr['trail_interval'] == 'undefined')?'':sell_data_arr['trail_interval'];
+		var stop_loss =  (typeof  sell_data_arr['stop_loss'] =='undefined')?'': sell_data_arr['stop_loss'];
+		var loss_percentage = (typeof sell_data_arr['loss_percentage'] =='undefined')?'':sell_data_arr['loss_percentage'];
+		var application_mode = (typeof sell_data_arr['application_mode'] == 'undefined')?'':sell_data_arr['application_mode'];
+		var lth_functionality = (typeof sell_data_arr['lth_functionality'] =='undefined')?'':sell_data_arr['lth_functionality'];
+
+		var tempArr = {};
+			tempArr['symbol'] = symbol;
+			tempArr['purchased_price'] = purchased_price;
+			tempArr['quantity'] = quantity;
+			tempArr['profit_type'] = profit_type;
+			tempArr['order_type'] = order_type;
+			tempArr['admin_id'] = admin_id;
+			tempArr['buy_order_check'] = buy_order_check;
+			tempArr['buy_order_id'] = buy_order_id;
+			tempArr['buy_order_binance_id'] = binance_order_id;
+			tempArr['stop_loss'] = stop_loss;
+			tempArr['lth_functionality'] = lth_functionality;
+			tempArr['loss_percentage'] = loss_percentage;
+			tempArr['application_mode'] = application_mode
+			tempArr['trigger_type'] = 'no';
+			tempArr['modified_date'] = new Date();
+			tempArr['created_date'] = new Date();
+		
+		var ins_data = {};
+		if (profit_type == 'percentage') {
+			var sell_price = purchased_price * sell_profit_percent;
+			var sell_price = sell_price / 100;
+			var sell_price = sell_price + purchased_price;
+			var sell_price =  parseFloat(sell_price).toFixed(8)
+			ins_data['sell_profit_percent'] = sell_profit_percent;
+			ins_data['sell_price'] = sell_price;
+		} else {
+			var sell_price = sell_profit_price;
+				ins_data['sell_profit_price'] = sell_profit_price;
+				ins_data['sell_price'] = sell_price;
+		}
+		if (trail_check != '') {
+			ins_data['trail_check'] = 'yes';
+			ins_data['trail_interval'] = trail_interval;
+			ins_data['sell_trail_price'] = sell_price;
+			ins_data['status'] = 'new';
+		} else {
+			ins_data['trail_check'] = 'no';
+			ins_data['trail_interval'] = '0';
+			ins_data['sell_trail_price'] = '0';
+			ins_data['status'] = 'new';
+		}
+		
+		var collectionName = 'orders_'+exchange;
+		var  order_id =  await createOrder(collectionName,ins_data);
+		if (buy_order_check == 'yes') {
+			//Update Buy Order
+			var upd_data = {};
+				upd_data['is_sell_order'] = 'yes';
+				upd_data['lth_functionality'] = lth_functionality;
+				upd_data['sell_order_id'] = order_id;
+			var collectionName = 'buy_orders_'+exchange;
+			var where = {};
+				where['_id'] = new ObjectID(buy_order_id)
+				var upsert = {'upsert':true};	  
+			var  updPromise = updateSingle(collectionName,where,upd,upsert);
+				updPromise.then((callback)=>{})
+		}
+
+		var log_msg = "Sell Order was Created from Auto Sell";
+
+		var logPromise = recordOrderLog(buy_order_id,log_msg,'create_sell_order','yes',exchange);
+		logPromise.then((callback)=>{})
+		} // if($auto_sell =='yes')	
+	////////////////////////////////////////////////////////////////////////
+	})
+  
+}//End of createOrderFromAutoSell
+
+
+function createOrder(collectionName,ins_data){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			db.collection(collectionName).insertOne(ins_data,(err,result)=>{
+				if(err){
+				  resolve(err)
+				}else{
+				  resolve(result.insertedId)
+				}
+			})
+		})
+	})
+}//End of createOrder
+
+
+
+
+function listTempSellOrder(buy_order_id,exchange){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			let where = {};
+				where['buy_order_id'] = {$in:[buy_order_id,new ObjectID(order_id)]}
+			let collection = 'temp_sell_orders_'+exchange;
+			db.collection(collection).find(where).toArray((err,result)=>{
+				if(err){
+					resolve(err)
+				}else{
+					resolve(result);
+				}
+			})
+		})
+	})
+}//End of listTempSellOrder
+
+
+function orderReadyForBuy (buy_order_id,buy_quantity,market_value,coin_symbol,admin_id,trading_ip,trigger_type,type,exchange){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			var insert_arr = {};
+			insert_arr['buy_order_id'] = buy_order_id;
+			insert_arr['buy_quantity'] = buy_quantity;
+			insert_arr['market_value'] = market_value;
+			insert_arr['coin_symbol'] = coin_symbol;
+			insert_arr['admin_id'] =    admin_id;
+			insert_arr['trading_ip'] =  trading_ip;
+			insert_arr['trigger_type'] = trigger_type;
+			insert_arr['order_type'] = type;
+			insert_arr['order_status'] = 'ready';
+			insert_arr['created_date'] = new Date();
+			insert_arr['global'] = 'global';
+			let collection = (exchange == 'binance')?'ready_orders_for_buy_ip_based':'ready_orders_for_buy_ip_based_'+exchange;
+			db.collection(collection).insertOne(insert_arr,(err,result)=>{
+				if(err){
+					resolve(err)
+				}else{
+					resolve(result.insertedId);
+				}
+			})
+		})
+	})
+}//End of orderReadyForBuy
+
+
+
+function listSoldOrders(primaryID,exchange){
+    return new Promise ((resolve)=>{
+      conn.then((db)=>{
+        let searchCriteria  = {};
+        searchCriteria.status = 'FILLED';
+        searchCriteria.is_sell_order = 'sold';
+        searchCriteria.is_order_copyed = {'$ne':'yes'};
+		if(primaryID !=''){searchCriteria._id = primaryID;}
+		let collection = 'buy_orders_'+exchange;
+        db.collection(collection).find(searchCriteria).limit(500).toArray((err,result)=>{
+          if(err){
+            resolve(err)
+          }else{
+              resolve(result);
+          }
+        })
+      })
+    })
+  }//End of listSoldOrders
+
+  function copySoldOrders(order_id,exchange){
+    conn.then((db)=>{
+
+		(async ()=>{
+          let soldOrdersArr = await listSoldOrders(order_id,exchange);
+          if(typeof soldOrdersArr !='undefined' && soldOrdersArr.length >0){
+            let collection = 'sold_buy_orders_'+exchange;
+            for(let index in soldOrdersArr){
+              let _id = soldOrdersArr[index]['_id'];
+              let searchQuery = {};
+                  searchQuery._id = _id;
+              let updateQuery = {};
+                  updateQuery = soldOrdersArr[index];
+              let upsert  = {};
+                  upsert.upsert= true;
+			  var deletePromise = deleteBuyOrders(order_id,exchange);
+			  	  deletePromise.then((callback)=>{})
+			  var updSingle = updateSingle(collection,searchQuery,updateQuery,upsert);
+			 	  updSingle.then((callback)=>{})
+            }
+		  }
+		})()  
+        
+    }).catch((err)=>{
+      throw err
+    })
+  }//End of copySoldOrders
+
+
+ function deleteBuyOrders (_id,exchange){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+		  let searchCriteria = {};
+			  searchCriteria._id = _id;
+			  let collection = 'buy_orders_'+exchange;
+		  db.collection(collection).deleteOne(searchCriteria,(err,response)=>{
+			if(err){
+			  resolve(err)
+			}else{
+			  resolve(response)
+			}
+		  })
+		}).catch((err)=>{
+		  throw(err);
+		})
+	})
+}//End of deleteBuyOrders
+
+
+function updateSingle(collection,searchQuery,updateQuery,upsert){
+    return new Promise((resolve)=>{
+      conn.then((db)=>{
+        let set = {};
+            set['$set'] = updateQuery;
+        db.collection(collection).updateOne(searchQuery,set,upsert,(err,success)=>{
+          if(err){
+            resolve(err);
+          }else{
+            resolve(success);
+          }
+        })
+      })
+    })
+  }//End of update
+
 
 module.exports = router;
 
