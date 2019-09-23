@@ -1313,7 +1313,7 @@ router.post('/listManualOrderDetail',async (req,resp)=>{
 
 router.post('/listAutoOrderDetail',async (req,resp)=>{
 	var urserCoinsPromise = listUserCoins(req.body._id)
-
+	let exchange = req.body.exchange;
 	let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
 	var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin);
 	var promisesResult = await Promise.all([urserCoinsPromise,BTCUSDTPRICEPromise]);
@@ -1401,6 +1401,83 @@ router.post('/createManualOrder',(req,resp)=>{
 	})
 })//End of createManualOrder
 
+
+
+
+
+router.post('/createManualOrderByChart',(req,resp)=>{
+	conn.then((db)=>{
+		let orders = req.body.orderArr;
+		let exchange = orders['exchange'];
+		let price = orders['price'];
+
+		let profit_percent = req.body.tempOrderArr.profit_percent;
+		orders['created_date'] = new Date();
+		orders['modified_date'] = new Date();
+		var collectionName =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+
+		db.collection(collectionName).insertOne(orders,(err,result)=>{
+			if(err){
+				resp.status(403).send({
+					message:'some thing went wrong'
+				 });
+			}else{
+
+				var buyOrderId = result.insertedId 
+
+				console.log(':::::::::::::::::::::::')
+				console.log('buyOrderId',buyOrderId);
+				console.log(':::::::::::::::::::::::')
+
+
+				var log_msg = "Buy Order was Created at Price "+parseFloat(price).toFixed(8);
+				if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
+					log_msg += ' with auto sell ' +profit_percent +'%';
+				}
+
+				log_msg += '  From Chart';
+				let show_hide_log = 'yes';
+				let type = 'Order_created';
+				var promiseLog = recordOrderLog(buyOrderId,log_msg,type,show_hide_log,exchange)
+					promiseLog.then((callback)=>{
+						
+					})
+
+
+				if(req.body.orderArr.auto_sell == 'yes'){
+					
+				let tempOrder = req.body.tempOrderArr;
+					tempOrder['created_date'] = new Date();
+					tempOrder['buy_order_id'] = buyOrderId;
+				var tempCollection =  (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;
+
+					var where = {};
+					where['buy_order_id'] = {'$in':[buyOrderId,new ObjectID(buyOrderId)]}; 
+
+					var set = {};	
+					set['$set'] = tempOrder;
+					var upsert = { upsert: true }
+
+					db.collection(tempCollection).updateOne(where,set,upsert,(err,result)=>{
+					if(err){
+						resp.status(403).send({
+							message:'some thing went wrong while Creating order'
+						 });
+					}else{
+						resp.status(200).send({
+							message: 'Order successfully created'
+						 });
+					}
+				})
+				}else{
+					resp.status(200).send({
+						message: 'Order successfully created'
+					 });
+				}	
+			}	
+		})	
+	})
+})//End of createManualOrderByChart
 
 
 
@@ -1844,27 +1921,27 @@ router.post('/listOrderListing',async (req,resp)=>{
 			if ((status == 'FILLED' && is_sell_order == 'yes') || status == "LTH") {
 				var SellStatus = (sellOrderId =='')?'':await listSellOrderStatus(sellOrderId);
 				if(SellStatus == 'error'){
-					htmlStatus += '<span class="label label-danger">ERROR IN SELL</span>';
+					htmlStatus += '<span class="badge badge-danger">ERROR IN SELL</span>';
 				}else if(SellStatus =='submitted'){
-					htmlStatus += '<span class="label label-success">SUBMITTED FOR SELL</span>';
+					htmlStatus += '<span class="badge badge-success">SUBMITTED FOR SELL</span>';
 				}else{
-					htmlStatus += '<span class="label label-info">WAITING FOR SELL</span>';
+					htmlStatus += '<span class="badge badge-info">WAITING FOR SELL</span>';
 				}
 			}else if (status == 'FILLED' && is_sell_order == 'sold') {
 				if (is_lth_order== 'yes') {
-					htmlStatus += '<span class="label label-warning">LTH</span><span class="label label-success">Sold</span>';
+					htmlStatus += '<span class="badge badge-warning">LTH</span><span class="badge badge-success">Sold</span>';
 				} else {
-					htmlStatus += '<span class="label label-success">Sold</span>';
+					htmlStatus += '<span class="badge badge-success">Sold</span>';
 				}
 			}else{
 				var  statusClass = (status =='error')?'danger':'success'
-				htmlStatus += '<span class="label label-'+statusClass+'">'+status+  '</span>';
+				htmlStatus += '<span class="badge badge-'+statusClass+'">'+status+  '</span>';
 			}
 
 			if (fraction_sell_type == 'parent' || fraction_sell_type == 'child') {
-				htmlStatus += '<span class="label label-warning" style="margin-left:4px;">Sell Fraction</span>';
+				htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Sell Fraction</span>';
 			} else if (fraction_buy_type == 'parent' || fraction_buy_type == 'child') {
-				htmlStatus += '<span class="label label-warning" style="margin-left:4px;">Buy Fraction</span>';
+				htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Buy Fraction</span>';
 			}
 
 
@@ -3007,6 +3084,526 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
     })
   }//End of update
 
+  router.post('/listOrdersForChart',async (req,resp)=>{
+		var admin_id = req.body.admin_id;
+		var exchange = req.body.exchange;
+		var application_mode = req.body.application_mode;
+		var coin = req.body.coin;
+
+		var newArr = [];
+		let ordersArr = await listOrdersForChart(admin_id,exchange,application_mode,coin);
+			for(let row in ordersArr){
+				let newRow = {};
+				let trigger_type = ordersArr[row].trigger_type;
+				let defined_sell_percentage = (typeof ordersArr[row].defined_sell_percentage =='undefined')?0:ordersArr[row].defined_sell_percentage;
+				let sell_profit_percent = (typeof ordersArr[row].sell_profit_percent =='undefined')?0:ordersArr[row].sell_profit_percent;
+				let profitPercentage = (defined_sell_percentage == 0)?sell_profit_percent:defined_sell_percentage;
+
+				let price = (ordersArr[row].price);
+				let status =  ordersArr[row].status;
+				let quantity = ordersArr[row].quantity;
+
+				newRow['quantity'] = quantity;
+			
+				let sell_order_id = (typeof ordersArr[row].sell_order_id =='undefined')?'':ordersArr[row].sell_order_id;
+
+				var buyOrderId = ordersArr[row]._id;
+
+				newRow['_id'] = ordersArr[row]._id;
+				newRow['price'] = (price).toFixed(8);
+				newRow['trigger_type'] = ordersArr[row].trigger_type;  
+
+				newArr['auto_sell'] = ordersArr[row].auto_sell;
+
+				let auto_sell = (typeof ordersArr[row].auto_sell =='undefined')?'':ordersArr[row].auto_sell;
+				
+				if(trigger_type !='no'){
+					let calculateSellPrice = price+((price/100)*profitPercentage);
+					newRow['profit_price_'] = parseFloat(calculateSellPrice).toFixed(8);
+					let lsPrice = isNaN(ordersArr[row].iniatial_trail_stop)?0:ordersArr[row].iniatial_trail_stop;
+					lsPrice = parseFloat(lsPrice).toFixed(8);
+					newRow['loss_price_'] =  lsPrice;
+				}else{
+
+					if(auto_sell =='no'){
+						newRow['profit_price_'] = null;
+						newRow['loss_price_'] = null;
+					}else{
+
+
+						if(sell_order_id == 0){
+							var sellOrder = [];
+						}else{
+							var sellOrder = await listSellOrderById(sell_order_id,exchange);
+						}
+
+
+						if(sellOrder.length >0){
+							let sellOrderArr = sellOrder[0];
+							let stop_loss = (typeof sellOrderArr.stop_loss =='undefined')?null:sellOrderArr.stop_loss;
+
+							stop_loss = isNaN(stop_loss)?0:stop_loss;
+
+							let sell_price = (typeof sellOrderArr.sell_price =='undefined')?null:sellOrderArr.sell_price;
+							sell_price = isNaN(sell_price)?0:sell_price;
+
+							newRow['loss_price_'] = parseFloat(stop_loss).toFixed(8);
+							newRow['profit_price_'] = parseInt(sell_price).toFixed(8);
+
+						}else{
+
+							console.log('::::::::::::::::::::::')
+							console.log('buyOrderId',buyOrderId)
+							console.log('::::::::::::::::::::::')
+							let tempArrResp = await listselTempOrders(buyOrderId,exchange);
+							if(tempArrResp.length >0){
+
+								let tempArr = tempArrResp[0];
+								let stop_loss = (typeof tempArr.stop_loss =='undefined')?0:tempArr.stop_loss;
+
+								stop_loss = isNaN(stop_loss)?0:stop_loss;
+
+								let profit_price = (typeof tempArr.profit_price =='undefined')?null:tempArr.profit_price;
+								profit_price = isNaN(profit_price)?0:profit_price;
+
+								newRow['loss_price_'] = parseFloat(stop_loss).toFixed(8);
+								newRow['profit_price_'] = parseFloat(profit_price).toFixed(8);
+							}else{
+								newRow['loss_price_'] = null;
+								newRow['profit_price_'] =  null;
+							}
+
+						
+						}
+
+					}
+
+				}
+				
+				if(status == 'new'){
+					newRow['profit_status'] = 'yes';
+					newRow['loss_status'] = 'no';
+				}else{
+					newRow['profit_status'] = 'no';
+					newRow['loss_status'] = 'yes';
+				}
+				newArr.push(newRow);
+				
+			}
+
+
+		resp.status(200).send({
+			message:newArr
+		})
+		
+  })
+
+  function listOrdersForChart(admin_id,exchange,application_mode,coin){
+	return new Promise((resolve)=>{
+		let filter = {}; 
+			filter['status'] = {'$in':['submitted', 'FILLED','new']}
+			filter['price'] = {$nin:[null,""]};
+			filter['admin_id'] = admin_id;
+			filter['application_mode'] = application_mode;
+			filter['symbol'] = coin;
+		conn.then((db)=>{
+			let collection = (exchange =='binance')?'buy_orders':'buy_orders_'+exchange;
+			db.collection(collection).find(filter).toArray((err,result)=>{
+				if(err){
+					resolve(err);
+				}else{
+					resolve(result);
+				}
+			})//End of collection
+		})//End of conn
+	})//End of Promise
+  }//End of listOrdersForChart
+
+
+  function listSellOrderById(ID,exchange){
+	return new Promise((resolve)=>{
+		let filter = {}; 
+			filter['_id'] = new ObjectID(ID);
+		conn.then((db)=>{
+			let collection = (exchange =='binance')?'orders':'orders_'+exchange;
+			db.collection(collection).find(filter).toArray((err,result)=>{
+				if(err){
+					resolve(err);
+				}else{
+					resolve(result);
+				}
+			})//End of collection
+		})//End of conn
+	})//End of Promise
+  }//End of listSellOrderById
+
+
+  function listselTempOrders(ID,exchange){
+	return new Promise((resolve)=>{
+		let filter = {}; 
+			filter['buy_order_id'] = (ID == '' || ID == undefined || ID ==null)?ID:new ObjectID(ID);
+		conn.then((db)=>{
+			var collection = (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;
+			db.collection(collection).find(filter).toArray((err,result)=>{
+				if(err){
+					resolve(err);
+				}else{
+					resolve(result);
+				}
+			})//End of collection
+		})//End of conn
+	})//End of Promise
+  }//End of listselTempOrders
+
+
+  router.post('/updateOrderfromdraging',async (req,resp)=>{
+	  var exchange =  req.body.exchange;
+	  var orderId =  req.body.orderId;
+	  var side =  req.body.side;
+	  var updated_price =  req.body.updated_price;
+
+	  var message = '';
+
+	  var orderArr = await  listOrderById(orderId,exchange);
+		if(orderArr.length >0){
+			for(let index in orderArr){
+				var orderid = orderArr[index]['_id'];
+				var trigger_type = orderArr[index]['trigger_type'];
+				var buy_price = orderArr[index]['price'];
+				var previous_sell_price = (typeof orderArr[index]['sell_price'] == 'undefined')?0:orderArr[index]['sell_price'];
+
+				var admin_id =  (typeof orderArr[index]['admin_id'] == 'undefined')?0:orderArr[index]['admin_id'];
+
+				var application_mode = (typeof orderArr[index]['admin_id'] == 'undefined')?0:orderArr[index]['admin_id'];
+
+				var sell_order_id = (typeof orderArr[index]['sell_order_id'] == 'undefined')?'':orderArr[index]['sell_order_id'];
+
+
+				var auto_sell = (typeof orderArr[index]['auto_sell'] == 'undefined')?'':orderArr[index]['auto_sell'];
+
+
+				if(trigger_type !='no'){
+					let iniatial_trail_stop = (typeof orderArr[index]['iniatial_trail_stop'] == 'undefined')?0:orderArr[index]['iniatial_trail_stop'];
+
+					let sell_profit_percent = (typeof orderArr[index]['sell_profit_percent'] == 'undefined')?0:orderArr[index]['sell_profit_percent'];
+
+					var current_data2222 = updated_price - buy_price;
+					var calculate_new_sell_percentage = (current_data2222 * 100 / buy_price);
+					
+					calculate_new_sell_percentage = isNaN(calculate_new_sell_percentage)?0:calculate_new_sell_percentage;
+
+				 
+					//:::::::::::::::: triggers :::::::::::::::::::
+					if(side == 'profit_inBall'){
+						message = ' Auto Order Sell Price Changed';
+						var filter = {};
+						filter['_id'] = new ObjectID(orderId);
+						var update = {};	
+						update['sell_price'] = updated_price;
+						update['modified_date'] = new Date();
+						update['sell_profit_percent'] = calculate_new_sell_percentage
+						update['defined_sell_percentage'] = calculate_new_sell_percentage;
+						var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders'+exchange;
+						var updatePromise = updateOne(filter,update,collectionName);
+						updatePromise.then((resolve)=>{});
+		
+						
+						var log_msg = "Order Sell price updated from("+parseFloat(previous_sell_price).toFixed(8)+") to "+parseFloat(updated_price).toFixed(8)+"  From Chart";
+						var logPromise = recordOrderLog(orderId,log_msg,'create_sell_order','yes',exchange);
+						logPromise.then((callback)=>{})
+
+
+						var log_msg_1 = "Order Profit percentage Change From("+sell_profit_percent+") To ("+calculate_new_sell_percentage+")  From Chart";
+						var logPromise_1 = recordOrderLog(orderId,log_msg_1,'order_profit_percentage_change','yes',exchange);
+						logPromise_1.then((callback)=>{})
+
+					}else{//End of side
+						
+						message = "Auto Order stop Loss Changed";
+						var filter = {};
+						filter['_id'] = new ObjectID(orderId);
+						var update = {};	
+						update['iniatial_trail_stop'] =  parseFloat(updated_price);
+						update['modified_date'] = new Date();
+						var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders'+exchange;
+						var updatePromise = updateOne(filter,update,collectionName);
+						updatePromise.then((resolve)=>{});
+		
+						
+						var log_msg = "Order Stop Loss Updated From("+parseFloat(iniatial_trail_stop).toFixed(8)+") to "+parseFloat(updated_price).toFixed(8)+"  From Chart";
+						var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
+						logPromise.then((callback)=>{})
+					}
+					//:::::::::::::::: triggers :::::::::::::::::::
+				}else{//End of trigger type
+					//:::::::::::::::::Manual Trading :::::::::::::::::
+
+					if(sell_order_id !=''){
+
+						;
+						var sellOrderResp = listSellOrderById(sell_order_id,exchange);
+						var sellOrderArr = (typeof sellOrderResp[0] == 'undefined')?[]:sellOrderResp[0];
+						var sell_profit_percent = (typeof sellOrderArr.sell_profit_percent =='undefined')?'':sellOrderArr.sell_profit_percent;
+						var sell_price = (typeof sellOrderArr.sell_price =='undefined')?'':sellOrderArr.sell_price;
+						var stop_loss = (typeof sellOrderArr.stop_loss =='undefined')?'':sellOrderArr.stop_loss;
+						var loss_percentage = (typeof sellOrderArr.loss_percentage =='undefined')?'':sellOrderArr.loss_percentage;
+						var purchased_price = (typeof sellOrderArr.purchased_price =='undefined')?'':sellOrderArr.purchased_price;
+						var current_data2222 = updated_price - purchased_price;
+						var calculate_new_sell_percentage = (current_data2222 * 100 / purchased_price);
+
+						calculate_new_sell_percentage = isNaN(calculate_new_sell_percentage)?0:calculate_new_sell_percentage
+
+
+						if(side == 'profit_inBall'){
+							message = "Manual Order  Profit price Changed"
+							var filter = {};
+							filter['_id'] = new ObjectID(sell_order_id);
+							var update = {};	
+							update['sell_price'] = updated_price;
+							update['modified_date'] = new Date();
+							update['sell_profit_percent'] = calculate_new_sell_percentage
+							var collectionName = (exchange == 'binance')?'orders':'orders'+exchange;
+							var updatePromise = updateOne(filter,update,collectionName);
+							updatePromise.then((resolve)=>{});
+			
+							
+							var log_msg = "Order sell price Updated from("+parseFloat(sell_price).toFixed(8)+") to "+parseFloat(updated_price).toFixed(8)+"  From Chart";
+							var logPromise = recordOrderLog(orderId,log_msg,'create_sell_order','yes',exchange);
+							logPromise.then((callback)=>{})
+	
+	
+							var log_msg_1 = "Order Profit percentage Change From("+sell_profit_percent+") To ("+calculate_new_sell_percentage+")  From Chart";
+							var logPromise_1 = recordOrderLog(orderId,log_msg_1,'order_profit_percentage_change','yes',exchange);
+							logPromise_1.then((callback)=>{})
+						}else{//End of profitable side
+							message = "Manual Order  stop loss price Changed";
+						   var current_data2222 = purchased_price - updated_price;
+						   var stop_loss_percentage = (current_data2222 * 100 / updated_price);
+
+
+							var filter = {};
+							filter['_id'] = new ObjectID(sell_order_id);
+							var update = {};	
+							update['stop_loss'] =  parseFloat(updated_price);
+							update['modified_date'] = new Date();
+							var collectionName = (exchange == 'binance')?'orders':'orders'+exchange;
+							var updatePromise = updateOne(filter,update,collectionName);
+							updatePromise.then((resolve)=>{});
+			
+							
+							var log_msg = "Order Stop Loss Updated From("+parseFloat(stop_loss).toFixed(8)+") to "+parseFloat(updated_price).toFixed(8)+"  From Chart";
+							var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
+							logPromise.then((callback)=>{});
+
+
+							var log_msg_1 = "Order stop Loss percentage Change From("+loss_percentage+") To ("+stop_loss_percentage+")  From Chart";
+							var logPromise_1 = recordOrderLog(orderId,log_msg_1,'order_stop_loss_percentage_change','yes',exchange);
+							logPromise_1.then((callback)=>{})
+
+						}//End of Stop Loss part
+
+
+
+
+ 
+
+					}else{//End of if sell order Exist 
+						
+						//:::::::::::::::::::
+						if(auto_sell == 'no'){
+							var filter = {};
+							filter['_id'] = new ObjectID(orderId);
+							var update = {};	
+							update['auto_sell'] =  'yes';
+							update['modified_date'] = new Date();
+							var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders'+exchange;
+							var updatePromise = updateOne(filter,update,collectionName);
+							updatePromise.then((resolve)=>{});
+
+							var temp_arr = {};
+
+							var current_data2222 = updated_price - buy_price;
+							var sell_profit_percent = (current_data2222 * 100 / buy_price);
+						   sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
+
+
+		
+						   if(side == 'profit_inBall'){
+
+							   message = "Manual Order profit price changed and order Set to Auto Sell"; 
+								temp_arr['profit_percent'] = sell_profit_percent;
+								temp_arr['profit_price'] = updated_price;
+								
+
+								var log_msg = "Order profit percentage set to ("+sell_profit_percent+") %";
+								var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
+								logPromise.then((callback)=>{})
+
+
+								var log_msg = "Order profit price set to ("+updated_price+") %";
+								var logPromise = recordOrderLog(orderId,log_msg,'order_profit','yes',exchange);
+								logPromise.then((callback)=>{})
+
+
+						   }else{
+							message = "Manual Order stoploss price changed and order Set to Auto Sell"
+								var current_data2222 = buy_price - updated_price  ;
+								var loss_percentage = (current_data2222 * 100 / updated_price);
+								loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
+								temp_arr['stop_loss'] = updated_price,
+								temp_arr['loss_percentage'] = loss_percentage;
+
+
+								var log_msg = "Order stop loss percentage set to ("+loss_percentage+") % From Chart";
+								var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
+								logPromise.then((callback)=>{})
+
+
+								var log_msg = "Order stop loss  set to ("+updated_price+") % From Chart";
+								var logPromise = recordOrderLog(orderId,log_msg,'order_profit','yes',exchange);
+								logPromise.then((callback)=>{})
+						   }
+						  
+							temp_arr['buy_order_id'] = new ObjectID(orderId);;
+							temp_arr['profit_type'] = 'percentage';
+							temp_arr['order_type'] = 'market_order';
+							temp_arr['trail_check']= 'no';
+							temp_arr['trail_interval'] = 0;
+							temp_arr['sell_trail_percentage'] =0;
+						
+							temp_arr['admin_id'] = admin_id;
+							temp_arr['lth_functionality'] = '';
+							temp_arr['application_mode'] = application_mode;
+							temp_arr['created_date'] = new Date();
+							temp_arr['modified_date'] = new Date();
+
+							var log_msg = "Order Change Fron Normal to Auto Sell From Chart";
+							var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
+							logPromise.then((callback)=>{})
+
+
+
+							var log_msg = "Order Change Fron Normal to Auto Sell From Chart";
+							var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
+							logPromise.then((callback)=>{})
+
+							
+							var collection = (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;
+							conn.then((db)=>{
+								db.collection(collection).insertOne(temp_arr,(error,result)=>{
+									if(err){
+										console.log(err)
+									}else{
+		
+									}
+								})
+							})
+						
+					    }else{//End of auto sell is no
+							//:::::::::::::::: update temp order arr
+
+							var current_data2222 = updated_price - buy_price;
+							var sell_profit_percent = (current_data2222 * 100 / buy_price);
+						   sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
+
+						   var update ={};
+						   update['modified_date'] = new Date();
+						   var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders'+exchange;
+						   var filter = {};
+								filter['_id'] = new ObjectID(orderId);
+
+						   var updatePromise = updateOne(filter,update,collectionName);
+						   updatePromise.then((resolve)=>{});
+
+
+							var upd_temp = {};
+						   if(side == 'profit_inBall'){
+
+								upd_temp['profit_percent'] = sell_profit_percent;
+								upd_temp['profit_price'] = updated_price;
+
+								var filter = {};
+									filter['buy_order_id'] = new ObjectID(orderId);
+								var collection = (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;
+								var updatePromise = updateOne(filter,upd_temp,collection);
+								updatePromise.then((resolve)=>{});
+								
+
+								var log_msg = "Order profit percentage set to ("+sell_profit_percent+") % From Chart";
+								var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
+								logPromise.then((callback)=>{})
+
+
+								var log_msg = "Order profit price set to ("+updated_price+") % From Chart";
+								var logPromise = recordOrderLog(orderId,log_msg,'order_profit','yes',exchange);
+								logPromise.then((callback)=>{})
+
+
+								
+
+
+						   }else{
+							    message = "Manual Order stoploss price changed and order Set to Auto Sell"
+								var current_data2222 = buy_price - updated_price  ;
+								var loss_percentage = (current_data2222 * 100 / updated_price);
+								loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
+								var upd_temp = {};
+								upd_temp['stop_loss'] = updated_price;
+								upd_temp['loss_percentage'] = loss_percentage;
+
+
+								var filter = {};
+									filter['buy_order_id'] = new ObjectID(orderId);
+								var collection = (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;
+								var updatePromise = updateOne(filter,upd_temp,collection);
+								updatePromise.then((resolve)=>{});
+
+								var log_msg = "Order stop loss percentage set to ("+loss_percentage+") % From Chart";
+								var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
+								logPromise.then((callback)=>{})
+
+
+								var log_msg = "Order stop loss  set to ("+updated_price+") % From Chart";
+								var logPromise = recordOrderLog(orderId,log_msg,'order_profit','yes',exchange);
+								logPromise.then((callback)=>{})
+						   }
+
+							//:::::::::::::::: End of temp Orser Arr
+						}
+						//::::::::::::::
+					}//End of sell order not exist
+
+					//:::::::::::::::::End Of Manual Trading :::::::::::::::::
+				}
+			}//End of foreach
+		}//End of order array is not empty
+
+
+	  resp.status(200).send({
+		message:message
+	})
+
+
+  })//End of updateOrderfromdraging
+
+  
+
+  function listSellOrderByBuyOrderId(ID,exchange){
+	return new Promise((resolve)=>{
+		let filter = {}; 
+			filter['_id'] = {'$in':[ID,new ObjectID(ID)]};
+		conn.then((db)=>{
+			let collection = (exchange =='binance')?'orders':'orders_'+exchange;
+			db.collection(collection).find(filter).toArray((err,result)=>{
+				if(err){
+					resolve(err);
+				}else{
+					resolve(result);
+				}
+			})//End of collection
+		})//End of conn
+	})//End of Promise
+  }//End of listSellOrderByBuyOrderId
 
 module.exports = router;
 
