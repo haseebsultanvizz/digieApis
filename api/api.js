@@ -3122,7 +3122,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 				var buyOrderId = ordersArr[row]._id;
 
 				newRow['_id'] = ordersArr[row]._id;
-				newRow['price'] = parseFloat(price).toFixed();
+				newRow['price'] = parseFloat(price).toFixed(8);
 				newRow['trigger_type'] = ordersArr[row].trigger_type;  
 
 				newArr['auto_sell'] = ordersArr[row].auto_sell;
