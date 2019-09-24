@@ -3122,7 +3122,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 				var buyOrderId = ordersArr[row]._id;
 
 				newRow['_id'] = ordersArr[row]._id;
-				newRow['price'] = (price);
+				newRow['price'] = parseFloat(price).toFixed();
 				newRow['trigger_type'] = ordersArr[row].trigger_type;  
 
 				newArr['auto_sell'] = ordersArr[row].auto_sell;
@@ -3296,14 +3296,14 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 	  var exchange =  req.body.exchange;
 	  var orderId =  req.body.orderId;
 	  var side =  req.body.side;
-        var nss = side.indexOf("profit_inBall");
-
-        if(nss !=-1){
-            side = "profit_inBall";
-        }
-
-      
 	  var updated_price =  req.body.updated_price;
+
+	  var side =  req.body.side;
+	  var nss = side.indexOf("profit_inBall");
+
+	  if(nss !=-1){
+		  side = "profit_inBall";
+	  }
 
 	  var message = '';
 
