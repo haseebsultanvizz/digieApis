@@ -1349,6 +1349,7 @@ router.post('/createManualOrder',(req,resp)=>{
 	conn.then((db)=>{
 		let orders = req.body.orderArr;
 		let orderId = req.body.orderId;
+		var price = orders['price'];
 		let exchnage = orders['exchnage'];
 		orders['created_date'] = new Date();
 		orders['modified_date'] = new Date();
@@ -1366,8 +1367,22 @@ router.post('/createManualOrder',(req,resp)=>{
 					message:'some thing went wrong'
 				 });
 			}else{
+
+
+				var buyOrderId  = (result.upsertedId ==null)?orderId:result.upsertedId._id;
+				var log_msg = "Buy Order was Created at Price "+parseFloat(price).toFixed(8);
+				if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
+					log_msg += ' with auto sell ' +profit_percent +'%';
+				}
+				let show_hide_log = 'yes';
+				let type = 'Order_created';
+				var promiseLog = recordOrderLog(buyOrderId,log_msg,type,show_hide_log,exchnage)
+					promiseLog.then((callback)=>{
+						
+					})
+
 				if(req.body.orderArr.auto_sell == 'yes'){
-					let buyOrderId = (result.upsertedId ==null)?orderId:result.upsertedId._id;
+					
 				let tempOrder = req.body.tempOrderArr;
 					tempOrder['created_date'] = new Date();
 					tempOrder['buy_order_id'] = buyOrderId;
@@ -1424,12 +1439,6 @@ router.post('/createManualOrderByChart',(req,resp)=>{
 			}else{
 
 				var buyOrderId = result.insertedId 
-
-				console.log(':::::::::::::::::::::::')
-				console.log('buyOrderId',buyOrderId);
-				console.log(':::::::::::::::::::::::')
-
-
 				var log_msg = "Buy Order was Created at Price "+parseFloat(price).toFixed(8);
 				if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
 					log_msg += ' with auto sell ' +profit_percent +'%';
