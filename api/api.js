@@ -3116,13 +3116,13 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 				let quantity = ordersArr[row].quantity;
 
 				newRow['quantity'] = quantity;
-			
+				newRow['status'] = status;
 				let sell_order_id = (typeof ordersArr[row].sell_order_id =='undefined')?'':ordersArr[row].sell_order_id;
 
 				var buyOrderId = ordersArr[row]._id;
 
 				newRow['_id'] = ordersArr[row]._id;
-				newRow['price'] = (price).toFixed(8);
+				newRow['price'] = (price);
 				newRow['trigger_type'] = ordersArr[row].trigger_type;  
 
 				newArr['auto_sell'] = ordersArr[row].auto_sell;
@@ -3164,9 +3164,6 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 						}else{
 
-							console.log('::::::::::::::::::::::')
-							console.log('buyOrderId',buyOrderId)
-							console.log('::::::::::::::::::::::')
 							let tempArrResp = await listselTempOrders(buyOrderId,exchange);
 							if(tempArrResp.length >0){
 
@@ -3267,6 +3264,33 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 	})//End of Promise
   }//End of listselTempOrders
 
+
+
+  router.post('/updateBuyPriceFromDragging',async (req,resp)=>{
+	var exchange =  req.body.exchange;
+	var orderId =  req.body.orderId;
+	var previous_buy_price =  req.body.previous_buy_price;
+	var updated_buy_price =  req.body.updated_buy_price;
+	
+
+	var log_msg = "Order buy price updated from("+parseFloat(previous_buy_price).toFixed(8)+") to "+parseFloat(updated_buy_price).toFixed(8)+"  From Chart";
+
+	var logPromise = recordOrderLog(orderId,log_msg,'buy_price_updated','yes',exchange);
+	logPromise.then((callback)=>{});
+
+	var filter = {};
+	filter['_id'] = new ObjectID(orderId);
+	var update = {};	
+	update['price'] = updated_buy_price;
+	update['modified_date'] = new Date();
+	var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+	var updatePromise = await updateOne(filter,update,collectionName);
+	
+	resp.status(200).send({
+		message:'Order Buy Price Updated Successfully'
+	})
+		
+  })//End of updateBuyPriceFromDragging
 
   router.post('/updateOrderfromdraging',async (req,resp)=>{
 	  var exchange =  req.body.exchange;
