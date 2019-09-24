@@ -3296,6 +3296,13 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 	  var exchange =  req.body.exchange;
 	  var orderId =  req.body.orderId;
 	  var side =  req.body.side;
+        var nss = side.indexOf("profit_inBall");
+
+        if(nss !=-1){
+            side = "profit_inBall";
+        }
+
+      
 	  var updated_price =  req.body.updated_price;
 
 	  var message = '';
