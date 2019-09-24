@@ -1862,7 +1862,10 @@ router.post('/listOrderListing',async (req,resp)=>{
 
 
 		var btcPriceArr = (typeof responsePromise[1][0] =='undefined')?[]:responsePromise[1][0];
-		var BTCUSDTPRICE =(exchange == 'binance')?btcPriceArr.market_value:btcPriceArr.price;
+	
+		var BTCUSDTPRICE = ( typeof btcPriceArr.market_value == 'undefined')?btcPriceArr.price:btcPriceArr.market_value 
+		
+
 
 		var convertToBtc = orderListing[index].quantity * currentMarketPrice;
 		var coinPriceInBtc = BTCUSDTPRICE*convertToBtc
@@ -2632,7 +2635,7 @@ function sellTestOrder(sell_order_id,currentMarketPrice,buy_order_id,exchange){
 				var USDCURRENTVALUE = await listCurrentMarketPrice(globalCoin,exchange);
 
 				var btcPriceArr = (typeof USDCURRENTVALUE[0] =='undefined')?[]:USDCURRENTVALUE[0];
-		         var BTCUSDTPRICE =(exchange == 'binance')?btcPriceArr.currentMarketPrice:btcPriceArr.price;
+		         var BTCUSDTPRICE =	( typeof btcPriceArr.market_value == 'undefined')?btcPriceArr.price:btcPriceArr.market_value 
 
 
 				let splitArr =   symbol.split('USDT');
