@@ -1171,7 +1171,7 @@ function listCurrentMarketPrice(coin,exchange){
 		where.coin = coin;
 		conn.then((db)=>{
 			let collectionName = (exchange == 'binance')?'market_prices':'market_prices_'+exchange;
-			db.collection(collectionName).find(where).limit(1).toArray((err,result)=>{
+			db.collection(collectionName).find(where).sort({"created_date": -1}).limit(1).toArray((err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
@@ -3491,8 +3491,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							var collection = (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;
 							conn.then((db)=>{
 								db.collection(collection).insertOne(temp_arr,(error,result)=>{
-									if(err){
-										console.log(err)
+									if(error){
+										console.log(error)
 									}else{
 		
 									}
