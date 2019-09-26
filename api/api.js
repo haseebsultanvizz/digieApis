@@ -1048,7 +1048,6 @@ router.post('/authenticate',(req,resp)=>{
 	where['$or'] = [{username:username},{email_address:username}]
 	where['status'] = '0';
 	where['user_soft_delete'] = '0';
-
 	conn.then((db)=>{
 		let UserPromise = db.collection('users').find(where).toArray();
 		UserPromise.then((userArr)=>{
@@ -1087,6 +1086,7 @@ router.post('/authenticate',(req,resp)=>{
 				respObj.google_auth = userArr['google_auth'];
 				respObj.trigger_enable = userArr['trigger_enable'];
 				resp.send(respObj);
+				
 			}else{
 				resp.status(400).send({
 					message: 'username or Password Incorrect'
@@ -1099,22 +1099,61 @@ router.post('/authenticate',(req,resp)=>{
 
 router.post('/listDashboardData',async (req,resp)=>{
 		let userCoinsArr = await listUserCoins(req.body._id);
+		let  exchange = req.body.exchange;
 		let userCoin =  (typeof  req.body.userCoin =='undefined')?'':req.body.userCoin; 
 		var coin = ( (userCoinsArr.length == 0) || userCoin =='')?'TRXBTC':(userCoin =='')?userCoinsArr[0]['symbol']:userCoin;
 
-		let currentMarketPriceArr = await listCurrentMarketPrice(coin);
+		let currentMarketPriceArr = await listCurrentMarketPrice(coin,exchange);
 		var currentMarketPrice = (currentMarketPriceArr.length ==0)?0:currentMarketPriceArr[0]['price'];
 			currentMarketPrice = parseFloat(currentMarketPrice);
+
+
 		var askPricesPromise =  listAskPrices(coin,currentMarketPrice);
 		var bidPricesPromise =  listBidPrices(coin,currentMarketPrice);
 		var marketHistoryPromise = listMarketHistory(coin);
 		
 		var currncy = coin.replace("BTC",'');
 		var promisesResult = await Promise.all([askPricesPromise,bidPricesPromise,marketHistoryPromise]);
+
+		var askPriceResp = promisesResult[0];
+		var bidPriceResp = promisesResult[1];
+		var historyResp = promisesResult[2];
+		
+
+		var marketHistoryArr = [];
+		for(let row in historyResp){
+			let new_row = historyResp[row];
+				new_row['price'] = parseFloat(historyResp[row].price).toFixed(8);
+				new_row['quantity'] = parseFloat(historyResp[row].quantity).toFixed(2);
+				new_row['volume'] = parseFloat(historyResp[row].price*historyResp[row].quantity).toFixed(8);
+				marketHistoryArr.push(new_row);	
+		}
+
+
+		var askPriceArr = [];
+		for(let row in askPriceResp){
+			let new_row = {};
+				new_row['price'] = parseFloat(askPriceResp[row].price).toFixed(8);
+				new_row['quantity'] = parseFloat(askPriceResp[row].quantity).toFixed(2);
+				new_row['volume'] = parseFloat(askPriceResp[row].price*askPriceResp[row].quantity).toFixed(8);
+				askPriceArr.push(new_row);	
+		}
+
+		var bidPriceArr = [];
+		for(let row in bidPriceResp){
+			let new_row = {};
+				new_row['price'] = parseFloat(bidPriceResp[row].price).toFixed(8);
+				new_row['quantity'] = parseFloat(bidPriceResp[row].quantity).toFixed(2);
+				new_row['volume'] = parseFloat(bidPriceResp[row].price*bidPriceResp[row].quantity).toFixed(8);
+				bidPriceArr.push(new_row);	
+		}
+
+
+
 		var responseReslt = {};
-			responseReslt['askPricesArr'] = promisesResult[0];
-			responseReslt['bidPricesArr'] = promisesResult[1];
-			responseReslt['marketHistoryArr'] = promisesResult[2];
+			responseReslt['askPricesArr'] = askPriceArr;
+			responseReslt['bidPricesArr'] = bidPriceArr;
+			responseReslt['marketHistoryArr'] = marketHistoryArr;
 			responseReslt['currncy'] = currncy;
 			responseReslt['currentMarketPrice'] = currentMarketPrice;
 		resp.status(200).send({
@@ -3131,15 +3170,21 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 				
 				if(trigger_type !='no'){
 					let calculateSellPrice = price+((price/100)*profitPercentage);
-					newRow['profit_price_'] = parseFloat(calculateSellPrice).toFixed(8);
+					    calculateSellPrice = parseFloat(calculateSellPrice).toFixed(8);
+					newRow['profit_price_'] = ( (typeof calculateSellPrice == 'undefined') || isNaN(calculateSellPrice) || calculateSellPrice ==0)?null:calculateSellPrice;
+
 					let lsPrice = isNaN(ordersArr[row].iniatial_trail_stop)?0:ordersArr[row].iniatial_trail_stop;
 					lsPrice = parseFloat(lsPrice).toFixed(8);
-					newRow['loss_price_'] =  lsPrice;
+					
+					newRow['loss_price_'] = ( (typeof lsPrice == 'undefined') || isNaN(lsPrice) || lsPrice ==0)?null:lsPrice;
 				}else{
 
 					if(auto_sell =='no'){
 						newRow['profit_price_'] = null;
 						newRow['loss_price_'] = null;
+						newRow['buy_trail_percentage'] = null;
+						newRow['lth_functionality'] = null
+						newRow['sell_trail_percentage'] = null;
 					}else{
 
 
@@ -3155,12 +3200,26 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							let stop_loss = (typeof sellOrderArr.stop_loss =='undefined')?null:sellOrderArr.stop_loss;
 
 							stop_loss = isNaN(stop_loss)?0:stop_loss;
+							stop_loss = parseFloat(stop_loss).toFixed(8);
 
 							let sell_price = (typeof sellOrderArr.sell_price =='undefined')?null:sellOrderArr.sell_price;
 							sell_price = isNaN(sell_price)?0:sell_price;
 
-							newRow['loss_price_'] = parseFloat(stop_loss).toFixed(8);
-							newRow['profit_price_'] = parseInt(sell_price).toFixed(8);
+							sell_price = parseInt(sell_price).toFixed(8);
+
+
+							newRow['loss_price_'] = ((typeof stop_loss == 'undefined') || isNaN(stop_loss) || stop_loss ==0)?null:stop_loss;
+							newRow['profit_price_'] = ((typeof sell_price == 'undefined') || isNaN(sell_price) || sell_price ==0)?null:sell_price;
+
+							let buy_trail_percentage = (typeof sellOrderArr.buy_trail_percentage == 'undefined')?null:sellOrderArr.buy_trail_percentage;
+							newRow['buy_trail_percentage'] = buy_trail_percentage;
+
+
+							let lth_functionality = (typeof sellOrderArr.lth_functionality == 'undefined')?null:sellOrderArr.lth_functionality;
+							 newRow['lth_functionality'] = lth_functionality;
+
+							 let sell_trail_percentage = (typeof sellOrderArr.sell_trail_percentage == 'undefined')?null:sellOrderArr.sell_trail_percentage;
+							 newRow['sell_trail_percentage'] = sell_trail_percentage;
 
 						}else{
 
@@ -3171,15 +3230,34 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								let stop_loss = (typeof tempArr.stop_loss =='undefined')?0:tempArr.stop_loss;
 
 								stop_loss = isNaN(stop_loss)?0:stop_loss;
+								stop_loss = parseFloat(stop_loss).toFixed(8);
 
 								let profit_price = (typeof tempArr.profit_price =='undefined')?null:tempArr.profit_price;
 								profit_price = isNaN(profit_price)?0:profit_price;
+								profit_price = parseFloat(profit_price).toFixed(8);
 
-								newRow['loss_price_'] = parseFloat(stop_loss).toFixed(8);
-								newRow['profit_price_'] = parseFloat(profit_price).toFixed(8);
+
+								newRow['loss_price_'] = ((typeof stop_loss == 'undefined') || isNaN(stop_loss) || stop_loss ==0)?null:stop_loss;
+
+								newRow['profit_price_'] = ((typeof profit_price == 'undefined') || isNaN(profit_price) || profit_price ==0)?null:profit_price;
+
+
+								let buy_trail_percentage = (typeof tempArr.buy_trail_percentage == 'undefined')?null:tempArr.buy_trail_percentage;
+								newRow['buy_trail_percentage'] = buy_trail_percentage;
+
+								let lth_functionality = (typeof tempArr.lth_functionality == 'undefined')?null:tempArr.lth_functionality;
+								newRow['lth_functionality'] = lth_functionality;
+
+
+								let sell_trail_percentage = (typeof tempArr.sell_trail_percentage == 'undefined')?null:tempArr.sell_trail_percentage;
+							    newRow['sell_trail_percentage'] = sell_trail_percentage;
+
 							}else{
 								newRow['loss_price_'] = null;
 								newRow['profit_price_'] =  null;
+								newRow['buy_trail_percentage'] =  null;
+								newArr['lth_functionality'] = null;
+								newRow['sell_trail_percentage'] = null;
 							}
 
 						
@@ -3317,7 +3395,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 				var admin_id =  (typeof orderArr[index]['admin_id'] == 'undefined')?0:orderArr[index]['admin_id'];
 
-				var application_mode = (typeof orderArr[index]['admin_id'] == 'undefined')?0:orderArr[index]['admin_id'];
+				var application_mode = (typeof orderArr[index]['application_mode'] == 'undefined')?0:orderArr[index]['application_mode'];
 
 				var sell_order_id = (typeof orderArr[index]['sell_order_id'] == 'undefined')?'':orderArr[index]['sell_order_id'];
 
@@ -3451,9 +3529,13 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
  
 
 					}else{//End of if sell order Exist 
-						
+						let tempArrResp = await listselTempOrders(orderId,exchange);
+
+
 						//:::::::::::::::::::
-						if(auto_sell == 'no'){
+						if(tempArrResp.length == 0){
+
+							console.log('one');
 							var filter = {};
 							filter['_id'] = new ObjectID(orderId);
 							var update = {};	
@@ -3542,9 +3624,10 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								})
 							})
 						
-					    }else{//End of auto sell is no
+						}
+						else{//End of auto sell is no
 							//:::::::::::::::: update temp order arr
-
+							console.log('two');
 							var current_data2222 = updated_price - buy_price;
 							var sell_profit_percent = (current_data2222 * 100 / buy_price);
 						   sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
@@ -3564,12 +3647,15 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 								upd_temp['profit_percent'] = sell_profit_percent;
 								upd_temp['profit_price'] = updated_price;
+		
 
 								var filter = {};
 									filter['buy_order_id'] = new ObjectID(orderId);
 								var collection = (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;
 								var updatePromise = updateOne(filter,upd_temp,collection);
+
 								updatePromise.then((resolve)=>{});
+
 								
 
 								var log_msg = "Order profit percentage set to ("+sell_profit_percent+") % From Chart";
