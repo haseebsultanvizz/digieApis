@@ -20,14 +20,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(function(req, res, next) {
-    if (req.method == "OPTIONS")
-    {
-        res.writeHead(200, {"Content-Type": "application/json"});
-        res.end();
-    }
-    next();
-})
+
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
