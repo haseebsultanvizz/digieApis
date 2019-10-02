@@ -1596,7 +1596,7 @@ router.post('/editAutoOrder',async (req,resp)=>{
 	let order  = req.body.orderArr;
 	order['modified_date'] = new Date()
 	let orderId = order['orderId'];
-	var exchange = OrderArr['exchange'];
+	var exchange = order['exchange'];
    	var collection =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 	    delete order['orderId'];
 	var where = {};
