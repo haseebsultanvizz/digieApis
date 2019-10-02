@@ -2452,7 +2452,7 @@ router.post('/listOrderById',async (req,resp)=>{
 	let ordeLog = resolvepromise[1];
 	var index = 1;
 		for(let row in ordeLog){
-			index +=parseFloat(row);
+			index ++;
 			let date = new Date(ordeLog[row].created_date).toISOString().
 			replace(/T/, ' ').      // replace T with a space
 			replace(/\..+/, '') 
