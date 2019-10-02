@@ -1591,17 +1591,46 @@ router.post('/createAutoOrder',async (req,resp)=>{
 	});
 })//End of createAutoOrder
 
+
+router.post('/editAutoOrder',async (req,resp)=>{
+	let order  = req.body.orderArr;
+	order['modified_date'] = new Date()
+	let orderId = order['orderId'];
+	var exchange = OrderArr['exchange'];
+   	var collection =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+	    delete order['orderId'];
+	var where = {};
+	where['_id'] = new ObjectID(orderId); 
+   var updPrmise = updateOne(where,order,collection);
+	   updPrmise.then((callback)=>{})
+
+   var log_msg = "Order Was <b style='color:yellow'>Updated</b>";
+   let show_hide_log = 'yes';
+   let type = 'order_updated';
+   var promiseLog = recordOrderLog(orderId,log_msg,type,show_hide_log,exchange)
+	   promiseLog.then((callback)=>{
+		   
+	   })
+
+	resp.status(200).send({
+		message: 'updated'
+	});
+})//End of editAutoOrder
+
+
 function createAutoOrder(OrderArr){
 	return new Promise((resolve)=>{
-		conn.then((db)=>[
-			db.collection('buy_orders').insertOne(OrderArr,(err,result)=>{
+		conn.then((db)=>{
+			var exchange = OrderArr['exchange'];
+			var collection =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+			db.collection(collection).insertOne(OrderArr,(err,result)=>{
 				if(err){
 					resolve(err);
 				}else{
 					resolve(result)
 				}
 			})
-		])
+		})
 	})
 }//End of createAutoOrder
 
@@ -2452,7 +2481,7 @@ router.post('/listOrderById',async (req,resp)=>{
 	let ordeLog = resolvepromise[1];
 	var index = 1;
 		for(let row in ordeLog){
-			index ++;
+			
 			let date = new Date(ordeLog[row].created_date).toISOString().
 			replace(/T/, ' ').      // replace T with a space
 			replace(/\..+/, '') 
@@ -2462,6 +2491,7 @@ router.post('/listOrderById',async (req,resp)=>{
 			html +='<td>'+ordeLog[row].log_msg+'</td>';
 			html +='<td>'+date+'</td>'
 			html +='</tr>';
+			index ++;
 		}
 
 		respArr['logHtml'] = html;
