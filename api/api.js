@@ -5306,8 +5306,8 @@ function sortByKey(array, key) {
 
 		var sell_order_id =  (typeof buyOrderArr['sell_order_id'] =='undefined')?'':buyOrderArr['sell_order_id'];
 
-		let sellArr = [];
-		let tempSellArr = [];
+		var sellArr = [];
+		var tempSellArr = [];
 
 		if(auto_sell == 'yes'){
 				if(sell_order_id !=''){
