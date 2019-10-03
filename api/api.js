@@ -5371,27 +5371,32 @@ function sortByKey(array, key) {
 	var temp_sell_order_collection =  (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;
 	
 
-	var where = {};
-		where['_id'] = new ObjectID(buyOrderId)
-	var upsert = {'upsert':true};	  
-	var updPromise = updateSingle(buy_order_collection,where,buyorderArr,upsert);
+		var where = {};
+			where['_id'] = new ObjectID(buyOrderId)
+		var upsert = {'upsert':true};	  
+		var updPromise = updateSingle(buy_order_collection,where,buyorderArr,upsert);
 		updPromise.then((callback)=>{});
+	
+	
 
 
-
-	var where_1 = {};
-		where_1['_id'] = new ObjectID(sellOrderId)
-	var upsert = {'upsert':true};	  
-	var updPromise_1 = updateSingle(orders_collection,where_1,sellOrderArr,upsert);
+	if(sellOrderId != ''){
+		var where_1 = {};
+			where_1['_id'] = new ObjectID(sellOrderId)
+		var upsert = {'upsert':true};	  
+		var updPromise_1 = updateSingle(orders_collection,where_1,sellOrderArr,upsert);
 		updPromise_1.then((callback)=>{});
+	}
 
 
-
-	var where_2 = {};
+	if(tempSellOrderId !=''){
+		var where_2 = {};
 		where_2['_id'] = new ObjectID(tempSellOrderId)
-	var upsert = {'upsert':true};	  
-	var updPromise_2 = updateSingle(temp_sell_order_collection,where_2,tempOrderArr,upsert);
+		var upsert = {'upsert':true};	  
+		var updPromise_2 = updateSingle(temp_sell_order_collection,where_2,tempOrderArr,upsert);
 		updPromise_2.then((callback)=>{})
+	}
+	
 
 
 		resp.status(200).send({
