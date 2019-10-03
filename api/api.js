@@ -5306,15 +5306,28 @@ function sortByKey(array, key) {
 
 		var sell_order_id =  (typeof buyOrderArr['sell_order_id'] =='undefined')?'':buyOrderArr['sell_order_id'];
 
+
+		var ordrLogPromise = await  listOrderLog(orderId,exchange); 
+		let html = '';
+		let ordeLog = ordrLogPromise;
+		var index = 1;
+			for(let row in ordeLog){		
+				let date = new Date(ordeLog[row].created_date).toISOString().
+				replace(/T/, ' ').      // replace T with a space
+				replace(/\..+/, '');
+				html +='<tr>';
+				html +='<th scope="row" class="text-danger">'+index+'</th>';
+				html +='<td>'+ordeLog[row].log_msg+'</td>';
+				html +='<td>'+date+'</td>'
+				html +='</tr>';
+				index ++;
+			}
+	
 		var sellArr = [];
 		var tempSellArr = [];
-
 		if(auto_sell == 'yes'){
 				if(sell_order_id !=''){
 					var sellOrderResp = await  listSellOrderById(sell_order_id,exchange);
-					console.log('%%%%%%%%%%%%%%%%%%%%%%%%%5')
-					console.log(sellOrderResp)
-
 					var sellArr = sellOrderResp[0];
 				}else{
 					var tempOrderResp = await  listTempSellOrder(orderId,exchange);
@@ -5323,6 +5336,7 @@ function sortByKey(array, key) {
 		}
 
 		var respArr = {};
+			respArr['logHtml'] = html;
 			respArr['buyOrderArr'] = buyOrderArr;
 			respArr['sellArr'] = sellArr;
 			respArr['tempSellArr'] = tempSellArr;
