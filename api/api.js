@@ -5311,7 +5311,7 @@ function sortByKey(array, key) {
 
 		if(auto_sell == 'yes'){
 				if(sell_order_id !=''){
-					var sellOrderResp = await  listOrderById(sell_order_id,exchange);
+					var sellOrderResp = await  listSellOrderById(sell_order_id,exchange);
 					console.log('%%%%%%%%%%%%%%%%%%%%%%%%%5')
 					console.log(sellOrderResp)
 
