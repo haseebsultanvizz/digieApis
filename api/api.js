@@ -2946,25 +2946,25 @@ function createOrderFromAutoSell (orderArr,exchange){
 		var application_mode = (typeof sell_data_arr['application_mode'] == 'undefined')?'':sell_data_arr['application_mode'];
 		var lth_functionality = (typeof sell_data_arr['lth_functionality'] =='undefined')?'':sell_data_arr['lth_functionality'];
 
-		var tempArr = {};
-			tempArr['symbol'] = symbol;
-			tempArr['purchased_price'] = purchased_price;
-			tempArr['quantity'] = quantity;
-			tempArr['profit_type'] = profit_type;
-			tempArr['order_type'] = order_type;
-			tempArr['admin_id'] = admin_id;
-			tempArr['buy_order_check'] = buy_order_check;
-			tempArr['buy_order_id'] = buy_order_id;
-			tempArr['buy_order_binance_id'] = binance_order_id;
-			tempArr['stop_loss'] = stop_loss;
-			tempArr['lth_functionality'] = lth_functionality;
-			tempArr['loss_percentage'] = loss_percentage;
-			tempArr['application_mode'] = application_mode
-			tempArr['trigger_type'] = 'no';
-			tempArr['modified_date'] = new Date();
-			tempArr['created_date'] = new Date();
-		
 		var ins_data = {};
+			ins_data['symbol'] = symbol;
+			ins_data['purchased_price'] = purchased_price;
+			ins_data['quantity'] = quantity;
+			ins_data['profit_type'] = profit_type;
+			ins_data['order_type'] = order_type;
+			ins_data['admin_id'] = admin_id;
+			ins_data['buy_order_check'] = buy_order_check;
+			ins_data['buy_order_id'] = buy_order_id;
+			ins_data['buy_order_binance_id'] = binance_order_id;
+			ins_data['stop_loss'] = stop_loss;
+			ins_data['lth_functionality'] = lth_functionality;
+			ins_data['loss_percentage'] = loss_percentage;
+			ins_data['application_mode'] = application_mode
+			ins_data['trigger_type'] = 'no';
+			ins_data['modified_date'] = new Date();
+			ins_data['created_date'] = new Date();
+		
+		
 		if (profit_type == 'percentage') {
 			var sell_price = purchased_price * sell_profit_percent;
 			var sell_price = sell_price / 100;
@@ -5348,6 +5348,57 @@ function sortByKey(array, key) {
   
   
   
+
+  router.post('/updateManualOrder',(req,resp)=>{
+	let buyOrderId = req.body.buyOrderId;
+	let exchange = req.body.exchange;
+
+	let sellOrderId = req.body.sellOrderId;
+	let tempSellOrderId = req.body.tempSellOrderId;
+	let buyorderArr = req.body.buyorderArr;
+	let sellOrderArr = req.body.sellOrderArr;
+	let tempOrderArr = req.body.tempOrderArr;
+
+	let show_hide_log = 'yes';	
+	let type = 'order_update';	
+	let log_msg = "Order has been updated";
+	var logPromise = recordOrderLog(buyOrderId,log_msg,type,show_hide_log);
+		logPromise.then((resolve)=>{})
+
+
+	var orders_collection =  (exchange == 'binance')?'orders':'orders_'+exchange;
+    var buy_order_collection =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+	var temp_sell_order_collection =  (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;
+	
+
+	var where = {};
+		where['_id'] = new ObjectID(buyOrderId)
+	var upsert = {'upsert':true};	  
+	var updPromise = updateSingle(buy_order_collection,where,buyorderArr,upsert);
+		updPromise.then((callback)=>{});
+
+
+
+	var where_1 = {};
+		where_1['_id'] = new ObjectID(sellOrderId)
+	var upsert = {'upsert':true};	  
+	var updPromise_1 = updateSingle(orders_collection,where_1,sellOrderArr,upsert);
+		updPromise_1.then((callback)=>{});
+
+
+
+	var where_2 = {};
+		where_2['_id'] = new ObjectID(tempSellOrderId)
+	var upsert = {'upsert':true};	  
+	var updPromise_2 = updateSingle(temp_sell_order_collection,where_2,tempOrderArr,upsert);
+		updPromise_2.then((callback)=>{})
+
+
+		resp.status(200).send({
+			message: 'order updated'
+		 });
+
+  })//End of updateManualOrder
   
   
   
