@@ -5296,7 +5296,38 @@ function sortByKey(array, key) {
 /////------//////
   
   
-  
+  router.post('/lisEditManualOrderById',async (req,resp)=>{
+		let orderId = req.body.orderId;
+		let exchange = req.body.exchange;
+		var buyOrderResp = await  listOrderById(orderId,exchange);
+		var buyOrderArr = buyOrderResp[0];
+
+		var auto_sell = (typeof buyOrderArr['auto_sell'] =='undefined')?'no':buyOrderArr['auto_sell'];
+
+		var sell_order_id =  (typeof buyOrderArr['sell_order_id'] =='undefined')?'':buyOrderArr['sell_order_id'];
+
+		let sellArr = [];
+		let tempSellArr = [];
+
+		if(auto_sell == 'yes'){
+				if(sell_order_id !=''){
+					var sellOrderResp = await  listOrderById(sell_order_id,exchange);
+					var sellArr = sellOrderResp[0];
+				}else{
+					var tempOrderResp = await  listTempSellOrder(orderId,exchange);
+					var tempSellArr = tempOrderResp[0];
+				}
+		}
+
+		var respArr = {};
+			respArr['buyOrderArr'] = buyOrderArr;
+			respArr['sellArr'] = sellArr;
+			respArr['tempSellArr'] = tempSellArr;
+		resp.status(200).send({
+			message: respArr
+		 });
+		
+  })//End of lisEditManualOrderById
   
   
   
