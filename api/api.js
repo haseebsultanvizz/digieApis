@@ -5352,9 +5352,14 @@ function sortByKey(array, key) {
   router.post('/updateManualOrder',(req,resp)=>{
 	let buyOrderId = req.body.buyOrderId;
 	let exchange = req.body.exchange;
-
 	let sellOrderId = req.body.sellOrderId;
 	let tempSellOrderId = req.body.tempSellOrderId;
+
+	console.log('buyOrderId :'+buyOrderId);
+	console.log('sellOrderId :'+sellOrderId);
+	console.log('tempSellOrderId :'+tempSellOrderId);
+
+
 	let buyorderArr = req.body.buyorderArr;
 	let sellOrderArr = req.body.sellOrderArr;
 	let tempOrderArr = req.body.tempOrderArr;
