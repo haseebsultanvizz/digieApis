@@ -1393,22 +1393,15 @@ router.post('/createManualOrder',(req,resp)=>{
 		orders['created_date'] = new Date();
 		orders['modified_date'] = new Date();
 		var collectionName =  (exchnage == 'binance')?'buy_orders':'buy_orders_'+exchnage;
-		var where = {};
-			where['_id'] = (orderId == '')?'':new ObjectID(orderId);
 
-		var set = {};	
-			set['$set'] = orders;
-		var upsert = { upsert: true }
-
-		db.collection(collectionName).updateOne(where,set,upsert,(err,result)=>{
+		db.collection(collectionName).insertOne(orders,(err,result)=>{
 			if(err){
 				resp.status(403).send({
-					message:'some thing went wrong'
+					message: err
 				 });
 			}else{
-
-
-				var buyOrderId  = (result.upsertedId ==null)?orderId:result.upsertedId._id;
+				//:::::::::::::::::::::::::::::::::
+				var buyOrderId  = result.insertedId
 				var log_msg = "Buy Order was Created at Price "+parseFloat(price).toFixed(8);
 				let profit_percent  = req.body.tempOrderArr.profit_percent;
 
@@ -1418,41 +1411,38 @@ router.post('/createManualOrder',(req,resp)=>{
 				let show_hide_log = 'yes';
 				let type = 'Order_created';
 				var promiseLog = recordOrderLog(buyOrderId,log_msg,type,show_hide_log,exchnage)
-					promiseLog.then((callback)=>{
-						
-					})
+					promiseLog.then((callback)=>{})
 
-				if(req.body.orderArr.auto_sell == 'yes'){
+					if(req.body.orderArr.auto_sell == 'yes'){
 					
-				let tempOrder = req.body.tempOrderArr;
-					tempOrder['created_date'] = new Date();
-					tempOrder['buy_order_id'] = buyOrderId;
-				var tempCollection =  (exchnage == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchnage;
+						let tempOrder = req.body.tempOrderArr;
+							tempOrder['created_date'] = new Date();
+							tempOrder['buy_order_id'] = buyOrderId;
+							var tempCollection =  (exchnage == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchnage;
 
-					var where = {};
-					where['buy_order_id'] =  {'$in':[buyOrderId,new ObjectID(buyOrderId)]}; 
-
-					var set = {};	
-					set['$set'] = tempOrder;
-					var upsert = { upsert: true }
-
-					db.collection(tempCollection).updateOne(where,set,upsert,(err,result)=>{
-					if(err){
-						resp.status(403).send({
-							message:'some thing went wrong while Creating order'
-						 });
-					}else{
-						resp.status(200).send({
-							message: 'Order successfully created'
-						 });
-					}
-				})
-				}else{
-					resp.status(200).send({
-						message: 'Order successfully created'
-					 });
-				}	
-			}	
+							console.log(':::::::::::::::::::::::::::::::::');
+							console.log('tempCollection ',tempCollection);
+							console.log(tempOrder)
+							console.log(':::::::::::::::::::::::::::::::::');
+		
+							db.collection(tempCollection).insertOne(tempOrder,(err,result)=>{
+							if(err){
+								resp.status(403).send({
+									message:'some thing went wrong while Creating order'
+								 });
+							}else{
+								resp.status(200).send({
+									message: 'Order successfully created'
+								 });
+							}
+						})
+						}else{
+							resp.status(200).send({
+								message: 'Order successfully created'
+							 });
+						}
+				//:::::::::::::::::::::::::::::::::
+			}
 		})	
 	})
 })//End of createManualOrder
