@@ -5332,6 +5332,10 @@ function sortByKey(array, key) {
 				}else{
 					var tempOrderResp = await  listTempSellOrder(orderId,exchange);
 					var tempSellArr = tempOrderResp[0];
+
+					console.log('::::::::::::::::::::::::::');
+					console.log(tempSellArr);
+					console.log('::::::::::::::::::::::::::');
 				}
 		}
 
@@ -5340,6 +5344,9 @@ function sortByKey(array, key) {
 			respArr['buyOrderArr'] = buyOrderArr;
 			respArr['sellArr'] = sellArr;
 			respArr['tempSellArr'] = tempSellArr;
+			console.log(':;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;');
+			console.log(respArr);
+			console.log(':;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;');
 		resp.status(200).send({
 			message: respArr
 		 });
