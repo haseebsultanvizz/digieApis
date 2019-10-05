@@ -3017,9 +3017,9 @@ function listTempSellOrder(buy_order_id,exchange){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let where = {};
-				where['buy_order_id'] = {$in:[buy_order_id,new ObjectID(buy_order_id)]}
+				//where['buy_order_id'] = {$in:[buy_order_id,new ObjectID(buy_order_id)]}
 			let collection = 'temp_sell_orders_'+exchange;
-			db.collection(collection).find(where).toArray((err,result)=>{
+			db.collection(collection).find(where).limit(10).sort({'_id':-1}).toArray((err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
