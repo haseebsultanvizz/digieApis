@@ -3037,7 +3037,7 @@ function listTempSellOrder(buy_order_id,exchange){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let where = {};
-				where['buy_order_id'] = {$in:[buy_order_id,new ObjectID(order_id)]}
+				where['buy_order_id'] = {$in:[buy_order_id,new ObjectID(buy_order_id)]}
 			let collection = 'temp_sell_orders_'+exchange;
 			db.collection(collection).find(where).toArray((err,result)=>{
 				if(err){
@@ -5354,10 +5354,6 @@ function sortByKey(array, key) {
 	let exchange = req.body.exchange;
 	let sellOrderId = req.body.sellOrderId;
 	let tempSellOrderId = req.body.tempSellOrderId;
-
-	console.log('buyOrderId :'+buyOrderId);
-	console.log('sellOrderId :'+sellOrderId);
-	console.log('tempSellOrderId :'+tempSellOrderId);
 
 
 	let buyorderArr = req.body.buyorderArr;
