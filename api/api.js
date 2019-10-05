@@ -1410,6 +1410,8 @@ router.post('/createManualOrder',(req,resp)=>{
 
 				var buyOrderId  = (result.upsertedId ==null)?orderId:result.upsertedId._id;
 				var log_msg = "Buy Order was Created at Price "+parseFloat(price).toFixed(8);
+				let profit_percent  = req.body.tempOrderArr.profit_percent;
+
 				if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
 					log_msg += ' with auto sell ' +profit_percent +'%';
 				}
