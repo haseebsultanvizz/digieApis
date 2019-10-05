@@ -3014,6 +3014,8 @@ function createOrder(collectionName,ins_data){
 
 
 function listTempSellOrder(buy_order_id,exchange){
+
+	console.log('comming listTempSellOrder')
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let where = {};
