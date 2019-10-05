@@ -3014,14 +3014,13 @@ function createOrder(collectionName,ins_data){
 
 
 function listTempSellOrder(buy_order_id,exchange){
-
-	console.log('comming listTempSellOrder')
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let where = {};
-				//where['buy_order_id'] = {$in:[buy_order_id,new ObjectID(buy_order_id)]}
-			let collection = 'temp_sell_orders_'+exchange;
-			db.collection(collection).find(where).limit(10).sort({'_id':-1}).toArray((err,result)=>{
+				where['buy_order_id'] = {$in:[buy_order_id,new ObjectID(buy_order_id)]};
+
+				var collection =  (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;
+			db.collection(collection).find(where).toArray((err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
@@ -5312,22 +5311,8 @@ function sortByKey(array, key) {
 					var sellOrderResp = await  listSellOrderById(sell_order_id,exchange);
 					var sellArr = sellOrderResp[0];
 				}else{
-
-
-					console.log('orderId',orderId)
-					console.log('exchange',exchange)
-
 					var tempOrderResp = await  listTempSellOrder(orderId,exchange);
-
-					console.log('***************************');
-							console.log(tempOrderResp);
-					console.log('***************************');
-
 					var tempSellArr = tempOrderResp[0];
-
-					console.log('::::::::::::::::::::::::::');
-					console.log(tempSellArr);
-					console.log('::::::::::::::::::::::::::');
 				}
 		}
 
