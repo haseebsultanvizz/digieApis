@@ -5331,6 +5331,11 @@ function sortByKey(array, key) {
 					var sellArr = sellOrderResp[0];
 				}else{
 					var tempOrderResp = await  listTempSellOrder(orderId,exchange);
+
+					console.log('***************************');
+							console.log(tempOrderResp);
+					console.log('***************************');
+
 					var tempSellArr = tempOrderResp[0];
 
 					console.log('::::::::::::::::::::::::::');
