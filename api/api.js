@@ -1419,11 +1419,6 @@ router.post('/createManualOrder',(req,resp)=>{
 							tempOrder['created_date'] = new Date();
 							tempOrder['buy_order_id'] = buyOrderId;
 							var tempCollection =  (exchnage == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchnage;
-
-							console.log(':::::::::::::::::::::::::::::::::');
-							console.log('tempCollection ',tempCollection);
-							console.log(tempOrder)
-							console.log(':::::::::::::::::::::::::::::::::');
 		
 							db.collection(tempCollection).insertOne(tempOrder,(err,result)=>{
 							if(err){
@@ -1454,67 +1449,60 @@ router.post('/createManualOrder',(req,resp)=>{
 router.post('/createManualOrderByChart',(req,resp)=>{
 	conn.then((db)=>{
 		let orders = req.body.orderArr;
-		let exchange = orders['exchange'];
-		let price = orders['price'];
-
-		let profit_percent = req.body.tempOrderArr.profit_percent;
+		let orderId = req.body.orderId;
+		var price = orders['price'];
+		let exchnage = orders['exchnage'];
 		orders['created_date'] = new Date();
 		orders['modified_date'] = new Date();
-		var collectionName =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+		var collectionName =  (exchnage == 'binance')?'buy_orders':'buy_orders_'+exchnage;
 
 		db.collection(collectionName).insertOne(orders,(err,result)=>{
 			if(err){
 				resp.status(403).send({
-					message:'some thing went wrong'
+					message: err
 				 });
 			}else{
-
-				var buyOrderId = result.insertedId 
+				//:::::::::::::::::::::::::::::::::
+				var buyOrderId  = result.insertedId
 				var log_msg = "Buy Order was Created at Price "+parseFloat(price).toFixed(8);
+				let profit_percent  = req.body.tempOrderArr.profit_percent;
+
 				if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
 					log_msg += ' with auto sell ' +profit_percent +'%';
 				}
 
-				log_msg += '  From Chart';
+				log_msg += 'With Chart';
+
 				let show_hide_log = 'yes';
 				let type = 'Order_created';
-				var promiseLog = recordOrderLog(buyOrderId,log_msg,type,show_hide_log,exchange)
-					promiseLog.then((callback)=>{
-						
-					})
+				var promiseLog = recordOrderLog(buyOrderId,log_msg,type,show_hide_log,exchnage)
+					promiseLog.then((callback)=>{})
 
-
-				if(req.body.orderArr.auto_sell == 'yes'){
+					if(req.body.orderArr.auto_sell == 'yes'){
 					
-				let tempOrder = req.body.tempOrderArr;
-					tempOrder['created_date'] = new Date();
-					tempOrder['buy_order_id'] = buyOrderId;
-				var tempCollection =  (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;
-
-					var where = {};
-					where['buy_order_id'] = {'$in':[buyOrderId,new ObjectID(buyOrderId)]}; 
-
-					var set = {};	
-					set['$set'] = tempOrder;
-					var upsert = { upsert: true }
-
-					db.collection(tempCollection).updateOne(where,set,upsert,(err,result)=>{
-					if(err){
-						resp.status(403).send({
-							message:'some thing went wrong while Creating order'
-						 });
-					}else{
-						resp.status(200).send({
-							message: 'Order successfully created'
-						 });
-					}
-				})
-				}else{
-					resp.status(200).send({
-						message: 'Order successfully created'
-					 });
-				}	
-			}	
+						let tempOrder = req.body.tempOrderArr;
+							tempOrder['created_date'] = new Date();
+							tempOrder['buy_order_id'] = buyOrderId;
+							var tempCollection =  (exchnage == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchnage;
+		
+							db.collection(tempCollection).insertOne(tempOrder,(err,result)=>{
+							if(err){
+								resp.status(403).send({
+									message:'some thing went wrong while Creating order'
+								 });
+							}else{
+								resp.status(200).send({
+									message: 'Order successfully created'
+								 });
+							}
+						})
+						}else{
+							resp.status(200).send({
+								message: 'Order successfully created'
+							 });
+						}
+				//:::::::::::::::::::::::::::::::::
+			}
 		})	
 	})
 })//End of createManualOrderByChart
