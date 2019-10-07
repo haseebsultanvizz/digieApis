@@ -3420,6 +3420,12 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 	  var message = '';
 	  var orderArr = await  listOrderById(orderId,exchange);
 
+	  console.log(':::::::::::::::::::::::');
+	  console.log('side ',side);
+	  console.log('::::::::::::::::::::');
+
+	  console.log(orderArr)
+
 		if(orderArr.length >0){
 			for(let index in orderArr){
 				var orderid = orderArr[index]['_id'];
