@@ -3181,6 +3181,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 				let auto_sell = (typeof ordersArr[row].auto_sell =='undefined')?'':ordersArr[row].auto_sell;
 				
+				let buy_trail_percentage = (typeof ordersArr[row].buy_trail_percentage == 'undefined')?null:ordersArr[row].buy_trail_percentage;
+
 				if(trigger_type !='no'){
 					let calculateSellPrice = price+((price/100)*profitPercentage);
 					    calculateSellPrice = parseFloat(calculateSellPrice).toFixed(8);
@@ -3199,6 +3201,9 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						newRow['lth_functionality'] = null
 						newRow['sell_trail_percentage'] = null;
 					}else{
+
+						
+						newRow['buy_trail_percentage'] = buy_trail_percentage;
 
 
 						if(sell_order_id == 0){
@@ -3234,9 +3239,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							
 							newRow['profit_price_'] = ((typeof sell_price == 'undefined') || isNaN(sell_price) || sell_price ==0)?null:sell_price;
 
-							let buy_trail_percentage = (typeof sellOrderArr.buy_trail_percentage == 'undefined')?null:sellOrderArr.buy_trail_percentage;
-							newRow['buy_trail_percentage'] = buy_trail_percentage;
-
+						
 
 							let lth_functionality = (typeof sellOrderArr.lth_functionality == 'undefined')?null:sellOrderArr.lth_functionality;
 							 newRow['lth_functionality'] = lth_functionality;
@@ -3274,8 +3277,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								newRow['profit_price_'] = ((typeof profit_price == 'undefined') || isNaN(profit_price) || profit_price ==0)?null:profit_price;
 
 
-								let buy_trail_percentage = (typeof tempArr.buy_trail_percentage == 'undefined')?null:tempArr.buy_trail_percentage;
-								newRow['buy_trail_percentage'] = buy_trail_percentage;
+								
 
 								let lth_functionality = (typeof tempArr.lth_functionality == 'undefined')?null:tempArr.lth_functionality;
 								newRow['lth_functionality'] = lth_functionality;
