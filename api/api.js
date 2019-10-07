@@ -3418,8 +3418,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 	  }
 
 	  var message = '';
-
 	  var orderArr = await  listOrderById(orderId,exchange);
+
 		if(orderArr.length >0){
 			for(let index in orderArr){
 				var orderid = orderArr[index]['_id'];
@@ -3447,10 +3447,6 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					
 					calculate_new_sell_percentage = isNaN(calculate_new_sell_percentage)?0:calculate_new_sell_percentage;
 
-					console.log('::::::: calculate_new_sell_percentage ::::::::::::::::');
-					console.log(calculate_new_sell_percentage);
-					console.log('::::::::::::::::::::::::');
-
 				 
 					//:::::::::::::::: triggers :::::::::::::::::::
 					if(side == 'profit_inBall'){
@@ -3460,12 +3456,9 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						var update = {};	
 						update['sell_price'] = updated_price;
 						update['modified_date'] = new Date();
-						update['sell_profit_percent'] = calculate_new_sell_percentage
-						update['defined_sell_percentage'] = calculate_new_sell_percentage;
+						update['sell_profit_percent'] = parseFloat(calculate_new_sell_percentage).toFixed(2); 
+						update['defined_sell_percentage'] = parseFloat(calculate_new_sell_percentage).toFixed(2);
 
-						console.log(':::::::::::::::::::::::');
-						console.log(update);
-						console.log('::::::::::::::::::::::::');
 
 
 						var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders'+exchange;
@@ -3473,12 +3466,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						updatePromise.then((resolve)=>{});
 		
 						
-						var log_msg = "Order Sell % updated from("+parseFloat(previous_sell_price).toFixed(2)+") to "+parseFloat(updated_price).toFixed(2)+"  From Chart";
-						var logPromise = recordOrderLog(orderId,log_msg,'create_sell_order','yes',exchange);
-						logPromise.then((callback)=>{})
-
-
-						var log_msg_1 = "Order Profit percentage Change From("+sell_profit_percent+" % ) To ("+calculate_new_sell_percentage+" %)  From Chart";
+				
+						var log_msg_1 = "Order Profit percentage Change From("+sell_profit_percent+" % ) To ("+parseFloat(calculate_new_sell_percentage).toFixed(2)+" %)  From Chart";
 						var logPromise_1 = recordOrderLog(orderId,log_msg_1,'order_profit_percentage_change','yes',exchange);
 						logPromise_1.then((callback)=>{})
 
@@ -3578,8 +3567,6 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 						//:::::::::::::::::::
 						if(tempArrResp.length == 0){
-
-							console.log('one');
 							var filter = {};
 							filter['_id'] = new ObjectID(orderId);
 							var update = {};	
