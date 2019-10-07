@@ -3420,12 +3420,6 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 	  var message = '';
 	  var orderArr = await  listOrderById(orderId,exchange);
 
-	  console.log(':::::::::::::::::::::::');
-	  console.log('side ',side);
-	  console.log('::::::::::::::::::::');
-
-	  console.log(orderArr)
-
 		if(orderArr.length >0){
 			for(let index in orderArr){
 				var orderid = orderArr[index]['_id'];
@@ -3442,7 +3436,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 				var auto_sell = (typeof orderArr[index]['auto_sell'] == 'undefined')?'':orderArr[index]['auto_sell'];
 
-
+				//:::::: Auto Trigger Part :::::::::: 
 				if(trigger_type !='no'){
 					let iniatial_trail_stop = (typeof orderArr[index]['iniatial_trail_stop'] == 'undefined')?0:orderArr[index]['iniatial_trail_stop'];
 
@@ -3495,7 +3489,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						logPromise.then((callback)=>{})
 					}
 					//:::::::::::::::: triggers :::::::::::::::::::
-				}else{//End of trigger type
+				}
+				else{//End of trigger type
 					//:::::::::::::::::Manual Trading :::::::::::::::::
 
 					if(sell_order_id !=''){
@@ -3544,7 +3539,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							var filter = {};
 							filter['_id'] = new ObjectID(sell_order_id);
 							var update = {};	
-							update['stop_loss'] =  parseFloat(updated_price);
+							update['stop_loss'] =  'yes';
+							update['loss_percentage'] = parseFloat(stop_loss_percentage).toFixed(2);
 							update['modified_date'] = new Date();
 							var collectionName = (exchange == 'binance')?'orders':'orders'+exchange;
 							var updatePromise = updateOne(filter,update,collectionName);
@@ -3612,7 +3608,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								var current_data2222 = buy_price - updated_price  ;
 								var loss_percentage = (current_data2222 * 100 / updated_price);
 								loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
-								temp_arr['stop_loss'] = updated_price,
+								temp_arr['stop_loss'] = 'yes',
 								temp_arr['loss_percentage'] = loss_percentage;
 
 
@@ -3714,7 +3710,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								var loss_percentage = (current_data2222 * 100 / updated_price);
 								loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
 								var upd_temp = {};
-								upd_temp['stop_loss'] = updated_price;
+								upd_temp['stop_loss'] = 'yes';
 								upd_temp['loss_percentage'] = loss_percentage;
 
 
