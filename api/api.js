@@ -3447,6 +3447,10 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					
 					calculate_new_sell_percentage = isNaN(calculate_new_sell_percentage)?0:calculate_new_sell_percentage;
 
+					console.log('::::::: calculate_new_sell_percentage ::::::::::::::::');
+					console.log(calculate_new_sell_percentage);
+					console.log('::::::::::::::::::::::::');
+
 				 
 					//:::::::::::::::: triggers :::::::::::::::::::
 					if(side == 'profit_inBall'){
@@ -3458,17 +3462,23 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						update['modified_date'] = new Date();
 						update['sell_profit_percent'] = calculate_new_sell_percentage
 						update['defined_sell_percentage'] = calculate_new_sell_percentage;
+
+						console.log(':::::::::::::::::::::::');
+						console.log(update);
+						console.log('::::::::::::::::::::::::');
+
+
 						var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders'+exchange;
 						var updatePromise = updateOne(filter,update,collectionName);
 						updatePromise.then((resolve)=>{});
 		
 						
-						var log_msg = "Order Sell price updated from("+parseFloat(previous_sell_price).toFixed(8)+") to "+parseFloat(updated_price).toFixed(8)+"  From Chart";
+						var log_msg = "Order Sell % updated from("+parseFloat(previous_sell_price).toFixed(2)+") to "+parseFloat(updated_price).toFixed(2)+"  From Chart";
 						var logPromise = recordOrderLog(orderId,log_msg,'create_sell_order','yes',exchange);
 						logPromise.then((callback)=>{})
 
 
-						var log_msg_1 = "Order Profit percentage Change From("+sell_profit_percent+") To ("+calculate_new_sell_percentage+")  From Chart";
+						var log_msg_1 = "Order Profit percentage Change From("+sell_profit_percent+" % ) To ("+calculate_new_sell_percentage+" %)  From Chart";
 						var logPromise_1 = recordOrderLog(orderId,log_msg_1,'order_profit_percentage_change','yes',exchange);
 						logPromise_1.then((callback)=>{})
 
