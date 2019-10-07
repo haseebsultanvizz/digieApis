@@ -1451,7 +1451,9 @@ router.post('/createManualOrderByChart',(req,resp)=>{
 		let orders = req.body.orderArr;
 		let orderId = req.body.orderId;
 		var price = orders['price'];
-		let exchnage = orders['exchnage'];
+		let exchnage = orders['exchange'];
+
+		
 		orders['created_date'] = new Date();
 		orders['modified_date'] = new Date();
 		var collectionName =  (exchnage == 'binance')?'buy_orders':'buy_orders_'+exchnage;
@@ -1492,13 +1494,13 @@ router.post('/createManualOrderByChart',(req,resp)=>{
 								 });
 							}else{
 								resp.status(200).send({
-									message: 'Order successfully created'
+									message: 'Order successfully created with auto sell'
 								 });
 							}
 						})
 						}else{
 							resp.status(200).send({
-								message: 'Order successfully created'
+								message: 'Order created with**'
 							 });
 						}
 				//:::::::::::::::::::::::::::::::::
@@ -5321,9 +5323,7 @@ function sortByKey(array, key) {
 			respArr['buyOrderArr'] = buyOrderArr;
 			respArr['sellArr'] = sellArr;
 			respArr['tempSellArr'] = tempSellArr;
-			console.log(':;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;');
-			console.log(respArr);
-			console.log(':;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;');
+
 		resp.status(200).send({
 			message: respArr
 		 });
