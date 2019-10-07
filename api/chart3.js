@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var request = require('request');
-const conn = require('../connection');
+const conn = require('../connection/database');
 ObjectID = require('mongodb').ObjectID;
 var app = express();
 
