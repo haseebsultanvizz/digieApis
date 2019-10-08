@@ -14,7 +14,7 @@ router.post('/chart3', async function(req, res, next){
 			conn.then(async db =>{
 				let symbol = post_data['coin'];
 				//////console.log(symbol, "===> symbol");
-				var coin_info = await db.collection('coins').findOne({ "symbol": symbol }); // Get coin info
+				var coin_info = await db.collection('coins').findOne({ "symbol": symbol, "user_id": "global" }); // Get coin info
                 let coin_base_order = coin_info['base_order'];
                 let blackwall_amnt = coin_info['depth_wall_amount'];
                 let yellowwall_amnt = coin_info['yellow_wall_amount'];
