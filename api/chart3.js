@@ -3,6 +3,7 @@ var router = express.Router();
 var request = require('request');
 const conn = require('../connection/database');
 ObjectID = require('mongodb').ObjectID;
+var md5 = require('md5');
 var app = express();
 
 router.post('/chart3', async function(req, res, next){
@@ -283,7 +284,8 @@ async function get_remainder_group(symbol, market_value){
 					let return_arr = new Object();
 					return_arr['bid_arr'] = resolved_bid_arr;
 					return_arr['ask_arr'] = resolved_ask_arr;
-					return_arr['current_market_value'] = market_value;
+                    return_arr['current_market_value'] = market_value;
+                    //console.log(return_arr, "==============> return array");
 					resolve(return_arr);
 				} else{
 					resolve({});
