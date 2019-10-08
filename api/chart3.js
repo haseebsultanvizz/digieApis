@@ -6,15 +6,18 @@ ObjectID = require('mongodb').ObjectID;
 var md5 = require('md5');
 var app = express();
 
+
 router.post('/chart3', async function(req, res, next){
 	var post_data = req.body;
 	if(Object.keys(post_data).length > 0){
 		if('coin' in post_data){
 			conn.then(async db =>{
 				let symbol = post_data['coin'];
-				////console.log(symbol, "===> symbol");
+				//////console.log(symbol, "===> symbol");
 				var coin_info = await db.collection('coins').findOne({ "symbol": symbol }); // Get coin info
-				let coin_base_order = coin_info['base_order'];
+                let coin_base_order = coin_info['base_order'];
+                let blackwall_amnt = coin_info['depth_wall_amount'];
+                let yellowwall_amnt = coin_info['yellow_wall_amount'];
 				let coin_base_history = coin_info['base_history'];
 				let market_value = await get_market_value(symbol);
 				let bid_ask_arrays_object = get_remainder_group(symbol,market_value);
@@ -24,18 +27,25 @@ router.post('/chart3', async function(req, res, next){
 				bid_ask_arrays_object.then(async bid_ask_arrays_object_resolved =>{
 					if(Object.keys(bid_ask_arrays_object_resolved).length > 0){
 						let bid_arr = bid_ask_arrays_object_resolved['bid_arr'];
-						let ask_arr = bid_ask_arrays_object_resolved['ask_arr'];
-						//console.log(ask_arr, "===> ask array www")
+                        let ask_arr = bid_ask_arrays_object_resolved['ask_arr'];
+                        
 						var current_market_value = bid_ask_arrays_object_resolved['current_market_value'];
 						//**************************************************
 						let new_bid_arr = [];
 						let new_ask_arr = [];
 						let new_curr_arr = [];
 						//ForEach for bid_arr
-						var bid_index = 0;
-						bid_arr.forEach(bid_element =>{
-							let black_wall_object = calculate_blackwall_amount_for_chart3(ask_arr, bid_arr, coin_base_order);
-							let yellow_wall_object = calculate_yellowwall_amount_for_chart3(ask_arr, bid_arr, coin_base_order);
+                        var bid_index = 0;
+                        let black_wall_object = calculate_blackwall_amount_for_chart3(ask_arr, bid_arr, blackwall_amnt);
+                        let yellow_wall_object = calculate_yellowwall_amount_for_chart3(ask_arr, bid_arr, yellowwall_amnt);
+                        
+                         console.log(black_wall_object , "black_wall_object");
+                         console.log(yellow_wall_object , "yellow_wall_object");                        
+                        bid_arr.forEach(bid_element =>{
+							
+                            
+                            //console.log(black_wall_object , "black_wall_object");
+                            //console.log(yellow_wall_object , "yellow_wall_object");
 							let black_wall_bid_price = black_wall_object['blackwall_bid_price'];
 							let yellow_wall_bid_price = yellow_wall_object['yellowwall_bid_price'];
 							//
@@ -48,8 +58,8 @@ router.post('/chart3', async function(req, res, next){
 							//
 							//calculate percentages
 							//Indexes uper neechay because of kamran bhai
-							let depth_buy_percentage = Math.round((depth_sell_quantity / coin_base_order) * 100);
-							let depth_sell_percentage = Math.round((depth_buy_quantity / coin_base_order) * 100);
+							let depth_sell_percentage = Math.round((depth_sell_quantity / coin_base_order) * 100);
+							let depth_buy_percentage = Math.round((depth_buy_quantity / coin_base_order) * 100);
 							let buy_percentage = Math.round((buy_quantity / coin_base_history) * 100);
 							let sell_percentage = Math.round((sell_quantity / coin_base_history) * 100);
 							if(depth_sell_percentage > 100){
@@ -72,10 +82,10 @@ router.post('/chart3', async function(req, res, next){
 							    'is_ask_price_max':'no',
 							    'is_bid_price':'yes',
 							    'is_bid_price_max':'no',
-							    'buy_price':Convert_to_million(depth_sell_quantity),
-							    'buy_price_percent':depth_sell_percentage,
-							    'sell_price':Convert_to_million(depth_buy_quantity),
-							    'sell_price_percent':depth_buy_percentage,
+							    'buy_price':Convert_to_million(depth_buy_quantity),
+							    'buy_price_percent':depth_buy_percentage,
+							    'sell_price':Convert_to_million(depth_sell_quantity),
+							    'sell_price_percent':depth_sell_percentage,
 							    'price_buy_volum':Convert_to_million(buy_quantity),
 							    'price_buy_volum_percent':buy_percentage,
 							    'price_sell_volum':Convert_to_million(sell_quantity),
@@ -95,7 +105,12 @@ router.post('/chart3', async function(req, res, next){
 								if(bid_price == yellow_wall_bid_price){
 									temp_bid_arr['down_yellow_wall'] = "yes";
 									temp_bid_arr['is_bid_price'] = "no";
-								}
+                                }
+                                
+                                if(temp_bid_arr['down_yellow_wall'] == 'yes' && temp_bid_arr['down_black_wall'] == "yes"){
+                                    temp_bid_arr['down_yellow_wall'] = "no" 
+                                }
+
 
 							}
 
@@ -110,8 +125,7 @@ router.post('/chart3', async function(req, res, next){
 						// ForEach for ask_arr
 						var ask_index = 0;
 						ask_arr.forEach(ask_element =>{
-							let black_wall_object = calculate_blackwall_amount_for_chart3(ask_arr, bid_arr, coin_base_order);
-							let yellow_wall_object = calculate_yellowwall_amount_for_chart3(ask_arr, bid_arr, coin_base_order);
+						
 							let black_wall_ask_price = black_wall_object['blackwall_ask_price'];
 							let yellow_wall_ask_price = yellow_wall_object['yellowwall_ask_price'];
 							//
@@ -124,8 +138,8 @@ router.post('/chart3', async function(req, res, next){
 							//
 							//calculate percentages
 							//Indexes uper neechay because of kamran bhai
-							let depth_buy_percentage = Math.round((depth_sell_quantity / coin_base_order) * 100);
-							let depth_sell_percentage = Math.round((depth_buy_quantity / coin_base_order) * 100);
+							let depth_sell_percentage = Math.round((depth_sell_quantity / coin_base_order) * 100);
+							let depth_buy_percentage = Math.round((depth_buy_quantity / coin_base_order) * 100);
 							let buy_percentage = Math.round((buy_quantity / coin_base_history) * 100);
 							let sell_percentage = Math.round((sell_quantity / coin_base_history) * 100);
 							if(depth_sell_percentage > 100){
@@ -148,10 +162,10 @@ router.post('/chart3', async function(req, res, next){
 							    'is_ask_price_max':'no',
 							    'is_bid_price':'no',
 							    'is_bid_price_max':'no',
-							    'buy_price':Convert_to_million(depth_sell_quantity),
-							    'buy_price_percent':depth_sell_percentage,
-							    'sell_price':Convert_to_million(depth_buy_quantity),
-							    'sell_price_percent':depth_buy_percentage,
+							    'buy_price':Convert_to_million(depth_buy_quantity),
+							    'buy_price_percent':depth_buy_percentage,
+							    'sell_price':Convert_to_million(depth_sell_quantity),
+							    'sell_price_percent':depth_sell_percentage,
 							    'price_buy_volum':Convert_to_million(buy_quantity),
 							    'price_buy_volum_percent':buy_percentage,
 							    'price_sell_volum':Convert_to_million(sell_quantity),
@@ -171,7 +185,11 @@ router.post('/chart3', async function(req, res, next){
 								if(ask_price == yellow_wall_ask_price){
 									temp_ask_arr['up_yellow_wall'] = "yes";
 									temp_ask_arr['is_ask_price'] = "no";
-								}
+                                }
+                                
+                                if(temp_ask_arr['up_yellow_wall'] == "yes" && temp_ask_arr['up_black_wall'] == "yes"){
+                                    temp_ask_arr['up_yellow_wall'] = "no" 
+                                }
 
 							}
 							if(ask_price >= last_candle['low'] && ask_price <= last_candle['high']){
@@ -208,6 +226,13 @@ router.post('/chart3', async function(req, res, next){
 						};
 						new_curr_arr.push(temp_curr_arr);
 
+
+
+                        new_bid_arr = sortByKey(new_bid_arr, "price");
+                        new_bid_arr.reverse();
+
+                        new_ask_arr = sortByKey(new_ask_arr, "price");
+                        new_ask_arr.reverse();
 						//Indicators
 						let indicators_object = await indicators(symbol, ask_arr, bid_arr, coin_info, db);
 						//CREATE RESPONSE OBJECT
@@ -258,7 +283,7 @@ async function get_market_value(coin){
 		conn.then(async db => {
 			db.collection("market_prices").find({"coin": coin}).sort({"created_date": -1}).limit(1).toArray(async function(err, data){
 				if (err) throw err;
-				////console.log(data, "===> makret_data");
+				//////console.log(data, "===> makret_data");
 				if(data.length > 0){
 					resolve(data[0]['price']);
 				} else{
@@ -281,11 +306,13 @@ async function get_remainder_group(symbol, market_value){
 				let resolved_bid_arr = resolved_values[0];
 				let resolved_ask_arr = resolved_values[1];
 				if(resolved_bid_arr.length > 0 && resolved_ask_arr.length > 0){
-					let return_arr = new Object();
+                    let return_arr = new Object();
+                    
+
 					return_arr['bid_arr'] = resolved_bid_arr;
 					return_arr['ask_arr'] = resolved_ask_arr;
                     return_arr['current_market_value'] = market_value;
-                    //console.log(return_arr, "==============> return array");
+                    ////console.log(return_arr, "==============> return array");
 					resolve(return_arr);
 				} else{
 					resolve({});
@@ -311,13 +338,14 @@ async function get_values_for_chart(symbol, market_value, type, limit){
 			}else if (type == 'ask') {
 				search_arr['price'] = {$gte: market_value};
 			}
-			console.log(search_arr, "===> query...")
+			//console.log(search_arr, "===> query...")
 			db.collection("chart3_group").find(search_arr).sort({"price": -1}).limit(limit).toArray(async function(err, data){
 				if (err) throw err;
 				if(data.length > 0){
-					console.log(data, "=========> chart data");
-					let sorted_data_arr = sortByKey(data, "price");
-					////console.log(sorted_data_arr);
+					////console.log(data, "=========> chart data");
+                    let sorted_data_arr = sortByKey(data, "price");
+                    //sorted_data_arr.reverse();
+					//////console.log(sorted_data_arr);
 					resolve(sorted_data_arr);
 				}else {
 					resolve([]);
@@ -345,6 +373,7 @@ async function get_values_for_chart(symbol, market_value, type, limit){
 //..............................................................................................................................................
 
 function calculate_blackwall_amount_for_chart3(final_chart3_json_arr_ask, final_chart3_json_arr_bid, black_wall_amount){
+    //final_chart3_json_arr_ask.reverse();
     //%%%% Initializations %%%%
     let sum_depth_bid_qty = 0.0;
     let sum_depth_ask_qty = 0.0;
@@ -354,9 +383,9 @@ function calculate_blackwall_amount_for_chart3(final_chart3_json_arr_ask, final_
     let blackwall_ask_price = 0.0;
     let black_wall_side = '';
     //%%%% START OF FOR LOOP: FOR Bid Quantities %%%%
-    for(let i=0; i<final_chart3_json_arr_bid.length; i++){
+    for(let i=final_chart3_json_arr_bid.length-1; i>0; i--){
         if(sum_depth_bid_qty <= black_wall_amount){ 
-            blackwall_bid_indexes = i + 1;
+            blackwall_bid_indexes++;
             blackwall_bid_price = parseFloat(final_chart3_json_arr_bid[i].price);
             //%%%%%%%%%% - Sell is Bid and Buy is Ask According to Waqar Bhai - Just for code Understanding - %%%%%%%%%%%
             sum_depth_bid_qty = sum_depth_bid_qty + parseFloat(final_chart3_json_arr_bid[i].depth_sell_quantity); 
@@ -368,7 +397,7 @@ function calculate_blackwall_amount_for_chart3(final_chart3_json_arr_ask, final_
     for(let i=0; i<final_chart3_json_arr_ask.length; i++){
         //%%%% - START OF IF - %%%%%
         if(sum_depth_ask_qty <= black_wall_amount){
-            blackwall_ask_indexes = i + 1;
+            blackwall_ask_indexes++;
             blackwall_ask_price = parseFloat(final_chart3_json_arr_ask[i].price);
             //%%%%%%%%%% - Sell is Bid and Buy is Ask According to Waqar Bhai - Just for code Understanding - %%%%%%%%%%%
             sum_depth_ask_qty = sum_depth_ask_qty + parseFloat(final_chart3_json_arr_ask[i].depth_buy_quantity);
@@ -376,10 +405,10 @@ function calculate_blackwall_amount_for_chart3(final_chart3_json_arr_ask, final_
             break;
         }//%%%% - END OF IF - %%%%%
     }//%%%% END OF FOR LOOP: FOR Ask Quantities %%%%
-    //////console.log(blackwall_ask_indexes, "=> blackwall_ask_indexes");
-    //////console.log(blackwall_bid_indexes, "=> blackwall_bid_indexes");
-    //////console.log(blackwall_bid_price, "=> blackwall_bid_price");
-    //////console.log(blackwall_ask_price, '=> blackwall_ask_price');
+    ////////console.log(blackwall_ask_indexes, "=> blackwall_ask_indexes");
+    ////////console.log(blackwall_bid_indexes, "=> blackwall_bid_indexes");
+    ////////console.log(blackwall_bid_price, "=> blackwall_bid_price");
+    ////////console.log(blackwall_ask_price, '=> blackwall_ask_price');
     //%%%%% - Calculate Blackwall Difference - %%%%%
     let blackwall_difference = blackwall_ask_indexes - blackwall_bid_indexes;
     //%%%%% - START OF IF - Calculate Black Wall Side - %%%%%
@@ -420,6 +449,7 @@ function calculate_blackwall_amount_for_chart3(final_chart3_json_arr_ask, final_
 //%%%%%%%%%%%% START of Function Definition - Calculate Yellow Wall  %%%%%%%%%%%%%%
 function calculate_yellowwall_amount_for_chart3(final_chart3_json_arr_ask, final_chart3_json_arr_bid, yellow_wall_amount){
     //%%%% Initializations %%%%
+    //final_chart3_json_arr_ask.reverse();
     let sum_depth_bid_qty = 0.0;
     let sum_depth_ask_qty = 0.0;
     let yellowwall_bid_indexes = 0;
@@ -428,9 +458,9 @@ function calculate_yellowwall_amount_for_chart3(final_chart3_json_arr_ask, final
     let yellowwall_ask_price = 0.0;
     let yellow_wall_side = '';
     //%%%%%% Start of FOR %%%%%%
-    for(let i=0; i<final_chart3_json_arr_bid.length; i++){
+    for(let i=final_chart3_json_arr_bid.length-1; i>0; i--){
         if(sum_depth_bid_qty <= yellow_wall_amount){
-            yellowwall_bid_indexes = i + 1;
+            yellowwall_bid_indexes++;
             yellowwall_bid_price = parseFloat(final_chart3_json_arr_bid[i].price);
             //%%%%%%%%%% - Sell is Bid and Buy is Ask According to Waqar Bhai - Just for code Understanding - %%%%%%%%%%%
             sum_depth_bid_qty = sum_depth_bid_qty + final_chart3_json_arr_bid[i].depth_sell_quantity;
@@ -441,7 +471,7 @@ function calculate_yellowwall_amount_for_chart3(final_chart3_json_arr_ask, final
     //%%%%%% Start of FOR %%%%%%
     for(let i=0; i<final_chart3_json_arr_ask.length; i++){
         if(sum_depth_ask_qty <= yellow_wall_amount){
-            yellowwall_ask_indexes = i + 1;
+            yellowwall_ask_indexes++;
             yellowwall_ask_price = parseFloat(final_chart3_json_arr_ask[i].price);
             //%%%%%%%%%% - Sell is Bid and Buy is Ask According to Waqar Bhai - Just for code Understanding - %%%%%%%%%%%
             sum_depth_ask_qty = sum_depth_ask_qty + final_chart3_json_arr_ask[i].depth_buy_quantity;
@@ -496,7 +526,7 @@ function get_rolling_hour_trade_volume_t2cot(coin, db){
 	    rolling_hour_start.setSeconds(00);
 	    rolling_hour_start.setMilliseconds(000);
 	    let time_now = new Date();
-	    ////console.log({'coin': coin, 'created_date': {$gte: rolling_hour_start}}, "------query");
+	    //////console.log({'coin': coin, 'created_date': {$gte: rolling_hour_start}}, "------query");
 	    get_trades_query = db.collection('market_trades').find({'coin': coin, 'created_date': {$gte: rolling_hour_start}}).toArray();
 	    get_trades_query.then(get_trades_query_response => {
 	        let bid_vol = 0;
@@ -580,12 +610,12 @@ function get_rolling_hour_trade_volume_t2cot(coin, db){
         let trade_type_fifteen = "";
 	    let time_minus_15_min = new Date();
 	    time_minus_15_min.setMinutes(time_minus_15_min.getMinutes() - 15);
-	    //////console.log(time_minus_15_min, "=> time_minus_15_min");
+	    ////////console.log(time_minus_15_min, "=> time_minus_15_min");
 	    get_trades_query = db.collection('market_trades').find({'coin': coin, 'created_date': {$gte: time_minus_15_min} }).toArray();
 	    get_trades_query.then(get_trades_query_response => {
 	        let bid_vol = 0;
 	        let ask_vol = 0;
-	        //////console.log(get_trades_query_response);
+	        ////////console.log(get_trades_query_response);
 	       get_trades_query_response.forEach(element => {
 	            if(element['maker'] == 'true'){ // element['maker'] key returns a bool value
 	                bid_vol += element['quantity'];
@@ -593,7 +623,7 @@ function get_rolling_hour_trade_volume_t2cot(coin, db){
 	                ask_vol += element['quantity'];
 	            }
 	        });//end of foreach
-	        //////console.log(bid_vol, '=> bid_vol', ask_vol, '=> ask_vol');
+	        ////////console.log(bid_vol, '=> bid_vol', ask_vol, '=> ask_vol');
 	        let total_volume = bid_vol + ask_vol;
 
 	        let bid_per = (bid_vol * 100) / total_volume;
@@ -659,12 +689,12 @@ function get_rolling_five_mins_trade_volume(coin, db){
     return new Promise(function (resolve, reject) { //thankyou ustad zulqarnain
 	    let time_minus_5_min = new Date();
 	    time_minus_5_min.setMinutes(time_minus_5_min.getMinutes() - 5);
-	    //////console.log(time_minus_5_min, "=> time_minus_5_min");
+	    ////////console.log(time_minus_5_min, "=> time_minus_5_min");
 	    get_trades_query = db.collection('market_trades').find({'coin': coin, 'created_date': {$gte: time_minus_5_min} }).toArray();
 	    get_trades_query.then(get_trades_query_response => {
 	        let bid_vol = 0;
 	        let ask_vol = 0;
-	        //////console.log(get_trades_query_response);
+	        ////////console.log(get_trades_query_response);
 	        get_trades_query_response.forEach(element => {
 	        if(element['maker'] == 'true'){ // element['maker'] key returns a bool value when field type in collection is bool or T/F
 	            bid_vol += element['quantity'];
@@ -672,7 +702,7 @@ function get_rolling_five_mins_trade_volume(coin, db){
 	            ask_vol += element['quantity'];
 	        }
 	        });//end of foreach
-	        //////console.log(bid_vol, '=> bid_vol', ask_vol, '=> ask_vol');
+	        ////////console.log(bid_vol, '=> bid_vol', ask_vol, '=> ask_vol');
 	        let total_volume = bid_vol + ask_vol;
 
 	        let bid_per = (bid_vol * 100) / total_volume;
@@ -743,13 +773,13 @@ function get_contract_info(coin, db){
     return new Promise(function (resolve, reject) {
         let coin_info_query = db.collection('coins').findOne({"symbol": coin});
         coin_info_query.then(coin_info_query_resp => {
-            //////console.log(coin_info_query_resp, "=> coin_info_query_resp");
+            ////////console.log(coin_info_query_resp, "=> coin_info_query_resp");
             let contract_time = parseInt(coin_info_query_resp['contract_time']);
             let contract_percentage = parseInt(coin_info_query_resp['contract_percentage']);
             //%%%%%%%%%% - Minus the Contract Time from Current Time - %%%%%%%%%%
             let time_reversed = new Date(); 
             time_reversed.setMinutes(time_reversed.getMinutes() - contract_time);
-            //////console.log(time_reversed, "=> time_reversed");
+            ////////console.log(time_reversed, "=> time_reversed");
             if(contract_time == 0){
                 contract_time = 2
             }
@@ -760,7 +790,7 @@ function get_contract_info(coin, db){
             let get_trades_query = db.collection('market_trades').find({"coin": coin, "created_date": {$gte: time_reversed}}).sort({'created_date': -1}).toArray();
             //%%%%%%%%%% - Query Promise Reolution - %%%%%%%%%%
             get_trades_query.then( get_trades_query_response => {
-                //////console.log(get_trades_query_response, "=> get_trades_query_response");
+                ////////console.log(get_trades_query_response, "=> get_trades_query_response");
                 let get_trade_query_quantities_arr = [];
                 get_trades_query_response.forEach(element => { 
                     get_trade_query_quantities_arr.push(parseFloat(element['quantity'])); 
@@ -768,12 +798,12 @@ function get_contract_info(coin, db){
                 get_trade_query_quantities_arr.sort(function(a,b) { return a - b;});
                 get_trade_query_quantities_arr.reverse();
 
-                //////console.log(get_trade_query_quantities_arr, "=> get_trade_query_quantities");
-                //////console.log(get_trade_query_quantities_arr.length , "=> get_trade_query_quantities_arr.length");
-                //////console.log(contract_percentage, "=>contract_percentage")
+                ////////console.log(get_trade_query_quantities_arr, "=> get_trade_query_quantities");
+                ////////console.log(get_trade_query_quantities_arr.length , "=> get_trade_query_quantities_arr.length");
+                ////////console.log(contract_percentage, "=>contract_percentage")
 
                 let index = Math.round((parseInt(get_trade_query_quantities_arr.length) / 100) * parseInt(contract_percentage));
-                //////console.log(Math.round(index), "=> index")
+                ////////console.log(Math.round(index), "=> index")
                 //%%%%%%%%%%% - Quantity Sum Upto the defined INDEX varibale defined above - %%%%%%%%%%%
                 let q_sum = 0.0; 
                 for(let i =0; i < index; i++){
@@ -783,9 +813,9 @@ function get_contract_info(coin, db){
                 let t_sum = 0.0; 
                 for(let i = 0; i < get_trade_query_quantities_arr.length; i++){
                     t_sum = t_sum + parseFloat(get_trade_query_quantities_arr[i]);
-                    //////console.log(t_sum, "=> t_sum", i, "=> i");
+                    ////////console.log(t_sum, "=> t_sum", i, "=> i");
                 }
-                //////console.log(q_sum, '=> q_sum')
+                ////////console.log(q_sum, '=> q_sum')
                 //%%%%% - Avg Quantity - %%%%%
                 let q_avg = q_sum / index;
                 //%%%%% - Percentage with Total Quantity Sum - %%%%%
@@ -794,7 +824,7 @@ function get_contract_info(coin, db){
                 let get_contract_info_resp_json = new Object();
                 get_contract_info_resp_json['avg'] = Math.round(q_avg);
                 get_contract_info_resp_json['per'] = Math.round(percentage_);
-                //////console.log(get_contract_info_resp_json, "=> get_contract_info_resp_json");
+                ////////console.log(get_contract_info_resp_json, "=> get_contract_info_resp_json");
                 //%%%%% - Resolve and Return Json Response - It'll be a promise wherever the Function will be called - %%%%%
                 resolve(get_contract_info_resp_json);
             });
@@ -830,25 +860,25 @@ function get_contract_info(coin, db){
 //         let coin_info_query = db.collection('coins').find({"symbol": coin}).toArray();
 //         //%%%%% - Coins Info Query Resolution - %%%%%
 //         coin_info_query.then(coin_info_query_resp => {
-//             //////console.log(coin_info_query_resp, "=> coin_info_query_resp");
+//             ////////console.log(coin_info_query_resp, "=> coin_info_query_resp");
 //             let time_reversed = new Date();
 //             let contract_time = parseInt(coin_info_query_resp[0]['contract_time']);
 //             let contract_percentage = parseInt(coin_info_query_resp[0]['contract_percentage']);
 //             time_reversed.setMinutes(time_reversed.getMinutes() - contract_time);
-//             //////console.log(time_reversed, "=> time_reversed");
+//             ////////console.log(time_reversed, "=> time_reversed");
 //             if(contract_time == 0){
 //                 contract_time = 2
 //             }
 //             if(contract_percentage == 0){
 //                 contract_percentage = 10;
 //             }
-//             //////console.log(coin, '=> coin');
+//             ////////console.log(coin, '=> coin');
 //             //%%%%%%%%%%%%%% Query %%%%%%%%%%%%%%%
-//             //////console.log({"coin": coin, "created_date": {$gte: time_reversed}}, "===> SPL Query Bid contract info")
+//             ////////console.log({"coin": coin, "created_date": {$gte: time_reversed}}, "===> SPL Query Bid contract info")
 //             let get_trades_query = db.collection('market_trades').find({"coin": coin, "created_date": {$gte: time_reversed}}).sort({'created_date': -1}).toArray();
 //             //%%%%%%%%%%%%%% Resolve Promise Cursor %%%%%%%%%%%%%%%%
 //             get_trades_query.then( get_trades_query_response => {
-//                 //////console.log(get_trades_query_response.length, "=> get_trades_query_response");
+//                 ////////console.log(get_trades_query_response.length, "=> get_trades_query_response");
 //                 //%%%%%%%%% - Function to SORT a JSON ARRAY by KEY - %%%%%%%%%
 //                 function sortByKey(array, key) {
 //                     return array.sort(function(a, b) {
@@ -857,22 +887,22 @@ function get_contract_info(coin, db){
 //                     });
 //                 }//%%%%%%%%% - //END Function sortByKey() - %%%%%%%%%
 //                 get_trades_query_response = sortByKey(get_trades_query_response, "quantity");
-//                 ////console.log(get_trades_query_response, "=> get_trades_query_responses");
-//                 //////console.log(contract_percentage, "=> contract_percentage")
+//                 //////console.log(get_trades_query_response, "=> get_trades_query_responses");
+//                 ////////console.log(contract_percentage, "=> contract_percentage")
 //                 //%%%%% - Define Index variable for Number of Trades to Crawl - %%%%% => Number of Trades returned by Mongo Query Above ----
 //                 let index = Math.round((get_trades_query_response.length / 100) * (contract_percentage));
-//                 //////console.log(get_trades_query_response.length, "=> get_trades_query_response.length")
-//                 //////console.log(index, "=> index")
+//                 ////////console.log(get_trades_query_response.length, "=> get_trades_query_response.length")
+//                 ////////console.log(index, "=> index")
 //                 //%%%%% - Quantity Sum upto Indexes Calculated Above in the Index Variable - %%%%%
 //                 let q_sum = 0.0;
 //                 //%%%%% - Start of FOR LOOP - Sum Quantities - %%%%%
 //                 for(let i =0; i < index; i++){
 //                     if (get_trades_query_response[i]['maker'] == 'true') {
-//                         //////console.log('calculating quantities')
+//                         ////////console.log('calculating quantities')
 //                         q_sum = q_sum + parseFloat(get_trades_query_response[i]['quantity']);
 //                     }
 //                 }//%%%%% - //END of FOR LOOP - %%%%%
-//                 //////console.log(q_sum, "=> q_sum");
+//                 ////////console.log(q_sum, "=> q_sum");
 //                 let q2 = 0.0; 
 //                 let max_price = 0;
 //                 //%%%%% - What Price Have the MAX Quantity in get_trades_query_response JSON ARRAY??? - %%%%%
@@ -886,13 +916,13 @@ function get_contract_info(coin, db){
 //                         }
 //                     }
 //                 } //%%% - //END of FOR - %%%
-//                 //////console.log(max_price, "=> max_price")
+//                 ////////console.log(max_price, "=> max_price")
 //                 let t_sum = 0.0;
 //                 //%%% - FOR LOOP - Total Sum of all the Trades Returned by Query - %%%
 //                 for (let i = 0; i < get_trades_query_response.length; i++) {
 //                     t_sum += get_trades_query_response[i]['quantity'];
 //                 }//%%% - //END FOR - %%%
-//                 //////console.log(t_sum, "=> t_sum")
+//                 ////////console.log(t_sum, "=> t_sum")
 //                 let q_avg = q_sum / index;
 //                 //%%%%%% - To Avoid NaN in q_avg Variable when Index = 0 - %%%%%%
 //                 if( Number.isNaN(q_avg) ){
@@ -903,7 +933,7 @@ function get_contract_info(coin, db){
 //                 get_bid_contract_info_return_json_response['avg'] = Math.round(q_avg);
 //                 get_bid_contract_info_return_json_response['per'] = percentage_;
 //                 get_bid_contract_info_return_json_response['max'] = parseFloat(max_price).toFixed(8);
-//                 //////console.log(get_bid_contract_info_return_json_response, "=> get_bid_contract_info_return_json_response")
+//                 ////////console.log(get_bid_contract_info_return_json_response, "=> get_bid_contract_info_return_json_response")
 //                 //%%%%% - Resolve and Return - %%%%%
 //                 resolve(get_bid_contract_info_return_json_response); //resolve and return promise
 //             }) //%%%%% - //END OF Promise.then 2 of 2 - %%%%%
@@ -917,12 +947,12 @@ function get_bid_contract_info(coin, db){
         let coin_info_query = db.collection('coins').find({"symbol": coin}).toArray();
         //%%%%% - Coins Info Query Resolution - %%%%%
         coin_info_query.then(coin_info_query_resp => {
-            //////console.log(coin_info_query_resp, "=> coin_info_query_resp");
+            ////////console.log(coin_info_query_resp, "=> coin_info_query_resp");
             let time_reversed = new Date();
             let contract_time = parseInt(coin_info_query_resp[0]['contract_time']);
             let contract_percentage = parseInt(coin_info_query_resp[0]['contract_percentage']);
             time_reversed.setMinutes(time_reversed.getMinutes() - contract_time);
-            //////console.log(time_reversed, "=> time_reversed");
+            ////////console.log(time_reversed, "=> time_reversed");
             if(contract_time == 0){
                 contract_time = 2
             }
@@ -933,7 +963,7 @@ function get_bid_contract_info(coin, db){
             let get_trades_query = db.collection('market_trades').find({"coin": coin, "created_date": {$gte: time_reversed}}).sort({'created_date': -1}).toArray();
             //%%%%%%%%%%%%%% Resolve Promise Cursor %%%%%%%%%%%%%%%%
             get_trades_query.then( get_trades_query_response => {
-                //////console.log(get_trades_query_response, "=> get_trades_query_response");
+                ////////console.log(get_trades_query_response, "=> get_trades_query_response");
                 //%%%%%%%%% - Function to SORT a JSON ARRAY by KEY - %%%%%%%%%
                 function sortByKey(array, key) { //function to sort a json array by key value
                     return array.sort(function(a, b) {
@@ -943,10 +973,10 @@ function get_bid_contract_info(coin, db){
                 }//%%%%%%%%% - //END Function sortByKey() - %%%%%%%%%
                 get_trades_query_response = sortByKey(get_trades_query_response, "quantity");
                 get_trades_query_response.reverse();
-                //////console.log(get_trades_query_response, "=> get_trades_query_responses");
+                ////////console.log(get_trades_query_response, "=> get_trades_query_responses");
                 //%%%%% - Define Index variable for Number of Trades to Crawl - %%%%% => Number of Trades returned by Mongo Query Above ----
                 let index = Math.round((get_trades_query_response.length / 100) * (contract_percentage));
-                //////console.log(index, "=> index");
+                ////////console.log(index, "=> index");
                 //%%%%% - Quantity Sum upto Indexes Calculated Above in the Index Variable - %%%%%
                 let q_sum = 0.0;
                 //%%%%% - Start of FOR LOOP - Sum Quantities - %%%%%
@@ -977,14 +1007,14 @@ function get_bid_contract_info(coin, db){
             if(Number.isNaN(q_avg)){
                 q_avg = 0.0;
             }//%%% - END IF - %%%
-            //////console.log(q_sum, "=> q_sum");
-            //////console.log(t_sum, "-> t_sum");
+            ////////console.log(q_sum, "=> q_sum");
+            ////////console.log(t_sum, "-> t_sum");
             let percentage_ = Math.round((q_sum / t_sum) * 100);
             let get_ask_contract_info_return_json_response = new Object();
             get_ask_contract_info_return_json_response['avg'] = Math.round(q_avg);
             get_ask_contract_info_return_json_response['per'] = Math.round(percentage_);
             get_ask_contract_info_return_json_response['max'] = parseFloat(max_price).toFixed(8);
-            //////console.log(get_ask_contract_info_return_json_response, "=> get_ask_contract_info_return_json_response")
+            ////////console.log(get_ask_contract_info_return_json_response, "=> get_ask_contract_info_return_json_response")
             //%%%%% - Resolve and Return - %%%%%
             resolve(get_ask_contract_info_return_json_response); //resolve and return promise
             }) //%%%%% - //END OF Promise.then 2 of 2 - %%%%%
@@ -1021,12 +1051,12 @@ function get_ask_contract_info(coin, db){
         let coin_info_query = db.collection('coins').find({"symbol": coin}).toArray();
         //%%%%% - Coins Info Query Resolution - %%%%%
         coin_info_query.then(coin_info_query_resp => {
-            //////console.log(coin_info_query_resp, "=> coin_info_query_resp");
+            ////////console.log(coin_info_query_resp, "=> coin_info_query_resp");
             let time_reversed = new Date();
             let contract_time = parseInt(coin_info_query_resp[0]['contract_time']);
             let contract_percentage = parseInt(coin_info_query_resp[0]['contract_percentage']);
             time_reversed.setMinutes(time_reversed.getMinutes() - contract_time);
-            //////console.log(time_reversed, "=> time_reversed");
+            ////////console.log(time_reversed, "=> time_reversed");
             if(contract_time == 0){
                 contract_time = 2
             }
@@ -1037,7 +1067,7 @@ function get_ask_contract_info(coin, db){
             let get_trades_query = db.collection('market_trades').find({"coin": coin, "created_date": {$gte: time_reversed}}).sort({'created_date': -1}).toArray();
             //%%%%%%%%%%%%%% Resolve Promise Cursor %%%%%%%%%%%%%%%%
             get_trades_query.then( get_trades_query_response => {
-                //////console.log(get_trades_query_response, "=> get_trades_query_response");
+                ////////console.log(get_trades_query_response, "=> get_trades_query_response");
                 //%%%%%%%%% - Function to SORT a JSON ARRAY by KEY - %%%%%%%%%
                 function sortByKey(array, key) { //function to sort a json array by key value
                     return array.sort(function(a, b) {
@@ -1047,10 +1077,10 @@ function get_ask_contract_info(coin, db){
                 }//%%%%%%%%% - //END Function sortByKey() - %%%%%%%%%
                 get_trades_query_response = sortByKey(get_trades_query_response, "quantity");
                 get_trades_query_response.reverse();
-                //////console.log(get_trades_query_response, "=> get_trades_query_responses");
+                ////////console.log(get_trades_query_response, "=> get_trades_query_responses");
                 //%%%%% - Define Index variable for Number of Trades to Crawl - %%%%% => Number of Trades returned by Mongo Query Above ----
                 let index = Math.round((get_trades_query_response.length / 100) * (contract_percentage));
-                //////console.log(index, "=> index");
+                ////////console.log(index, "=> index");
                 //%%%%% - Quantity Sum upto Indexes Calculated Above in the Index Variable - %%%%%
                 let q_sum = 0.0;
                 //%%%%% - Start of FOR LOOP - Sum Quantities - %%%%%
@@ -1081,14 +1111,14 @@ function get_ask_contract_info(coin, db){
             if(Number.isNaN(q_avg)){
                 q_avg = 0.0;
             }//%%% - END IF - %%%
-            //////console.log(q_sum, "=> q_sum");
-            //////console.log(t_sum, "-> t_sum");
+            ////////console.log(q_sum, "=> q_sum");
+            ////////console.log(t_sum, "-> t_sum");
             let percentage_ = Math.round((q_sum / t_sum) * 100);
             let get_ask_contract_info_return_json_response = new Object();
             get_ask_contract_info_return_json_response['avg'] = Math.round(q_avg);
             get_ask_contract_info_return_json_response['per'] = Math.round(percentage_);
             get_ask_contract_info_return_json_response['max'] = parseFloat(max_price).toFixed(8);
-            //////console.log(get_ask_contract_info_return_json_response, "=> get_ask_contract_info_return_json_response")
+            ////////console.log(get_ask_contract_info_return_json_response, "=> get_ask_contract_info_return_json_response")
             //%%%%% - Resolve and Return - %%%%%
             resolve(get_ask_contract_info_return_json_response); //resolve and return promise
             }) //%%%%% - //END OF Promise.then 2 of 2 - %%%%%
@@ -1138,12 +1168,12 @@ function calculate_seven_level_pressure(final_chart3_json_arr_ask, final_chart3_
 
     final_chart3_json_arr_bid = sortByKey(final_chart3_json_arr_bid, "price");
     final_chart3_json_arr_bid.reverse();
-    // //console.log(final_chart3_json_arr_ask, '=> ask_max');
-    // //console.log(final_chart3_json_arr_bid, "=> bid_max");
+    // ////console.log(final_chart3_json_arr_ask, '=> ask_max');
+    // ////console.log(final_chart3_json_arr_bid, "=> bid_max");
     for (let i = 0; i < 7; i++) {
 
-    	// //console.log(final_chart3_json_arr_ask[i]['depth_buy_quantity'], '=> ask_max');
-    	// //console.log(final_chart3_json_arr_bid[i]['depth_sell_quantity'], "=> bid_max");
+    	// ////console.log(final_chart3_json_arr_ask[i]['depth_buy_quantity'], '=> ask_max');
+    	// ////console.log(final_chart3_json_arr_bid[i]['depth_sell_quantity'], "=> bid_max");
         bid_max += final_chart3_json_arr_bid[i]['depth_sell_quantity'];
         ask_max += final_chart3_json_arr_ask[i]['depth_buy_quantity'];
     }//%%%%%% END of FOR %%%%%%
@@ -1197,13 +1227,13 @@ function calculate_seven_level_pressure(final_chart3_json_arr_ask, final_chart3_
 function get_contracts_one(coin, db){
     //%%%% Start of Promise Object %%%%
     return new Promise(function (resolve, reject) {
-    //console.log("get_contracts_one")
+    ////console.log("get_contracts_one")
     //%%%%% - Coins Info Query - %%%%%
     let coin_info_query = db.collection('coins').find({"symbol": coin}).toArray();
     //%%%%% - Coin Info Query Promise Resolution - %%%%%
     coin_info_query.then(coin_info_query_resp => {
         let contract_size = coin_info_query_resp[0]['contract_size'];
-        //console.log(contract_size, '=> contract_size ---------------------------------------------------------------------------------------------------------------')
+        ////console.log(contract_size, '=> contract_size ---------------------------------------------------------------------------------------------------------------')
         //%%%%% - What's the time now? Check the Clock... - %%%%%
         let nowtime = new Date();
         //%%%%% - Market Trades Query - %%%%%
@@ -1220,27 +1250,27 @@ function get_contracts_one(coin, db){
             let last_contract_time;
             let time_elapsed_minutes;
             let last_qty_buy_vs_sell = 0.0;
-            //console.log(get_trades_query_response, "=> get_trades_query_response===================================================");
+            ////console.log(get_trades_query_response, "=> get_trades_query_response===================================================");
             //%%%%% - FOR LOOP - %%%%%
             for(let i = 0; i < get_trades_query_response.length; i++){
                 //%%%%% - IF MAKER IS TRUE THEN DO - ELSE IF MAKER FALSE THEN DO - %%%%%
                 if (String(get_trades_query_response[i]['maker']) == 'true') {
                     bid_quantity += get_trades_query_response[i]['quantity'];
                     bids++;
-                    //console.log(bid_quantity, "=> bid_quantity");
+                    ////console.log(bid_quantity, "=> bid_quantity");
                 } else if (String(get_trades_query_response[i]['maker']) == 'false') {
                     ask_quantity += get_trades_query_response[i]['quantity'];
-                    //console.log(ask_quantity, "=> ask_quantity");
+                    ////console.log(ask_quantity, "=> ask_quantity");
                     asks++;
                 } //%%%%% - END ELSE IF - %%%%%
                 //%%%%% - TOTAL QUANTITY BEING PLUSED - %%%%%
                 total_quantity = bid_quantity + ask_quantity;
-                //console.log(total_quantity, "=> total_quantity 1");
+                ////console.log(total_quantity, "=> total_quantity 1");
                 //%%%%% - IF TOTAL QUANTITY GOES GREATER THAN CONTRACT SIZE, THEN BREAK - %%%%%
                 if (total_quantity >= contract_size) {
                     //%%%%% - CREATED_DATE KEY OF LAST ITERATED JSON OBJECT IN A JSON ARRAY RETURNED BY MARKET TRADES QUERY - %%%%%
                     last_time = get_trades_query_response[i]['created_date'];
-                    //console.log(last_time, "=> last_time");
+                    ////console.log(last_time, "=> last_time");
                     break;
                 }//%%%%% - END IF - %%%%%
             } //%%%%% - END FOR - %%%%%
@@ -1288,7 +1318,7 @@ function get_contracts_one(coin, db){
             get_contracts_one_json_return['asks_per'] = Math.round(ask_per);
             get_contracts_one_json_return['last_qty_buy_vs_sell'] = parseFloat(last_qty_buy_vs_sell);
             get_contracts_one_json_return['time_string'] = String(time_elapsed_minutes);
-            //console.log(get_contracts_one_json_return, '=> get_contracts_one_json_return');
+            ////console.log(get_contracts_one_json_return, '=> get_contracts_one_json_return');
             //%%%%% - RESOLVE AND RETURN JSON OBJECT FILLED ABOVE - %%%%%
             resolve(get_contracts_one_json_return);
             });//%%%%% - END OF MARKET TRADES QUERY PROMISE RESOLUTION - %%%%%
@@ -1302,13 +1332,13 @@ function get_contracts_one(coin, db){
 function get_contracts_two(coin, db){
     //%%%% Start of Promise Object %%%%
     return new Promise(function (resolve, reject) {
-    //console.log("get_contracts_two")
+    ////console.log("get_contracts_two")
     //%%%%% - Coins Info Query - %%%%%
     let coin_info_query = db.collection('coins').find({"symbol": coin}).toArray();
     //%%%%% - Coin Info Query Promise Resolution - %%%%%
     coin_info_query.then(coin_info_query_resp => {
         let contract_period = parseInt(coin_info_query_resp[0]['contract_period']);
-        //console.log(contract_period, '=> contract_period ---------------------------------------------------------------------------------------------------------------')
+        ////console.log(contract_period, '=> contract_period ---------------------------------------------------------------------------------------------------------------')
         //%%%%% - What's the time now? Check the Clock... - %%%%%
         let nowtime = new Date();
         //%%%%% - Market Trades Query - %%%%%
@@ -1325,27 +1355,27 @@ function get_contracts_two(coin, db){
             let last_contract_time;
             let time_elapsed_minutes;
             let last_200_buy_vs_sell = 0.0;
-            //console.log(get_trades_query_response, "=> get_trades_query_response===================================================");
+            ////console.log(get_trades_query_response, "=> get_trades_query_response===================================================");
             //%%%%% - FOR LOOP - %%%%%
             for(let i = 0; i < get_trades_query_response.length; i++){
                 //%%%%% - IF MAKER IS TRUE THEN DO - ELSE IF MAKER FALSE THEN DO - %%%%%
                 if (String(get_trades_query_response[i]['maker']) == 'true') {
                     bid_quantity += get_trades_query_response[i]['quantity'];
                     bids++;
-                    //console.log(bid_quantity, "=> bid_quantity");
+                    ////console.log(bid_quantity, "=> bid_quantity");
                 } else if (String(get_trades_query_response[i]['maker']) == 'false') {
                     ask_quantity += get_trades_query_response[i]['quantity'];
-                    //console.log(ask_quantity, "=> ask_quantity");
+                    ////console.log(ask_quantity, "=> ask_quantity");
                     asks++;
                 }
                 //%%%%% - CREATED_DATE KEY OF LAST ITERATED JSON OBJECT IN A JSON ARRAY RETURNED BY MARKET TRADES QUERY - %%%%%
                 last_time = get_trades_query_response[i]['created_date'];
-                //console.log(last_time, "=> last_time");
+                ////console.log(last_time, "=> last_time");
             }
             //%%%%% - END ELSE IF - %%%%%
             //%%%%% - TOTAL QUANTITY BEING PLUSED - %%%%%
             total_quantity = bid_quantity + ask_quantity;
-            //console.log(total_quantity, "=> total_quantity 1");
+            ////console.log(total_quantity, "=> total_quantity 1");
             if(last_time != null){
                 last_contract_time = new Date(last_time);
                 time_elapsed_minutes = time_elapsed_returns_minutes(last_contract_time);
@@ -1382,7 +1412,7 @@ function get_contracts_two(coin, db){
             get_contracts_two_json_return['asks_per'] = Math.round(ask_per);
             get_contracts_two_json_return['last_200_buy_vs_sell'] = parseFloat(last_200_buy_vs_sell);
             get_contracts_two_json_return['time_string'] = String(time_elapsed_minutes);
-            //console.log(get_contracts_two_json_return, '=> get_contracts_two_json_return');
+            ////console.log(get_contracts_two_json_return, '=> get_contracts_two_json_return');
             //%%%%% - RESOLVE AND RETURN - %%%%%
             resolve(get_contracts_two_json_return);
             });//%%%%% - END OF MARKET TRADES QUERY PROMISE RESOLUTION - %%%%%
@@ -1397,7 +1427,7 @@ function get_contracts_two(coin, db){
 function get_contracts_three(coin, db){
     //%%%%% - START OF PROMISE OBJECT - %%%%%
     return new Promise(function (resolve, reject) {
-    //console.log("get_contracts_three");
+    ////console.log("get_contracts_three");
     //%%%%% - COIN INFO QUERY - %%%%%
     let coin_info_query = db.collection('coins').find({"symbol": coin}).toArray();
     //%%%%% - COIN INFO QUERY PROMISE RESOLUTION - %%%%%
@@ -1405,7 +1435,7 @@ function get_contracts_three(coin, db){
         let contract_size = coin_info_query_resp[0]['contract_size'];
         //%%%%% - GET CONTRACT SIZE FROM COIN INFO QUERY RESPONSE - %%%%%
         contract_size = parseInt(contract_size * 3);
-        //console.log(contract_size, '=> contract_size ---------------------------------------------------------------------------------------------------------------')
+        ////console.log(contract_size, '=> contract_size ---------------------------------------------------------------------------------------------------------------')
         let nowtime = new Date();
         //%%%%% - MARKET TRADES QUERY - %%%%%
         let get_trades_query = db.collection('market_trades').find({"coin": coin, "created_date": {$lte: nowtime}}).sort({'created_date': -1}).toArray()
@@ -1420,23 +1450,23 @@ function get_contracts_three(coin, db){
         let last_contract_time;
         let time_elapsed_minutes;
         let last_qty_buy_vs_sell_15 = 0.0;
-        //console.log(get_trades_query_response, "=> get_trades_query_response===================================================");
+        ////console.log(get_trades_query_response, "=> get_trades_query_response===================================================");
         //%%%%% - FOR LOOP - ADD BID AND ASK QUANTITIES AND ALSO CALCULATE TOTAL QUANTITY BID+ASK - ITERATE UNTIL TOTAL QUANTITY IS GREATHER OR EQUAL TO CONTRACT SIZE - %%%%%
         for(let i = 0; i < get_trades_query_response.length; i++){
                 if (String(get_trades_query_response[i]['maker']) == 'true') {
                     bid_quantity += get_trades_query_response[i]['quantity'];
                     bids++;
-                    //console.log(bid_quantity, "=> bid_quantity");
+                    ////console.log(bid_quantity, "=> bid_quantity");
                 } else if (String(get_trades_query_response[i]['maker']) == 'false') {
                     ask_quantity += get_trades_query_response[i]['quantity'];
-                    //console.log(ask_quantity, "=> ask_quantity");
+                    ////console.log(ask_quantity, "=> ask_quantity");
                     asks++;
                 }
                 total_quantity = bid_quantity + ask_quantity;
-                //console.log(total_quantity, "=> total_quantity 1");
+                ////console.log(total_quantity, "=> total_quantity 1");
                 if (total_quantity >= contract_size) {
                     last_time = get_trades_query_response[i]['created_date'];
-                    //console.log(last_time, "=> last_time");
+                    ////console.log(last_time, "=> last_time");
                     break;
                 }   
         } //%%%%% - END OF FOR LOOP - %%%%%
@@ -1480,7 +1510,7 @@ function get_contracts_three(coin, db){
         get_contracts_three_json_return['asks_per'] = Math.round(ask_per);
         get_contracts_three_json_return['last_qty_buy_vs_sell_15'] = parseFloat(last_qty_buy_vs_sell_15);
         get_contracts_three_json_return['time_string'] = String(time_elapsed_minutes);
-        //console.log(get_contracts_three_json_return, '=> get_contracts_three_json_return');
+        ////console.log(get_contracts_three_json_return, '=> get_contracts_three_json_return');
         //resolve and return
         resolve(get_contracts_three_json_return);
             });// end of promise : 2 of 2
@@ -1494,12 +1524,12 @@ function get_contracts_three(coin, db){
     //start of function: ================ get_contracts_two =================
 function get_contracts_four(coin, db){
     return new Promise(function (resolve, reject) {
-    //console.log("get_contracts_four")
+    ////console.log("get_contracts_four")
     let coin_info_query = db.collection('coins').find({"symbol": coin}).toArray();
     coin_info_query.then(coin_info_query_resp => {
         let contract_period = parseInt(coin_info_query_resp[0]['contract_period']);
         contract_period = parseInt(contract_period * 3);
-        //console.log(contract_period, '=> contract_period ---------------------------------------------------------------------------------------------------------------')
+        ////console.log(contract_period, '=> contract_period ---------------------------------------------------------------------------------------------------------------')
         let nowtime = new Date();
         let get_trades_query = db.collection('market_trades').find({"coin": coin, "created_date": {$lte: nowtime}}).sort({'created_date': -1}).limit(contract_period).toArray()
         get_trades_query.then(get_trades_query_response => {
@@ -1512,22 +1542,22 @@ function get_contracts_four(coin, db){
             let last_contract_time;
             let time_elapsed_minutes;
             let last_200_buy_vs_sell_15 = 0.0;
-            //console.log(get_trades_query_response, "=> get_trades_query_response===================================================")
+            ////console.log(get_trades_query_response, "=> get_trades_query_response===================================================")
             for(let i = 0; i < get_trades_query_response.length; i++){
                 if (String(get_trades_query_response[i]['maker']) == 'true') {
                     bid_quantity += get_trades_query_response[i]['quantity'];
                     bids++;
-                    //console.log(bid_quantity, "=> bid_quantity");
+                    ////console.log(bid_quantity, "=> bid_quantity");
                 } else if (String(get_trades_query_response[i]['maker']) == 'false') {
                     ask_quantity += get_trades_query_response[i]['quantity'];
-                    //console.log(ask_quantity, "=> ask_quantity");
+                    ////console.log(ask_quantity, "=> ask_quantity");
                     asks++;
                 }
                 last_time = get_trades_query_response[i]['created_date'];
-                //console.log(last_time, "=> last_time");
+                ////console.log(last_time, "=> last_time");
             } //enf of : for
             total_quantity = bid_quantity + ask_quantity;
-            //console.log(total_quantity, "=> total_quantity 1");
+            ////console.log(total_quantity, "=> total_quantity 1");
             if(last_time != null){
                 last_contract_time = new Date(last_time);
                 time_elapsed_minutes = time_elapsed_returns_minutes(last_contract_time);
@@ -1563,7 +1593,7 @@ function get_contracts_four(coin, db){
             get_contracts_four_json_return['asks_per'] = Math.round(ask_per);
             get_contracts_four_json_return['last_200_buy_vs_sell_15'] = parseFloat(last_200_buy_vs_sell_15);
             get_contracts_four_json_return['time_string'] = String(time_elapsed_minutes);
-            //console.log(get_contracts_four_json_return, '=> get_contracts_four_json_return');
+            ////console.log(get_contracts_four_json_return, '=> get_contracts_four_json_return');
             //resolve and return
             resolve(get_contracts_four_json_return);
             });// end of promise : 2 of 2
@@ -1579,8 +1609,8 @@ function calculate_five_level_pressure(final_chart3_json_arr_ask, final_chart3_j
     let bid_count = 0;
     let ask_count = 0;
     let five_level_pressure_type = '';
-    // ////console.log(final_chart3_json_arr_ask.length, "Ask Arr Length");
-    // ////console.log(final_chart3_json_arr_bid.length, "Bid Arr Length");
+    // //////console.log(final_chart3_json_arr_ask.length, "Ask Arr Length");
+    // //////console.log(final_chart3_json_arr_bid.length, "Bid Arr Length");
     function sortByKey(array, key) { //function to sort a json array by key value
         return array.sort(function(a, b) {
             var x = a[key]; var y = b[key];
@@ -1593,18 +1623,18 @@ function calculate_five_level_pressure(final_chart3_json_arr_ask, final_chart3_j
 
     final_chart3_json_arr_bid = sortByKey(final_chart3_json_arr_bid, "price");
     final_chart3_json_arr_bid.reverse();
-	//console.log(final_chart3_json_arr_ask," Ask Arr");
-    ////console.log(final_chart3_json_arr_bid[i],"Bid Arr");
+	////console.log(final_chart3_json_arr_ask," Ask Arr");
+    //////console.log(final_chart3_json_arr_bid[i],"Bid Arr");
     for(let i=0; i<5; i++){
-    	//console.log(i)
-    	// //console.log(final_chart3_json_arr_ask[i]," Ask Arr");
-    	// //console.log(final_chart3_json_arr_bid[i],"Bid Arr");
+    	////console.log(i)
+    	// ////console.log(final_chart3_json_arr_ask[i]," Ask Arr");
+    	// ////console.log(final_chart3_json_arr_bid[i],"Bid Arr");
         if(parseFloat(final_chart3_json_arr_ask[i].depth_buy_quantity) > parseFloat(final_chart3_json_arr_bid[i].depth_sell_quantity)){
             ask_count = ask_count + 1;
-            ////console.log("Ask is Up", ask_count);
+            //////console.log("Ask is Up", ask_count);
         } else if (parseFloat(final_chart3_json_arr_bid[i].depth_sell_quantity) > parseFloat(final_chart3_json_arr_ask[i].depth_buy_quantity)){
             bid_count = bid_count + 1;
-            ////console.log("Bid is Up", bid_count);
+            //////console.log("Bid is Up", bid_count);
         }
     }
     //%%%%% Calculate Five Level Pressure Difference %%%%%
@@ -1621,8 +1651,8 @@ function calculate_five_level_pressure(final_chart3_json_arr_ask, final_chart3_j
     }
     
 
-    //////console.log(ask_count, "=> ask_count");
-    //////console.log(bid_count, "=> bid_count");
+    ////////console.log(ask_count, "=> ask_count");
+    ////////console.log(bid_count, "=> bid_count");
     //%%%%% Declare JSON Resp Object %%%%%
     let five_level_pressure_resp = new Object();
     five_level_pressure_resp['five_level_pressure_difference'] = parseInt(five_level_pressure_difference);
@@ -1673,8 +1703,8 @@ function calculate_dc_wall(final_chart3_json_arr_ask, final_chart3_json_arr_bid,
     final_chart3_json_arr_bid.reverse();
     let ask_arr_sliced = final_chart3_json_arr_ask.slice(0, 5);//%%% Slice the final_chart3_json_arr_ask Array for First 5 Indexes
     let bid_arr_sliced = final_chart3_json_arr_bid.slice(0, 5);//%%% Slice the final_chart3_json_arr_bid Array for First 5 Indexes
-    //////console.log(ask_arr_sliced, "=> ask_arr_sliced");
-    //////console.log(bid_arr_sliced, "=> bid_arr_sliced");
+    ////////console.log(ask_arr_sliced, "=> ask_arr_sliced");
+    ////////console.log(bid_arr_sliced, "=> bid_arr_sliced");
     let bid_qty_max = 0.0;
     let ask_qty_max = 0.0;
     let bid_price_max = 0.0;
@@ -1685,23 +1715,23 @@ function calculate_dc_wall(final_chart3_json_arr_ask, final_chart3_json_arr_bid,
     let side = "";
     //%%%%%% - START of FOR LOOP - Scan upto 5 indexes of Bid/Ask Sliced Chunked Arrays - %%%%%%%
     for(let i = 0; i < 5; i = i + 1){
-        //////console.log("check 0")
+        ////////console.log("check 0")
         if(i == 0){
             bid_qty_max = bid_arr_sliced[i].depth_sell_quantity;
             ask_qty_max = ask_arr_sliced[i].depth_buy_quantity;
             bid_price_max = bid_arr_sliced[i].price;
             ask_price_max = ask_arr_sliced[i].price;
-            //////console.log("check 1");
+            ////////console.log("check 1");
         } else if(i>0){
             if(parseFloat(bid_arr_sliced[i].depth_sell_quantity) > parseFloat(bid_qty_max)){
                 bid_qty_max = bid_arr_sliced[i].depth_sell_quantity;
                 bid_price_max = bid_arr_sliced[i].price;
-                //////console.log("check 2");
+                ////////console.log("check 2");
             }
             if(parseFloat(ask_arr_sliced[i].depth_buy_quantity) > parseFloat(ask_qty_max)){
                 ask_qty_max = ask_arr_sliced[i].depth_buy_quantity;
                 ask_price_max = ask_arr_sliced[i].price;
-                //////console.log("check 2");
+                ////////console.log("check 2");
             }
         }
     }//%%%%%% - END of FOR LOOP - %%%%%%%
@@ -1755,7 +1785,7 @@ async function get_last_barrier(symbol, market_value, type){
 
 			db.collection('barrier_values_collection').find(where_json).sort({"created_date": -1}).limit(1).toArray(async function(err, data){
 				if (err) throw err;
-				////console.log(data, "===> makret_data");
+				//////console.log(data, "===> makret_data");
 				if(data.length > 0){
 					resolve(data[0]);
 				} else{
@@ -1775,7 +1805,7 @@ async function get_last_demand_candle(symbol){
 		conn.then(async db => {
 			db.collection('market_chart').find({"coin": symbol, "candle_type": "demand"}).sort({"created_date": -1}).limit(1).toArray(async function(err, data){
 				if (err) throw err;
-				////console.log(data, "===> makret_data");
+				//////console.log(data, "===> makret_data");
 				if(data.length > 0){
 					resolve(data[0]);
 				} else{
@@ -1785,7 +1815,7 @@ async function get_last_demand_candle(symbol){
 		})
 	})
 
-	//console.log(candle_arr[0], "Last Demand Candle");
+	////console.log(candle_arr[0], "Last Demand Candle");
 
 	
 	
@@ -1795,10 +1825,12 @@ async function get_last_demand_candle(symbol){
 async function indicators(symbol, market_buy_depth_arr, market_sell_depth_arr, coin_info, db){
 	return new Promise(async function(resolve, reject){
 		let coin_base_order = coin_info['base_order']; //order_book_base in php
-		let coin_base_history = coin_info['base_history'];//trade_base_history in php
+        let coin_base_history = coin_info['base_history'];//trade_base_history in php
+        let blackwall_amnt = coin_info['depth_wall_amount'];
+        let yellowwall_amnt = coin_info['yellow_wall_amount'];
 		//Synchronous Methods
-		let black_wall_object = calculate_blackwall_amount_for_chart3(market_buy_depth_arr, market_sell_depth_arr, coin_base_order);
-		let yellow_wall_object = calculate_yellowwall_amount_for_chart3(market_buy_depth_arr, market_sell_depth_arr, coin_base_order);
+		let black_wall_object = calculate_blackwall_amount_for_chart3(market_buy_depth_arr, market_sell_depth_arr, blackwall_amnt);
+		let yellow_wall_object = calculate_yellowwall_amount_for_chart3(market_buy_depth_arr, market_sell_depth_arr, yellowwall_amnt);
 		let five_level_pressure_object = calculate_five_level_pressure(market_buy_depth_arr, market_sell_depth_arr);//calculate_pressure()
 		let sevel_pressure_pressure_object = calculate_seven_level_pressure(market_buy_depth_arr, market_sell_depth_arr); //calculate_bid_ask_levels()
 		let dc_big_wall_pressure_object = calculate_dc_wall(market_buy_depth_arr, market_sell_depth_arr, coin_base_order); //calculate_big_wall()
@@ -1834,7 +1866,7 @@ async function indicators(symbol, market_buy_depth_arr, market_sell_depth_arr, c
 			let contracts_three_resolved = resolved_items[6];
 			let contracts_four_resolved = resolved_items[7];
 
-			////console.log(current_candle_volume_resolved, "=====> current_candle_volume_resolved")
+			//////console.log(current_candle_volume_resolved, "=====> current_candle_volume_resolved")
 			//Current candle 
 			let bid_per_current_candle = current_candle_volume_resolved['bid_per'];
 			let ask_per_current_candle = current_candle_volume_resolved['ask_per'];
@@ -1887,9 +1919,9 @@ async function indicators(symbol, market_buy_depth_arr, market_sell_depth_arr, c
 				let bid_contract_info_resolved = resolved_items_1[1];
 				let ask_contract_info_resolved = resolved_items_1[2];
 				let last_demand_candle_resolved = resolved_items_1[3];
-				////console.log(contract_info_resolved, "-----------MCP---------");
-				////console.log(bid_contract_info_resolved, "-----------SPL---------");
-				////console.log(ask_contract_info_resolved, "-----------BPL---------");
+				//////console.log(contract_info_resolved, "-----------MCP---------");
+				//////console.log(bid_contract_info_resolved, "-----------SPL---------");
+				//////console.log(ask_contract_info_resolved, "-----------BPL---------");
 
 				let avg_bid_contract_info = bid_contract_info_resolved['avg'];
 				let avg_ask_contract_info = ask_contract_info_resolved['avg'];
@@ -1908,7 +1940,7 @@ async function indicators(symbol, market_buy_depth_arr, market_sell_depth_arr, c
 
 				let data_to_return = new Object();
 
-				//////console.log(black_wall_object);
+				////////console.log(black_wall_object);
 				data_to_return['black_pressure'] = black_wall_object['blackwall_difference'];
 				data_to_return['yellow_pressure'] = yellow_wall_object['yellowwall_difference'];
 				data_to_return['swing_point'] = swing_point;
@@ -1945,10 +1977,10 @@ async function indicators(symbol, market_buy_depth_arr, market_sell_depth_arr, c
 				let last_candle_bid = last_demand_candle_resolved['bid_volume'];
 				let last_candle_total = last_demand_candle_resolved['total_volume'];
 
-				console.log(last_candle_ask,"last_candle_ask",last_candle_bid,"last_candle_bid",last_candle_total,"last_candle_total");
+				//console.log(last_candle_ask,"last_candle_ask",last_candle_bid,"last_candle_bid",last_candle_total,"last_candle_total");
 
-				let lc_bid_per = (last_candle_total/last_candle_bid)* 100;
-				let lc_ask_per = (last_candle_total/last_candle_ask)* 100;
+				let lc_bid_per = (last_candle_bid/last_candle_total)* 100;
+				let lc_ask_per = (last_candle_ask/last_candle_total)* 100;
 				
 				data_to_return['lc_bid_per'] = lc_bid_per;
 				data_to_return['lc_ask_per'] = lc_ask_per;
@@ -1995,7 +2027,9 @@ async function indicators(symbol, market_buy_depth_arr, market_sell_depth_arr, c
 				json_for_score['t_h_a'] = contracts_two_resolved['asks_per'];
 
 				let score =  calculate_score(json_for_score);
-				data_to_return['score'] = parseInt(score);
+                data_to_return['score'] = parseInt(score);
+                data_to_return['taf'] = 45;
+                data_to_return['tbf'] = 55;
 
 				resolve(data_to_return);
 
@@ -2007,7 +2041,7 @@ async function indicators(symbol, market_buy_depth_arr, market_sell_depth_arr, c
 }
 
 function calculate_score(score_array){
-    //console.log(score_array, "-> score_array in function ")
+    ////console.log(score_array, "-> score_array in function ")
 
     let depth_pressure = score_array['depth_pressure'];
     let depth_pressure_side = score_array['depth_pressure_side'];
@@ -2186,12 +2220,12 @@ function calculate_score(score_array){
     total_score_array.push(score_big);
     //%%%%%%%%%% End Big Pressure %%%%%%%%%%%%%%%
 
-    console.log(total_score_array, "=> total_score_array")
+    //console.log(total_score_array, "=> total_score_array")
 
     let score_calculated = total_score_array.reduce(function(a, b) { return a + b; }, 0);
     score_calculated = score_calculated + 50;
 
-    console.log(score_calculated, '=> score_calculated');
+    //console.log(score_calculated, '=> score_calculated');
 
     return parseInt(score_calculated);
 
@@ -2202,8 +2236,8 @@ function time_elapsed_returns_minutes(time_){
 	var timeDiff = time_ - time_now; //in ms
 	timeDiff = Math.round(timeDiff / 60000);
 	timeDiff = timeDiff * (-1); 
-   //  //console.log(time_, '=> time_', time_now, "=> time_now")
-   //  //console.log(timeDiff, "=> timediff");
+   //  ////console.log(time_, '=> time_', time_now, "=> time_now")
+   //  ////console.log(timeDiff, "=> timediff");
    timeDiff = timeDiff + " minutes ago";
    return timeDiff;
 }
