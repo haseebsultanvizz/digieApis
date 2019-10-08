@@ -9,6 +9,8 @@ var usersRouter = require('./routes/users');
 var apiRouter  = require('./api/api');
 var graphicalTradingRouter  = require('./api/chart3');
 
+var digie_apis = require('./routes/api');
+
 var app = express();
 
 // view engine setup
@@ -36,6 +38,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/apiEndPoint',apiRouter);
 app.use('/apiEndPointChart3',graphicalTradingRouter);
+app.use('/api', digie_apis);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
