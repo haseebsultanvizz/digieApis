@@ -228,11 +228,11 @@ router.post('/chart3', async function(req, res, next){
 
 
 
-                        new_bid_arr = sortByKey(new_bid_arr, "price");
-                        new_bid_arr.reverse();
+                        // new_bid_arr = sortByKey(new_bid_arr, "price");
+                        // new_bid_arr.reverse();
 
-                        new_ask_arr = sortByKey(new_ask_arr, "price");
-                        new_ask_arr.reverse();
+                        // new_ask_arr = sortByKey(new_ask_arr, "price");
+                        // new_ask_arr.reverse();
 						//Indicators
 						let indicators_object = await indicators(symbol, ask_arr, bid_arr, coin_info, db);
 						//CREATE RESPONSE OBJECT
