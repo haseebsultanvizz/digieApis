@@ -1,6 +1,6 @@
 const express = require('express');
 const speakeasy = require('speakeasy');
-const conn = require('../database');
+const conn = require('./connection/database');
 ObjectID = require('mongodb').ObjectID;
 const router = express.Router();
 
