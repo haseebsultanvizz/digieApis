@@ -6,9 +6,6 @@ ObjectID = require('mongodb').ObjectID;
 var md5 = require('md5');
 var app = express();
 
-
-
-
 router.post('/chart3', async function(req, res, next){
 	var post_data = req.body;
 	if(Object.keys(post_data).length > 0){
@@ -16,14 +13,14 @@ router.post('/chart3', async function(req, res, next){
 			conn.then(async db =>{
 				let symbol = post_data['coin'];
 				//////console.log(symbol, "===> symbol");
-				var coin_info = await db.collection('coins').findOne({ "symbol": symbol ,'user_id':'global'}); // Get coin info
+				var coin_info = await db.collection('coins').findOne({ "symbol": symbol ,'user_id':'global'});
                 let coin_base_order = coin_info['base_order'];
                 let blackwall_amnt = coin_info['depth_wall_amount'];
                 let yellowwall_amnt = coin_info['yellow_wall_amount'];
 				let coin_base_history = coin_info['base_history'];
 				let market_value = await get_market_value(symbol);
 				let bid_ask_arrays_object = get_remainder_group(symbol,market_value);
-				//let last_candle = await get_last_demand_candle(symbol);
+				let last_candle = await get_last_demand_candle(symbol);
 				//let up_barrier = await get_last_barrier(symbol, market_value, 'up');
 				//let down_barrier = await get_last_barrier(symbol, market_value, 'down');
 				bid_ask_arrays_object.then(async bid_ask_arrays_object_resolved =>{
@@ -41,7 +38,8 @@ router.post('/chart3', async function(req, res, next){
                         let black_wall_object = calculate_blackwall_amount_for_chart3(ask_arr, bid_arr, blackwall_amnt);
                         let yellow_wall_object = calculate_yellowwall_amount_for_chart3(ask_arr, bid_arr, yellowwall_amnt);
                         
-                                   
+                         console.log(black_wall_object , "black_wall_object");
+                         console.log(yellow_wall_object , "yellow_wall_object");                        
                         bid_arr.forEach(bid_element =>{
 							
                             
@@ -115,9 +113,9 @@ router.post('/chart3', async function(req, res, next){
 
 							}
 
-							//if(bid_price >= last_candle['low'] && bid_price <= last_candle['high']){
-								//temp_bid_arr['specific_price_wall'] = 'yes';
-							//}
+							if(bid_price >= last_candle['low'] && bid_price <= last_candle['high']){
+								temp_bid_arr['specific_price_wall'] = 'yes';
+							}
 							// if(bid_price >= down_barrier && next_bid_price < down_barrier){
 							// 	temp_bid_arr['is_bid_price_max'] = 'yes';
 							// }
@@ -193,9 +191,9 @@ router.post('/chart3', async function(req, res, next){
                                 }
 
 							}
-							///if(ask_price >= last_candle['low'] && ask_price <= last_candle['high']){
-							//	temp_ask_arr['specific_price_wall'] = 'yes';
-							//}
+							if(ask_price >= last_candle['low'] && ask_price <= last_candle['high']){
+								temp_ask_arr['specific_price_wall'] = 'yes';
+							}
 
 							///if(ask_price >= up_barrier && next_ask_price < up_barrier){
 								//temp_bid_arr['is_ask_price_max'] = 'yes';
@@ -227,13 +225,7 @@ router.post('/chart3', async function(req, res, next){
 						};
 						new_curr_arr.push(temp_curr_arr);
 
-
-
-                        // new_bid_arr = sortByKey(new_bid_arr, "price");
-                        // new_bid_arr.reverse();
-
-                        // new_ask_arr = sortByKey(new_ask_arr, "price");
-                        // new_ask_arr.reverse();
+                     
 						//Indicators
 						//let indicators_object = await indicators(symbol, ask_arr, bid_arr, coin_info, db);
 
@@ -244,7 +236,7 @@ router.post('/chart3', async function(req, res, next){
 
 						data_to_return['black_pressure'] = meta_promise['black_wall_pressure'];
 						data_to_return['yellow_pressure'] = meta_promise['yellow_wall_pressure'];
-						data_to_return['swing_point'] = "HL";
+						data_to_return['swing_point'] = meta_promise['swing_status'];
 						//Contract Info
 						data_to_return['mcp_avg'] = Convert_to_million(meta_promise['bid_contracts']+meta_promise['ask_contract']);
 						data_to_return['mcp_per'] = meta_promise['bid_percentage']+meta_promise['ask_percentage'];
@@ -274,24 +266,35 @@ router.post('/chart3', async function(req, res, next){
 
 						data_to_return['pressure_wall'] = meta_promise['great_wall'];
 
-						data_to_return['lc_bid_per'] = 60;
-						data_to_return['lc_ask_per'] = 40;
+
+                                //LAst Demand Candle
+                        let last_candle_ask = last_candle['ask_volume'];
+                        let last_candle_bid = last_candle['bid_volume'];
+                        let last_candle_total = last_candle['total_volume'];
+
+                        //console.log(last_candle_ask,"last_candle_ask",last_candle_bid,"last_candle_bid",last_candle_total,"last_candle_total");
+
+                        let lc_bid_per = (last_candle_bid/last_candle_total)* 100;
+                        let lc_ask_per = (last_candle_ask/last_candle_total)* 100;
+                        
+                        data_to_return['lc_bid_per'] = lc_bid_per;
+                        data_to_return['lc_ask_per'] = lc_ask_per;
 
 
-						data_to_return['t1ltc_bid_per'] = 50//meta_promise['black_wall_pressure'];
-						data_to_return['t1ltc_ask_per'] = 50//meta_promise['black_wall_pressure'];
+						data_to_return['t1ltc_bid_per'] = meta_promise['last_qty_bid_per'];
+						data_to_return['t1ltc_ask_per'] = meta_promise['last_qty_ask_per'];
 						data_to_return['t1ltc_time'] = meta_promise['last_qty_time_ago'];
 
-						data_to_return['t2ltc_bid_per'] = 50//meta_promise['black_wall_pressure'];
-						data_to_return['t2ltc_ask_per'] = 50//meta_promise['black_wall_pressure'];
+						data_to_return['t2ltc_bid_per'] = meta_promise['last_200_bid_per'];
+						data_to_return['t2ltc_ask_per'] = meta_promise['last_200_ask_per'];
 						data_to_return['t2ltc_time'] = meta_promise['last_200_time_ago'];
 
-						data_to_return['t3ltc_bid_per'] = 50//meta_promise['black_wall_pressure'];
-						data_to_return['t3ltc_ask_per'] = 50//meta_promise['black_wall_pressure'];
+						data_to_return['t3ltc_bid_per'] = meta_promise['last_qty_bid_per_15'];
+						data_to_return['t3ltc_ask_per'] = meta_promise['last_qty_ask_per_15'];
 						data_to_return['t3ltc_time'] = meta_promise['last_qty_time_ago_15'];
 
-						data_to_return['t4ltc_bid_per'] = 50//meta_promise['black_wall_pressure'];
-						data_to_return['t4ltc_ask_per'] = 50// meta_promise['black_wall_pressure'];
+						data_to_return['t4ltc_bid_per'] = meta_promise['last_200_bid_per_15'];
+						data_to_return['t4ltc_ask_per'] = meta_promise['last_200_ask_per_15'];
 						data_to_return['t4ltc_time'] = meta_promise['last_200_time_ago_15'];
 						//
 
