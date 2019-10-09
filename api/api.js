@@ -2208,7 +2208,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							console.log('***********************')
 
 
-							sell_price = parseInt(sell_price).toFixed(8);
+							sell_price = parseFloat(sell_price).toFixed(8);
 							console.log('***********************')
 							console.log('sell_price2 ',sell_price);
 							console.log('***********************')
