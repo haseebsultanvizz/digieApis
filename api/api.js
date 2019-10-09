@@ -2531,7 +2531,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					var current_data2222 = updated_price - buy_price;
 					var calculate_new_sell_percentage = (current_data2222 * 100 / buy_price);
 					
-					calculate_new_sell_percentage = isNaN(calculate_new_sell_percentage)?0:calculate_new_sell_percentage;
+		
 
 				 
 					//:::::::::::::::: triggers :::::::::::::::::::
@@ -2592,7 +2592,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						var current_data2222 = updated_price - purchased_price;
 						var calculate_new_sell_percentage = (current_data2222 * 100 / purchased_price);
 
-						calculate_new_sell_percentage = isNaN(calculate_new_sell_percentage)?0:calculate_new_sell_percentage
+					
 
 
 						if(side == 'profit_inBall'){
@@ -2668,7 +2668,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 							var current_data2222 = updated_price - buy_price;
 							var sell_profit_percent = (current_data2222 * 100 / buy_price);
-						   sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
+					
 
 
 		
@@ -2693,7 +2693,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							message = "Manual Order stoploss price changed and order Set to Auto Sell"
 								var current_data2222 = buy_price - updated_price  ;
 								var loss_percentage = (current_data2222 * 100 / updated_price);
-								loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
+							
 								temp_arr['stop_loss'] = 'yes',
 								temp_arr['loss_percentage'] = loss_percentage;
 
@@ -2749,7 +2749,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							console.log('two');
 							var current_data2222 = updated_price - buy_price;
 							var sell_profit_percent = (current_data2222 * 100 / buy_price);
-						   sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
+						  
 
 						   var update ={};
 						   update['modified_date'] = new Date();
@@ -2794,7 +2794,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							    message = "Manual Order stoploss price changed and order Set to Auto Sell"
 								var current_data2222 = buy_price - updated_price  ;
 								var loss_percentage = (current_data2222 * 100 / updated_price);
-								loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
+							
 								var upd_temp = {};
 								upd_temp['stop_loss'] = 'yes';
 								upd_temp['loss_percentage'] = loss_percentage;
@@ -3321,7 +3321,7 @@ router.post('/addUserCoin', async function(req, res, next){
 	}
 	})
 
-	
+
   
   Date.prototype.addHours= function(h){
     this.setHours(this.getHours()+h);
