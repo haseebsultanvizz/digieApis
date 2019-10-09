@@ -297,7 +297,7 @@ router.post('/chart3', async function(req, res, next){
 						data_to_return['t4ltc_time'] = meta_promise['last_200_time_ago_15'];
 						//
 
-						data_to_return['big_contract_pressure'] = meta_promise['black_wall_pressure'];
+						data_to_return['big_contract_pressure'] = meta_promise['great_wall'];
 
 						data_to_return['seven_level_pressuure'] = meta_promise['seven_level_depth'];
 						data_to_return['seven_level_color'] = meta_promise['seven_level_type'];
