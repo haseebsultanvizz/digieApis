@@ -2416,6 +2416,12 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					var tempOrderArr = (typeof tempOrderResp[0] =='undefined')?[]:tempOrderResp[0];
 					var profit_price = (typeof tempOrderArr.profit_price == 'undefined')?0:tempOrderArr.profit_price;
 
+					
+					var profit_percent = (typeof tempOrderArr.profit_percent == 'undefined')?0:tempOrderArr.profit_percent;
+
+					
+			
+
 					var temp_order_id = tempOrderArr['_id'];
 
 					if(status == 'new'){
@@ -2434,12 +2440,20 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					console.log(':::::::::::::::::::::::::');
 
 
-					var current_data2222 = profit_price - buy_price;
-					var sell_percentage = (current_data2222 * 100 / buy_price);
+					
+
+					if(profit_percent == 0 || profit_percent == ''){
+						var current_data2222 = profit_price - buy_price;
+						var sell_percentage = (current_data2222 * 100 / buy_price);
 						sell_percentage = isNaN(sell_percentage)?0:sell_percentage;
+					}else{
+						sell_percentage = profit_percent;
+					}	
+
 
 					var new_sell_price = updated_buy_price +(updated_buy_price/100)*sell_percentage;
 
+					console.log('updatd sell price')
 
 					var filter = {};
 						filter['_id'] = temp_order_id;
