@@ -2138,6 +2138,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 				let status =  ordersArr[row].status;
 				let quantity = ordersArr[row].quantity;
 
+				
+
 				newRow['quantity'] = quantity;
 				newRow['status'] = status;
 				let sell_order_id = (typeof ordersArr[row].sell_order_id =='undefined')?'':ordersArr[row].sell_order_id;
@@ -2145,7 +2147,15 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 				var buyOrderId = ordersArr[row]._id;
 
 				newRow['_id'] = ordersArr[row]._id;
-				newRow['price'] = parseFloat(price).toFixed(8);
+
+				if(status == 'new'){
+					newRow['price'] = parseFloat(price).toFixed(8);
+				}else{
+					let buy_price = (typeof  ordersArr[row].market_value == 'undefined')?price:ordersArr[row].market_value;
+					newRow['price'] = parseFloat(buy_price).toFixed(8);
+				}
+
+				
 				newRow['trigger_type'] = ordersArr[row].trigger_type;  
 
 				newArr['auto_sell'] = ordersArr[row].auto_sell;
@@ -3120,6 +3130,46 @@ if (post_data_key_array.length == 0) {
 	}
 }
 })
+
+
+
+	router.post('/addUserCoins', function(req, res, next) {
+		var post_data = req.body;
+		let post_data_key_array = Object.keys(post_data);
+		if (post_data_key_array.length == 0) {
+		res.send({ "success": "false", "message": "No data posted in a post request" })
+		} else {
+		conn.then(db => {
+		if("admin_id" in post_data && "coin_ids" in post_data){
+			let admin_id = post_data['admin_id'];
+			let coin_ids = post_data['coin_ids'];
+			let promise_arr = [];
+			coin_id.forEach(async coin_idd => {
+					promise_arr.push(get_coins_by_ids(coin_idd))
+			})
+
+			Promise.all(promise_arr).then(promise_res => {
+				promise_res.forEach(coin_arr => {
+					console.log(coin_arr);
+				})
+			})
+
+			res.send(coins_arr)
+
+
+		}
+
+		async function get_coins_by_ids(coin_id){
+			return new Promise(async function(resolve, reject){
+				db.collection("coins").find({"_id": ObjectID("coin_id")}).toArray((err, data)=>{
+				if (err) throw err;
+				resolve(data[0]['symbol']);
+				})
+			})
+		}
+		})
+		}
+	})//End of addUserCoins
 
   //:::::::::::::::::::::::::::::::::::::::::: /
 
