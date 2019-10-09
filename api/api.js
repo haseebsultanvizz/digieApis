@@ -2206,6 +2206,12 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							sell_price = parseInt(sell_price).toFixed(8);
 
 
+							console.log(':::::::::::::::::::::::');
+							console.log(sell_price);
+							console.log('sellOrderArr ',sellOrderArr._id);
+							console.log(':::::::::::::::::::::::');
+
+
 
 							let stop_loss = (typeof sellOrderArr.stop_loss =='undefined')?'no':sellOrderArr.stop_loss;
 
