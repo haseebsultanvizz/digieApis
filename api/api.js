@@ -3281,6 +3281,47 @@ if (post_data_key_array.length == 0) {
 
 
   
+
+router.post('/addUserCoin', async function(req, res, next){
+	var post_data = req.body;
+	let post_data_key_array = Object.keys(post_data);
+	if(post_data_key_array.length == 0){
+	res.send({"success": "false", "message": "No data posted in a post request"})
+	} else{
+	console.log(post_data, "===> post_data");
+	if("coin_arr" in post_data && "user_id" in post_data){
+	conn.then(db => {
+	let coin_arr = post_data["coin_arr"];
+	let user_id = post_data["user_id"];
+	db.collection("coins").deleteMany({"user_id": user_id});
+	coin_arr.forEach(coin_id => {
+	db.collection("coins").find({"_id": new ObjectID(coin_id)}).toArray(async function(err, coin_data){
+	if (err) throw err;
+	if(coin_data.length > 0){
+	let new_coin_symbol = coin_data[0]['symbol'];
+	let new_coin_name = coin_data[0]['coin_name'];
+	let new_coin_logo = coin_data[0]['coin_logo'];
+	let new_exchange_type = coin_data[0]['exchange_type'];
+	let insert_obj = {"user_id": user_id, "symbol": new_coin_symbol, "coin_name": new_coin_name, "coin_logo": new_coin_logo, "exchange_type": new_exchange_type};
+	db.collection("coins").insertOne(insert_obj, function(err1, obj){
+	if (err1) throw err1;
+	if(obj.result.nInserted > 0){
+	console.log(obj.result.nInserted, "====> coin inserted ")
+	}
+	})
+	} else{
+	console.log("error 2")
+	res.status(500).send({"success": "false", "message": "Something gone wrong while finding the coin id you've posted!", "coin_id": coin_id})
+	}
+	})
+	})
+	})
+	res.status(200).send({"success": "true", "message": "coins inserted"})
+	}
+	}
+	})
+
+	
   
   Date.prototype.addHours= function(h){
     this.setHours(this.getHours()+h);
