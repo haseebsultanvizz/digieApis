@@ -2407,31 +2407,48 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 			var tempOrderResp = await listselTempOrders(orderId,exchange);
 
-			var tempOrderArr = (typeof tempOrderResp[0] =='undefined')?[]:tempOrderResp[0];
-			var profit_price = (typeof tempOrderArr.profit_price == 'undefined')?0:tempOrderArr.profit_price;
+			console.log('::::::::::::::::::::::::::::::');
+			console.log('tempordre arr');
+			console.log(tempOrderResp);
+			console.log('::::::::::::::::::::::::::::::');
 
-			var temp_order_id = tempOrderArr['_id'];
+			if(tempOrderResp.length >0){
+					var tempOrderArr = (typeof tempOrderResp[0] =='undefined')?[]:tempOrderResp[0];
+					var profit_price = (typeof tempOrderArr.profit_price == 'undefined')?0:tempOrderArr.profit_price;
 
-			if(status == 'new'){
-				var buy_price = buyOrderArr.price;
-			}else{
-				var buy_price = (typeof buyOrderArr.market_value == 'undefined')?buyOrderArr.price:buyOrderArr.market_value;
-			}
+					var temp_order_id = tempOrderArr['_id'];
 
-			var current_data2222 = profit_price - buy_price;
-			var sell_percentage = (current_data2222 * 100 / buy_price);
-				sell_percentage = isNaN(sell_percentage)?0:sell_percentage;
-
-			var new_sell_price = updated_buy_price +(updated_buy_price/100)*sell_percentage;
+					if(status == 'new'){
+						var buy_price = buyOrderArr.price;
+					}else{
+						var buy_price = (typeof buyOrderArr.market_value == 'undefined')?buyOrderArr.price:buyOrderArr.market_value;
+					}
 
 
-			var filter = {};
-				filter['_id'] = temp_order_id;
-			var update = {};	
-			update['profit_price'] = new_sell_price;
-			var collection = (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;	
-			var updatePromise =  updateOne(filter,update,collection);
-				updatePromise.then((resolve)=>{});
+					console.log(':::::::::::::::::::::::::');
+						console.log('buy_price ',buy_price);
+					console.log(':::::::::::::::::::::::::');
+
+					console.log(':::::::::::::::::::::::::');
+						console.log('profit_price ',profit_price);
+					console.log(':::::::::::::::::::::::::');
+
+
+					var current_data2222 = profit_price - buy_price;
+					var sell_percentage = (current_data2222 * 100 / buy_price);
+						sell_percentage = isNaN(sell_percentage)?0:sell_percentage;
+
+					var new_sell_price = updated_buy_price +(updated_buy_price/100)*sell_percentage;
+
+
+					var filter = {};
+						filter['_id'] = temp_order_id;
+					var update = {};	
+					update['profit_price'] = new_sell_price;
+					var collection = (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;	
+					var updatePromise =  updateOne(filter,update,collection);
+						updatePromise.then((resolve)=>{});
+			}//End of temp order Arr
 		}
 
 	}//End of trigger type no
