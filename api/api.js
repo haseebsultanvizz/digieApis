@@ -2365,6 +2365,79 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 	var previous_buy_price =  req.body.previous_buy_price;
 	var updated_buy_price =  req.body.updated_buy_price;
 	
+	var buyOrderResp = await  listOrderById(orderId,exchange);
+	var buyOrderArr = (typeof buyOrderResp[0] == 'undefined')?[]:buyOrderResp[0];
+
+	var sell_order_id = (typeof buyOrderArr['sell_order_id'] == 'undefined')?'':buyOrderArr['sell_order_id'];
+
+	var status = (typeof buyOrderArr['status'] == 'undefined')?'':buyOrderArr['status'];
+
+	var trigger_type = (typeof buyOrderArr['trigger_type'] == 'undefined')?'':buyOrderArr['trigger_type'];
+
+	if(trigger_type == 'no'){
+
+		if(sell_order_id !=''){
+			var sellOrderResp = await listSellOrderById(sell_order_id,exchange);
+
+			var sellOrderArr = (typeof sellOrderResp[0] =='undefined')?[]:sellOrderResp[0];
+			var sell_price = (typeof sellOrderArr.sell_price == 'undefined')?0:sellOrderArr.sell_price;
+
+			if(status == 'new'){
+				var buy_price = buyOrderArr.price;
+			}else{
+				var buy_price = (typeof buyOrderArr.market_value == 'undefined')?buyOrderArr.price:buyOrderArr.market_value;
+			}
+
+			var current_data2222 = sell_price - buy_price;
+			var sell_percentage = (current_data2222 * 100 / buy_price);
+				sell_percentage = isNaN(sell_percentage)?0:sell_percentage;
+
+			var new_sell_price = updated_buy_price +(updated_buy_price/100)*sell_percentage;
+
+
+			var filter = {};
+				filter['_id'] = new ObjectID(sell_order_id);
+			var update_order = {};	
+				update_order['sell_price'] = new_sell_price;
+			var collection_order = (exchange == 'binance')?'orders':'orders_'+exchange;
+			var updatePromise =  updateOne(filter,update_order,collection_order);
+			updatePromise.then((resolve)=>{});
+
+		}else {//End of sell order id not empty
+
+			var tempOrderResp = await listselTempOrders(orderId,exchange);
+
+			var tempOrderArr = (typeof tempOrderResp[0] =='undefined')?[]:tempOrderResp[0];
+			var profit_price = (typeof tempOrderArr.profit_price == 'undefined')?0:tempOrderArr.profit_price;
+
+			var temp_order_id = tempOrderArr['_id'];
+
+			if(status == 'new'){
+				var buy_price = buyOrderArr.price;
+			}else{
+				var buy_price = (typeof buyOrderArr.market_value == 'undefined')?buyOrderArr.price:buyOrderArr.market_value;
+			}
+
+			var current_data2222 = profit_price - buy_price;
+			var sell_percentage = (current_data2222 * 100 / buy_price);
+				sell_percentage = isNaN(sell_percentage)?0:sell_percentage;
+
+			var new_sell_price = updated_buy_price +(updated_buy_price/100)*sell_percentage;
+
+
+			var filter = {};
+				filter['_id'] = temp_order_id;
+			var update = {};	
+			update['profit_price'] = new_sell_price;
+			var collection = (exchange == 'binance')?'temp_sell_orders':'temp_sell_orders_'+exchange;	
+			var updatePromise =  updateOne(filter,update,collection);
+				updatePromise.then((resolve)=>{});
+		}
+
+	}//End of trigger type no
+
+
+
 
 	var log_msg = "Order buy price updated from("+parseFloat(previous_buy_price).toFixed(8)+") to "+parseFloat(updated_buy_price).toFixed(8)+"  From Chart";
 
