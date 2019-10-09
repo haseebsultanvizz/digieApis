@@ -2392,8 +2392,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 			var sell_percentage = (current_data2222 * 100 / buy_price);
 				sell_percentage = isNaN(sell_percentage)?0:sell_percentage;
 
-			var new_sell_price = updated_buy_price +(updated_buy_price/100)*sell_percentage;
-
+			
+			var new_sell_price = parseFloat(updated_buy_price) +parseFloat((updated_buy_price/100)*sell_percentage);
 
 			var filter = {};
 				filter['_id'] = new ObjectID(sell_order_id);
@@ -2451,7 +2451,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					}	
 
 
-					var new_sell_price = updated_buy_price +(updated_buy_price/100)*sell_percentage;
+					var new_sell_price = parseFloat(updated_buy_price) +parseFloat((updated_buy_price/100)*sell_percentage);
 
 					console.log('updatd sell price')
 
