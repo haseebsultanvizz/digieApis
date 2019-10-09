@@ -2201,8 +2201,17 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						
 						
 
-							let sell_price = (typeof sellOrderArr.sell_price =='undefined')?null:sellOrderArr.sell_price;
+							let sell_price = (typeof sellOrderArr.sell_price =='undefined')?null:sellOrderArr.sell_price;	
+
+							console.log('***********************')
+							console.log('sell_price 1',sell_price);
+							console.log('***********************')
+
+
 							sell_price = parseInt(sell_price).toFixed(8);
+							console.log('***********************')
+							console.log('sell_price2 ',sell_price);
+							console.log('***********************')
 
 							let stop_loss = (typeof sellOrderArr.stop_loss =='undefined')?'no':sellOrderArr.stop_loss;
 
