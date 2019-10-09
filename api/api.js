@@ -2209,6 +2209,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							console.log(':::::::::::::::::::::::');
 							console.log(sell_price);
 							console.log('sellOrderArr ',sellOrderArr._id);
+
+							console.log(sellOrderArr)
 							console.log(':::::::::::::::::::::::');
 
 

@@ -38,8 +38,7 @@ router.post('/chart3', async function(req, res, next){
                         let black_wall_object = calculate_blackwall_amount_for_chart3(ask_arr, bid_arr, blackwall_amnt);
                         let yellow_wall_object = calculate_yellowwall_amount_for_chart3(ask_arr, bid_arr, yellowwall_amnt);
                         
-                         console.log(black_wall_object , "black_wall_object");
-                         console.log(yellow_wall_object , "yellow_wall_object");                        
+                           
                         bid_arr.forEach(bid_element =>{
 							
                             
