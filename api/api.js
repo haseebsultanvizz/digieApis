@@ -2169,7 +2169,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					    calculateSellPrice = parseFloat(calculateSellPrice).toFixed(8);
 					newRow['profit_price_'] = ( (typeof calculateSellPrice == 'undefined') || isNaN(calculateSellPrice) || calculateSellPrice ==0)?null:calculateSellPrice;
 
-					let lsPrice = isNaN(ordersArr[row].iniatial_trail_stop)?0:ordersArr[row].iniatial_trail_stop;
+					let lsPrice = ordersArr[row].iniatial_trail_stop;
+
 					lsPrice = parseFloat(lsPrice).toFixed(8);
 					
 					newRow['loss_price_'] = ( (typeof lsPrice == 'undefined') || isNaN(lsPrice) || lsPrice ==0)?null:lsPrice;
@@ -2197,29 +2198,11 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						if(sellOrder.length >0){
 							let sellOrderArr = sellOrder[0];
 							let loss_percentage = (typeof sellOrderArr.loss_percentage =='undefined')?null:sellOrderArr.loss_percentage;
-							loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
+						
 						
 
 							let sell_price = (typeof sellOrderArr.sell_price =='undefined')?null:sellOrderArr.sell_price;
-
-							console.log('*********************');
-							console.log('sell_price',sell_price);
-							console.log('*********************');
-
-
-							sell_price = isNaN(sell_price)?0:sell_price;
-
 							sell_price = parseInt(sell_price).toFixed(8);
-
-
-							console.log(':::::::::::::::::::::::');
-							console.log(sell_price);
-							console.log('sellOrderArr ',sellOrderArr._id);
-
-							console.log(sellOrderArr)
-							console.log(':::::::::::::::::::::::');
-
-
 
 							let stop_loss = (typeof sellOrderArr.stop_loss =='undefined')?'no':sellOrderArr.stop_loss;
 
@@ -2249,11 +2232,11 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 								let tempArr = tempArrResp[0];
 								let loss_percentage = (typeof tempArr.loss_percentage =='undefined')?0:tempArr.loss_percentage;
-								loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
+								
 							
 
 								let profit_price = (typeof tempArr.profit_price =='undefined')?null:tempArr.profit_price;
-								profit_price = isNaN(profit_price)?0:profit_price;
+						
 								profit_price = parseFloat(profit_price).toFixed(8);
 
 								let stop_loss = (typeof tempArr.stop_loss =='undefined')?'no':tempArr.stop_loss;
@@ -2269,7 +2252,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 							
 
-								newRow['profit_price_'] = ((typeof profit_price == 'undefined') || isNaN(profit_price) || profit_price ==0)?null:profit_price;
+								newRow['profit_price_'] = ((typeof profit_price == 'undefined') || profit_price ==0)?null:profit_price;
 
 
 								
