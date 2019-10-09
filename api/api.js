@@ -2167,13 +2167,13 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 				if(trigger_type !='no'){
 					let calculateSellPrice = price+((price/100)*profitPercentage);
 					    calculateSellPrice = parseFloat(calculateSellPrice).toFixed(8);
-					newRow['profit_price_'] = ( (typeof calculateSellPrice == 'undefined') || isNaN(calculateSellPrice) || calculateSellPrice ==0)?null:calculateSellPrice;
+					newRow['profit_price_'] = ( (typeof calculateSellPrice == 'undefined') || calculateSellPrice ==0)?null:calculateSellPrice;
 
 					let lsPrice = ordersArr[row].iniatial_trail_stop;
 
 					lsPrice = parseFloat(lsPrice).toFixed(8);
 					
-					newRow['loss_price_'] = ( (typeof lsPrice == 'undefined') || isNaN(lsPrice) || lsPrice ==0)?null:lsPrice;
+					newRow['loss_price_'] = ( (typeof lsPrice == 'undefined') || lsPrice ==0)?null:lsPrice;
 				}else{
 
 					if(auto_sell =='no'){
@@ -2215,7 +2215,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							}
 
 							
-							newRow['profit_price_'] = ((typeof sell_price == 'undefined') || isNaN(sell_price) || sell_price ==0)?null:sell_price;
+							newRow['profit_price_'] = ((typeof sell_price == 'undefined') || sell_price ==0)?null:sell_price;
 
 						
 
