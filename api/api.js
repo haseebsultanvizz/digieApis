@@ -2163,6 +2163,10 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 				var currentMarketPrice = (currentMarketPriceArr.length ==0)?0:currentMarketPriceArr[0]['price'];
 				currentMarketPrice = parseFloat(currentMarketPrice);
 
+				console.log('currentMarketPrice :',currentMarketPrice)
+
+				console.log('buy_price :',buy_price)
+
 				let profit_loss_percentage = (currentMarketPrice - buy_price/buy_price)*100;
 				newRow['profit_loss_percentage'] = parseFloat(profit_loss_percentage).toFixed(2);
 				
