@@ -1,4 +1,4 @@
-var conn = require('../connection.js');
+const conn = require('../connection/database');
 const express = require('express')
 var app = express()
 var cron = require('node-cron');
