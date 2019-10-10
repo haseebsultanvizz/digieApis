@@ -2582,7 +2582,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					if(sell_order_id !=''){
 
 						;
-						var sellOrderResp = listSellOrderById(sell_order_id,exchange);
+						var sellOrderResp = await listSellOrderById(sell_order_id,exchange);
 						var sellOrderArr = (typeof sellOrderResp[0] == 'undefined')?[]:sellOrderResp[0];
 
 
