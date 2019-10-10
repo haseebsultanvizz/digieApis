@@ -2627,6 +2627,13 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						   var current_data2222 = purchased_price - updated_price;
 						   var stop_loss_percentage = (current_data2222 * 100 / updated_price);
 
+						   console.log('::::::::::::::::::::::::');
+						   console.log('purchased_price',purchased_price);
+
+
+
+						   console.log('::::::::::::::::::::::::');
+						   console.log('updated_price',updated_price)
 
 
 						   console.log(':::::::::::::::::::::::::::::');
