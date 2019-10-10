@@ -13,7 +13,7 @@ console.log(conn);
 
 
 //cron.schedule('* * * * * *', ()=> {
-    conn.then(db => {
+    conn.then(async db => {
         console.log(db, "====")
         start = new Date()
         console.log("satrted")
