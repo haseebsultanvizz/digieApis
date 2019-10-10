@@ -2588,7 +2588,13 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						var sell_price = (typeof sellOrderArr.sell_price =='undefined')?'':sellOrderArr.sell_price;
 						var stop_loss = (typeof sellOrderArr.stop_loss =='undefined')?'':sellOrderArr.stop_loss;
 						var loss_percentage = (typeof sellOrderArr.loss_percentage =='undefined')?'':sellOrderArr.loss_percentage;
+
 						var purchased_price = (typeof sellOrderArr.purchased_price =='undefined')?'':sellOrderArr.purchased_price;
+
+						var market_value = (typeof sellOrderArr.market_value =='undefined')?'':sellOrderArr.market_value;
+
+						purchased_price = (purchased_price  == '')?market_value:purchased_price;
+						
 						var current_data2222 = updated_price - purchased_price;
 						var calculate_new_sell_percentage = (current_data2222 * 100 / purchased_price);
 
@@ -2620,6 +2626,12 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							message = "Manual Order  stop loss price Changed";
 						   var current_data2222 = purchased_price - updated_price;
 						   var stop_loss_percentage = (current_data2222 * 100 / updated_price);
+
+
+
+						   console.log(':::::::::::::::::::::::::::::');
+						   console.log('stop_loss_percentage',stop_loss_percentage);
+						   console.log('::::::::::::::::::::::::--- :::'); 
 
 
 							var filter = {};
