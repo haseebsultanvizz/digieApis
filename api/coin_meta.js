@@ -17,11 +17,11 @@ console.log(conn);
         console.log(db, "====")
         start = new Date()
         console.log("satrted")
-        calculate_coin_meta("XRPBTC", db);
-        // let coins_arr = await get_all_coins(db);
-        // coins_arr.forEach(async symbol => {
-        // 	calculate_coin_meta(symbol, db);
-        // }); 
+        //calculate_coin_meta("XRPBTC", db);
+        let coins_arr = await get_all_coins(db);
+        coins_arr.forEach(async symbol => {
+        	calculate_coin_meta(symbol, db);
+        }); 
     })
 //})
 
