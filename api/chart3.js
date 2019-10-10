@@ -253,7 +253,7 @@ router.post('/chart3', async function(req, res, next){
 						data_to_return['roll_ask_per'] = meta_promise['buyers_percentage'];
 						//15-Min / Rolling Candle/Trade Volume
 						data_to_return['roll_fif_bid_per'] = meta_promise['sellers_percentage_fifteen'];
-						data_to_return['roll_fif_ask_per'] = meta_promise['sellers_percentage_fifteen'];
+						data_to_return['roll_fif_ask_per'] = meta_promise['buyers_percentage_fifteen'];
 						//Calculate Pressure Function PHP/ Five Level Pressure Node
 						data_to_return['pressure_up'] = meta_promise['up_pressure'];
 						data_to_return['pressure_down'] = meta_promise['down_pressure'];
