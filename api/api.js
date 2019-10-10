@@ -2587,7 +2587,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 
 						console.log('::::::::":":":":":"');
-						console.log(sellOrderArr)
+						console.log(sellOrderResp)
 						console.log('::::::::":":":":":"');
 
 
