@@ -1,23 +1,32 @@
-const conn = require('../connection/database');
+var conn = require('../connection/database');
 const express = require('express')
 var app = express()
 var cron = require('node-cron');
 ObjectID = require('mongodb').ObjectID;
+var app = express();
 
+
+
+console.log("klsfhdlksjdflkj")
 var start;
-cron.schedule('*/10 * * * * *', () => {
-conn.then(db => {
-    start = new Date()
-	let coins_arr = await get_all_coins(db);
-	coins_arr.forEach(async symbol => {
-		calculate_coin_meta(symbol, db);
-	}); 
-});
-});
+console.log(conn);
 
+calculate_coin_meta("XRPBTC", db);
+conn.then(db => {
+    console.log(db, "====")
+    start = new Date()
+    console.log("satrted")
+    // calculate_coin_meta("XRPBTC", db);
+	// let coins_arr = await get_all_coins(db);
+	// coins_arr.forEach(async symbol => {
+	// 	calculate_coin_meta(symbol, db);
+	// }); 
+})
+
+console.log("lkdflkdjf")
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%% - Start of Function : Chart3 - %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function calculate_coin_meta(coin_symbol, db) { //start of : function chart3
+async function calculate_coin_meta(coin_symbol, db) { //start of : function chart3
 	//%%%%%%%%%%%%%%%%%% Start of Promise object -> To be used to return Promises within Promises in a Function definition %%%%%%%%%%%%%%%%%%
 	return new Promise(function (resolve, reject) {
 		var coin_info = db.collection('coins').findOne({
@@ -408,7 +417,7 @@ function calculate_coin_meta(coin_symbol, db) { //start of : function chart3
 					let data_to_insert = {};
 					data_to_insert = data;
 					data_to_insert['coin'] = coin_symbol;
-					db.collection('chart3_group_test').insertOne(data_to_insert);
+					// db.collection('chart3_group_test').insertOne(data_to_insert);
 
 
 					final_chart3_json_arr_bid.push(data);
@@ -467,7 +476,7 @@ function calculate_coin_meta(coin_symbol, db) { //start of : function chart3
 					let data_to_insert = {};
 					data_to_insert = data;
 					data_to_insert['coin'] = coin_symbol;
-					db.collection('chart3_group_test').insertOne(data_to_insert);
+					// db.collection('chart3_group_test').insertOne(data_to_insert);
 
 					//console.log(data_to_insert, "===> data_to_insert")
 					final_chart3_json_arr_ask.push(data);
@@ -696,12 +705,15 @@ function calculate_coin_meta(coin_symbol, db) { //start of : function chart3
                     
                     final_chart3_arr_for_group['coin_meta'] = chart3_response;
                     //%%%%% - INSERT COIN META INTO ITS RELAVANT SEPARATE COLLECTION FOR FURTHER CALCULATION WE MIGHT DO IN THE FUTURE - %%%%%%
-                    db.collection("coin_meta_test").insertOne(chart3_response, function(err, res){
-                        console.log(err);
-                        var end = new Date() - start
-                        console.info('Execution time: %dms', end)
-                    	console.log(res, "res")
-                    });
+                    var end = new Date() - start
+                    console.info('Execution time: %dms', end)
+                    console.log(chart3_response, "chart3_response")
+                    // db.collection("coin_meta_test").insertOne(chart3_response, function(err, res){
+                    //     console.log(err);
+                    //     var end = new Date() - start
+                    //     console.info('Execution time: %dms', end)
+                    // 	console.log(res, "res")
+                    // });
                     
                     //console.log(final_chart3_arr_for_group, "===> final_chart3_arr_for_group")
                     //console.log(final_chart3_arr_for_group, "====> final_chart3_arr_for_group")

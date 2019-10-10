@@ -8,8 +8,8 @@ var logger = require('morgan');
 //var usersRouter = require('./routes/users');
 var apiRouter  = require('./api/api');
 var graphicalTradingRouter  = require('./api/chart3');
-
 var digie_apis = require('./api/rabi_api');
+var coinMetaRouter  = require('./api/coin_meta');
 
 var app = express();
 
