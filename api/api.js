@@ -2167,7 +2167,11 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 				console.log('buy_price :',buy_price)
 
-				let profit_loss_percentage = (currentMarketPrice - buy_price/buy_price)*100;
+				var current_data2222 = currentMarketPrice - buy_price;
+			  	var profit_loss_percentage = (current_data2222 * 100 / buy_price);
+
+			   console.log(profit_loss_percentage)
+
 				newRow['profit_loss_percentage'] = parseFloat(profit_loss_percentage).toFixed(2);
 				
 				
