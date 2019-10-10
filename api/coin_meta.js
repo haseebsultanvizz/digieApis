@@ -419,7 +419,8 @@ async function calculate_coin_meta(coin_symbol, db) { //start of : function char
 					//%%%%% - DATA TO INSERT IN COLLECTION CHART3_GROUP - %%%%%
 					let data_to_insert = {};
 					data_to_insert = data;
-					data_to_insert['coin'] = coin_symbol;
+                    data_to_insert['coin'] = coin_symbol;
+                    console.log(data_to_insert, "===> chart3 group bid")
 					// db.collection('chart3_group_test').insertOne(data_to_insert);
 
 
@@ -478,7 +479,8 @@ async function calculate_coin_meta(coin_symbol, db) { //start of : function char
 					//%%%%% - DATA TO INSERT IN COLLECTION CHART3_GROUP - %%%%%
 					let data_to_insert = {};
 					data_to_insert = data;
-					data_to_insert['coin'] = coin_symbol;
+                    data_to_insert['coin'] = coin_symbol;
+                    console.log(data_to_insert, "===> chart3 group ask")
 					// db.collection('chart3_group_test').insertOne(data_to_insert);
 
 					//console.log(data_to_insert, "===> data_to_insert")
