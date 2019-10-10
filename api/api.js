@@ -2137,6 +2137,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 				let price = (ordersArr[row].price);
 				let status =  ordersArr[row].status;
 				let quantity = ordersArr[row].quantity;
+				var coin = ordersArr[row].symbol;
 
 				
 
@@ -2148,12 +2149,24 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 				newRow['_id'] = ordersArr[row]._id;
 
+				let buy_price = (typeof  ordersArr[row].market_value == 'undefined')?price:ordersArr[row].market_value;
+
 				if(status == 'new'){
 					newRow['price'] = parseFloat(price).toFixed(8);
 				}else{
-					let buy_price = (typeof  ordersArr[row].market_value == 'undefined')?price:ordersArr[row].market_value;
+					
 					newRow['price'] = parseFloat(buy_price).toFixed(8);
 				}
+
+
+				let currentMarketPriceArr = await listCurrentMarketPrice(coin,exchange);
+				var currentMarketPrice = (currentMarketPriceArr.length ==0)?0:currentMarketPriceArr[0]['price'];
+				currentMarketPrice = parseFloat(currentMarketPrice);
+
+				let profit_loss_percentage = (currentMarketPrice - buy_price/buy_price)*100;
+				newRow['profit_loss_percentage'] = parseFloat(profit_loss_percentage).toFixed(2);
+				
+				
 
 				
 				newRow['trigger_type'] = ordersArr[row].trigger_type;  
@@ -2174,6 +2187,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					lsPrice = parseFloat(lsPrice).toFixed(8);
 					
 					newRow['loss_price_'] = ( (typeof lsPrice == 'undefined') || lsPrice ==0)?null:lsPrice;
+				
+
 				}else{
 
 					if(auto_sell =='no'){
