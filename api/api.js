@@ -2584,6 +2584,13 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						;
 						var sellOrderResp = listSellOrderById(sell_order_id,exchange);
 						var sellOrderArr = (typeof sellOrderResp[0] == 'undefined')?[]:sellOrderResp[0];
+
+
+						console.log('::::::::":":":":":"');
+						console.log(sellOrderArr)
+						console.log('::::::::":":":":":"');
+
+
 						var sell_profit_percent = (typeof sellOrderArr.sell_profit_percent =='undefined')?'':sellOrderArr.sell_profit_percent;
 						var sell_price = (typeof sellOrderArr.sell_price =='undefined')?'':sellOrderArr.sell_price;
 						var stop_loss = (typeof sellOrderArr.stop_loss =='undefined')?'':sellOrderArr.stop_loss;
