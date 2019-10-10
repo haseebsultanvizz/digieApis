@@ -11,17 +11,20 @@ console.log("klsfhdlksjdflkj")
 var start;
 console.log(conn);
 
-calculate_coin_meta("XRPBTC", db);
-conn.then(db => {
-    console.log(db, "====")
-    start = new Date()
-    console.log("satrted")
-    // calculate_coin_meta("XRPBTC", db);
-	// let coins_arr = await get_all_coins(db);
-	// coins_arr.forEach(async symbol => {
-	// 	calculate_coin_meta(symbol, db);
-	// }); 
-})
+
+//cron.schedule('* * * * * *', ()=> {
+    conn.then(db => {
+        console.log(db, "====")
+        start = new Date()
+        console.log("satrted")
+        calculate_coin_meta("XRPBTC", db);
+        // let coins_arr = await get_all_coins(db);
+        // coins_arr.forEach(async symbol => {
+        // 	calculate_coin_meta(symbol, db);
+        // }); 
+    })
+//})
+
 
 console.log("lkdflkdjf")
 
