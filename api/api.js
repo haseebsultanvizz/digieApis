@@ -2185,7 +2185,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						calculateSellPrice = parseFloat(calculateSellPrice).toFixed(8);
 						
 					var profit_price_ = ( (typeof calculateSellPrice == 'undefined') || calculateSellPrice ==0)?null:calculateSellPrice;
-					newRow['profit_price_'] = (Number.isNaN(profit_price_))?null:profit_price_;
+					newRow['profit_price_'] = (Number.isNaN(parseFloat(profit_price_)))?null:profit_price_;
 
 					
 
@@ -2196,7 +2196,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					 
 
 					var loss_price_ = ( (typeof lsPrice == 'undefined') || lsPrice ==0)?null:lsPrice;
-					newRow['loss_price_'] = (Number.isNaN(loss_price_))?null:loss_price_;
+					newRow['loss_price_'] = (Number.isNaN(parseFloat(loss_price_)))?null:loss_price_;
 				
 
 				}else{
@@ -2241,7 +2241,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 								var loss_price_ = parseFloat(calculate_stop_loss).toFixed(8);
 
-								newRow['loss_price_'] = (Number.isNaN(loss_price_))?null:loss_price_;
+								newRow['loss_price_'] = (Number.isNaN(parseFloat(loss_price_)))?null:loss_price_;
 							}else{
 								newRow['loss_price_'] = null;
 							}
@@ -2250,7 +2250,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							
 							
 							var profit_price_ = ((typeof sell_price == 'undefined') || sell_price ==0)?null:sell_price;
-							newRow['profit_price_'] = (Number.isNaN(profit_price_))?null:profit_price_;
+							newRow['profit_price_'] = (Number.isNaN(parseFloat(profit_price_)))?null:profit_price_;
 						
 
 							let lth_functionality = (typeof sellOrderArr.lth_functionality == 'undefined')?null:sellOrderArr.lth_functionality;
@@ -2279,7 +2279,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 									let calculate_stop_loss = (parseFloat(price)* parseFloat(loss_percentage))/100;
 									calculate_stop_loss = (price) - parseFloat(calculate_stop_loss);
 									var loss_price_ = parseFloat(calculate_stop_loss).toFixed(8); 
-									newRow['loss_price_'] = (Number.isNaN(loss_price_))?null:loss_price_;
+									newRow['loss_price_'] = (Number.isNaN(parseFloat(loss_price_)))?null:loss_price_;
 								}else{
 									newRow['loss_price_'] = null;
 								}
@@ -2289,7 +2289,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								
 
 								var profit_price_ = ((typeof profit_price == 'undefined') || profit_price ==0)?null:profit_price;
-								newRow['profit_price_'] = (Number.isNaN(profit_price_))?null:profit_price_;
+								newRow['profit_price_'] = (Number.isNaN(parseFloat(profit_price_)))?null:profit_price_;
 
 
 								
