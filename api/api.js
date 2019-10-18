@@ -159,7 +159,8 @@ function listUserCoins(userId){
 				if(err){
 					resolve(err)
 				}else{
-					resolve(result)
+					var return_arr = await mergeContentManageCoins(result);
+					resolve(return_arr)
 				}
 			})
 		})
@@ -3387,6 +3388,82 @@ router.post('/addUserCoin', async function(req, res, next){
     return this;
   }
   
+
+
+
+/////////////////////rabi
+
+
+async function getLastPrice(coin){
+	return new Promise(async function(resolve, reject){
+		conn.then(async db=>{
+			db.collection("market_prices").find({"coin": coin}).sort({"_id": -1}).limit(1).toArray(async function(err, data){
+				if (err) throw err;
+				if(data.length > 0){
+					let last_value = parseFloat(data[0].price);
+					console.log(last_value, "===<> last_value");
+					resolve(last_value);
+				} else{
+					resolve(null);
+				}
+			})
+		}).catch(err=>{
+			console.log(err);
+		})
+	})
+}// End of getLastPrice
+
+async function get24HrPriceChange(coin){
+	return new Promise(async function(resolve, reject){
+		conn.then(async db=>{
+			db.collection("coin_price_change").findOne({"symbol": coin}, async function(err, data){
+				if (err) throw err;
+				if(data != undefined || data != null){
+					if(Object.keys(data).length > 0){
+						let return_json = new Object();
+						return_json['price_change'] = data['priceChange'];
+						return_json['price_change_percentage'] = data['priceChangePercent'];
+						resolve(return_json);
+					} else{
+						resolve({})
+					}
+				} else{
+					resolve(null)
+				}
+			})
+		})
+	})
+}
+
+async function mergeContentManageCoins(data){
+	return new Promise(async function(resolve, reject){
+		var return_arr = [];
+		var arrylen =  data.length;
+		var temlen = 0;
+		data.forEach(async data_element => {
+			
+			data_element['last_price'] = await getLastPrice(data_element['symbol']);
+			let price_change_json = await get24HrPriceChange(data_element['symbol']);
+			if(price_change_json != null || Object.keys(price_change_json).length > 0){
+				data_element = Object.assign(data_element, price_change_json);
+			}
+			console.log(data_element, "===> data_element");
+
+			return_arr.push(data_element);
+			console.log(return_arr.length, "===> length of bc return_arr")
+			temlen++;
+		})
+		console.log(temlen, " ==== ", arrylen)
+		if(temlen == arrylen){
+			console.log(return_arr, "===> return_arr bc")
+			resolve(return_arr);
+		}
+		//Promise.all(return_arr).then(arr_element => )
+	})
+}
+//*********************************************************== */
+
+
 
 module.exports = router;
 
