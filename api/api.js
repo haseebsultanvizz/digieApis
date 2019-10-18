@@ -155,12 +155,45 @@ async function listUserCoins(userId){
 		where.user_id = userId;
 		where.symbol = {'$nin':['',null,'BTC','BNBBTC']};
 		conn.then(async (db)=>{
-			db.collection('coins').find(where).toArray(async (err,result)=>{
+			db.collection('coins').find(where).toArray(async (err,data)=>{
 				if(err){
 					resolve(err)
 				}else{
-					var return_arr =  mergeContentManageCoins(result);
-					resolve(result)
+
+					///*************************************************
+
+						var return_arr = [];
+						var arrylen =  data.length;
+						var temlen = 0;
+
+						(async ()=>{
+								for(let index in data){
+									let data_element = {};
+									data_element['last_price'] = await getLastPrice(data[index]['symbol']);
+									let price_change_json = await get24HrPriceChange(data[index]['symbol']);
+
+								if(price_change_json != null || Object.keys(price_change_json).length > 0){
+									data_element = Object.assign(data_element, price_change_json);
+									console.log(data_element);
+								}
+
+								console.log("//////////////////////////////////////////////////////////////");
+								console.log("//////////////////////////////////////////////////////////////");
+								console.log("//////////////////////////////////////////////////////////////");
+								console.log("//////////////////////////////////////////////////////////////");
+								console.log("//////////////////////////////////////////////////////////////");
+								return_arr.push(data_element);
+							}
+
+							resolve(return_arr)
+
+						})()
+
+
+					///***************************************************
+
+					// var return_arr =  mergeContentManageCoins(result);
+					// resolve(result)
 				}
 			})
 		})
