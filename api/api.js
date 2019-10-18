@@ -155,7 +155,7 @@ async function listUserCoins(userId){
 		where.user_id = userId;
 		where.symbol = {'$nin':['',null,'BTC','BNBBTC']};
 		conn.then(async (db)=>{
-			db.collection('coins').find(where).toArray((err,result)=>{
+			db.collection('coins').find(where).toArray(async (err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
