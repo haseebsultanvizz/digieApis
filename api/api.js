@@ -3443,6 +3443,7 @@ async function get24HrPriceChange(coin){
 
 		(async ()=>{
 				for(let index in data){
+					let data_element = {};
 					data_element['last_price'] = await getLastPrice(data[index]['symbol']);
 					let price_change_json = await get24HrPriceChange(data[index]['symbol']);
 
