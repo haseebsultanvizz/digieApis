@@ -159,7 +159,7 @@ async function listUserCoins(userId){
 				if(err){
 					resolve(err)
 				}else{
-					var return_arr = await mergeContentManageCoins(result);
+					var return_arr =  mergeContentManageCoins(result);
 					resolve(return_arr)
 				}
 			})
@@ -3435,31 +3435,27 @@ async function get24HrPriceChange(coin){
 	})
 }
 
-async function mergeContentManageCoins(data){
-	return new Promise(async function(resolve, reject){
+ function mergeContentManageCoins(data){
+		
 		var return_arr = [];
 		var arrylen =  data.length;
 		var temlen = 0;
-		data.forEach(async data_element => {
-			
-			data_element['last_price'] = await getLastPrice(data_element['symbol']);
-			let price_change_json = await get24HrPriceChange(data_element['symbol']);
-			if(price_change_json != null || Object.keys(price_change_json).length > 0){
-				data_element = Object.assign(data_element, price_change_json);
-			}
-			console.log(data_element, "===> data_element");
 
-			return_arr.push(data_element);
-			console.log(return_arr.length, "===> length of bc return_arr")
-			temlen++;
-		})
-		console.log(temlen, " ==== ", arrylen)
-		if(temlen == arrylen){
-			console.log(return_arr, "===> return_arr bc")
-			resolve(return_arr);
-		}
-		//Promise.all(return_arr).then(arr_element => )
-	})
+		(async ()=>{
+				for(let index in data){
+					data_element['last_price'] = await getLastPrice(data[index]['symbol']);
+					let price_change_json = await get24HrPriceChange(data[index]['symbol']);
+
+				if(price_change_json != null || Object.keys(price_change_json).length > 0){
+					data_element = Object.assign(data_element, price_change_json);
+				}
+				return_arr.push(data_element);
+			}
+		})()
+		
+
+		return return_arr;
+	
 }
 //*********************************************************== */
 
