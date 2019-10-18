@@ -3451,11 +3451,21 @@ async function get24HrPriceChange(coin){
 					data_element = Object.assign(data_element, price_change_json);
 					console.log(data_element);
 				}
+
+				console.log("//////////////////////////////////////////////////////////////");
+				console.log("//////////////////////////////////////////////////////////////");
+				console.log("//////////////////////////////////////////////////////////////");
+				console.log("//////////////////////////////////////////////////////////////");
+				console.log("//////////////////////////////////////////////////////////////");
 				return_arr.push(data_element);
 			}
 		})()
 
-		console.log(return_arr);
+		console.log(return_arr, "sdkfl;asdjflsadjfkljalksdfjlaskdfjla");
+		console.log("================================================");
+		console.log("================================================");
+		console.log("================================================");
+		console.log("================================================");
 		return return_arr;
 	
 }
