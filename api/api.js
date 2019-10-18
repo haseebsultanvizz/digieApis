@@ -149,7 +149,7 @@ router.post('/listUserCoinsApi',async (req,resp)=>{
 	 });
 })//End of listUserCoinsApi
 
-function listUserCoins(userId){
+async function listUserCoins(userId){
 	return new Promise((resolve)=>{
 		let where = {};
 		where.user_id = userId;
