@@ -3449,12 +3449,13 @@ async function get24HrPriceChange(coin){
 
 				if(price_change_json != null || Object.keys(price_change_json).length > 0){
 					data_element = Object.assign(data_element, price_change_json);
+					console.log(data_element);
 				}
 				return_arr.push(data_element);
 			}
 		})()
-		
 
+		console.log(return_arr);
 		return return_arr;
 	
 }
