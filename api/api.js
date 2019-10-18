@@ -160,7 +160,7 @@ async function listUserCoins(userId){
 					resolve(err)
 				}else{
 					var return_arr =  mergeContentManageCoins(result);
-					resolve(return_arr)
+					resolve(result)
 				}
 			})
 		})
