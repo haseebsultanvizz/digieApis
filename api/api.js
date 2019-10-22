@@ -882,7 +882,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 		countArr['filledCount'] = filledCount;
 	
 	var userBalanceArr = await listUserBalance(admin_id);
-	var soldOrderArr = await calculateAverageOrdersProfit(req.body.postData);
+	var soldOrderArr = [];//await calculateAverageOrdersProfit(req.body.postData);
 	var total_profit  = 0;
 	var total_quantity = 0;
 	for(let index in soldOrderArr){
