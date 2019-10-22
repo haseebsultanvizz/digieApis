@@ -2372,7 +2372,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
   function listOrdersForChart(admin_id,exchange,application_mode,coin){
 	return new Promise((resolve)=>{
 		let filter = {}; 
-			filter['status'] = {'$in':['submitted', 'FILLED','new']}
+			filter['status'] = {'$in':['submitted', 'FILLED','new','LTH']}
 			filter['price'] = {$nin:[null,""]};
 			filter['admin_id'] = admin_id;
 			filter['application_mode'] = application_mode;
