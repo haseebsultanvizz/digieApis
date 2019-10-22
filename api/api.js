@@ -149,17 +149,52 @@ router.post('/listUserCoinsApi',async (req,resp)=>{
 	 });
 })//End of listUserCoinsApi
 
-function listUserCoins(userId){
+async function listUserCoins(userId){
 	return new Promise((resolve)=>{
 		let where = {};
 		where.user_id = userId;
 		where.symbol = {'$nin':['',null,'BTC','BNBBTC']};
-		conn.then((db)=>{
-			db.collection('coins').find(where).toArray((err,result)=>{
+		conn.then(async (db)=>{
+			db.collection('coins').find(where).toArray(async (err,data)=>{
 				if(err){
 					resolve(err)
 				}else{
-					resolve(result)
+
+					///*************************************************
+
+						var return_arr = [];
+						var arrylen =  data.length;
+						var temlen = 0;
+
+						(async ()=>{
+								for(let index in data){
+									let data_element = {};
+									data_element['last_price'] = await getLastPrice(data[index]['symbol']);
+									let price_change_json = await get24HrPriceChange(data[index]['symbol']);
+
+								if(price_change_json != null || Object.keys(price_change_json).length > 0){
+									data_element = Object.assign(data_element, price_change_json);
+									console.log(data_element);
+								}
+
+								console.log("//////////////////////////////////////////////////////////////");
+								console.log("//////////////////////////////////////////////////////////////");
+								console.log("//////////////////////////////////////////////////////////////");
+								console.log("//////////////////////////////////////////////////////////////");
+								console.log("//////////////////////////////////////////////////////////////");
+								data_element = Object.assign(data_element, data[index])
+								return_arr.push(data_element);
+							}
+
+							resolve(return_arr)
+
+						})()
+
+
+					///***************************************************
+
+					// var return_arr =  mergeContentManageCoins(result);
+					// resolve(result)
 				}
 			})
 		})
@@ -3387,6 +3422,90 @@ router.post('/addUserCoin', async function(req, res, next){
     return this;
   }
   
+
+
+
+/////////////////////rabi
+
+
+async function getLastPrice(coin){
+	return new Promise(async function(resolve, reject){
+		conn.then(async db=>{
+			db.collection("market_prices").find({"coin": coin}).sort({"_id": -1}).limit(1).toArray(async function(err, data){
+				if (err) throw err;
+				if(data.length > 0){
+					let last_value = parseFloat(data[0].price);
+					console.log(last_value, "===<> last_value");
+					resolve(last_value);
+				} else{
+					resolve(null);
+				}
+			})
+		}).catch(err=>{
+			console.log(err);
+		})
+	})
+}// End of getLastPrice
+
+async function get24HrPriceChange(coin){
+	return new Promise(async function(resolve, reject){
+		conn.then(async db=>{
+			db.collection("coin_price_change").findOne({"symbol": coin}, async function(err, data){
+				if (err) throw err;
+				if(data != undefined || data != null){
+					if(Object.keys(data).length > 0){
+						let return_json = new Object();
+						return_json['price_change'] = data['priceChange'];
+						return_json['price_change_percentage'] = data['priceChangePercent'];
+						resolve(return_json);
+					} else{
+						resolve({})
+					}
+				} else{
+					resolve(null)
+				}
+			})
+		})
+	})
+}
+
+ function mergeContentManageCoins(data){
+		
+		var return_arr = [];
+		var arrylen =  data.length;
+		var temlen = 0;
+
+		(async ()=>{
+				for(let index in data){
+					let data_element = {};
+					data_element['last_price'] = await getLastPrice(data[index]['symbol']);
+					let price_change_json = await get24HrPriceChange(data[index]['symbol']);
+
+				if(price_change_json != null || Object.keys(price_change_json).length > 0){
+					data_element = Object.assign(data_element, price_change_json);
+					console.log(data_element);
+				}
+
+				console.log("//////////////////////////////////////////////////////////////");
+				console.log("//////////////////////////////////////////////////////////////");
+				console.log("//////////////////////////////////////////////////////////////");
+				console.log("//////////////////////////////////////////////////////////////");
+				console.log("//////////////////////////////////////////////////////////////");
+				return_arr.push(data_element);
+			}
+		})()
+
+		console.log(return_arr, "sdkfl;asdjflsadjfkljalksdfjlaskdfjla");
+		console.log("================================================");
+		console.log("================================================");
+		console.log("================================================");
+		console.log("================================================");
+		return return_arr;
+	
+}
+//*********************************************************== */
+
+
 
 module.exports = router;
 
