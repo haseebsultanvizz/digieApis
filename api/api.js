@@ -367,14 +367,15 @@ router.post('/listAutoOrderDetail',async (req,resp)=>{
 	let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
 	var BTCUSDTPRICEPromise = await listCurrentMarketPrice(globalCoin);
 
-	var marketMinNotationResp = await marketMinNotation(promisesResult[0][0].symbol);
-	var currentMarketPriceArr = await listCurrentMarketPrice(promisesResult[0][0].symbol);
+	var marketMinNotationResp = await marketMinNotation(urserCoinsPromise[0].symbol);
+	var currentMarketPriceArr = await listCurrentMarketPrice(urserCoinsPromise[0].symbol);
 	var responseReslt = {};
 		responseReslt['userCoinsArr'] = urserCoinsPromise;
 		responseReslt['BTCUSDTPRICE'] = BTCUSDTPRICEPromise;
 		responseReslt['CurrentMarkerPriceArr'] = currentMarketPriceArr
 		responseReslt['marketMinNotation'] = marketMinNotationResp
-		responseReslt['selectedCoin'] = promisesResult[0][0].symbol;
+	var currentMarketPriceArr = await listCurrentMarketPrice(urserCoinsPromise[0].symbol);
+		responseReslt['selectedCoin'] = urserCoinsPromise[0].symbol;
 	resp.status(200).send({
 		message: responseReslt
 	 });
