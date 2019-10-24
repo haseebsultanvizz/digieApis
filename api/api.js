@@ -351,16 +351,23 @@ router.post('/listManualOrderDetail',async (req,resp)=>{
 })//End of listManualOrderDetail
 
 router.post('/listAutoOrderDetail',async (req,resp)=>{
-	var urserCoinsPromise = listUserCoins(req.body._id)
+
 	let exchange = req.body.exchange;
+	if(exchange == 'bam'){
+		var urserCoinsPromise = await listBamUserCoins(req.body._id);
+	}else{
+		var urserCoinsPromise = await listUserCoins(req.body._id);
+	}
+	
+
 	let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
-	var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin);
-	var promisesResult = await Promise.all([urserCoinsPromise,BTCUSDTPRICEPromise]);
+	var BTCUSDTPRICEPromise = await listCurrentMarketPrice(globalCoin);
+
 	var marketMinNotationResp = await marketMinNotation(promisesResult[0][0].symbol);
 	var currentMarketPriceArr = await listCurrentMarketPrice(promisesResult[0][0].symbol);
 	var responseReslt = {};
-		responseReslt['userCoinsArr'] = promisesResult[0];
-		responseReslt['BTCUSDTPRICE'] = promisesResult[1];
+		responseReslt['userCoinsArr'] = urserCoinsPromise;
+		responseReslt['BTCUSDTPRICE'] = BTCUSDTPRICEPromise;
 		responseReslt['CurrentMarkerPriceArr'] = currentMarketPriceArr
 		responseReslt['marketMinNotation'] = marketMinNotationResp
 		responseReslt['selectedCoin'] = promisesResult[0][0].symbol;
@@ -3500,6 +3507,31 @@ function listBamCurrentMarketPrice(coin){
 	  });
 	})
   }//End of listBamCurrentMarketPrice
+
+
+
+function listBamUserCoins(admin_id){
+	return new Promise(function(resolve, reject){
+	  request.post({
+		url:'http://54.156.174.16:3001/api/listUserCoinsAPI',
+		json:{
+			"admin_id": admin_id,
+		},
+		headers: {'content-type' : 'application/json'}
+	  }, function(error, response, body){
+		if (!error && response.statusCode == 200){
+		  if(body == undefined){
+			resolve([])
+		  } else{
+			resolve(body.message)
+		  }
+		} else{
+		}
+	  });
+	})
+}//End of listBamUserCoins
+
+
 
 
 
