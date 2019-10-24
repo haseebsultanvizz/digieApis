@@ -174,14 +174,8 @@ async function listUserCoins(userId){
 
 								if(price_change_json != null || Object.keys(price_change_json).length > 0){
 									data_element = Object.assign(data_element, price_change_json);
-									console.log(data_element);
+									
 								}
-
-								console.log("//////////////////////////////////////////////////////////////");
-								console.log("//////////////////////////////////////////////////////////////");
-								console.log("//////////////////////////////////////////////////////////////");
-								console.log("//////////////////////////////////////////////////////////////");
-								console.log("//////////////////////////////////////////////////////////////");
 								data_element = Object.assign(data_element, data[index])
 								return_arr.push(data_element);
 							}
@@ -907,14 +901,14 @@ router.post('/listOrderListing',async (req,resp)=>{
 	var customOrderListing = [];
 	for(let index in orderListing){
 
-		listBamCurrentMarketPrice
-		if(exchange == 'bam'){
+		
+		// if(exchange == 'bam'){
 
-			console.log('comming in bam ')
-			var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
-			console.log('currentMarketPrice --',currentMarketPrice)
-			var BTCUSDTPRICE = await listBamCurrentMarketPrice(BTCUSDT);
-		}else{
+		// 	console.log('comming in bam ')
+		// 	var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
+		// 	console.log('currentMarketPrice --',currentMarketPrice)
+		// 	var BTCUSDTPRICE = await listBamCurrentMarketPrice(BTCUSDT);
+		// }else{}
 
 			let currentMarketPricePromise =  listCurrentMarketPrice(orderListing[index].symbol,exchange);
 			let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
@@ -924,7 +918,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 			var currentMarketPrice = (typeof (currentMarketPriceArr.price) =='undefined')?0:currentMarketPriceArr.price;
 			var btcPriceArr = (typeof responsePromise[1][0] =='undefined')?[]:responsePromise[1][0];
 			var BTCUSDTPRICE = ( typeof btcPriceArr.market_value == 'undefined')?btcPriceArr.price:btcPriceArr.market_value;
-		}
+		
 
 		 
 		
@@ -3476,7 +3470,6 @@ async function get24HrPriceChange(coin){
 
 				if(price_change_json != null || Object.keys(price_change_json).length > 0){
 					data_element = Object.assign(data_element, price_change_json);
-					console.log(data_element);
 				}
 
 				return_arr.push(data_element);
