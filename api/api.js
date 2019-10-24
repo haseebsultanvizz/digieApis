@@ -906,20 +906,24 @@ router.post('/listOrderListing',async (req,resp)=>{
 	var orderListing = await listOrderListing(req.body.postData);
 	var customOrderListing = [];
 	for(let index in orderListing){
-		let currentMarketPricePromise =  listCurrentMarketPrice(orderListing[index].symbol,exchange);
-		let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
-		var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin,exchange);
-		var responsePromise = await  Promise.all([currentMarketPricePromise,BTCUSDTPRICEPromise]);
-		
-		var currentMarketPriceArr = (typeof responsePromise[0][0] =='undefined')?[]:responsePromise[0][0];
-		
 
-		let currentMarketPrice = (typeof (currentMarketPriceArr.price) =='undefined')?0:currentMarketPriceArr.price;
+		listBamCurrentMarketPrice
+		if(exchange == 'bam'){
+			var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
+			var BTCUSDTPRICE = await listBamCurrentMarketPrice(BTCUSDT);
+		}else{
 
+			let currentMarketPricePromise =  listCurrentMarketPrice(orderListing[index].symbol,exchange);
+			let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
+			var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin,exchange);
+			var responsePromise = await  Promise.all([currentMarketPricePromise,BTCUSDTPRICEPromise]);
+			var currentMarketPriceArr = (typeof responsePromise[0][0] =='undefined')?[]:responsePromise[0][0];
+			var currentMarketPrice = (typeof (currentMarketPriceArr.price) =='undefined')?0:currentMarketPriceArr.price;
+			var btcPriceArr = (typeof responsePromise[1][0] =='undefined')?[]:responsePromise[1][0];
+			var BTCUSDTPRICE = ( typeof btcPriceArr.market_value == 'undefined')?btcPriceArr.price:btcPriceArr.market_value;
+		}
 
-		var btcPriceArr = (typeof responsePromise[1][0] =='undefined')?[]:responsePromise[1][0];
-	
-		var BTCUSDTPRICE = ( typeof btcPriceArr.market_value == 'undefined')?btcPriceArr.price:btcPriceArr.market_value 
+		 
 		
 
 
@@ -1247,7 +1251,7 @@ router.post('/manageCoins',async (req,resp)=>{
 	resp.status(200).send({
 			message: responseReslt
 		});
-})//End of listOrderListing
+})//End of manageCoins
 
 
 function listGlobalCoins(){
@@ -3079,7 +3083,7 @@ router.post('/manageCoins', async(req, resp) => {
 	resp.status(200).send({
 		message: responseReslt
 	});
-}) //End of listOrderListing
+}) //End of manageCoins
 
 router.post('/get_orders_post', function(req, res, next) {
 conn.then(db => {
@@ -3486,24 +3490,35 @@ async function get24HrPriceChange(coin){
 					console.log(data_element);
 				}
 
-				console.log("//////////////////////////////////////////////////////////////");
-				console.log("//////////////////////////////////////////////////////////////");
-				console.log("//////////////////////////////////////////////////////////////");
-				console.log("//////////////////////////////////////////////////////////////");
-				console.log("//////////////////////////////////////////////////////////////");
 				return_arr.push(data_element);
 			}
 		})()
-
-		console.log(return_arr, "sdkfl;asdjflsadjfkljalksdfjlaskdfjla");
-		console.log("================================================");
-		console.log("================================================");
-		console.log("================================================");
-		console.log("================================================");
 		return return_arr;
 	
 }
 //*********************************************************== */
+
+
+function listBamCurrentMarketPrice(coin){
+	return new Promise(function(resolve, reject){
+	  request.post({
+		url:'http://54.156.174.16:3001/api/listCurrentmarketPrice',
+		json:{
+			"coin": coin,
+		},
+		headers: {'content-type' : 'application/json'}
+	  }, function(error, response, body){
+		if (!error && response.statusCode == 200){
+		  if(body == undefined){
+			resolve([])
+		  } else{
+			resolve(body.message)
+		  }
+		} else{
+		}
+	  });
+	})
+  }//End of listBamCurrentMarketPrice
 
 
 
