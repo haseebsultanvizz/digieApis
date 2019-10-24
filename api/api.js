@@ -353,6 +353,8 @@ router.post('/listManualOrderDetail',async (req,resp)=>{
 router.post('/listAutoOrderDetail',async (req,resp)=>{
 
 	let exchange = req.body.exchange;
+
+	console.log(exchange,'listAutoOrderDetail')
 	if(exchange == 'bam'){
 		console.log('bam user coins')
 		var urserCoinsPromise = await listBamUserCoins(req.body._id);
