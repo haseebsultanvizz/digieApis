@@ -2847,7 +2847,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						}
 						else{//End of auto sell is no
 							//:::::::::::::::: update temp order arr
-							console.log('two');
+							
 							var current_data2222 = updated_price - buy_price;
 							var sell_profit_percent = (current_data2222 * 100 / buy_price);
 						  
@@ -3117,9 +3117,6 @@ conn.then(db => {
 		let cursor2;
 		let total_orders_count_promise;
 
-
-		console.log(coin_array, " ===> coin_array")
-
 		if (page == "") {
 			page = 1;
 		}
@@ -3144,7 +3141,7 @@ conn.then(db => {
 				} else if (status == "parent") {
 					search_array['parent_status'] = 'parent';
 					search_array['status'] = 'new';
-					console.log(search_array, "===> search_array")
+					
 				} else if (status == "lth") {
 					search_array['status'] = 'lth';
 				} else if (status == 'new') {
@@ -3163,7 +3160,7 @@ conn.then(db => {
 					if (filter_array['filter_coin'] != "") {
 						symbol = filter_array['filter_coin'];
 						search_array['symbol'] = { $in: coin_array };
-						console.log(search_array, "===> search_array");
+						
 					}
 					if (filter_array['filter_type'] != "") {
 						order_type = filter_array['filter_type'];
@@ -3184,23 +3181,18 @@ conn.then(db => {
 						search_array['created_date'] = { $gte: start_date, $lte: end_date };
 					}
 				}
-				console.log(search_array, "===> search_array of api")
+		
 
 				let final_orders_query_resolved = await db.collection('buy_orders').find(search_array).limit(perPage_limit).skip((perPage_limit * page) - perPage_limit).toArray();
 
 				let order_count = await db.collection('buy_orders').count(search_array);
 				let total_pages = Math.round(order_count / perPage_limit);
 
-				//console.log(final_orders_query_resolved, "===> final_orders_query_resolved")
+
 
 				if (final_orders_query_resolved.length > 0) {
 
-					// function calculate_amount_and_resolve_promises(final_orders_query_resolved){
-					// 	return new Promise(function (resolve, reject){
-
-					// 		})
-					// }//
-
+	
 					let array_response = [];
 					let btc_price = await get_btc_price();
 					final_orders_query_resolved.forEach(async final_orders_element => {
@@ -3213,19 +3205,19 @@ conn.then(db => {
 
 						let market_price = market_price_array[0]['price'];
 
-						console.log(market_price, "===> market_price and btc_price ===> ", btc_price);
+						
 						let amount_in_usd = pulled_quantity * market_price * btc_price;
 
-						console.log(amount_in_usd, "===> amount_in_usd")
+						
 						final_orders_element['amount_in_usd'] = amount_in_usd;
 
-						console.log(final_orders_element, "===> final_orders_element")
+					
 
 						array_response.push(final_orders_element);
 						//console.log(array_response, "===> array_response inside scope")
 					})
 
-					console.log(await array_response, "==> array_response outside scope")
+					
 
 					res.send({ "success": "true", "data": final_orders_query_resolved, "data_length": final_orders_query_resolved.length, "total_pages": total_pages, "message": "Orders fetched successfully" });
 				} else {
@@ -3248,13 +3240,10 @@ if (post_data_key_array.length == 0) {
 } else {
 	if ('user_id' in post_data) {
 		let user_id = post_data['user_id'];
-		console.log(user_id, "===> user_id")
 		conn.then(db => {
 			let search_arr = { "_id": ObjectID(user_id) };
-			console.log(search_arr, "===>search_arr")
 			db.collection("users").findOne(search_arr, function(err, data) {
 				if (err) throw err;
-				console.log(data, "===> data")
 				if (data != undefined || data != null) {
 					if (Object.keys(data).length > 0) {
 						data['profile_image'] = "data:image/gif;base64,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"
@@ -3291,10 +3280,8 @@ if (post_data_key_array.length == 0) {
 } else {
 	if ('user_id' in post_data) {
 		let user_id = post_data['user_id'];
-		console.log(user_id, "===> user_id")
 		conn.then(db => {
 			let search_arr = { "_id": ObjectID(user_id) };
-			console.log(search_arr, "===>search_arr")
 			db.collection("users").findOne(search_arr, function(err, data) {
 				if (err) throw err;
 				if (Object.keys(data).length > 0) {
@@ -3407,7 +3394,7 @@ router.post('/addUserCoin', async function(req, res, next){
 	db.collection("coins").insertOne(insert_obj, function(err1, obj){
 	if (err1) throw err1;
 	if(obj.result.nInserted > 0){
-	console.log(obj.result.nInserted, "====> coin inserted ")
+
 	}
 	})
 	} else{
@@ -3442,7 +3429,6 @@ async function getLastPrice(coin){
 				if (err) throw err;
 				if(data.length > 0){
 					let last_value = parseFloat(data[0].price);
-					console.log(last_value, "===<> last_value");
 					resolve(last_value);
 				} else{
 					resolve(null);
