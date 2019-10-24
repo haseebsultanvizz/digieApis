@@ -354,7 +354,11 @@ router.post('/listAutoOrderDetail',async (req,resp)=>{
 
 	let exchange = req.body.exchange;
 	if(exchange == 'bam'){
+		console.log('bam user coins')
 		var urserCoinsPromise = await listBamUserCoins(req.body._id);
+
+		console.log(urserCoinsPromise)
+
 	}else{
 		var urserCoinsPromise = await listUserCoins(req.body._id);
 	}
@@ -925,9 +929,6 @@ router.post('/listOrderListing',async (req,resp)=>{
 			var BTCUSDTPRICE = ( typeof btcPriceArr.market_value == 'undefined')?btcPriceArr.price:btcPriceArr.market_value;
 		}
 
-		console.log('out side of bam');
-		 
-		
 
 
 		var convertToBtc = orderListing[index].quantity * currentMarketPrice;
