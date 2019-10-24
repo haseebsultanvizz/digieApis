@@ -143,7 +143,7 @@ router.post('/listManualOrderComponent',async (req,resp)=>{
 
 
 router.post('/listUserCoinsApi',async (req,resp)=>{
-	var urserCoinsArr = await listUserCoins(req.body._id)
+	var urserCoinsArr = await listUserCoins(req.body.admin_id)
 	resp.status(200).send({
 		message: urserCoinsArr
 	 });
@@ -903,12 +903,9 @@ router.post('/listOrderListing',async (req,resp)=>{
 
 		
 		if(exchange == 'bam'){
-			console.log('exchange BAM')
 			var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
-				console.log('comming in bam')
 			var BTCUSDTPRICE = await listBamCurrentMarketPrice('BTCUSDT');
-			console.log('**********')
-			console.log(BTCUSDTPRICE)
+
 		}else{
 
 			let currentMarketPricePromise =  listCurrentMarketPrice(orderListing[index].symbol,exchange);
@@ -921,6 +918,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 			var BTCUSDTPRICE = ( typeof btcPriceArr.market_value == 'undefined')?btcPriceArr.price:btcPriceArr.market_value;
 		}
 
+		console.log('out side of bam');
 		 
 		
 
