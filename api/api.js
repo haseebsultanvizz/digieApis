@@ -902,13 +902,10 @@ router.post('/listOrderListing',async (req,resp)=>{
 	for(let index in orderListing){
 
 		
-		// if(exchange == 'bam'){
-
-		// 	console.log('comming in bam ')
-		// 	var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
-		// 	console.log('currentMarketPrice --',currentMarketPrice)
-		// 	var BTCUSDTPRICE = await listBamCurrentMarketPrice(BTCUSDT);
-		// }else{}
+		if(exchange == 'bam'){
+			var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
+			var BTCUSDTPRICE = await listBamCurrentMarketPrice('BTCUSDT');
+		}else{
 
 			let currentMarketPricePromise =  listCurrentMarketPrice(orderListing[index].symbol,exchange);
 			let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
@@ -918,7 +915,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 			var currentMarketPrice = (typeof (currentMarketPriceArr.price) =='undefined')?0:currentMarketPriceArr.price;
 			var btcPriceArr = (typeof responsePromise[1][0] =='undefined')?[]:responsePromise[1][0];
 			var BTCUSDTPRICE = ( typeof btcPriceArr.market_value == 'undefined')?btcPriceArr.price:btcPriceArr.market_value;
-		
+		}
 
 		 
 		
