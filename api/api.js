@@ -332,18 +332,27 @@ function listMarketHistory(coin){
 
 router.post('/listManualOrderDetail',async (req,resp)=>{
 	let exchange  = req.body.exchange;
-	var urserCoinsPromise = listUserCoins(req.body._id)
-	var currentMarketPricePromise =  listCurrentMarketPrice(req.body.coin,exchange);
+	var urserCoinsPromise = listUserCoins(req.body._id);
+
+	if(exchange == 'bam'){
+		var urserCoinsPromise = await listBamUserCoins(req.body._id);
+	}else{
+		var urserCoinsPromise = await listUserCoins(req.body._id);
+	}
+
+
+	var currentMarketPricePromise = await  listCurrentMarketPrice(req.body.coin,exchange);
 	let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
+
 	var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin,exchange);
 	var marketMinNotationPromise = marketMinNotation(req.body.coin);
-	var promisesResult = await Promise.all([urserCoinsPromise,currentMarketPricePromise,marketMinNotationPromise,BTCUSDTPRICEPromise]);
+	var promisesResult = await Promise.all([marketMinNotationPromise,BTCUSDTPRICEPromise]);
 
 	var responseReslt = {};
-		responseReslt['userCoinsArr'] = promisesResult[0];
-		responseReslt['CurrentMarkerPriceArr'] = promisesResult[1];
-		responseReslt['marketMinNotation'] = promisesResult[2];
-		responseReslt['BTCUSDTPRICE'] = promisesResult[3];
+		responseReslt['userCoinsArr'] = urserCoinsPromise;
+		responseReslt['CurrentMarkerPriceArr'] = currentMarketPricePromise;
+		responseReslt['marketMinNotation'] = promisesResult[0];
+		responseReslt['BTCUSDTPRICE'] = promisesResult[1];
 	resp.status(200).send({
 		message: responseReslt
 	 });
@@ -353,14 +362,9 @@ router.post('/listManualOrderDetail',async (req,resp)=>{
 router.post('/listAutoOrderDetail',async (req,resp)=>{
 
 	let exchange = req.body.exchange;
-
-	console.log(exchange,'listAutoOrderDetail')
 	if(exchange == 'bam'){
 		console.log('bam user coins')
 		var urserCoinsPromise = await listBamUserCoins(req.body._id);
-
-		console.log(urserCoinsPromise)
-
 	}else{
 		var urserCoinsPromise = await listUserCoins(req.body._id);
 	}
