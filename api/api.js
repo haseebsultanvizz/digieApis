@@ -903,6 +903,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 
 		
 		if(exchange == 'bam'){
+			console.log('exchange BAM')
 			var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
 				console.log('comming in bam')
 			var BTCUSDTPRICE = await listBamCurrentMarketPrice('BTCUSDT');
