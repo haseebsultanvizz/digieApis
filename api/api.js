@@ -71,7 +71,8 @@ router.post('/authenticate',(req,resp)=>{
 router.post('/listDashboardData',async (req,resp)=>{
 		let userCoinsArr = await listUserCoins(req.body._id);
 		let  exchange = req.body.exchange;
-		let userCoin =  (typeof  req.body.userCoin =='undefined')?'':req.body.userCoin; 
+		let userCoin =  (typeof  req.body.userCoin =='undefined')?'':req.body.coin; 
+
 		var coin = ( (userCoinsArr.length == 0) || userCoin =='')?'TRXBTC':(userCoin =='')?userCoinsArr[0]['symbol']:userCoin;
 
 		let currentMarketPriceArr = await listCurrentMarketPrice(coin,exchange);
