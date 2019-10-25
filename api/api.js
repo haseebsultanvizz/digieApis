@@ -3498,23 +3498,22 @@ async function get24HrPriceChange(coin){
 
 function listBamCurrentMarketPrice(coin){
 	return new Promise(function(resolve, reject){
-	  request.post({
-		url:'http://54.156.174.16:3001/api/listCurrentmarketPrice',
-		json:{
-			"coin": coin,
-		},
-		headers: {'content-type' : 'application/json'}
-	  }, function(error, response, body){
-		if (!error && response.statusCode == 200){
-		  if(body == undefined){
-			resolve([])
-		  } else{
-			resolve(body.message)
-		  }
-		} else{
-		}
-	  });
-	})
+		conn.then((db)=>{
+			let where = {};
+			where['coin'] = coin;
+				db.collection('market_prices_node_bam').find(where).toArray((err,result)=>{
+					if(err){
+						resolve(err);
+					}else{
+						if(result.length >0){
+							resolve(result[0]['price']);
+						}else{
+							resolve(000);
+						}
+					}
+			})	
+		})
+	})		
   }//End of listBamCurrentMarketPrice
 
 
