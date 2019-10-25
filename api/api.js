@@ -3541,6 +3541,57 @@ function listBamUserCoins(admin_id){
 }//End of listBamUserCoins
 
 
+router.post('/saveBamCredentials',(req,resp)=>{
+	var user_id = req.body.user_id;
+	var api_key = req.body.api_key;
+	var api_secret = req.body.api_secret;
+
+	conn.then((db)=>{
+		let insertArr = {};
+			insertArr['user_id'] = user_id;
+			insertArr['api_key'] = api_key;
+			insertArr['api_secret'] = api_secret;
+ 		let set = {};
+			set['$set'] = insertArr;
+		let where = {};
+			where['user_id'] = user_id;
+			{ upsert: true }
+		let upsert = { upsert: true };
+		db.collection('bam_credentials').updateOne(where,set,upsert,(err,result)=>{
+			if(err){
+				console.log(err);
+			}else{
+				resp.status(200).send({"success": "true", "message": "Credentials Updated Successfully"})
+			}
+		})
+	})
+
+
+})//End of saveBamCredentials
+
+
+router.post('/getBamCredentials',async (req,resp)=>{
+	var user_id = req.body.user_id;
+	var bamCredentials = await getBamCredentials(user_id);
+	resp.status(200).send({response:bamCredentials})
+
+})//End of getBamCredentials
+
+function getBamCredentials(user_id){
+	return new Promise((resolve,reject)=>{
+		conn.then((db)=>{
+			let where = {};
+				where['user_id'] = user_id;
+			db.collection('bam_credentials').find(where).toArray((err,result)=>{
+				if(err){
+					reject(err);
+				}else{
+					resolve(result);
+				}
+			})
+		})
+	})
+}//End of getBamCredentials
 
 
 
