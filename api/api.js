@@ -1829,7 +1829,7 @@ router.post('/buyOrderManually',async (req,resp)=>{
 				currentMarketPrice = parseFloat(currentMarketPrice);
 
 
-			var log_msg = "Orde Send for buy Manually On ".parseFloat(currentMarketPrice).toFixed(8);
+			var log_msg = "Orde Send for buy Manually On "+parseFloat(currentMarketPrice).toFixed(8);
 			var logPromise = recordOrderLog(orderId,log_msg,'submitted','yes',exchange);
 				logPromise.then((callback)=>{
 					console.log(callback)
