@@ -1825,10 +1825,12 @@ router.post('/buyOrderManually',async (req,resp)=>{
 			filter['_id'] = new ObjectID(orderId); 
 			let collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 			var updatePromise_1 = updateOne(filter,update,collectionName);
+			updatePromise_1.then((resolve)=>{})
+
 			var currentMarketPriceArr =  await listCurrentMarketPrice(symbol,exchange);
 			var currentMarketPrice = (currentMarketPriceArr.length ==0)?0:currentMarketPriceArr[0]['price'];
 				currentMarketPrice = parseFloat(currentMarketPrice);
-			
+				console.log(application_mode)
 			if(application_mode == 'live'){
 				let buy_trigger_type = '';
 				var respPromise = orderReadyForBuy(orderId,buy_quantity,currentMarketPrice,symbol,admin_id,trading_ip,buy_trigger_type,'buy_market_order',exchange);
