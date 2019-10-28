@@ -83,8 +83,11 @@ router.post('/listDashboardData',async (req,resp)=>{
 		var askPricesPromise =  listAskPrices(coin,currentMarketPrice);
 		var bidPricesPromise =  listBidPrices(coin,currentMarketPrice);
 		var marketHistoryPromise = listMarketHistory(coin);
+
+
 		
-		var currncy = coin.replace("BTC",'');
+		var currncy = 'XRP'//coin.replace("BTC",'');
+
 		var promisesResult = await Promise.all([askPricesPromise,bidPricesPromise,marketHistoryPromise]);
 
 		var askPriceResp = promisesResult[0];
