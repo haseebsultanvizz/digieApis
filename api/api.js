@@ -2359,6 +2359,10 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						}else{
 
 							let tempArrResp = await listselTempOrders(buyOrderId,exchange);
+							console.log('::::::::::::: tempArrResp ::::::::::::::::::');
+							console.log(tempArrResp);
+							console.log('::::::::::::: tempArrResp ::::::::::::::::::');
+
 							if(tempArrResp.length >0){
 
 								let tempArr = tempArrResp[0];
@@ -2377,6 +2381,11 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 									calculate_stop_loss = (price) - parseFloat(calculate_stop_loss);
 									var loss_price_ = parseFloat(calculate_stop_loss).toFixed(8); 
 									newRow['loss_price_'] = (Number.isNaN(parseFloat(loss_price_)))?null:loss_price_;
+
+									console.log('*********************');
+									console.log(loss_price_);
+									console.log('*********************');
+
 								}else{
 									newRow['loss_price_'] = null;
 								}
