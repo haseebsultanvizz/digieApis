@@ -1029,13 +1029,13 @@ router.post('/listOrderListing',async (req,resp)=>{
 		
 
 			if ((status == 'FILLED' && is_sell_order == 'yes') || status == "LTH") {
-				var SellStatus = (sellOrderId =='')?'':await listSellOrderStatus(sellOrderId);
+				var SellStatus = (sellOrderId =='')?'':await listSellOrderStatus(sellOrderId,exchange);
 				if(SellStatus == 'error'){
 					htmlStatus += '<span class="badge badge-danger">ERROR IN SELL</span>';
 				}else if(SellStatus =='submitted'){
 					htmlStatus += '<span class="badge badge-success">SUBMITTED FOR SELL</span>';
 				}else{
-					htmlStatus += '<span class="badge badge-info">WAITING FOR SELL '+SellStatus+'</span>';
+					htmlStatus += '<span class="badge badge-info">WAITING FOR SELL </span>';
 				}
 			}else if (status == 'FILLED' && is_sell_order == 'sold') {
 				if (is_lth_order== 'yes') {
@@ -1098,13 +1098,14 @@ function calculate_percentage(purchasedPrice,sellPrice) {
 
 }
 
-function listSellOrderStatus(sellOrderId){
+function listSellOrderStatus(sellOrderId,exchange){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let where  = {};
 			const checkForHexRegExp = new RegExp('^[0-9a-fA-F]{24}$');
 				where['_id'] = (checkForHexRegExp.test(sellOrderId))?{'$in':[sellOrderId,new ObjectID(sellOrderId)]}:'';
-			db.collection('orders').find(where).toArray((err,result)=>{
+				let collection = (exchange == 'binance')?'orders':'orders_'+exchange;
+			db.collection(collection).find(where).toArray((err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
