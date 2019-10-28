@@ -1800,10 +1800,7 @@ router.post('/buyOrderManually',async (req,resp)=>{
 	var orderId = req.body.orderId;
 	var coin = req.body.coin;
 	var exchange = req.body.exchange;
-	var ordeResp = await listOrderById(orderId,exchange); 
-
-	console.log(ordeResp)
-	
+	var ordeResp = await listOrderById(orderId,exchange); 	
 	if(ordeResp.length >0){
 		var orderArr = ordeResp[0];
 		let admin_id = (typeof orderArr['admin_id'] == undefined)?'':orderArr['admin_id'];
@@ -1830,11 +1827,20 @@ router.post('/buyOrderManually',async (req,resp)=>{
 			var currentMarketPriceArr =  await listCurrentMarketPrice(symbol,exchange);
 			var currentMarketPrice = (currentMarketPriceArr.length ==0)?0:currentMarketPriceArr[0]['price'];
 				currentMarketPrice = parseFloat(currentMarketPrice);
-			
+
+
+			var log_msg = "Orde Send for buy Manually On ".parseFloat(currentMarketPrice).toFixed(8);
+			var logPromise = recordOrderLog(orderId,log_msg,'submitted','yes',exchange);
+				logPromise.then((callback)=>{
+					console.log(callback)
+				})
+				
+				console.log('above live');
 			if(application_mode == 'live'){
+				console.log('inside  live');
 				let buy_trigger_type = '';
 				var respPromise = orderReadyForBuy(orderId,buy_quantity,currentMarketPrice,symbol,admin_id,trading_ip,buy_trigger_type,'buy_market_order',exchange);
-				respPromise.then((callback)=>{console.log(callback)})
+				respPromise.then((callback)=>{})
 			}else{
 				buyTestOrder(orderArr,currentMarketPrice,exchange);
 			}
@@ -2109,6 +2115,8 @@ function orderReadyForBuy (buy_order_id,buy_quantity,market_value,coin_symbol,ad
 			insert_arr['created_date'] = new Date();
 			insert_arr['global'] = 'global';
 			let collection = (exchange == 'binance')?'ready_orders_for_buy_ip_based':'ready_orders_for_buy_ip_based_'+exchange;
+			console.log(collection)
+
 			db.collection(collection).insertOne(insert_arr,(err,result)=>{
 				if(err){
 					resolve(err)
