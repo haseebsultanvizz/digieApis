@@ -86,8 +86,8 @@ router.post('/listDashboardData',async (req,resp)=>{
 
 
 		
-		var currncy = 'XRP'//coin.replace("BTC",'');
-
+		var currncy = coin.replace("BTC",'');
+		
 		var promisesResult = await Promise.all([askPricesPromise,bidPricesPromise,marketHistoryPromise]);
 
 		var askPriceResp = promisesResult[0];
