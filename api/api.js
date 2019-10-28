@@ -1801,6 +1801,8 @@ router.post('/buyOrderManually',async (req,resp)=>{
 	var coin = req.body.coin;
 	var exchange = req.body.exchange;
 	var ordeResp = await listOrderById(orderId,exchange); 
+
+	console.log(ordeResp)
 	
 	if(ordeResp.length >0){
 		var orderArr = ordeResp[0];
