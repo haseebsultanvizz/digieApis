@@ -1035,7 +1035,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 				}else if(SellStatus =='submitted'){
 					htmlStatus += '<span class="badge badge-success">SUBMITTED FOR SELL</span>';
 				}else{
-					htmlStatus += '<span class="badge badge-info">WAITING FOR SELL</span>';
+					htmlStatus += '<span class="badge badge-info">WAITING FOR SELL '+SellStatus+'</span>';
 				}
 			}else if (status == 'FILLED' && is_sell_order == 'sold') {
 				if (is_lth_order== 'yes') {
