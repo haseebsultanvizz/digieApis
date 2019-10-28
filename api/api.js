@@ -1820,7 +1820,10 @@ router.post('/buyOrderManually',async (req,resp)=>{
 			filter['_id'] = new ObjectID(orderId); 
 			let collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 			var updatePromise_1 = updateOne(filter,update,collectionName);
-			var currentMarketPrice =  await listCurrentMarketPrice(symbol,exchange);
+			var currentMarketPriceArr =  await listCurrentMarketPrice(symbol,exchange);
+			var currentMarketPrice = (currentMarketPriceArr.length ==0)?0:currentMarketPriceArr[0]['price'];
+				currentMarketPrice = parseFloat(currentMarketPrice);
+			
 			if(application_mode == 'live'){
 				let buy_trigger_type = '';
 				var respPromise = orderReadyForBuy(orderId,buy_quantity,currentMarketPrice,symbol,admin_id,trading_ip,buy_trigger_type,'buy_market_order',exchange);
@@ -1885,7 +1888,11 @@ function buyTestOrder(orders,market_value,exchange){
 			logPromise_2.then((callback)=>{})
 
 
-			var USDCURRENTVALUE =  await listCurrentMarketPrice('BTCUSD',exchange);
+			var USDCURRENTVALUEARR =  await listCurrentMarketPrice('BTCUSD',exchange);
+			var USDCURRENTVALUE = (USDCURRENTVALUEARR.length ==0)?0:USDCURRENTVALUEARR[0]['price'];
+			USDCURRENTVALUE = parseFloat(USDCURRENTVALUE);
+
+
 			let splitArr =   symbol.split('USDT');
 			var purchaseUsdPrice = (quantity * market_value)*USDCURRENTVALUE;
 			var purchaseUsdPrice = (typeof splitArr[1] !='undefined' && splitArr[1] == '')?quantity:purchaseUsdPrice;
