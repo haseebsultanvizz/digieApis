@@ -1830,11 +1830,11 @@ router.post('/buyOrderManually',async (req,resp)=>{
 			var currentMarketPriceArr =  await listCurrentMarketPrice(symbol,exchange);
 			var currentMarketPrice = (currentMarketPriceArr.length ==0)?0:currentMarketPriceArr[0]['price'];
 				currentMarketPrice = parseFloat(currentMarketPrice);
-				console.log(application_mode)
+			
 			if(application_mode == 'live'){
 				let buy_trigger_type = '';
 				var respPromise = orderReadyForBuy(orderId,buy_quantity,currentMarketPrice,symbol,admin_id,trading_ip,buy_trigger_type,'buy_market_order',exchange);
-				respPromise.then((callback)=>{})
+				respPromise.then((callback)=>{console.log(callback)})
 			}else{
 				buyTestOrder(orderArr,currentMarketPrice,exchange);
 			}
