@@ -3133,7 +3133,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
   })//End of updateManualOrder
   
   
-  router.post('/setForSell',(req,resp)=>{
+  router.post('/setForSell',async (req,resp)=>{
 		let sellOrderArr = req.body.sellOrderArr;
 		let exchange = req.body.exchange;
 		let buyOrderId = req.body.buyOrderId;
