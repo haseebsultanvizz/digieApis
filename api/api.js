@@ -3089,7 +3089,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 	let show_hide_log = 'yes';	
 	let type = 'order_update';	
 	let log_msg = "Order has been updated";
-	var logPromise = recordOrderLog(buyOrderId,log_msg,type,show_hide_log);
+	var logPromise = recordOrderLog(buyOrderId,log_msg,type,show_hide_log,exchange);
 		logPromise.then((resolve)=>{})
 
 
@@ -3133,8 +3133,50 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
   })//End of updateManualOrder
   
   
+  router.post('/setForSell',(req,resp)=>{
+		let sellOrderArr = req.body.sellOrderArr;
+		let exchange = req.body.exchange;
+		let buyOrderId = req.body.buyOrderId;
+		var sellOrderId = await  setForSell(sellOrderArr,exchange);
+
+		var collection =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+		var updArr = {};	
+			updArr['is_sell_order'] = 'yes';
+			updArr['sell_order_id'] = sellOrderId;
+
+		var where = {};
+			where['_id'] = {'$in':[buyOrderId,new ObjectID(buyOrderId)]}
+		var updPrmise = updateOne(where,updArr,collection);
+			updPrmise.then((callback)=>{})
+
+		let log_msg = "Sell Order was Created";
+		var logPromise1 = recordOrderLog(buyOrderId,log_msg,'set_for_sell','yes',exchange);
+			logPromise1.then((resolve)=>{})
+
+
+
+		resp.status(200).send({
+			message: 'Order Set For ell'
+		});
+  })
+
+
+ function setForSell(sellOrderArr,exchange){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			let collection = (exchange == 'binance')?'orders':'orders_'+exchange;
+			db.collection(collection).insertOne(temp_arr,(error,result)=>{
+				if(error){
+					console.log(error)
+				}else{
+					resolve(result.insertedId);
+				}
+			})
+		})
+	})
+  }//End of setForSell
   
-  
+
 
   //::::::::::::::::::::::::::::::::::; /
 
