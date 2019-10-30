@@ -369,7 +369,7 @@ router.post('/listManualOrderDetail',async (req,resp)=>{
 
 
 	var currentMarketPricePromise = await  listCurrentMarketPrice(req.body.coin,exchange);
-	let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
+	let globalCoin = (exchange == 'coinbasepro')?'BTCUSD':'BTCUSDT';
 
 	var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin,exchange);
 	var marketMinNotationPromise = marketMinNotation(req.body.coin);
@@ -397,7 +397,7 @@ router.post('/listAutoOrderDetail',async (req,resp)=>{
 	}
 	
 
-	let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
+	let globalCoin = (exchange == 'coinbasepro')?'BTCUSD':'BTCUSDT';
 	var BTCUSDTPRICEPromise = await listCurrentMarketPrice(globalCoin);
 
 	var marketMinNotationResp = await marketMinNotation(urserCoinsPromise[0].symbol);
@@ -954,7 +954,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 		}else{
 
 			let currentMarketPricePromise =  listCurrentMarketPrice(orderListing[index].symbol,exchange);
-			let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
+			let globalCoin = (exchange == 'coinbasepro')?'BTCUSD':'BTCUSDT';
 			var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin,exchange);
 			var responsePromise = await  Promise.all([currentMarketPricePromise,BTCUSDTPRICEPromise]);
 			var currentMarketPriceArr = (typeof responsePromise[0][0] =='undefined')?[]:responsePromise[0][0];
@@ -966,7 +966,12 @@ router.post('/listOrderListing',async (req,resp)=>{
 
 
 		var convertToBtc = orderListing[index].quantity * currentMarketPrice;
-		var coinPriceInBtc = BTCUSDTPRICE*convertToBtc
+
+		let splitArr =   orderListing[index].symbol.split('USDT');
+
+		var coinPriceInBtc = ((splitArr.length >1) && (splitArr[1] == ''))?(orderListing[index].quantity):(BTCUSDTPRICE*convertToBtc);
+		
+
 		var order = orderListing[index];
 			order['customCurrentMarketPrice'] = parseFloat(currentMarketPrice).toFixed(8);
 			
@@ -1730,7 +1735,7 @@ function sellTestOrder(sell_order_id,currentMarketPrice,buy_order_id,exchange){
 				var commission = commission_value*currentMarketPrice;
 				var commissionAsset = 'BTC';
 
-				let globalCoin = (exchange == 'binance')?'BTCUSDT':'BTCUSD';
+				let globalCoin = (exchange == 'coinbasepro')?'BTCUSD':'BTCUSDT';
 	
 				var USDCURRENTVALUE = await listCurrentMarketPrice(globalCoin,exchange);
 
@@ -1902,7 +1907,7 @@ function buyTestOrder(orders,market_value,exchange){
 			logPromise_2.then((callback)=>{})
 
 
-			var USDCURRENTVALUEARR =  await listCurrentMarketPrice('BTCUSD',exchange);
+			var USDCURRENTVALUEARR =  await listCurrentMarketPrice('BTCUSDT',exchange);
 			var USDCURRENTVALUE = (USDCURRENTVALUEARR.length ==0)?0:USDCURRENTVALUEARR[0]['price'];
 			USDCURRENTVALUE = parseFloat(USDCURRENTVALUE);
 
