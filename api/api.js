@@ -176,10 +176,15 @@ async function listUserCoins(userId){
 									data_element['last_price'] = await getLastPrice(data[index]['symbol']);
 									let price_change_json = await get24HrPriceChange(data[index]['symbol']);
 
-								if(price_change_json != null || Object.keys(price_change_json).length > 0){
-									data_element = Object.assign(data_element, price_change_json);
-									
+								try{
+									if(price_change_json != null || Object.keys(price_change_json).length > 0){
+										data_element = Object.assign(data_element, price_change_json);
+										
+									}
+								}catch{
+
 								}
+								
 								data_element = Object.assign(data_element, data[index])
 								return_arr.push(data_element);
 							}
