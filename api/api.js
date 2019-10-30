@@ -2329,6 +2329,10 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							let loss_percentage = (typeof sellOrderArr.loss_percentage =='undefined')?null:sellOrderArr.loss_percentage;
 							
 							var sellOrderStatus = (typeof sellOrderArr.status =='undefined')?'':sellOrderArr.status;
+
+							console.log('-------- sellOrderStatus ------------: sellOrderStatus ----:');
+							console.log(sellOrderStatus);
+							console.log('-------- sellOrderStatus ------------: sellOrderStatus ----:');
 						
 
 							let sell_price = (typeof sellOrderArr.sell_price =='undefined')?null:sellOrderArr.sell_price;	
