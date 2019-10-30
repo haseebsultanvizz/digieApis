@@ -2759,9 +2759,10 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 							var update_buy_order = {};
 							update_buy_order['modified_date'] = new Date();
+							update_buy_order['auto_sell'] = 'yes';
 							var filter_buy = {};
 								filter_buy['_id'] = orderid;
-								filter_buy['auto_sell'] = 'yes';
+							
 							var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 							var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
 								updateBuyPromise.then((resolve)=>{});
@@ -2798,9 +2799,10 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 							var update_buy_order = {};
 							update_buy_order['modified_date'] = new Date();
+							update_buy_order['auto_sell'] = 'yes';
 							var filter_buy = {};
 								filter_buy['_id'] = orderid;
-								filter_buy['auto_sell'] = 'yes';
+								
 							var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 							var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
 								updateBuyPromise.then((resolve)=>{});
@@ -2864,9 +2866,10 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 								var update_buy_order = {};
 							update_buy_order['modified_date'] = new Date();
+							update_buy_order['auto_sell'] = 'yes';
 							var filter_buy = {};
 								filter_buy['_id'] = orderid;
-								filter_buy['auto_sell'] = 'yes';
+							
 							var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 							var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
 								updateBuyPromise.then((resolve)=>{});
@@ -2911,9 +2914,10 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 							var update_buy_order = {};
 							update_buy_order['modified_date'] = new Date();
+							update_buy_order['auto_sell'] = 'yes';
 							var filter_buy = {};
 								filter_buy['_id'] = orderid;
-								filter_buy['auto_sell'] = 'yes';
+								
 							var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 							var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
 								updateBuyPromise.then((resolve)=>{});
@@ -2982,9 +2986,10 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								
 								var update_buy_order = {};
 								update_buy_order['modified_date'] = new Date();
+								update_buy_order['auto_sell'] = 'yes';
 								var filter_buy = {};
 									filter_buy['_id'] = orderid;
-									filter_buy['auto_sell'] = 'yes';
+									
 								var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 								var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
 									updateBuyPromise.then((resolve)=>{});
@@ -3016,9 +3021,10 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 								var update_buy_order = {};
 								update_buy_order['modified_date'] = new Date();
+								update_buy_order['auto_sell'] = 'yes';
 								var filter_buy = {};
 									filter_buy['_id'] = orderid;
-									filter_buy['auto_sell'] = 'yes';
+									
 								var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 								var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
 									updateBuyPromise.then((resolve)=>{});
