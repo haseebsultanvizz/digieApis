@@ -2278,7 +2278,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 				
 				newRow['trigger_type'] = ordersArr[row].trigger_type;  
 
-				newArr['auto_sell'] = ordersArr[row].auto_sell;
+				newRow['auto_sell'] = ordersArr[row].auto_sell;
 
 				let auto_sell = (typeof ordersArr[row].auto_sell =='undefined')?'':ordersArr[row].auto_sell;
 				
@@ -2329,7 +2329,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							let loss_percentage = (typeof sellOrderArr.loss_percentage =='undefined')?null:sellOrderArr.loss_percentage;
 							
 							var sellOrderStatus = (typeof sellOrderArr.status =='undefined')?'':sellOrderArr.status;
-						
+							newRow['sellOrderStatus'] = sellOrderStatus;
 
 							let sell_price = (typeof sellOrderArr.sell_price =='undefined')?null:sellOrderArr.sell_price;	
 
@@ -2423,15 +2423,15 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 				}
 
 
-				console.log('-------------Error in sell--------------');
-				console.log(sellOrderStatus)
+			
 				if(sellOrderStatus == 'error'){
-					console.log("comming in erro rin sell")
+					
 				}else{
+					console.log(newRow)
 					newArr.push(newRow);
 				}
 
-				console.log('-------------Error in sell--------------');
+			
 				
 				
 			}
