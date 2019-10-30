@@ -2750,7 +2750,20 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							var collectionName = (exchange == 'binance')?'orders':'orders_'+exchange;
 							var updatePromise = updateOne(filter,update,collectionName);
 							updatePromise.then((resolve)=>{});
+
+
+							var update_buy_order = {};
+							update_buy_order['modified_date'] = new Date();
+							var filter_buy = {};
+								filter_buy['_id'] = orderid;
+							var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+							var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
+								updateBuyPromise.then((resolve)=>{});
 			
+
+							
+
+
 							
 							var log_msg = "Order sell price Updated from("+parseFloat(sell_price).toFixed(8)+") to "+parseFloat(updated_price).toFixed(8)+"  From Chart";
 							var logPromise = recordOrderLog(orderId,log_msg,'create_sell_order','yes',exchange);
@@ -2775,6 +2788,15 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							var collectionName = (exchange == 'binance')?'orders':'orders_'+exchange;
 							var updatePromise = updateOne(filter,update,collectionName);
 							updatePromise.then((resolve)=>{});
+
+
+							var update_buy_order = {};
+							update_buy_order['modified_date'] = new Date();
+							var filter_buy = {};
+								filter_buy['_id'] = orderid;
+							var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+							var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
+								updateBuyPromise.then((resolve)=>{});
 			
 							
 							var log_msg = "Order Stop Loss Updated From("+parseFloat(stop_loss).toFixed(8)+") to "+parseFloat(updated_price).toFixed(8)+"  From Chart";
@@ -2833,6 +2855,15 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								logPromise.then((callback)=>{})
 
 
+								var update_buy_order = {};
+							update_buy_order['modified_date'] = new Date();
+							var filter_buy = {};
+								filter_buy['_id'] = orderid;
+							var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+							var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
+								updateBuyPromise.then((resolve)=>{});
+
+
 						   }else{
 							message = "Manual Order stoploss price changed and order Set to Auto Sell"
 								var current_data2222 = buy_price - updated_price  ;
@@ -2869,6 +2900,14 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
 							logPromise.then((callback)=>{})
 
+
+							var update_buy_order = {};
+							update_buy_order['modified_date'] = new Date();
+							var filter_buy = {};
+								filter_buy['_id'] = orderid;
+							var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+							var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
+								updateBuyPromise.then((resolve)=>{});
 
 
 							var log_msg = "Order Change Fron Normal to Auto Sell From Chart";
@@ -2932,7 +2971,13 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 
 								
-
+								var update_buy_order = {};
+								update_buy_order['modified_date'] = new Date();
+								var filter_buy = {};
+									filter_buy['_id'] = orderid;
+								var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+								var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
+									updateBuyPromise.then((resolve)=>{});
 
 						   }else{
 							    message = "Manual Order stoploss price changed and order Set to Auto Sell"
@@ -2958,6 +3003,14 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								var log_msg = "Order stop loss  set to ("+updated_price+") % From Chart";
 								var logPromise = recordOrderLog(orderId,log_msg,'order_profit','yes',exchange);
 								logPromise.then((callback)=>{})
+
+								var update_buy_order = {};
+								update_buy_order['modified_date'] = new Date();
+								var filter_buy = {};
+									filter_buy['_id'] = orderid;
+								var collectionName_buy = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+								var updateBuyPromise = updateOne(filter_buy,update_buy_order,collectionName_buy);
+									updateBuyPromise.then((resolve)=>{});
 						   }
 
 							//:::::::::::::::: End of temp Orser Arr
