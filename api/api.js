@@ -2422,14 +2422,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					newRow['loss_status'] = 'yes';
 				}
 
-
-			
-				if(sellOrderStatus == 'error'){
-					
-				}else{
-					console.log(newRow)
 					newArr.push(newRow);
-				}
+				
 
 			
 				
@@ -2689,7 +2683,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 
 
-						var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders'+exchange;
+						var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 						var updatePromise = updateOne(filter,update,collectionName);
 						updatePromise.then((resolve)=>{});
 		
@@ -2707,7 +2701,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						var update = {};	
 						update['iniatial_trail_stop'] =  parseFloat(updated_price);
 						update['modified_date'] = new Date();
-						var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders'+exchange;
+						var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 						var updatePromise = updateOne(filter,update,collectionName);
 						updatePromise.then((resolve)=>{});
 		
@@ -2726,11 +2720,6 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						;
 						var sellOrderResp = await listSellOrderById(sell_order_id,exchange);
 						var sellOrderArr = (typeof sellOrderResp[0] == 'undefined')?[]:sellOrderResp[0];
-
-
-						console.log('::::::::":":":":":"');
-						console.log(sellOrderResp)
-						console.log('::::::::":":":":":"');
 
 
 						var sell_profit_percent = (typeof sellOrderArr.sell_profit_percent =='undefined')?'':sellOrderArr.sell_profit_percent;
@@ -2758,7 +2747,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							update['sell_price'] = updated_price;
 							update['modified_date'] = new Date();
 							update['sell_profit_percent'] = calculate_new_sell_percentage
-							var collectionName = (exchange == 'binance')?'orders':'orders'+exchange;
+							var collectionName = (exchange == 'binance')?'orders':'orders_'+exchange;
 							var updatePromise = updateOne(filter,update,collectionName);
 							updatePromise.then((resolve)=>{});
 			
@@ -2776,19 +2765,6 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						   var current_data2222 = purchased_price - updated_price;
 						   var stop_loss_percentage = (current_data2222 * 100 / updated_price);
 
-						   console.log('::::::::::::::::::::::::');
-						   console.log('purchased_price',purchased_price);
-
-
-
-						   console.log('::::::::::::::::::::::::');
-						   console.log('updated_price',updated_price)
-
-
-						   console.log(':::::::::::::::::::::::::::::');
-						   console.log('stop_loss_percentage',stop_loss_percentage);
-						   console.log('::::::::::::::::::::::::--- :::'); 
-
 
 							var filter = {};
 							filter['_id'] = new ObjectID(sell_order_id);
@@ -2796,7 +2772,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							update['stop_loss'] =  'yes';
 							update['loss_percentage'] = parseFloat(stop_loss_percentage).toFixed(2);
 							update['modified_date'] = new Date();
-							var collectionName = (exchange == 'binance')?'orders':'orders'+exchange;
+							var collectionName = (exchange == 'binance')?'orders':'orders_'+exchange;
 							var updatePromise = updateOne(filter,update,collectionName);
 							updatePromise.then((resolve)=>{});
 			
@@ -2828,7 +2804,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							var update = {};	
 							update['auto_sell'] =  'yes';
 							update['modified_date'] = new Date();
-							var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders'+exchange;
+							var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 							var updatePromise = updateOne(filter,update,collectionName);
 							updatePromise.then((resolve)=>{});
 
@@ -2921,7 +2897,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 						   var update ={};
 						   update['modified_date'] = new Date();
-						   var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders'+exchange;
+						   var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 						   var filter = {};
 								filter['_id'] = new ObjectID(orderId);
 
