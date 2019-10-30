@@ -2230,6 +2230,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 		var newArr = [];
 		let ordersArr = await listOrdersForChart(admin_id,exchange,application_mode,coin);
 			for(let row in ordersArr){
+
+				var sellOrderStatus = '';
 				let newRow = {};
 				let trigger_type = ordersArr[row].trigger_type;
 				let defined_sell_percentage = (typeof ordersArr[row].defined_sell_percentage =='undefined')?0:ordersArr[row].defined_sell_percentage;
@@ -2325,7 +2327,8 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						if(sellOrder.length >0){
 							let sellOrderArr = sellOrder[0];
 							let loss_percentage = (typeof sellOrderArr.loss_percentage =='undefined')?null:sellOrderArr.loss_percentage;
-						
+							
+							var sellOrderStatus = (typeof sellOrderArr.status =='undefined')?'':sellOrderArr.status;
 						
 
 							let sell_price = (typeof sellOrderArr.sell_price =='undefined')?null:sellOrderArr.sell_price;	
@@ -2364,9 +2367,6 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 						}else{
 
 							let tempArrResp = await listselTempOrders(buyOrderId,exchange);
-							console.log('::::::::::::: tempArrResp ::::::::::::::::::');
-							console.log(tempArrResp);
-							console.log('::::::::::::: tempArrResp ::::::::::::::::::');
 
 							if(tempArrResp.length >0){
 
@@ -2386,24 +2386,11 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 									calculate_stop_loss = (price) - parseFloat(calculate_stop_loss);
 									var loss_price_ = parseFloat(calculate_stop_loss).toFixed(8); 
 									newRow['loss_price_'] = (Number.isNaN(parseFloat(loss_price_)))?null:loss_price_;
-
-									console.log('*********************');
-									console.log(loss_price_);
-									console.log('*********************');
-
 								}else{
 									newRow['loss_price_'] = null;
 								}
-
-
-							
-								
-
 								var profit_price_ = ((typeof profit_price == 'undefined') || profit_price ==0)?null:profit_price;
 								newRow['profit_price_'] = (Number.isNaN(parseFloat(profit_price_)))?null:profit_price_;
-
-
-								
 
 								let lth_functionality = (typeof tempArr.lth_functionality == 'undefined')?null:tempArr.lth_functionality;
 								newRow['lth_functionality'] = lth_functionality;
@@ -2434,7 +2421,12 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					newRow['profit_status'] = 'no';
 					newRow['loss_status'] = 'yes';
 				}
-				newArr.push(newRow);
+				if(sellOrderStatus == 'error'){
+
+				}else{
+					newArr.push(newRow);
+				}
+				
 				
 			}
 
