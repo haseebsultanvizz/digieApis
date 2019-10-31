@@ -925,7 +925,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 		countArr['soldCount'] = soldCount;
 		countArr['filledCount'] = filledCount;
 	
-	var userBalanceArr = await listUserBalance(admin_id);
+	var userBalanceArr = await listUserBalance(admin_id,exchange);
 	var soldOrderArr = [];//await calculateAverageOrdersProfit(req.body.postData);
 	var total_profit  = 0;
 	var total_quantity = 0;
@@ -1080,12 +1080,13 @@ router.post('/listOrderListing',async (req,resp)=>{
 })//End of listOrderListing
 
 
-function listUserBalance(admin_id){
+function listUserBalance(admin_id,exchange){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let where = {};
 				where['user_id'] = admin_id;
-			db.collection('user_wallet').find(where).toArray((err,result)=>{
+			let collection = (exchange == 'binance')?'user_wallet':'user_wallet_'+exchange;	
+			db.collection(collection).find(where).toArray((err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
