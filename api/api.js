@@ -1321,11 +1321,11 @@ function listGlobalCoins(){
 
 
 router.post('/playOrder',async (req,resp)=>{
-	var playPromise = pausePlayParentOrder(req.body.orderId,req.body.status);
+	var playPromise = pausePlayParentOrder(req.body.orderId,req.body.status,req.body.exchange);
 	let show_hide_log = 'yes';	
 	let type = 'play pause';	
 	let log_msg = "Parent Order was ACTIVE Manually";
-	var LogPromise = recordOrderLog(req.body.orderId,log_msg,type,show_hide_log)
+	var LogPromise = recordOrderLog(req.body.orderId,log_msg,type,show_hide_log,req.body.exchange);
 	var promiseResponse = await Promise.all([playPromise,LogPromise]);
 	resp.status(200).send({
 		message: promiseResponse
@@ -1333,15 +1333,15 @@ router.post('/playOrder',async (req,resp)=>{
 })//End of playOrder
 
 
-function pausePlayParentOrder(orderId,status){
+function pausePlayParentOrder(orderId,status,exchange){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let filter = {};
 			filter['_id'] = new ObjectID(orderId);
 			let set = {};
 				set['$set'] = {'pause_status':status}
-
-			db.collection('buy_orders').updateOne(filter,set,(err,result)=>{
+			let collection = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+			db.collection(collection).updateOne(filter,set,(err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
@@ -1441,7 +1441,7 @@ function listOrderById(orderId,exchange){
 
 
 router.post('/deleteOrder',async (req,resp)=>{
-	var respPromise =  deleteOrder(req.body.orderId);
+	var respPromise =  deleteOrder(req.body.orderId,req.body.exchange);
 	let show_hide_log = 'yes';	
 	let type = 'buy_canceled';	
 	let log_msg = "Buy Order was Canceled";
@@ -1453,14 +1453,16 @@ router.post('/deleteOrder',async (req,resp)=>{
 
 })//End of deleteOrder
 
-function deleteOrder(orderId){
+function deleteOrder(orderId,exchange){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let filter = {};
 				filter['_id'] = new ObjectID(orderId);
 			let set = {};
-				set['$set'] = {'status':'canceled','modified_date':new Date()}
-			db.collection('buy_orders').updateOne(filter,set,(err,result)=>{
+				set['$set'] = {'status':'canceled','modified_date':new Date()};
+
+				let collection = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+			db.collection(collection).updateOne(filter,set,(err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
