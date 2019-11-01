@@ -3217,7 +3217,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let collection = (exchange == 'binance')?'orders':'orders_'+exchange;
-			db.collection(collection).insertOne(temp_arr,(error,result)=>{
+			db.collection(collection).insertOne(sellOrderArr,(error,result)=>{
 				if(error){
 					console.log(error)
 				}else{
