@@ -3207,9 +3207,15 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
   
   router.post('/setForSell',async (req,resp)=>{
 		let sellOrderArr = req.body.sellOrderArr;
+		var buy_order_id = (typeof sellOrderArr['buy_order_id'] == 'undefined')?'':sellOrderArr['buy_order_id'];
+		
+		if(buy_order_id !=''){
+			sellOrderArr['buy_order_id'] = new ObjectID(buy_order_id);
+		}
+
 		let exchange = req.body.exchange;
 		let buyOrderId = req.body.buyOrderId;
-		var sellOrderId = await  setForSell(sellOrderArr,exchange);
+		var sellOrderId = await  setForSell(sellOrderArr,exchange,buy_order_id);
 
 		var collection =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 		var updArr = {};	
@@ -3233,17 +3239,37 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
   })
 
 
- function setForSell(sellOrderArr,exchange){
+ function setForSell(sellOrderArr,exchange,buy_order_id){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
-			let collection = (exchange == 'binance')?'orders':'orders_'+exchange;
-			db.collection(collection).insertOne(sellOrderArr,(error,result)=>{
+			var collection = (exchange == 'binance')?'orders':'orders_'+exchange;
+			var where = {};
+				where['buy_order_id'] = {'$in':[buy_order_id,new ObjectID(buy_order_id)]};
+			var set = {};
+				set['$set'] = sellOrderArr;
+			var upsert = {'upsert':true};	
+			db.collection(collection).updateOne(where,set,upsert,(error,result)=>{
 				if(error){
 					console.log(error)
 				}else{
-					resolve(result.insertedId);
+					if(result.upsertedId == null){
+						db.collection(collection).find(where).toArray((err,result)=>{
+							if(err){
+								resolve(err)
+							}else{
+								if(result.length>0){
+									resolve(result[0]['_id']);
+								}else{
+									resolve(result)
+								}
+							}
+						})
+					}else{
+						resolve(result.upsertedId._id);
+					}
 				}
 			})
+
 		})
 	})
   }//End of setForSell
