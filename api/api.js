@@ -974,7 +974,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 
 		let splitArr =   orderListing[index].symbol.split('USDT');
 
-		var coinPriceInBtc = ((splitArr.length >1) && (splitArr[1] == ''))?(orderListing[index].quantity):(BTCUSDTPRICE*convertToBtc);
+		var coinPriceInBtc = ((splitArr.length >1) && (splitArr[1] == ''))?((orderListing[index].quantity)*currentMarketPrice):(BTCUSDTPRICE*convertToBtc);
 		
 
 		var order = orderListing[index];
