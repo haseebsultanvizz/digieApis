@@ -1104,21 +1104,12 @@ function listUserBalance(admin_id,exchange){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let where = {};
-				//where['user_id'] = { $in:[new ObjectID(admin_id),admin_id]};
-				console.log(where);
+				where['user_id'] = { $in:[new ObjectID(admin_id),admin_id]};
 			let collection = (exchange == 'binance')?'user_wallet':'user_wallet_'+exchange;	
-			
-			console.log('************************');
-			console.log(collection);
-			console.log('************************');
-
 			db.collection(collection).find(where).toArray((err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
-					console.log(':::::::::::::::::::');
-					console.log(result);
-					console.log(':::::::::::::::::::');
 					resolve(result);
 				}
 			})
