@@ -1105,11 +1105,15 @@ function listUserBalance(admin_id,exchange){
 		conn.then((db)=>{
 			let where = {};
 				where['user_id'] = { $in:[new ObjectID(admin_id),admin_id]};
+				console.log(where);
 			let collection = (exchange == 'binance')?'user_wallet':'user_wallet_'+exchange;	
 			db.collection(collection).find(where).toArray((err,result)=>{
 				if(err){
 					resolve(err)
 				}else{
+					console.log(':::::::::::::::::::');
+					console.log(result);
+					console.log(':::::::::::::::::::');
 					resolve(result);
 				}
 			})
