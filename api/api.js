@@ -1521,8 +1521,12 @@ function orderMoveToLth(orderId,lth_profit,exchange){
 				var collection = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 			db.collection(collection).updateOne(filter,set,(err,result)=>{
 				if(err){
+					console.log(':::::::::::');
+					console.log(err)
 					resolve(err)
 				}else{
+					console.log(':::::::::::');
+					console.log(result)
 					resolve(result);
 				}
 			})
