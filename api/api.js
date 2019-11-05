@@ -1518,7 +1518,7 @@ function orderMoveToLth(orderId,lth_profit,exchange){
 				filter['_id'] = new ObjectID(orderId);
 			let set = {};
 				set['$set'] = {'status':'LTH','lth_profit':lth_profit,'lth_functionality':'yes','modified_date':new Date()};
-				var collection = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchang
+				var collection = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 			db.collection(collection).updateOne(filter,set,(err,result)=>{
 				if(err){
 					resolve(err)
