@@ -2013,18 +2013,15 @@ function createOrderFromAutoSell (orderArr,exchange){
 	var binance_order_id = (typeof orderArr['binance_order_id'] == 'undefined')?'':orderArr['binance_order_id'];
 	var purchased_price = (typeof orderArr['market_value'] == 'undefined')?'':orderArr['market_value'];
 
-	console.log(':::::::::::::::::::');
-	console.log(orderArr);
-	console.log(':::::::::::::::::::');
-
-
 	(async()=>{
 	////////////////////////////////////////////////////////////////////////
 		if (auto_sell == 'yes') {
 		var buy_order_check = 'yes';
 		//Get Sell Temp Data
+		console.log(':::::::::::: Temp sell orders ::::::::::::::');
+		console.log(buy_order_id)
 		var respArr =  await listTempSellOrder(buy_order_id,exchange);
-			console.log('----------------')
+			console.log('----------***********8------')
 			console.log(respArr)
 
 		var sell_data_arr = (typeof respArr[0] =='undefined')?[]:respArr[0];
