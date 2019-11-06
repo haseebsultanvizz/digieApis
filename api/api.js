@@ -2026,9 +2026,6 @@ function createOrderFromAutoSell (orderArr,exchange){
 		console.log(':::::::::::: Temp sell orders ::::::::::::::');
 		console.log(buy_order_id)
 		var respArr =  await listTempSellOrder(buy_order_id,exchange);
-			console.log('----------***********8------')
-			console.log(respArr)
-
 		var sell_data_arr = (typeof respArr[0] =='undefined')?[]:respArr[0];
 		var profit_type = (typeof sell_data_arr['profit_type'] =='undefined')?'':sell_data_arr['profit_type'];
 		var sell_profit_percent = (typeof sell_data_arr['profit_percent'] =='undefined')?'':sell_data_arr['profit_percent'];
@@ -2106,7 +2103,7 @@ function createOrderFromAutoSell (orderArr,exchange){
 		logPromise.then((callback)=>{})
 		} // if($auto_sell =='yes')	
 	////////////////////////////////////////////////////////////////////////
-	})
+	})()
   
 }//End of createOrderFromAutoSell
 
