@@ -2038,6 +2038,8 @@ function createOrderFromAutoSell (orderArr,exchange){
 		var application_mode = (typeof sell_data_arr['application_mode'] == 'undefined')?'':sell_data_arr['application_mode'];
 		var lth_functionality = (typeof sell_data_arr['lth_functionality'] =='undefined')?'':sell_data_arr['lth_functionality'];
 
+		var quantity = (typeof sell_data_arr['quantity'] =='undefined')?'':sell_data_arr['quantity'];
+
 		var ins_data = {};
 			ins_data['symbol'] = symbol;
 			ins_data['purchased_price'] = purchased_price;
