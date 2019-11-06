@@ -1862,7 +1862,7 @@ router.post('/buyOrderManually',async (req,resp)=>{
 			var updatePromise_1 = updateOne(filter,update,collectionName);
 			updatePromise_1.then((resolve)=>{})
 
-			
+			var currentMarketPriceArr =  await listCurrentMarketPrice(symbol,exchange);
 			var currentMarketPrice = (currentMarketPriceArr.length ==0)?0:currentMarketPriceArr[0]['price'];
 				currentMarketPrice = parseFloat(currentMarketPrice);
 
@@ -1872,7 +1872,6 @@ router.post('/buyOrderManually',async (req,resp)=>{
 				logPromise.then((callback)=>{
 					console.log(callback)
 				})
-				
 			if(application_mode == 'live'){
 				console.log('inside  live');
 				let buy_trigger_type = '';
@@ -2013,13 +2012,16 @@ function createOrderFromAutoSell (orderArr,exchange){
 	var symbol = (typeof orderArr['symbol'] == 'undefined')?'':orderArr['symbol'];
 	var binance_order_id = (typeof orderArr['binance_order_id'] == 'undefined')?'':orderArr['binance_order_id'];
 	var purchased_price = (typeof orderArr['market_value'] == 'undefined')?'':orderArr['market_value'];
-	console.log('comming out auto sell');
+
+	console.log(':::::::::::::::::::');
+	console.log(orderArr);
+	console.log(':::::::::::::::::::');
+
+
 	(async()=>{
 	////////////////////////////////////////////////////////////////////////
 		if (auto_sell == 'yes') {
 		var buy_order_check = 'yes';
-		 console.log('comming inside auto sell');
-
 		//Get Sell Temp Data
 		var respArr =  await listTempSellOrder(buy_order_id,exchange);
 			console.log('----------------')
