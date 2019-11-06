@@ -2676,19 +2676,25 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 		if(orderArr.length >0){
 			for(let index in orderArr){
+				
 				var orderid = orderArr[index]['_id'];
 				var trigger_type = orderArr[index]['trigger_type'];
 				var buy_price = orderArr[index]['price'];
 				var previous_sell_price = (typeof orderArr[index]['sell_price'] == 'undefined')?0:orderArr[index]['sell_price'];
-
 				var admin_id =  (typeof orderArr[index]['admin_id'] == 'undefined')?0:orderArr[index]['admin_id'];
-
 				var application_mode = (typeof orderArr[index]['application_mode'] == 'undefined')?0:orderArr[index]['application_mode'];
-
 				var sell_order_id = (typeof orderArr[index]['sell_order_id'] == 'undefined')?'':orderArr[index]['sell_order_id'];
-
-
+				var statsus =  (typeof orderArr[index]['statsus'] == 'undefined')?'':orderArr[index]['statsus'];
 				var auto_sell = (typeof orderArr[index]['auto_sell'] == 'undefined')?'':orderArr[index]['auto_sell'];
+
+				var purchased_price  = (typeof orderArr[index]['purchased_price'] == 'undefined')?'':orderArr[index]['purchased_price'];
+					purchased_price = (purchased_price == '')?buy_price:purchased_price;
+				var symbol = (typeof orderArr[index]['symbol'] == 'undefined')?'':orderArr[index]['symbol'];
+				var quantity = (typeof orderArr[index]['quantity'] == 'undefined')?'':orderArr[index]['quantity'];
+				var order_type = (typeof orderArr[index]['order_type'] == 'undefined')?'':orderArr[index]['order_type']; 
+
+				var buy_order_binance_id =  (typeof orderArr[index]['buy_order_binance_id'] == 'undefined')?'':orderArr[index]['buy_order_binance_id']; 
+				
 
 				//:::::: Auto Trigger Part :::::::::: 
 				if(trigger_type !='no'){
@@ -2851,7 +2857,60 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
  
 
-					}else{//End of if sell order Exist 
+					}else if(sell_order_id == '' && statsus == 'FILLED' && side == 'profit_inBall'){
+						///:::::::::set for sell ::::::::::::::::::::::::
+						let tempArrResp = await listselTempOrders(orderId,exchange);
+						if(tempArrResp.length >0){
+							//::::::::::: if temp arr Exist ::::::::::::::::::
+							var tempObj = tempArrResp[0];
+							var stop_loss =  (typeof tempObj['stop_loss'] == 'undefined')?'':tempObj['stop_loss'];
+							var loss_percentage =  (typeof tempObj['loss_percentage'] == 'undefined')?'':tempObj['loss_percentage'];
+							var lth_functionality = (typeof tempObj['lth_functionality'] == 'undefined')?'':tempObj['lth_functionality'];
+							var current_data2222 = updated_price - buy_price;
+							var sell_profit_percent = (current_data2222 * 100 / buy_price);	
+							//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+							//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+							var ins_data = {};
+							ins_data['symbol'] = symbol,
+							ins_data['purchased_price'] = purchased_price;
+							ins_data['quantity'] = quantity,
+							ins_data['profit_type'] = 'percentage';
+							ins_data['order_type'] = order_type;
+							ins_data['admin_id'] =  admin_id;
+							ins_data['buy_order_check'] = '',
+							ins_data['buy_order_id'] = orderid,
+							ins_data['buy_order_binance_id'] = buy_order_binance_id;
+							ins_data['stop_loss'] = stop_loss;
+							ins_data['loss_percentage'] = loss_percentage;
+							ins_data['application_mode'] = application_mode;
+							ins_data['trigger_type'] = 'no';
+							ins_data['sell_profit_percent'] = sell_profit_percent;
+							ins_data['sell_price'] = updated_price;
+							ins_data['trail_check'] = 'no';
+							ins_data['trail_interval'] = '0';
+							ins_data['buy_trail_percentage'] = '0';
+							ins_data['buy_trail_price'] = '0';
+							ins_data['status'] = 'new';
+							ins_data['lth_functionality'] = lth_functionality;
+							//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+							//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+							var sellOrderId = await  setForSell(ins_data,exchange,orderId);
+							var collection =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+							var updArr = {};	
+								updArr['is_sell_order'] = 'yes';
+								updArr['sell_order_id'] = sellOrderId;
+							var where = {};
+								where['_id'] = {'$in':[buyOrderId,new ObjectID(buyOrderId)]}
+							var updPrmise = updateOne(where,updArr,collection);
+								updPrmise.then((callback)=>{})
+							let log_msg = "Sell Order was Created";
+							var logPromise1 = recordOrderLog(buyOrderId,log_msg,'set_for_sell','yes',exchange);
+								logPromise1.then((resolve)=>{})
+							//::::::::::: End of temp arr exist ::::::::::::::
+						}
+						//::::::::::::-:-:-: End of set for sell :-:-:-:-:-:
+					}else
+					{//End of if sell order Exist 
 						let tempArrResp = await listselTempOrders(orderId,exchange);
 
 
