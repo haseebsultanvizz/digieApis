@@ -1917,7 +1917,7 @@ function buyTestOrder(orders,market_value,exchange){
 			var log_msg = "Buy Market Order was <b>SUBMITTED</b>";
 			var logPromise = recordOrderLog(id,log_msg,'submitted','yes',exchange);
 				logPromise.then((callback)=>{
-					console.log(callback)
+					
 				})
 
 			//%%%%%%%%%%% Market Filled Process %%%%%%%%%%%%%%%%%%
@@ -1990,8 +1990,10 @@ function buyTestOrder(orders,market_value,exchange){
 
 		var auto_sell = (typeof orders['auto_sell'] =='undefined')?'':orders['auto_sell'];
 
-		console.log('comming in auto sell')
+		    console.log('point one ');
+
 			if(auto_sell == 'yes'){
+				console.log('point two ');
 				createOrderFromAutoSell(orders,exchange);
 			}//if auto sell is yes
 		
@@ -2006,6 +2008,7 @@ function buyTestOrder(orders,market_value,exchange){
 
 
 function createOrderFromAutoSell (orderArr,exchange){
+	console.log('point three ');
 	var buy_order_id = orderArr['_id'];
 	var auto_sell = (typeof orderArr['auto_sell'] == 'undefined')?'':orderArr['auto_sell'];
 	var admin_id = (typeof orderArr['admin_id'] == 'undefined')?'':orderArr['admin_id'];
@@ -2015,7 +2018,9 @@ function createOrderFromAutoSell (orderArr,exchange){
 
 	(async()=>{
 	////////////////////////////////////////////////////////////////////////
+		console.log('point four ');
 		if (auto_sell == 'yes') {
+			console.log('point five ');
 		var buy_order_check = 'yes';
 		//Get Sell Temp Data
 		console.log(':::::::::::: Temp sell orders ::::::::::::::');
