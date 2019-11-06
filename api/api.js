@@ -1991,6 +1991,8 @@ function buyTestOrder(orders,market_value,exchange){
 
 
 		var auto_sell = (typeof orders['auto_sell'] =='undefined')?'':orders['auto_sell'];
+
+		console.log('comming in auto sell')
 			if(auto_sell == 'yes'){
 				createOrderFromAutoSell(orders,exchange);
 			}//if auto sell is yes
@@ -2019,6 +2021,9 @@ function createOrderFromAutoSell (orderArr,exchange){
 		var buy_order_check = 'yes';
 		//Get Sell Temp Data
 		var respArr =  await listTempSellOrder(buy_order_id,exchange);
+			console.log('------------------'+respArr+'--------------------')
+			console.log(respArr)
+
 		var sell_data_arr = (typeof respArr[0] =='undefined')?[]:respArr[0];
 		var profit_type = (typeof sell_data_arr['profit_type'] =='undefined')?'':sell_data_arr['profit_type'];
 		var sell_profit_percent = (typeof sell_data_arr['profit_percent'] =='undefined')?'':sell_data_arr['profit_percent'];
