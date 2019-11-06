@@ -2095,7 +2095,7 @@ function createOrderFromAutoSell (orderArr,exchange){
 			var where = {};
 				where['_id'] = new ObjectID(buy_order_id)
 				var upsert = {'upsert':true};	  
-			var  updPromise = updateSingle(collectionName,where,upd,upsert);
+			var  updPromise = updateSingle(collectionName,where,upd_data,upsert);
 				updPromise.then((callback)=>{})
 		}
 
