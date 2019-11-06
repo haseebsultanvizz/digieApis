@@ -1862,7 +1862,11 @@ router.post('/buyOrderManually',async (req,resp)=>{
 			var updatePromise_1 = updateOne(filter,update,collectionName);
 			updatePromise_1.then((resolve)=>{})
 
+			console.log('symbol{{{{{{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}}}}}} ');
+			console.log(symbol);
+			console.log(exchange)
 			var currentMarketPriceArr =  await listCurrentMarketPrice(symbol,exchange);
+			console.log(currentMarketPriceArr)
 			var currentMarketPrice = (currentMarketPriceArr.length ==0)?0:currentMarketPriceArr[0]['price'];
 				currentMarketPrice = parseFloat(currentMarketPrice);
 
@@ -2021,7 +2025,7 @@ function createOrderFromAutoSell (orderArr,exchange){
 		var buy_order_check = 'yes';
 		//Get Sell Temp Data
 		var respArr =  await listTempSellOrder(buy_order_id,exchange);
-			console.log('------------------'+respArr+'--------------------')
+			console.log('----------------')
 			console.log(respArr)
 
 		var sell_data_arr = (typeof respArr[0] =='undefined')?[]:respArr[0];
