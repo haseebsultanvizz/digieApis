@@ -946,7 +946,6 @@ router.post('/listOrderListing',async (req,resp)=>{
 	}
 
 	var avg_profit = 0; //total_profit / total_quantity;
-
 	var orderListing = await listOrderListing(req.body.postData);
 	var customOrderListing = [];
 	for(let index in orderListing){
@@ -3860,7 +3859,33 @@ function getBamCredentials(user_id){
 }//End of getBamCredentials
 
 
+router.post('/calculate_average_profit',async (req,resp)=>{
+	var soldOrderArr = await calculateAverageOrdersProfit(req.body.postData);
+	var total_profit  = 0;
+	var total_quantity = 0;
+	for(let index in soldOrderArr){
+		var market_sold_price = (typeof  soldOrderArr[index]['market_sold_price'] =='undefined')?0:soldOrderArr[index]['market_sold_price'];
+			market_sold_price = parseFloat((isNaN(market_sold_price))?0:market_sold_price);
+		
+		var current_order_price =(typeof  soldOrderArr[index]['market_value'] =='undefined')?0:soldOrderArr[index]['market_value'];  
+			current_order_price = parseFloat( (isNaN(current_order_price))?0:current_order_price);
 
+		var quantity = (typeof  soldOrderArr[index]['quantity'] =='undefined')?0:soldOrderArr[index]['quantity']; 
+			quantity = parseFloat( (isNaN(quantity))?0:quantity);
+
+		var percentage = calculate_percentage(current_order_price, market_sold_price);
+		var total_btc = quantity *current_order_price;
+		 total_profit += total_btc * percentage;
+		 total_quantity += total_btc;
+	}
+
+	var avg_profit = total_profit / total_quantity;
+	var responseReslt = {};
+		responseReslt['avg_profit'] = avg_profit;
+	resp.status(200).send({
+		message: avg_profit
+	});
+})
 module.exports = router;
 
 
