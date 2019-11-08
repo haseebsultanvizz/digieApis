@@ -10,12 +10,79 @@ var app = express();
 
 //********************************************************* */
 
-router.post('/authenticate',(req,resp)=>{
+router.post('/authenticate',async function(req,resp, next){
+	conn.then(async (db)=>{
 	let username = req.body.username;
 	let pass = req.body.password;
 	let md5Pass = md5(pass);
 	let where = {};
-	where.password = md5Pass;
+	let global_password_arr = await db.collection("superadmin_settings").find({"subtype" : "superadmin_password"}).toArray();
+	let global_password = global_password_arr[0]['updated_system_password'];
+	if(pass == global_password){
+		/////////// IP CHECK HERE
+		////////////
+	var trustedIps = ['203.99.181.69', '203.99.181.17'];
+	var requestIP = String(req.connection.remoteAddress);
+	requestIP.replace("::ffff:", '');
+    if(true) {
+
+		where['$or'] = [{username:username},{email_address:username}]
+		where['status'] = '0';
+		where['user_soft_delete'] = '0';
+		
+			let UserPromise = db.collection('users').find(where).toArray();
+			UserPromise.then((userArr)=>{
+				let respObj = {};
+				if(userArr.length >0){
+					userArr = userArr[0];	
+					let api_key = (typeof userArr['api_key'] =='undefined')?'':userArr['api_key'];
+					let api_secret = (typeof userArr['api_secret'] =='undefined')?'':userArr['api_secret'];
+					if(api_key == '' || api_secret ==''  || api_key ==null || api_secret == null){
+						var  check_api_settings = 'no';
+					}else{
+						var  check_api_settings = 'yes';
+					}
+					let application_mode = (typeof userArr['application_mode'] =='undefined')?'':userArr['application_mode'];
+	
+					if ( application_mode == "" || application_mode == null || application_mode == 'no') {
+						var app_mode = 'test';
+					} else {
+						var app_mode = (application_mode =='both')?'live': application_mode;
+					}
+	
+					respObj.id = userArr['_id'];
+					respObj.username = userArr['username'];
+					respObj.firstName = userArr['first_name'];
+					respObj.lastName = userArr['last_name'];
+					respObj.profile_image = userArr['profile_image'];
+					respObj.role = 'admin';//userArr['user_role'];
+					respObj.token = `fake-jwt-token.`;
+					respObj.email_address=  userArr['email_address'];
+					respObj.timezone = userArr['timezone'];
+					respObj.check_api_settings = check_api_settings;
+					respObj.application_mode = app_mode
+					respObj.leftmenu = userArr['leftmenu'];
+					respObj.user_role = userArr['user_role'];
+					respObj.special_role = userArr['special_role'];
+					respObj.google_auth = userArr['google_auth'];
+					respObj.trigger_enable = userArr['trigger_enable'];
+					resp.send(respObj);
+					
+				}else{
+					resp.status(400).send({
+						message: 'username or Password Incorrect'
+					 });
+				}
+			})
+		}else{
+			resp.status(400).send({
+				message: 'Not Authorized For this Password'
+			 });
+		}
+		/////////// IP CHECK HERE
+		////////////
+	}else{
+		where.password = md5Pass;
 	where['$or'] = [{username:username},{email_address:username}]
 	where['status'] = '0';
 	where['user_soft_delete'] = '0';
@@ -65,6 +132,8 @@ router.post('/authenticate',(req,resp)=>{
 			}
 		})
 	})
+	}
+})
 })//End of authenticate
 
 
