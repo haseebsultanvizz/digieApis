@@ -1198,7 +1198,9 @@ function calculateAverageOrdersProfit(postDAta){
 		filter['created_date'] = {'$gte':start_date},{'$lte':end_date}
 	}
 
-	var collectionName = 'sold_buy_orders';
+	var exchange = postDAta.exchange;
+
+	var collectionName = (exchange == 'binance')?'sold_buy_orders':'sold_buy_orders_'+exchange;
 
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
