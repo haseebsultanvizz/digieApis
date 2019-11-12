@@ -3957,6 +3957,42 @@ router.post('/calculate_average_profit',async (req,resp)=>{
 		message: avg_profit
 	});
 })
+
+
+router.post('/validate_bam_credentials',async (req,resp)=>{
+	let APIKEY = req.body.APIKEY;
+	let APISECRET = req.body.APISECRET;
+	var credentials =  await validate_bam_credentials(APIKEY,APISECRET);
+	resp.status(200).send({
+		message: credentials
+	});
+})//End of validate_bam_credentials
+
+
+function validate_bam_credentials(APIKEY,APISECRET){
+	return new Promise((resolve,reject)=>{
+    binance = require('node-binance-api')().options({
+      APIKEY:    APIKEY,
+      APISECRET: APISECRET,
+      useServerTime: true 
+    });
+    binance.balance((error, balances) => { 
+      if(error){
+		 let message = {};
+			 message['status'] = 'error';
+			 message['message'] = error.body;
+		resolve(message);
+      }else{
+		let message = {};
+			message['status'] = 'success';
+			message['message'] = balances;
+        resolve(message);
+      }
+    });
+	})
+}//End of validate_bam_credentials
+
+
 module.exports = router;
 
 
