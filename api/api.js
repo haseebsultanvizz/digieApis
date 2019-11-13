@@ -3994,6 +3994,41 @@ function validate_bam_credentials(APIKEY,APISECRET){
 }//End of validate_bam_credentials
 
 
+router.post('/get_error_in_sell',async (req,resp)=>{
+	let order_id = req.body.order_id;
+	let exchange = req.body.exchange;
+	var error =  await get_error_in_sell(order_id,exchange);
+	resp.status(200).send({
+		message: error
+	});
+})//End of get_error_in_sell
+
+function get_error_in_sell(order_id,exchange){
+	return new Promise((resolve)=>{
+		conn.collection((db)=>{
+			let where = {};
+				where['order_id'] = (order_id == '')?'':new ObjectID(order_id);
+				where['type'] = 'sell_error';
+			var collection =  (exchange == 'binance')?'orders_history_log':'orders_history_log_'+exchange;
+			db.collection(collection).find(where).toArray((err,result)=>{
+				if(err){
+					resolve(err);
+				}else{
+					var log_msg = '';
+					if(result.length >0){
+						log_msg  = result[0]['log_msg'];
+					}
+					resolve(log_msg);
+				}
+			})
+		})
+	})
+}//End of get_error_in_sell
+
+
+
+
+
 module.exports = router;
 
 
