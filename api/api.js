@@ -4026,7 +4026,39 @@ function get_error_in_sell(order_id,exchange){
 }//End of get_error_in_sell
 
 
+router.post('/removeOrderManually',async (req,resp)=>{
+	let order_id = req.body.order_id;
+	let exchange = req.body.exchange;
 
+	var show_hide_log = 'yes';
+	var type = 'remove_error';
+	var log_msg  = 'Order was updated And Moved From Error To Open ***';
+	var promiseLog = recordOrderLog(order_id,log_msg,type,show_hide_log,exchange)
+	promiseLog.then((callback)=>{});
+
+
+	var where_2 = {};
+	where_2['_id'] = new ObjectID(order_id)
+	var upsert = {'upsert':true};	  
+	var collectionName =  (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+	var upd = {};
+		upd['modified_date'] = new Date();
+	var updPromise_2 = updateSingle(collectionName,where_2,upd,upsert);
+		updPromise_2.then((callback)=>{});
+
+
+
+	var where_3 = {};
+		where_3['buy_order_id'] = new ObjectID(order_id)
+	var upsert_2 = {'upsert':true};	  
+	var collection =  (exchange == 'binance')?'orders':'orders_'+exchange;
+	var upd_2 = {};
+		upd_2['status'] = 'new';
+	var message =  await updateSingle(collection,where_3,upd_2,upsert_2);
+	resp.status(200).send({
+		message: message
+	});
+})//End of removeOrderManually
 
 
 module.exports = router;
