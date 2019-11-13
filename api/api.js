@@ -4005,7 +4005,7 @@ router.post('/get_error_in_sell',async (req,resp)=>{
 
 function get_error_in_sell(order_id,exchange){
 	return new Promise((resolve)=>{
-		conn.collection((db)=>{
+		conn.then((db)=>{
 			let where = {};
 				where['order_id'] = (order_id == '')?'':new ObjectID(order_id);
 				where['type'] = 'sell_error';
