@@ -1128,6 +1128,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 
 			if ((status == 'FILLED' && is_sell_order == 'yes') || status == "LTH") {
 				var SellStatus = (sellOrderId =='')?'':await listSellOrderStatus(sellOrderId,exchange);
+					order['sell_status'] = SellStatus;
 				if(SellStatus == 'error'){
 					htmlStatus += '<span class="badge badge-danger">ERROR IN SELL</span>';
 				}else if(SellStatus =='submitted'){
