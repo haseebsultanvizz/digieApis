@@ -1400,6 +1400,7 @@ function listGlobalCoins(){
 		conn.then((db)=>{
 			let filter = {};
 			filter['user_id'] = 'global'
+			filter['exchange_type'] = 'binance'
 			db.collection('coins').find(filter).toArray((err,result)=>{
 				if(err){
 					resolve(err)
