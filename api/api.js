@@ -965,8 +965,6 @@ router.post('/listOrderListing',async (req,resp)=>{
 		}
 
 	var soldCountPromise = countCollection(collectionName,filter_8);
-	console.log(filter_8, "====> Filter For Sold Orders");
-	console.log(collectionName, "==============> Collection Name");
 
 	
 
@@ -983,7 +981,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 	var filledCount = PromiseResponse[8];
 
 	var totalCount = parseFloat(parentCount)+parseFloat(newCount)+parseFloat(openCount)+parseFloat(cancelCount)+parseFloat(errorCount)+parseFloat(lthCount)+parseFloat(submitCount)+parseFloat(soldCount);
-	console.log(soldCount, "====> soldCount");
+
 	var countArr = {};
 		countArr['totalCount'] = totalCount;
 		countArr['parentCount'] = parentCount;
