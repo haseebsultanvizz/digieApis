@@ -983,7 +983,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 	var filledCount = PromiseResponse[8];
 
 	var totalCount = parseFloat(parentCount)+parseFloat(newCount)+parseFloat(openCount)+parseFloat(cancelCount)+parseFloat(errorCount)+parseFloat(lthCount)+parseFloat(submitCount)+parseFloat(soldCount);
-
+	console.log(soldCount, "====> soldCount");
 	var countArr = {};
 		countArr['totalCount'] = totalCount;
 		countArr['parentCount'] = parentCount;
