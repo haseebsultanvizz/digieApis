@@ -955,7 +955,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 		if(postDAta.start_date !='' && postDAta.end_date !=''){
 			let start_date = new Date(postDAta.start_date);
 			let end_date = new Date(postDAta.end_date);
-			filter_8['created_date'] = [{'$gte':start_date},{'$lte':end_date}]
+			filter_8['created_date'] = {'$gte':start_date, '$lte':end_date};
 		}
 
 		if(count >0){
@@ -1265,7 +1265,7 @@ function calculateAverageOrdersProfit(postDAta){
 	if(postDAta.start_date !='' && postDAta.end_date !=''){
 		let start_date = new Date(postDAta.start_date);
 		let end_date = new Date(postDAta.end_date);
-		filter['created_date'] = {'$gte':start_date},{'$lte':end_date}
+		filter['created_date'] = {'$gte':start_date, '$lte':end_date};
 	}
 
 	var exchange = postDAta.exchange;
@@ -1316,7 +1316,7 @@ function listOrderListing(postDAta,dbConnection){
 		if(postDAta.start_date !='' && postDAta.end_date !=''){
 			let start_date = new Date(postDAta.start_date);
 			let end_date = new Date(postDAta.end_date);
-			filter['created_date'] = {'$gte':start_date},{'$lte':end_date}
+			filter['created_date'] = {'$gte':start_date, '$lte':end_date};
 		}
 
 		if(postDAta.status == 'open'){
@@ -2154,7 +2154,10 @@ function createOrderFromAutoSell (orderArr,exchange){
 			ins_data['status'] = 'new';
 		}
 		
-		var collectionName = 'orders_'+exchange;
+	
+		var collectionName = (exchange == 'binance')?'orders':'orders_'+exchange;
+
+
 		var  order_id =  await createOrder(collectionName,ins_data);
 		if (buy_order_check == 'yes') {
 			//Update Buy Order
@@ -2162,7 +2165,7 @@ function createOrderFromAutoSell (orderArr,exchange){
 				upd_data['is_sell_order'] = 'yes';
 				upd_data['lth_functionality'] = lth_functionality;
 				upd_data['sell_order_id'] = order_id;
-			var collectionName = 'buy_orders_'+exchange;
+			var collectionName = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
 			var where = {};
 				where['_id'] = new ObjectID(buy_order_id)
 				var upsert = {'upsert':true};	  
@@ -4060,6 +4063,38 @@ router.post('/removeOrderManually',async (req,resp)=>{
 	});
 })//End of removeOrderManually
 
+
+router.post('/validate_user_password',async (req,resp)=>{
+	var password = req.body.password;
+	let md5Pass = md5(password);
+	var user_id = req.body.user_id;
+	var is_valid = await validate_user_password();
+	resp.status(200).send({
+		message: is_valid
+	});
+})//End of validate_user_password
+
+
+function validate_user_password(){
+	return new Promise((resolve)=>{
+		var where = {};
+			where._id = new ObjectID(user_id);
+			where.password = md5Pass
+		conn.then((db)=>{
+			db.collection('users').find(where).toArray((err,result)=>{
+				if(err){
+					resolve(false);
+				}else{
+					if(result.length >0){
+						resolve(true);
+					}else{
+						resolve(false);
+					}	
+				}
+			})
+		})
+	})
+}//End of validate_user_password
 
 module.exports = router;
 
