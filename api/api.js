@@ -1681,6 +1681,8 @@ function listOrderLog(orderId,exchange){
 				if(err){
 					resolve(err);
 				}else{
+					console.log('listOrderLog ')
+					console.log(result);
 					resolve(result);
 				}
 			})
