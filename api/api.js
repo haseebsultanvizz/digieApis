@@ -136,6 +136,34 @@ router.post('/authenticate',async function(req,resp, next){
 })
 })//End of authenticate
 
+//resetPassword //Umer Abbas [19-11-19]
+router.post('/resetPassword',async function(req, resp){
+	conn.then(async (db)=>{
+		let user_id = req.body.user_id;
+		let password = req.body.password;
+		let md5Pass = md5(password);
+		let where = {
+			"_id": user_id
+		};
+		let set = {
+			'password': password
+		}
+		let user = await db.collection("users").find(where).toArray();
+		if(user.length > 0){
+			let reset = await db.collection("users").updateOne(where, set);
+			if(reset){
+				resp.status(200).send({
+					message: 'password reset successful'
+				});
+			}else{
+				resp.status(400).send({
+					message: 'password reset failed'
+				});
+			}
+		}
+	})
+})//End of resetPassword
+
 
 router.post('/listDashboardData',async (req,resp)=>{
 		let userCoinsArr = await listUserCoins(req.body._id);
