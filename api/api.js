@@ -4076,7 +4076,7 @@ router.post('/validate_user_password',async (req,resp)=>{
 })//End of validate_user_password
 
 
-function validate_user_password(){
+function validate_user_password(user_id,md5Pass){
 	return new Promise((resolve)=>{
 		var where = {};
 			where._id = new ObjectID(user_id);
