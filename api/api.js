@@ -4066,7 +4066,10 @@ router.post('/removeOrderManually',async (req,resp)=>{
 
 
 router.post('/validate_user_password',async (req,resp)=>{
-	var password = req.body.password;
+	var password = req.body.user_password;
+	console.log(':::::::: password ::::::::::::::');
+	console.log(password);
+	console.log(':::::::: password ::::::::::::::');
 	let md5Pass = md5(password);
 	var user_id = req.body.user_id;
 	var is_valid = await validate_user_password();
