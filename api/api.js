@@ -1665,13 +1665,16 @@ router.post('/listOrderById',async (req,resp)=>{
 			let date = new Date(ordeLog[row].created_date).toISOString().
 			replace(/T/, ' ').      // replace T with a space
 			replace(/\..+/, '') 
-
-			html +='<tr>';
-			html +='<th scope="row" class="text-danger">'+index+'</th>';
-			html +='<td>'+ordeLog[row].log_msg+'</td>';
-			html +='<td>'+date+'</td>'
-			html +='</tr>';
-			index ++;
+			if(ordeLog[row].type !='indicator_log_message'){
+				html +='<tr>';
+				html +='<th scope="row" class="text-danger">'+index+'</th>';
+				html +='<td>'+ordeLog[row].log_msg+'</td>';
+				html +='<td>'+date+'</td>'
+				html +='</tr>';
+				index ++;
+			}
+			
+			
 		}
 
 		respArr['logHtml'] = html;
