@@ -141,23 +141,33 @@ router.post('/resetPassword',async function(req, resp){
 	conn.then(async (db)=>{
 		let user_id = req.body.user_id;
 		let password = req.body.password;
-		let md5Pass = md5(password);
-		let where = {
-			"_id": user_id
-		};
-		let set = {
-			'password': password
-		}
-		let user = await db.collection("users").find(where).toArray();
-		if(user.length > 0){
-			let reset = await db.collection("users").updateOne(where, set);
-			if(reset){
-				resp.status(200).send({
-					message: 'password reset successful'
-				});
+		if(user_id == 'undefined' || password == 'undefined'){
+			resp.status(400).send({
+				message: 'user_id or password can not be empty'
+			});
+		}else{
+			let md5Pass = md5(password);
+			let where = {
+				"_id": new ObjectID(user_id)
+			};
+			let set = {
+				'password': password
+			}
+			let user = await db.collection("users").find(where).toArray();
+			if(user.length > 0){
+				let reset = await db.collection("users").updateOne(where, set);
+				if(reset){
+					resp.status(200).send({
+						message: 'password reset successful'
+					});
+				}else{
+					resp.status(400).send({
+						message: 'password reset failed'
+					});
+				}
 			}else{
 				resp.status(400).send({
-					message: 'password reset failed'
+					message: 'Invalid user'
 				});
 			}
 		}
