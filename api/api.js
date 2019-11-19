@@ -151,7 +151,9 @@ router.post('/resetPassword',async function(req, resp){
 				"_id": new ObjectID(user_id)
 			};
 			let set = {
-				'password': password
+				'$set': {
+					'password': md5Pass
+				}
 			}
 			let user = await db.collection("users").find(where).toArray();
 			if(user.length > 0){
