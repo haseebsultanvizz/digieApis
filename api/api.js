@@ -1127,7 +1127,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 				if(sellOrder.length>0){
 					let sellArr = sellOrder[0];
 					let sell_profit_percent = (typeof sellArr.sell_profit_percent =='undefined')?'--':sellArr.sell_profit_percent;
-					var targetPrice = sell_profit_percent;
+					var targetPrice = (status == 'LTH')?lth_profit:sell_profit_percent;
 				}else{
 					var targetPrice = '';
 				}
