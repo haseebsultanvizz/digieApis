@@ -1115,6 +1115,8 @@ router.post('/listOrderListing',async (req,resp)=>{
 			var fraction_sell_type = (typeof orderListing[index].fraction_sell_type =='undefined')?'':orderListing[index].fraction_sell_type;
 			var fraction_buy_type = (typeof orderListing[index].fraction_buy_type =='undefined')?'':orderListing[index].fraction_buy_type;
 
+			var parent_status = (typeof orderListing[index].parent_status =='undefined')?'':orderListing[index].parent_status;
+
 			
 
 
@@ -1187,6 +1189,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 				}
 			}else{
 				var  statusClass = (status =='error')?'danger':'success'
+				status = (parent_status == 'parent')?parent_status:status;
 				htmlStatus += '<span class="badge badge-'+statusClass+'">'+status+  '</span>';
 			}
 
