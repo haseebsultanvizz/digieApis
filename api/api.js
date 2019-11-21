@@ -4143,7 +4143,7 @@ router.get('/delete_log',async (req,resp)=>{
 function list_logs(limit,skip){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
-			db.collection(orders_history_log).find({}).limit(limit).skip(skip).toArray((err,result)=>{
+			db.collection('orders_history_log').find({}).limit(limit).skip(skip).toArray((err,result)=>{
 				if(err){
 					console.log(err)
 				}else{
