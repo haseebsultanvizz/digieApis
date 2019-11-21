@@ -4130,10 +4130,49 @@ function validate_user_password(user_id,md5Pass){
 
 
 router.get('/delete_log',async (req,resp)=>{
+	let limit  = 100;
+	let skip  = 0;
+	let log_arr = await list_logs(limit,skip);
 	resp.status(200).send({
-		message: 'ok working'
+		message: log_arr
 	});
 })//End of delete_log
+
+
+
+function list_logs(limit,skip){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			db.collection(orders_history_log).find({}).limit(limit).skip(skip).toArray((err,result)=>{
+				if(err){
+					console.log(err)
+				}else{
+					resolve(result)
+				}
+			})
+		})
+	})
+
+}
+
+
+
+function delete_log(log_id){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			let where = {};
+				where['_id'] = new ObjectID(log_id);
+				db.collection('orders_history_log').deleteOne(where,(err,result)=>{
+					if(err){
+						resolve(err);
+					}else{
+						resolve(result);
+					}
+				})
+		})
+	})
+	
+}
 
 module.exports = router;
 
