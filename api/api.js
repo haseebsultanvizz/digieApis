@@ -4132,13 +4132,16 @@ function validate_user_password(user_id,md5Pass){
 router.get('/delete_log',async (req,resp)=>{
 	let limit  = 100;
 	let skip  = 0;
+
+
 	let log_arr = await list_logs(limit,skip);
 	var resp_obj = {};
 	for(let index in log_arr){
-		let order_id = log_arr[index]['order_id'];
+		var order_id = log_arr[index]['order_id'];
 		var is_order_exist = await is_buy_order_exist(order_id);
 		if(!is_order_exist){
-			resp_obj[order_id] = 'not found'; 
+			var del_arr = await delete_log(order_id);
+			resp_obj[order_id] = del_arr; 
 		}
 	}
 	resp.status(200).send({
@@ -4186,12 +4189,12 @@ function list_logs(limit,skip){
 
 
 
-function delete_log(log_id){
+function delete_log(order_id){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let where = {};
-				where['_id'] = new ObjectID(log_id);
-				db.collection('orders_history_log').deleteOne(where,(err,result)=>{
+				where['order_id'] = new ObjectID(order_id);
+				db.collection('orders_history_log').deleteMany(where,(err,result)=>{
 					if(err){
 						resolve(err);
 					}else{
