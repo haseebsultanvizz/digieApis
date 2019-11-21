@@ -4133,11 +4133,40 @@ router.get('/delete_log',async (req,resp)=>{
 	let limit  = 100;
 	let skip  = 0;
 	let log_arr = await list_logs(limit,skip);
+	var resp = {};
+	for(let index in log_arr){
+		let order_id = log_arr[index]['order_id'];
+		var is_buy_order_exist = await is_buy_order_exist(order_id);
+		if(!is_buy_order_exist){
+			resp[order_id] = 'not found'; 
+		}
+	}
 	resp.status(200).send({
-		message: log_arr
+		message: resp
 	});
 })//End of delete_log
 
+
+function is_buy_order_exist(order_id){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			let where = {};
+				where['_id'] = order_id;
+			db.collection('buy_orders').findOne(where).toArray((err,result)=>{
+				if(err){
+					resolve(err);
+				}else{
+					var is_exist  = false;
+					if(result.length >0){
+						is_exist  = true;
+					}
+
+					resolve(is_exist);
+				}
+			})
+		})
+	})
+}//End of is_buy_order_exist 
 
 
 function list_logs(limit,skip){
