@@ -4152,7 +4152,7 @@ function is_buy_order_exist(order_id){
 		conn.then((db)=>{
 			let where = {};
 				where['_id'] = order_id;
-			db.collection('buy_orders').findOne(where).toArray((err,result)=>{
+			db.collection('buy_orders').find(where).toArray((err,result)=>{
 				if(err){
 					resolve(err);
 				}else{
