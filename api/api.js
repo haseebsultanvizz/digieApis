@@ -2711,12 +2711,6 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 		}else {//End of sell order id not empty
 
 			var tempOrderResp = await listselTempOrders(orderId,exchange);
-
-			console.log('::::::::::::::::::::::::::::::');
-			console.log('tempordre arr');
-			console.log(tempOrderResp);
-			console.log('::::::::::::::::::::::::::::::');
-
 			if(tempOrderResp.length >0){
 					var tempOrderArr = (typeof tempOrderResp[0] =='undefined')?[]:tempOrderResp[0];
 					var profit_price = (typeof tempOrderArr.profit_price == 'undefined')?0:tempOrderArr.profit_price;
@@ -2724,27 +2718,13 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 					
 					var profit_percent = (typeof tempOrderArr.profit_percent == 'undefined')?0:tempOrderArr.profit_percent;
 
-					
-			
-
+				
 					var temp_order_id = tempOrderArr['_id'];
-
 					if(status == 'new'){
 						var buy_price = buyOrderArr.price;
 					}else{
 						var buy_price = (typeof buyOrderArr.market_value == 'undefined')?buyOrderArr.price:buyOrderArr.market_value;
 					}
-
-
-					console.log(':::::::::::::::::::::::::');
-						console.log('buy_price ',buy_price);
-					console.log(':::::::::::::::::::::::::');
-
-					console.log(':::::::::::::::::::::::::');
-						console.log('profit_price ',profit_price);
-					console.log(':::::::::::::::::::::::::');
-
-
 					
 
 					if(profit_percent == 0 || profit_percent == ''){
@@ -2758,7 +2738,6 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 					var new_sell_price = parseFloat(updated_buy_price) +parseFloat((updated_buy_price/100)*sell_percentage);
 
-					console.log('updatd sell price')
 
 					var filter = {};
 						filter['_id'] = temp_order_id;
@@ -2863,7 +2842,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 		
 						
 				
-						var log_msg_1 = "Order Profit percentage Change From("+sell_profit_percent+" % ) To ("+parseFloat(calculate_new_sell_percentage).toFixed(2)+" %)  From Chart";
+						var log_msg_1 = "Order Profit percentage Change From("+parseFloat(sell_profit_percent).toFixed(2)+" % ) To ("+parseFloat(calculate_new_sell_percentage).toFixed(2)+" %)  From Chart";
 						var logPromise_1 = recordOrderLog(orderId,log_msg_1,'order_profit_percentage_change','yes',exchange);
 						logPromise_1.then((callback)=>{})
 
@@ -2946,7 +2925,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							logPromise.then((callback)=>{})
 	
 	
-							var log_msg_1 = "Order Profit percentage Change From("+sell_profit_percent+") To ("+calculate_new_sell_percentage+")  From Chart";
+							var log_msg_1 = "Order Profit percentage Change From("+parseFloat(sell_profit_percent).toFixed(2)+") To ("+parseFloat(calculate_new_sell_percentage).toFixed(2)+")  From Chart";
 							var logPromise_1 = recordOrderLog(orderId,log_msg_1,'order_profit_percentage_change','yes',exchange);
 							logPromise_1.then((callback)=>{})
 						}else{//End of profitable side
@@ -2982,7 +2961,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 							logPromise.then((callback)=>{});
 
 
-							var log_msg_1 = "Order stop Loss percentage Change From("+loss_percentage+") To ("+stop_loss_percentage+")  From Chart";
+							var log_msg_1 = "Order stop Loss percentage Change From("+parseFloat(loss_percentage).toFixed(2)+") To ("+parseFloat(stop_loss_percentage).toFixed(2)+")  From Chart";
 							var logPromise_1 = recordOrderLog(orderId,log_msg_1,'order_stop_loss_percentage_change','yes',exchange);
 							logPromise_1.then((callback)=>{})
 
@@ -3076,7 +3055,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								temp_arr['profit_price'] = updated_price;
 								
 
-								var log_msg = "Order profit percentage set to ("+sell_profit_percent+") %";
+								var log_msg = "Order profit percentage set to ("+parseFloat(sell_profit_percent).toFixed(2)+") %";
 								var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
 								logPromise.then((callback)=>{})
 
@@ -3106,7 +3085,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								temp_arr['loss_percentage'] = loss_percentage;
 
 
-								var log_msg = "Order stop loss percentage set to ("+loss_percentage+") % From Chart";
+								var log_msg = "Order stop loss percentage set to ("+parseFloat(loss_percentage).toFixed(2)+") % From Chart";
 								var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
 								logPromise.then((callback)=>{})
 
@@ -3195,7 +3174,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 
 								
 
-								var log_msg = "Order profit percentage set to ("+sell_profit_percent+") % From Chart";
+								var log_msg = "Order profit percentage set to ("+parseFloat(sell_profit_percent).toFixed(2)+") % From Chart";
 								var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
 								logPromise.then((callback)=>{})
 
@@ -3232,7 +3211,7 @@ function updateSingle(collection,searchQuery,updateQuery,upsert){
 								var updatePromise = updateOne(filter,upd_temp,collection);
 								updatePromise.then((resolve)=>{});
 
-								var log_msg = "Order stop loss percentage set to ("+loss_percentage+") % From Chart";
+								var log_msg = "Order stop loss percentage set to ("+parseFloat(loss_percentage).toFixed(2)+") % From Chart";
 								var logPromise = recordOrderLog(orderId,log_msg,'order_stop_loss_change','yes',exchange);
 								logPromise.then((callback)=>{})
 
