@@ -4208,6 +4208,57 @@ function delete_log(order_id){
 	
 }
 
+
+
+router.post('/create_index',async (req,resp)=>{
+	var collection = req.body.collection;
+	var index_obj = req.body.index_obj;
+	var createIndexResp = await create_index(collection,index_obj);
+
+	resp.status(200).send({
+		message: createIndexResp
+	});
+})//End of create_index
+
+
+function create_index(collection,index_obj){
+	return new Promise((resole)=>{
+		conn.then((db)=>{
+			db.collection(collection).createIndex(index_obj,(err,result)=>{
+				if(err){
+					resole(err);
+				}else{
+					resole(result);
+				}
+			})
+		})
+	})
+}//End of create_index
+
+
+router.post('/get_index',async (req,resp)=>{
+	var collection = req.body.collection;
+	var indexArr = await get_index(collection);
+	resp.status(200).send({
+		message: indexArr
+	});
+})//End of get_index
+
+function get_index(collection){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			db.collection(collection).getIndexes((err,result)=>{
+				if(err){
+					resolve(err);
+				}else{
+					resolve(result);
+				}
+			})
+		})
+	})
+}//End of get_index
+
+
 module.exports = router;
 
 
