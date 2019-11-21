@@ -4136,8 +4136,8 @@ router.get('/delete_log',async (req,resp)=>{
 	var resp = {};
 	for(let index in log_arr){
 		let order_id = log_arr[index]['order_id'];
-		var is_buy_order_exist = await is_buy_order_exist(order_id);
-		if(!is_buy_order_exist){
+		var is_order_exist = await is_buy_order_exist(order_id);
+		if(!is_order_exist){
 			resp[order_id] = 'not found'; 
 		}
 	}
