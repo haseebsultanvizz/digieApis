@@ -4133,16 +4133,16 @@ router.get('/delete_log',async (req,resp)=>{
 	let limit  = 100;
 	let skip  = 0;
 	let log_arr = await list_logs(limit,skip);
-	var resp = {};
+	var resp_obj = {};
 	for(let index in log_arr){
 		let order_id = log_arr[index]['order_id'];
 		var is_order_exist = await is_buy_order_exist(order_id);
 		if(!is_order_exist){
-			resp[order_id] = 'not found'; 
+			resp_obj[order_id] = 'not found'; 
 		}
 	}
 	resp.status(200).send({
-		message: resp
+		message: resp_obj
 	});
 })//End of delete_log
 
