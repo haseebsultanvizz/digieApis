@@ -4129,7 +4129,7 @@ function validate_user_password(user_id,md5Pass){
 }//End of validate_user_password
 
 
-router.get('/delete_log',async (err,result)=>{
+router.get('/delete_log',async (req,resp)=>{
 	resp.status(200).send({
 		message: 'ok working'
 	});
