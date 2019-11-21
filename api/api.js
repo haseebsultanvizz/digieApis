@@ -4131,9 +4131,7 @@ function validate_user_password(user_id,md5Pass){
 
 router.get('/delete_log',async (req,resp)=>{
 	let limit  = 1000;
-	let skip  = 100;
-
-
+	let skip  = 1100;
 	let log_arr = await list_logs(limit,skip);
 	var resp_obj = {};
 	for(let index in log_arr){
