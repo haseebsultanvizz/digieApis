@@ -4130,18 +4130,22 @@ function validate_user_password(user_id,md5Pass){
 
 
 router.get('/delete_log',async (req,resp)=>{
-	let limit  = 1000;
-	let skip  = 1100;
-	let log_arr = await list_logs(limit,skip);
-	var resp_obj = {};
-	for(let index in log_arr){
-		var order_id = log_arr[index]['order_id'];
-		var is_order_exist = await is_buy_order_exist(order_id);
-		if(!is_order_exist){
-			var del_arr = await delete_log(order_id);
-			resp_obj[order_id] = del_arr; 
+	var limit  = 100;
+	for (var skip = 0; skip <100000; skip += 100) {
+		let log_arr = await list_logs(limit,skip);
+		var resp_obj = {};
+		for(let index in log_arr){
+			var order_id = log_arr[index]['order_id'];
+			var is_order_exist = await is_buy_order_exist(order_id);
+			if(!is_order_exist){
+				var del_arr = await delete_log(order_id);
+				console.log(del_arr)
+				//resp_obj[order_id] = del_arr; 
+			}
 		}
+	
 	}
+	
 	resp.status(200).send({
 		message: resp_obj
 	});
