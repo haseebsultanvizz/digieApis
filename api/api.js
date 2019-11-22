@@ -4267,12 +4267,12 @@ function delete_log_msg(){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let start_date = new Date('2019-02-01');
-			let end_date = new Date('2018-011-30');
+			let end_date = new Date('2019-02-30');
 			let where = {};
-				//where['created_date'] = {'$gte':start_date, '$lte':end_date}
-				//where['show_error_log'] = 'no';
+				where['created_date'] = {'$gte':start_date, '$lte':end_date}
+				where['show_error_log'] = 'no';
 
-				where['type'] = 'move_to_lth';
+				
 				
 			db.collection('orders_history_log').deleteMany(where,(err,result)=>{
 				if(err){
