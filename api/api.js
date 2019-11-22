@@ -4257,6 +4257,7 @@ function get_index(collection){
 
 router.get('/testing',async (req,resp)=>{
 	var respArr	= await delete_log_msg();
+	console.log(respArr)
 	resp.status(200).send({
 		message: respArr
 	});
@@ -4266,7 +4267,7 @@ function delete_log_msg(){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			let start_date = new Date('2019-02-01');
-			let end_date = new Date('2018-06-30');
+			let end_date = new Date('2018-02-30');
 			let where = {};
 				where['created_date'] = {'$gte':start_date, '$lte':end_date}
 				where['show_error_log'] = 'no';
