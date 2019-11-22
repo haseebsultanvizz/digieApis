@@ -1695,9 +1695,9 @@ function listOrderLog(orderId,exchange){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			var where = {};
-				where['order_id'] = {'$in':[orderId,new ObjectID(orderId)]};
+				where['order_id'] = new ObjectID(orderId);
 			var collection = (exchange == 'binance')?'orders_history_log':'orders_history_log_'+exchange;
-			db.collection(collection).find(where).toArray((err,result)=>{
+			db.collection(collection).find(where).sort({created_date:-1}).toArray((err,result)=>{
 				if(err){
 					resolve(err);
 				}else{
