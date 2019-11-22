@@ -1143,7 +1143,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 
 
 		
-			order['targetPrice'] =  (targetPrice =='' )?'---':parseFloat(targetPrice).toFixed(3);
+			order['targetPrice'] =  (targetPrice == '' || targetPrice == 1000 )?'---':parseFloat(targetPrice).toFixed(2);
 			
 			var orderSellPrice = (typeof orderListing[index].market_sold_price =='undefined' || orderListing[index].market_sold_price == '')?'':orderListing[index].market_sold_price;
 			var orderPurchasePrice = (typeof orderListing[index].market_value =='undefined' || orderListing[index].market_value =='')?0:orderListing[index].market_value;
