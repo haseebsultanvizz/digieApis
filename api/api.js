@@ -4265,8 +4265,8 @@ router.get('/testing',async (req,resp)=>{
 function delete_log_msg(){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
-			let start_date = new Date('2019-01-01');
-			let end_date = new Date('2019-01-30');
+			let start_date = new Date('2018-01-01');
+			let end_date = new Date('2018-06-30');
 			let where = {};
 				where['created_date'] = {'$gte':start_date, '$lte':end_date}
 				where['show_error_log'] = 'no';
