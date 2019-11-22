@@ -4255,19 +4255,19 @@ function get_index(collection){
 	})
 }//End of get_index
 
-router.get('/testing',async (req,resp)=>{
-	var respArr	= await delete_log_msg();
+router.post('/testing',async (req,resp)=>{
+	var respArr	= await delete_log_msg(req.body.from_dt,req.body.end_dt,);
 	console.log(respArr)
 	resp.status(200).send({
 		message: respArr
 	});
 })
 
-function delete_log_msg(){
+function delete_log_msg(from_dt,end_dt){
 	return new Promise((resolve)=>{
 		conn.then((db)=>{
-			let start_date = new Date('2019-02-01');
-			let end_date = new Date('2019-02-30');
+			let start_date = new Date(from_dt);
+			let end_date = new Date(end_dt);
 			let where = {};
 				where['created_date'] = {'$gte':start_date, '$lte':end_date}
 				where['show_error_log'] = 'no';
