@@ -4263,7 +4263,7 @@ router.get('/testing',async (req,resp)=>{
 })
 
 function delete_log_msg(){
-	return new promie((resolve)=>{
+	return new Promise((resolve)=>{
 		conn.then((db)=>{
 			db.collection('orders_history_log').deleteMany({show_error_log:'no'},(err,result)=>{
 				if(err){
