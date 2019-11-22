@@ -4269,9 +4269,11 @@ function delete_log_msg(){
 			let start_date = new Date('2019-02-01');
 			let end_date = new Date('2018-011-30');
 			let where = {};
-				where['created_date'] = {'$gte':start_date, '$lte':end_date}
-				where['show_error_log'] = 'no';
+				//where['created_date'] = {'$gte':start_date, '$lte':end_date}
+				//where['show_error_log'] = 'no';
 
+				where['log_msg'] = 'Order Move to LTH by Setting';
+				
 			db.collection('orders_history_log').deleteMany(where,(err,result)=>{
 				if(err){
 					resolve(err);
