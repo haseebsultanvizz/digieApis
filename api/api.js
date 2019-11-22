@@ -1697,7 +1697,7 @@ function listOrderLog(orderId,exchange){
 			var where = {};
 				where['order_id'] = new ObjectID(orderId);
 			var collection = (exchange == 'binance')?'orders_history_log':'orders_history_log_'+exchange;
-			db.collection(collection).find(where).sort({created_date:-1}).toArray((err,result)=>{
+			db.collection(collection).find(where).toArray((err,result)=>{
 				if(err){
 					resolve(err);
 				}else{
@@ -4254,6 +4254,27 @@ function get_index(collection){
 		})
 	})
 }//End of get_index
+
+router.get('/testing',async (req,resp)=>{
+	var respArr	= await delete_log_msg();
+	resp.status(200).send({
+		message: respArr
+	});
+})
+
+function delete_log_msg(){
+	return new promie((resolve)=>{
+		conn.then((db)=>{
+			db.collection('orders_history_log').deleteMany({show_error_log:'no'},(err,result)=>{
+				if(err){
+					resolve(err);
+				}else{
+					resolve(result)	
+				}
+			})
+		})
+	})
+}
 
 
 module.exports = router;
