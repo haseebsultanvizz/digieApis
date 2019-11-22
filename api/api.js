@@ -4285,6 +4285,38 @@ function delete_log_msg(from_dt,end_dt){
 	})
 }
 
+router.post('/testing_count',async (req,resp)=>{
+	var respArr	= await count_log_msg(req.body.from_dt,req.body.end_dt,);
+	console.log(respArr)
+	resp.status(200).send({
+		message: respArr
+	});
+})
+
+
+
+function count_log_msg(from_dt,end_dt){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			let start_date = new Date(from_dt);
+			let end_date = new Date(end_dt);
+			let where = {};
+				where['created_date'] = {'$gte':start_date, '$lte':end_date}
+				where['show_error_log'] = 'no';
+
+				
+				
+			db.collection('orders_history_log').count(where,(err,result)=>{
+				if(err){
+					resolve(err);
+				}else{
+					resolve(result)	
+				}
+			})
+		})
+	})
+}
+
 
 module.exports = router;
 
