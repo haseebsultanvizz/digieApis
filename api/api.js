@@ -4272,7 +4272,7 @@ function delete_log_msg(){
 				//where['created_date'] = {'$gte':start_date, '$lte':end_date}
 				//where['show_error_log'] = 'no';
 
-				where['log_msg'] = 'Order Move to LTH by Setting';
+				where['type'] = 'move_to_lth';
 				
 			db.collection('orders_history_log').deleteMany(where,(err,result)=>{
 				if(err){
