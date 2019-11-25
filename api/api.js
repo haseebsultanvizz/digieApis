@@ -3616,9 +3616,9 @@ conn.then(db => {
 						let pulled_quantity = final_orders_element['quantity'];
 
 						let pulled_coin_symbol = final_orders_element['symbol'];
-						let market_price_array = await db.collection('market_prices').find({ "coin": pulled_coin_symbol }).sort({ "created_date": -1 }).limit(1).toArray();
+						// let market_price_array = await db.collection('market_prices').find({ "coin": pulled_coin_symbol }).sort({ "created_date": -1 }).limit(1).toArray();
 
-						let market_price = market_price_array[0]['price'];
+						let market_price = get_market_price(pulled_coin_symbol);//market_price_array[0]['price'];
 
 						
 						let amount_in_usd = pulled_quantity * market_price * btc_price;
@@ -3646,7 +3646,23 @@ conn.then(db => {
 })
 })
 
-
+async function get_market_price(coin){
+	return new Promise(async function(resolve, reject){
+		request.post({
+			url: "http://35.171.172.15:3000/api/listCurrentmarketPrice",
+			json: {
+				"coin": coin
+			},
+			headers: {"content-type": "application/json"}
+		}, async function(error, response, body){
+			if(body.message){
+				return resolve(body.message);
+			}else{
+				return resolve(null);
+			}
+		})
+	})
+}
 router.post('/get_user_info', function(req, res, next) {
 var post_data = req.body;
 let post_data_key_array = Object.keys(post_data);
