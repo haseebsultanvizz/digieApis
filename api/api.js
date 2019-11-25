@@ -1140,10 +1140,8 @@ router.post('/listOrderListing',async (req,resp)=>{
 				var targetPrice = (status == 'LTH')?lth_profit:sell_profit_percent;
 			}
 
-
-
-		
-			order['targetPrice'] =  (targetPrice == '' || targetPrice == 1000 )?'---':parseFloat(targetPrice).toFixed(2);
+			targetPrice = (targetPrice == '' || targetPrice == 1000 )?'---':parseFloat(targetPrice).toFixed(2);
+			order['targetPrice'] =  (isNaN(targetPrice))?'---':targetPrice
 			
 			var orderSellPrice = (typeof orderListing[index].market_sold_price =='undefined' || orderListing[index].market_sold_price == '')?'':orderListing[index].market_sold_price;
 			var orderPurchasePrice = (typeof orderListing[index].market_value =='undefined' || orderListing[index].market_value =='')?0:orderListing[index].market_value;
