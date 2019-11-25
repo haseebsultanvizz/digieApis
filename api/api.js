@@ -1490,6 +1490,44 @@ function pausePlayParentOrder(orderId,status,exchange){
 }//End of listGlobalCoins
 
 
+//Umer Abbas [25-11-19]
+router.post('/togglePausePlayOrder',async (req,resp)=>{
+	var playPromise = togglePausePlayOrder(req.body.orderId,req.body.status,req.body.exchange);
+	let show_hide_log = 'yes';
+	let type = 'play pause';
+	let log_msg = '';
+	if(req.body.status == 'play'){
+		log_msg = 'Parent Order was set to Play Manually';
+	}else if(req.body.status == 'pause'){
+		log_msg = 'Parent Order was set to Pause Manually';
+	}
+	var LogPromise = recordOrderLog(req.body.orderId,log_msg,type,show_hide_log,req.body.exchange);
+	var promiseResponse = await Promise.all([playPromise,LogPromise]);
+	resp.status(200).send({
+		message: promiseResponse
+	});
+})//End of playOrder
+
+function togglePausePlayOrder(orderId,status,exchange){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			let filter = {};
+			filter['_id'] = new ObjectID(orderId);
+			let set = {};
+			set['$set'] = {'pause_status':status}
+			let collection = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+			db.collection(collection).updateOne(filter,set,(err,result)=>{
+				if(err){
+					resolve(err)
+				}else{
+					resolve(result);
+				}
+			})
+		})
+	})
+}//End of togglePausePlayOrder
+
+
 function recordOrderLog(order_id,log_msg,type,show_hide_log,exchange){
     return new Promise((resolve,reject)=>{
         conn.then((db)=>{
