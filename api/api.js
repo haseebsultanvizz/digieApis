@@ -316,7 +316,7 @@ async function listUserCoins(userId){
 	})	
 }//End of listUserCoins
 
-
+//Depricated //Umer Abbas [25-11-19] => please use the API calls provided by waqar (Bam)[http://35.171.172.15:3001/api/listCurrentmarketPrice],params['coin', 'exchange'], (Binance)[http://35.171.172.15:3000/api/listCurrentmarketPrice], params['coin', 'exchange']
 router.post('/listCurrentmarketPrice',async (req,resp)=>{
 	let exchange = req.body.exchange;
 	var urserCoinsArr = await listCurrentMarketPrice(req.body.coin,exchange)
