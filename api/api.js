@@ -1416,7 +1416,7 @@ function calculateAverageOrdersProfit(postDAta){
 			var SoldOrderArr =	await list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
 			var buyOrderArr = await	list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
 			var returnArr = mergeOrdersArrays(SoldOrderArr,buyOrderArr);
-			var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
+			var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date);
 		}else{
 			var orderArr =	await list_orders_by_filter(collectionName,filter,pagination,limit,skip);
 		}
