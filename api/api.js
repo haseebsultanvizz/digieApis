@@ -316,7 +316,7 @@ async function listUserCoins(userId){
 	})	
 }//End of listUserCoins
 
-
+//Depricated //Umer Abbas [25-11-19] => please use the API calls provided by waqar (Bam)[http://35.171.172.15:3001/api/listCurrentmarketPrice],params['coin', 'exchange'], (Binance)[http://35.171.172.15:3000/api/listCurrentmarketPrice], params['coin', 'exchange']
 router.post('/listCurrentmarketPrice',async (req,resp)=>{
 	let exchange = req.body.exchange;
 	var urserCoinsArr = await listCurrentMarketPrice(req.body.coin,exchange)
@@ -1533,6 +1533,44 @@ function pausePlayParentOrder(orderId,status,exchange){
 		})
 	})
 }//End of listGlobalCoins
+
+
+//Umer Abbas [25-11-19]
+router.post('/togglePausePlayOrder',async (req,resp)=>{
+	var playPromise = togglePausePlayOrder(req.body.orderId,req.body.status,req.body.exchange);
+	let show_hide_log = 'yes';
+	let type = 'play pause';
+	let log_msg = '';
+	if(req.body.status == 'play'){
+		log_msg = 'Parent Order was set to Play Manually';
+	}else if(req.body.status == 'pause'){
+		log_msg = 'Parent Order was set to Pause Manually';
+	}
+	var LogPromise = recordOrderLog(req.body.orderId,log_msg,type,show_hide_log,req.body.exchange);
+	var promiseResponse = await Promise.all([playPromise,LogPromise]);
+	resp.status(200).send({
+		message: promiseResponse
+	});
+})//End of playOrder
+
+function togglePausePlayOrder(orderId,status,exchange){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			let filter = {};
+			filter['_id'] = new ObjectID(orderId);
+			let set = {};
+			set['$set'] = {'pause_status':status}
+			let collection = (exchange == 'binance')?'buy_orders':'buy_orders_'+exchange;
+			db.collection(collection).updateOne(filter,set,(err,result)=>{
+				if(err){
+					resolve(err)
+				}else{
+					resolve(result);
+				}
+			})
+		})
+	})
+}//End of togglePausePlayOrder
 
 
 function recordOrderLog(order_id,log_msg,type,show_hide_log,exchange){
@@ -3623,9 +3661,9 @@ conn.then(db => {
 						let pulled_quantity = final_orders_element['quantity'];
 
 						let pulled_coin_symbol = final_orders_element['symbol'];
-						let market_price_array = await db.collection('market_prices').find({ "coin": pulled_coin_symbol }).sort({ "created_date": -1 }).limit(1).toArray();
+						// let market_price_array = await db.collection('market_prices').find({ "coin": pulled_coin_symbol }).sort({ "created_date": -1 }).limit(1).toArray();
 
-						let market_price = market_price_array[0]['price'];
+						let market_price = get_market_price(pulled_coin_symbol);//market_price_array[0]['price'];
 
 						
 						let amount_in_usd = pulled_quantity * market_price * btc_price;
@@ -3653,7 +3691,23 @@ conn.then(db => {
 })
 })
 
-
+async function get_market_price(coin){
+	return new Promise(async function(resolve, reject){
+		request.post({
+			url: "http://35.171.172.15:3000/api/listCurrentmarketPrice",
+			json: {
+				"coin": coin
+			},
+			headers: {"content-type": "application/json"}
+		}, async function(error, response, body){
+			if(body.message){
+				return resolve(body.message);
+			}else{
+				return resolve(null);
+			}
+		})
+	})
+}
 router.post('/get_user_info', function(req, res, next) {
 var post_data = req.body;
 let post_data_key_array = Object.keys(post_data);
