@@ -755,7 +755,8 @@ router.post('/editAutoOrder', async(req, resp) => {
          * Get Buy Order record and get sell id and update sell order Redocr.
          * Update sell record with updates LTH price By Ali 11-27-2019 ....
          */
-        let buyOrderReocrd = getBuyOrder(orderId);
+        let orderId_final = new ObjectID(orderId);
+        let buyOrderReocrd = getBuyOrder(orderId_final);
 
         console.log("buyOrderReocrd here");
         console.log(buyOrderReocrd);
