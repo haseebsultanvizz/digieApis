@@ -771,7 +771,8 @@ router.post('/editAutoOrder', async(req, resp) => {
         })
 
         resp.status(200).send({
-            message: 'updated'
+            message: sell_order_id,
+            message2: buyOrderReocrd
         });
     }) //End of editAutoOrder
 
