@@ -750,7 +750,9 @@ router.post('/editAutoOrder', async(req, resp) => {
         console.log(status)
         if (status == 'LTH') {
             console.log('I am here line 750 api.js')
-            var sell_price = ((parseFloat(purchased_price) / 100) * lth_profit) + parseFloat(purchased_price);
+            var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
+
+            console.log("sell_price", sell_price);
             order['sell_price'] = sell_price;
         }
 
