@@ -739,6 +739,18 @@ router.post('/editAutoOrder', async(req, resp) => {
         order['modified_date'] = new Date()
         let orderId = order['orderId'];
         var exchange = order['exchange'];
+        var lth_profit = order['lth_profit'];
+
+        var buyOrderArr = await listOrderById(orderId, exchange);
+        var purchased_price = buyOrderArr[0]['market_value'];
+        var status = buyOrderArr[0]['status'];
+        if (status == 'LTH') {
+            var sell_price = ((parseFloat(purchased_price) / 100) * lth_profit) + parseFloat(lth_profit);
+            order['sell_price'] = sell_price;
+        }
+
+
+
         var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         delete order['orderId'];
         var where = {};
@@ -1693,7 +1705,10 @@ router.post('/orderMoveToLth', async(req, resp) => {
         let exchange = req.body.exchange;
         let orderId = req.body.orderId;
         let lth_profit = req.body.lth_profit;
-        var respPromise = orderMoveToLth(orderId, lth_profit, exchange);
+        var buyOrderArr = await listOrderById(orderId, exchange);
+        var purchased_price = buyOrderArr[0]['market_value'];
+        var sell_price = ((parseFloat(purchased_price) / 100) * lth_profit) + parseFloat(lth_profit);
+        var respPromise = orderMoveToLth(orderId, lth_profit, exchange, sell_price);
         let show_hide_log = 'yes';
         let type = 'move_lth';
         let log_msg = 'Buy Order was Moved to <strong> LONG TERM HOLD </strong>  <span style="color:yellow;    font-size: 14px;"><b>Manually</b></span> ';
@@ -1706,13 +1721,13 @@ router.post('/orderMoveToLth', async(req, resp) => {
     }) //End of orderMoveToLth
 
 
-function orderMoveToLth(orderId, lth_profit, exchange) {
+function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
     return new Promise((resolve) => {
         conn.then((db) => {
             let filter = {};
             filter['_id'] = new ObjectID(orderId);
             let set = {};
-            set['$set'] = { 'status': 'LTH', 'lth_profit': lth_profit, 'lth_functionality': 'yes', 'modified_date': new Date() };
+            set['$set'] = { 'status': 'LTH', 'lth_profit': lth_profit, 'lth_functionality': 'yes', 'modified_date': new Date(), 'sell_price': sell_price };
             var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             db.collection(collection).updateOne(filter, set, (err, result) => {
                 if (err) {
