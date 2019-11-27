@@ -1415,9 +1415,10 @@ function calculateAverageOrdersProfit(postDAta){
 			var buyOrdercollection = (exchange =='binance')?'buy_orders':'buy_orders_'+exchange;
 			var SoldOrderArr =	await list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
 			var buyOrderArr = await	list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
-			var orderArr = mergeOrdersArrays(SoldOrderArr,buyOrderArr);
+			var returnArr = mergeOrdersArrays(SoldOrderArr,buyOrderArr);
+			var orderArr = orderArr.slice().sort((a, b) => b.created_date - a.created_date)
 		}else{
-			var orderArr =	 list_orders_by_filter(collectionName,filter,pagination,limit,skip);
+			var orderArr =	await list_orders_by_filter(collectionName,filter,pagination,limit,skip);
 		}
 		return orderArr;
 }//End of listOrderListing
