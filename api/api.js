@@ -744,7 +744,10 @@ router.post('/editAutoOrder', async(req, resp) => {
         var buyOrderArr = await listOrderById(orderId, exchange);
         var purchased_price = buyOrderArr[0]['market_value'];
         var status = buyOrderArr[0]['status'];
+
+        console.log(status)
         if (status == 'LTH') {
+            console.log('I am here line 750 api.js')
             var sell_price = ((parseFloat(purchased_price) / 100) * lth_profit) + parseFloat(lth_profit);
             order['sell_price'] = sell_price;
         }
