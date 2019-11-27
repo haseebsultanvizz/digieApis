@@ -1414,7 +1414,7 @@ function calculateAverageOrdersProfit(postDAta){
 			var soldOrdercollection = (exchange =='binance')?'sold_buy_orders':'sold_buy_orders_'+exchange;
 			var buyOrdercollection = (exchange =='binance')?'buy_orders':'buy_orders_'+exchange;
 			var SoldOrderArr =	await list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
-			var buyOrderArr = await	list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
+			var buyOrderArr = await	list_orders_by_filter(buyOrdercollection,filter,pagination,limit,skip);
 			var returnArr = mergeOrdersArrays(SoldOrderArr,buyOrderArr);
 			var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
 		}else{
