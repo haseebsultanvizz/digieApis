@@ -1424,22 +1424,22 @@ function calculateAverageOrdersProfit(postDAta){
 }//End of listOrderListing
 
 
-function mergeOrdersArrays(arr1, arr2) {
+function mergeOrdersArrays(SoldOrderArr, buyOrderArr) {
 	let merged = [];
 	let index1 = 0;
 	let index2 = 0;
 	let current = 0;
   
-	while (current < (arr1.length + arr2.length)) {
+	while (current < (SoldOrderArr.length + buyOrderArr.length)) {
   
-	  let isArr1Depleted = index1 >= arr1.length;
-	  let isArr2Depleted = index2 >= arr2.length;
+	  let isSoldOrderArrDepleted = index1 >= SoldOrderArr.length;
+	  let isbuyOrderArrDepleted = index2 >= buyOrderArr.length;
   
-	  if (!isArr1Depleted && (isArr2Depleted || (arr1[index1] < arr2[index2]))) {
-		merged[current] = arr1[index1];
+	  if (!isSoldOrderArrDepleted && (isbuyOrderArrDepleted || (SoldOrderArr[index1] < buyOrderArr[index2]))) {
+		merged[current] = SoldOrderArr[index1];
 		index1++;
 	  } else {
-		merged[current] = arr2[index2];
+		merged[current] = buyOrderArr[index2];
 		index2++;
 	  }
   
@@ -1447,7 +1447,7 @@ function mergeOrdersArrays(arr1, arr2) {
 	}
   
 	return merged;
-  }
+  }//End of mergeOrdersArrays
   
  
 
