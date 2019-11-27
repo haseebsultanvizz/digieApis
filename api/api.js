@@ -1413,8 +1413,8 @@ function calculateAverageOrdersProfit(postDAta){
 		if(postDAta.status == 'all'){
 			var soldOrdercollection = (exchange =='binance')?'sold_buy_orders':'sold_buy_orders_'+exchange;
 			var buyOrdercollection = (exchange =='binance')?'buy_orders':'buy_orders_'+exchange;
-			var SoldOrderArr =	 list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
-			var buyOrderArr =	 list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
+			var SoldOrderArr =	await list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
+			var buyOrderArr = await	list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
 			var orderArr = mergeOrdersArrays(SoldOrderArr,buyOrderArr);
 		}else{
 			var orderArr =	 list_orders_by_filter(collectionName,filter,pagination,limit,skip);
