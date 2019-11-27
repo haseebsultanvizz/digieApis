@@ -1414,6 +1414,7 @@ async function listOrderListing(postDAta,dbConnection){
 			var SoldOrderArr =	await list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
 			var buyOrderArr =	await list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
 			var orderArr = mergeOrdersArrays(SoldOrderArr,buyOrderArr);
+			console.log(':::::::::::::: combine array :::::::::::::::::');
 			console.log(orderArr);
 		}else{
 			var orderArr =	await list_orders_by_filter(collectionName,filter,pagination,limit,skip);
