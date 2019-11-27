@@ -745,6 +745,8 @@ router.post('/editAutoOrder', async(req, resp) => {
         var purchased_price = buyOrderArr[0]['market_value'];
         var status = buyOrderArr[0]['status'];
 
+
+        console.log('status')
         console.log(status)
         if (status == 'LTH') {
             console.log('I am here line 750 api.js')
