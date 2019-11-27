@@ -1059,7 +1059,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 
 	var avg_profit = 0; //total_profit / total_quantity;
 	console.log('point 1');
-	var orderListing =  listOrderListing(req.body.postData);
+	var orderListing = await listOrderListing(req.body.postData);
 	console.log(orderListing);
 	console.log('point 2');
 	var customOrderListing = [];
@@ -1410,19 +1410,15 @@ function calculateAverageOrdersProfit(postDAta){
 			filter['status'] = 'submitted';
 		}
 		
-		( async()=>{
-			if(postDAta.status == 'all'){
-				var soldOrdercollection = (exchange =='binance')?'sold_buy_orders':'sold_buy_orders_'+exchange;
-				var buyOrdercollection = (exchange =='binance')?'buy_orders':'buy_orders_'+exchange;
-				var SoldOrderArr =	await list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
-				var buyOrderArr =	await list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
-				var orderArr = mergeOrdersArrays(SoldOrderArr,buyOrderArr);
-				console.log(':::::::::::::: combine array :::::::::::::::::');
-				console.log(orderArr);
-			}else{
-				var orderArr =	await list_orders_by_filter(collectionName,filter,pagination,limit,skip);
-			}
-		})();
+		if(postDAta.status == 'all'){
+			var soldOrdercollection = (exchange =='binance')?'sold_buy_orders':'sold_buy_orders_'+exchange;
+			var buyOrdercollection = (exchange =='binance')?'buy_orders':'buy_orders_'+exchange;
+			var SoldOrderArr =	 list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
+			var buyOrderArr =	 list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
+			var orderArr = mergeOrdersArrays(SoldOrderArr,buyOrderArr);
+		}else{
+			var orderArr =	 list_orders_by_filter(collectionName,filter,pagination,limit,skip);
+		}
 		return orderArr;
 }//End of listOrderListing
 
