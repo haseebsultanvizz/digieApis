@@ -1333,7 +1333,7 @@ function calculateAverageOrdersProfit(postDAta){
 }//End of calculateAverageOrdersProfit
 
 
- function listOrderListing(postDAta,dbConnection){
+ async function listOrderListing(postDAta,dbConnection){
 
 	var filter = {};	
 	var pagination = {};
