@@ -1058,7 +1058,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 	}
 
 	var avg_profit = 0; //total_profit / total_quantity;
-	var orderListing = await listOrderListing(req.body.postData);
+	var orderListing =  listOrderListing(req.body.postData);
 	var customOrderListing = [];
 	for(let index in orderListing){
 
@@ -1330,7 +1330,7 @@ function calculateAverageOrdersProfit(postDAta){
 }//End of calculateAverageOrdersProfit
 
 
-function listOrderListing(postDAta,dbConnection){
+async function listOrderListing(postDAta,dbConnection){
 
 	var filter = {};	
 	var pagination = {};
@@ -1407,21 +1407,65 @@ function listOrderListing(postDAta,dbConnection){
 			filter['status'] = 'submitted';
 		}
 		
+	
+		if(postDAta.status == 'all'){
+			var soldOrdercollection = (exchange =='binance')?'sold_buy_orders':'sold_buy_orders_'+exchange;
+			var buyOrdercollection = (exchange =='binance')?'buy_orders':'buy_orders_'+exchange;
+			var SoldOrderArr =	await list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
+			var buyOrderArr =	await list_orders_by_filter(soldOrdercollection,filter,pagination,limit,skip);
+			var orderArr = mergeOrdersArrays(SoldOrderArr,buyOrderArr);
+			console.log(orderArr);
+		}else{
+			var orderArr =	await list_orders_by_filter(collectionName,filter,pagination,limit,skip);
+		}
+
+		return orderArr
 
 		
+}//End of listOrderListing
 
-		return new Promise((resolve)=>{
-			conn.then((db)=>{
-				db.collection(collectionName).find(filter,pagination).limit(limit).skip(skip).sort( { modified_date: -1 } ).toArray((err,result)=>{
-					if(err){
-						console.log(err)
-					}else{
-						resolve(result)
-					}
-				})
+
+function mergeOrdersArrays(arr1, arr2) {
+	let merged = [];
+	let index1 = 0;
+	let index2 = 0;
+	let current = 0;
+  
+	while (current < (arr1.length + arr2.length)) {
+  
+	  let isArr1Depleted = index1 >= arr1.length;
+	  let isArr2Depleted = index2 >= arr2.length;
+  
+	  if (!isArr1Depleted && (isArr2Depleted || (arr1[index1] < arr2[index2]))) {
+		merged[current] = arr1[index1];
+		index1++;
+	  } else {
+		merged[current] = arr2[index2];
+		index2++;
+	  }
+  
+	  current++;
+	}
+  
+	return merged;
+  }
+  
+ 
+
+
+function list_orders_by_filter(collectionName,filter,pagination,limit,skip){
+	return new Promise((resolve)=>{
+		conn.then((db)=>{
+			db.collection(collectionName).find(filter,pagination).limit(limit).skip(skip).sort( { modified_date: -1 } ).toArray((err,result)=>{
+				if(err){
+					console.log(err)
+				}else{
+					resolve(result)
+				}
 			})
 		})
-}//End of listOrderListing
+	})
+}//End of list_orders
 
 
 
