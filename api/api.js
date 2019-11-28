@@ -1770,7 +1770,7 @@ router.post('/listOrderById', async(req, resp) => {
 
 			var timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
 			timeZoneTime = new Date(timeZoneTime);
-			var date = timeZoneTime.toLocaleString();
+			var date = timeZoneTime.toLocaleString()+' '+timezone;
 
             if (ordeLog[row].type != 'indicator_log_message') {
                 html += '<tr>';
