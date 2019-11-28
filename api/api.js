@@ -1764,7 +1764,8 @@ router.post('/listOrderById', async(req, resp) => {
         var respArr = {};
         respArr['ordeArr'] = resolvepromise[0];
         let html = '';
-        let ordeLog = resolvepromise[1];
+		let ordeLog = resolvepromise[1];
+			ordeLog = ordeLog.reverse();
         var index = 1;
         for (let row in ordeLog) {
 
