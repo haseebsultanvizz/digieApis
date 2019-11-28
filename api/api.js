@@ -1744,15 +1744,12 @@ router.post('/listOrderById',async (req,resp)=>{
 	var index = 1;
 		for(let row in ordeLog){
 			
-			// let date = new Date(ordeLog[row].created_date).toISOString().
-			replace(/T/, ' ').      // replace T with a space
-			replace(/\..+/, '') 
-
-			var usaTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: "America/New_York"});
-			usaTime = new Date(usaTime);
-			let date = 'USA time: '+usaTime.toLocaleString();
-			//console.log('USA time: '+usaTime.toLocaleString())
-
+			//let date = new Date(ordeLog[row].created_date).toISOString().
+			//replace(/T/, ' ').      // replace T with a space
+			//replace(/\..+/, '') 
+				var usaTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: "America/New_York"});
+				usaTime = new Date(usaTime);
+				var date = 'USA time: '+usaTime.toLocaleString();
 
 			if(ordeLog[row].type !='indicator_log_message'){
 				html +='<tr>';
