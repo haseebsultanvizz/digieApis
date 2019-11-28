@@ -1755,10 +1755,11 @@ function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
 
 router.post('/listOrderById', async(req, resp) => {
         let orderId = req.body.orderId;
-        let exchange = req.body.exchange;
+		let exchange = req.body.exchange;
+		var timezone = req.body.timezone;
         var ordeRespPromise = listOrderById(orderId, exchange);
-        var ordrLogPromise = listOrderLog(orderId, exchange);
-
+		var ordrLogPromise = listOrderLog(orderId, exchange);
+	
         var resolvepromise = await Promise.all([ordeRespPromise, ordrLogPromise]);
         var respArr = {};
         respArr['ordeArr'] = resolvepromise[0];
@@ -1767,12 +1768,9 @@ router.post('/listOrderById', async(req, resp) => {
         var index = 1;
         for (let row in ordeLog) {
 
-            //let date = new Date(ordeLog[row].created_date).toISOString().
-			//replace(/T/, ' ').      // replace T with a space
-			//replace(/\..+/, '') 
-			var usaTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: "America/New_York"});
-			usaTime = new Date(usaTime);
-			var date = 'USA time: '+usaTime.toLocaleString();
+			var timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
+			timeZoneTime = new Date(timeZoneTime);
+			var date = timeZoneTime.toLocaleString();
 
             if (ordeLog[row].type != 'indicator_log_message') {
                 html += '<tr>';
