@@ -1058,10 +1058,7 @@ router.post('/listOrderListing',async (req,resp)=>{
 	}
 
 	var avg_profit = 0; //total_profit / total_quantity;
-	console.log('point 1');
 	var orderListing = await listOrderListing(req.body.postData);
-	console.log(orderListing);
-	console.log('point 2');
 	var customOrderListing = [];
 	for(let index in orderListing){
 
@@ -1747,9 +1744,16 @@ router.post('/listOrderById',async (req,resp)=>{
 	var index = 1;
 		for(let row in ordeLog){
 			
-			let date = new Date(ordeLog[row].created_date).toISOString().
+			// let date = new Date(ordeLog[row].created_date).toISOString().
 			replace(/T/, ' ').      // replace T with a space
 			replace(/\..+/, '') 
+
+			var usaTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: "America/New_York"});
+			usaTime = new Date(usaTime);
+			let date = 'USA time: '+usaTime.toLocaleString();
+			//console.log('USA time: '+usaTime.toLocaleString())
+
+
 			if(ordeLog[row].type !='indicator_log_message'){
 				html +='<tr>';
 				html +='<th scope="row" class="text-danger">'+index+'</th>';
