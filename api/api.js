@@ -1766,14 +1766,8 @@ router.post('/listOrderById', async(req, resp) => {
         let html = '';
 		let ordeLog = resolvepromise[1];
 
-			console.log('::::::::::::::::::::::: ');
-			console.log(ordeLog);
-			console.log('+++++++++++++++++++++++++ ');
-		var reverseordeLog = ordeLog.reverse();
-			console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ');
-			console.log(reverseordeLog);
         var index = 1;
-        for (let row in reverseordeLog) {
+        for (let row in ordeLog) {
 
 			var timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
 			timeZoneTime = new Date(timeZoneTime);
@@ -1805,7 +1799,7 @@ function listOrderLog(orderId, exchange) {
             var where = {};
             where['order_id'] = new ObjectID(orderId);
             var collection = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-            db.collection(collection).find(where).toArray((err, result) => {
+            db.collection(collection).find(where,{allowDiskUse: true}).sort({created_date:-1}).toArray((err, result) => {
                 if (err) {
                     resolve(err);
                 } else {
