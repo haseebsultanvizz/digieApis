@@ -1765,9 +1765,15 @@ router.post('/listOrderById', async(req, resp) => {
         respArr['ordeArr'] = resolvepromise[0];
         let html = '';
 		let ordeLog = resolvepromise[1];
-			ordeLog = ordeLog.reverse();
+
+			console.log('::::::::::::::::::::::: ');
+			console.log(ordeLog);
+			console.log('+++++++++++++++++++++++++ ');
+		var reverseordeLog = ordeLog.reverse();
+			console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ');
+			console.log(reverseordeLog);
         var index = 1;
-        for (let row in ordeLog) {
+        for (let row in reverseordeLog) {
 
 			var timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
 			timeZoneTime = new Date(timeZoneTime);
