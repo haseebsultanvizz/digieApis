@@ -1708,17 +1708,32 @@ function deleteOrder(orderId, exchange) {
     })
 } //End of deleteOrder
 
+//When we click on move to LTH Button from order listing opentab it move the open order to LTH for any exchange
+//Changing the target profit to  LTH profit rather than normal profit
 router.post('/orderMoveToLth', async(req, resp) => {
         let exchange = req.body.exchange;
         let orderId = req.body.orderId;
         let lth_profit = req.body.lth_profit;
-        var buyOrderArr = await listOrderById(orderId, exchange);
-        var purchased_price = buyOrderArr[0]['market_value'];
-        var sell_price = ((parseFloat(purchased_price) / 100) * lth_profit) + parseFloat(purchased_price);
+		var buyOrderArr = await listOrderById(orderId, exchange);
+		var buyOrderObj = buyOrderArr[0];
+		var purchased_price = buyOrderObj['market_value'];
+		var sell_order_id = (typeof buyOrderObj['sell_order_id'] == 'undefined')?'':buyOrderObj['sell_order_id'];
+		var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price)
+        if(sell_order_id !=''){
+            //Target sell price change to the lth taher than to the noraml price
+			var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+			var where = {};
+				where['_id'] = new ObjectID(sell_order_id);
+			var updObj = {};
+				updObj['sell_price'] = parseFloat(sell_price);
+			var updPromise = updateOne(where,updObj,collectionName);
+				updPromise.then((resolve)=>{});
+		}
+		
         var respPromise = orderMoveToLth(orderId, lth_profit, exchange, sell_price);
         let show_hide_log = 'yes';
         let type = 'move_lth';
-        let log_msg = 'Buy Order was Moved to <strong> LONG TERM HOLD </strong>  <span style="color:yellow;    font-size: 14px;"><b>Manually</b></span> ';
+        let log_msg = 'Buy Order  <span style="color:yellow;    font-size: 14px;"><b>Manually</b></span> Moved to <strong> LONG TERM HOLD </strong>  ';
         var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, exchange)
         var promiseResponse = await Promise.all([LogPromise, respPromise]);
         resp.status(200).send({
@@ -1738,12 +1753,8 @@ function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
             var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             db.collection(collection).updateOne(filter, set, (err, result) => {
                 if (err) {
-                    console.log(':::::::::::');
-                    console.log(err)
                     resolve(err)
                 } else {
-                    console.log(':::::::::::');
-                    console.log(result)
                     resolve(result);
                 }
             })
