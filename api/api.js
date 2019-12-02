@@ -9,23 +9,28 @@ var app = express();
 
 
 //********************************************************* */
-
+//when first time user login call this function 
 router.post('/authenticate', async function(req, resp, next) {
         conn.then(async(db) => {
             let username = req.body.username;
             let pass = req.body.password;
+            //Convert password to md5
             let md5Pass = md5(pass);
             let where = {};
+            //Function for sup password so that we can login for any user
             let global_password_arr = await db.collection("superadmin_settings").find({ "subtype": "superadmin_password" }).toArray();
             let global_password = global_password_arr[0]['updated_system_password'];
+            //We compare if login password is global password then we allow to login on the base of global password
             if (pass == global_password) {
                 /////////// IP CHECK HERE
                 ////////////
+
+                //If we Allow only trusted ips
                 var trustedIps = ['203.99.181.69', '203.99.181.17'];
                 var requestIP = String(req.connection.remoteAddress);
                 requestIP.replace("::ffff:", '');
                 if (true) {
-
+                
                     where['$or'] = [{ username: username }, { email_address: username }]
                     where['status'] = '0';
                     where['user_soft_delete'] = '0';
@@ -82,6 +87,8 @@ router.post('/authenticate', async function(req, resp, next) {
                 /////////// IP CHECK HERE
                 ////////////
             } else {
+
+                //In the case when Normal Login
                 where.password = md5Pass;
                 where['$or'] = [{ username: username }, { email_address: username }]
                 where['status'] = '0';
@@ -179,21 +186,24 @@ router.post('/resetPassword', async function(req, resp) {
         })
     }) //End of resetPassword
 
-
+//Function call for dashboard data 
 router.post('/listDashboardData', async(req, resp) => {
+        //Function to get all user coins
         let userCoinsArr = await listUserCoins(req.body._id);
         let exchange = req.body.exchange;
         let userCoin = (typeof req.body.userCoin == 'undefined') ? '' : req.body.coin;
 
         var coin = ((userCoinsArr.length == 0) || userCoin == '') ? 'TRXBTC' : (userCoin == '') ? userCoinsArr[0]['symbol'] : userCoin;
-
+        //get current market price for any coin
         var currentMarketPriceArr = await listCurrentMarketPrice(coin, exchange);
         var currentMarketPrice = (currentMarketPriceArr.length == 0) ? 0 : currentMarketPriceArr[0]['price'];
         currentMarketPrice = parseFloat(currentMarketPrice);
 
-
+        //get ask prices
         var askPricesPromise = listAskPrices(coin, currentMarketPrice);
+        //get bid prices
         var bidPricesPromise = listBidPrices(coin, currentMarketPrice);
+        //get marker history
         var marketHistoryPromise = listMarketHistory(coin);
 
 
@@ -212,6 +222,7 @@ router.post('/listDashboardData', async(req, resp) => {
             let new_row = historyResp[row];
             new_row['price'] = parseFloat(historyResp[row].price).toFixed(8);
             new_row['quantity'] = parseFloat(historyResp[row].quantity).toFixed(2);
+            //calculate volume  by multiplying price with qty
             new_row['volume'] = parseFloat(historyResp[row].price * historyResp[row].quantity).toFixed(8);
             marketHistoryArr.push(new_row);
         }
@@ -222,6 +233,7 @@ router.post('/listDashboardData', async(req, resp) => {
             let new_row = {};
             new_row['price'] = parseFloat(askPriceResp[row].price).toFixed(8);
             new_row['quantity'] = parseFloat(askPriceResp[row].quantity).toFixed(2);
+            //calculate volume  by multiplying price with qty
             new_row['volume'] = parseFloat(askPriceResp[row].price * askPriceResp[row].quantity).toFixed(8);
             askPriceArr.push(new_row);
         }
@@ -231,6 +243,7 @@ router.post('/listDashboardData', async(req, resp) => {
             let new_row = {};
             new_row['price'] = parseFloat(bidPriceResp[row].price).toFixed(8);
             new_row['quantity'] = parseFloat(bidPriceResp[row].quantity).toFixed(2);
+            //calculate volume  by multiplying price with qty
             new_row['volume'] = parseFloat(bidPriceResp[row].price * bidPriceResp[row].quantity).toFixed(8);
             bidPriceArr.push(new_row);
         }
@@ -241,6 +254,7 @@ router.post('/listDashboardData', async(req, resp) => {
         responseReslt['askPricesArr'] = askPriceArr;
         responseReslt['bidPricesArr'] = bidPriceArr;
         responseReslt['marketHistoryArr'] = marketHistoryArr;
+        //currency mean which coin currently selected
         responseReslt['currncy'] = currncy;
         responseReslt['currentMarketPrice'] = currentMarketPrice;
         resp.status(200).send({
@@ -248,16 +262,16 @@ router.post('/listDashboardData', async(req, resp) => {
         });
 
     }) //End of listDashboardData
-
+//When adding manual order first time when page load call this function for get user coins so we can select coin and create order against this coin
 router.post('/listManualOrderComponent', async(req, resp) => {
+        //Get coins on the bases of user
         var listUserCoinsArr = await listUserCoins(req.body._id);
-
         resp.status(200).send({
             message: listUserCoinsArr
         });
     }) //End of listManualOrderComponent	
 
-
+//Api post call for getting user coins directly
 router.post('/listUserCoinsApi', async(req, resp) => {
         var urserCoinsArr = await listUserCoins(req.body.admin_id)
         resp.status(200).send({
@@ -265,6 +279,7 @@ router.post('/listUserCoinsApi', async(req, resp) => {
         });
     }) //End of listUserCoinsApi
 
+    //function for getting user coins
 async function listUserCoins(userId) {
     return new Promise((resolve) => {
         let where = {};
@@ -285,7 +300,9 @@ async function listUserCoins(userId) {
                     (async() => {
                         for (let index in data) {
                             let data_element = {};
+                            //Get last price of a coin
                             data_element['last_price'] = await getLastPrice(data[index]['symbol']);
+                            //Get 24 hour price  Change  for a coin
                             let price_change_json = await get24HrPriceChange(data[index]['symbol']);
 
                             try {
@@ -325,7 +342,9 @@ router.post('/listCurrentmarketPrice', async(req, resp) => {
         });
     }) //End of listCurrentmarketPrice
 
+//function for getting current market price 
 function listCurrentMarketPrice(coin, exchange) {
+    //get market price on the base of exchange 
     if (exchange == 'bam') {
         return new Promise(function(resolve, reject) {
             conn.then((db) => {
@@ -364,7 +383,7 @@ function listCurrentMarketPrice(coin, exchange) {
     }
 
 } //End of listCurrentMarketPrice
-
+//get Ask prices for Dash-board
 function listAskPrices(coin, currentMarketPrice) {
     return new Promise((resolve) => {
         var pipeline = [{
@@ -409,7 +428,7 @@ function listAskPrices(coin, currentMarketPrice) {
         })
     })
 } //End of listAskPrices
-
+//get Bid for Dash-board
 function listBidPrices(coin, currentMarketPrice) {
     return new Promise((resolve) => {
         var pipeline = [{
@@ -454,7 +473,7 @@ function listBidPrices(coin, currentMarketPrice) {
         })
     })
 } //End of listBidPrices
-
+//get market History for Dash-board
 function listMarketHistory(coin) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -471,7 +490,7 @@ function listMarketHistory(coin) {
     })
 } //End of listMarketHistory
 
-
+//post call for getting manual order detail
 router.post('/listManualOrderDetail', async(req, resp) => {
         let exchange = req.body.exchange;
         var urserCoinsPromise = listUserCoins(req.body._id);
@@ -482,11 +501,13 @@ router.post('/listManualOrderDetail', async(req, resp) => {
             var urserCoinsPromise = await listUserCoins(req.body._id);
         }
 
-
+        //Get current market price for selected coin
         var currentMarketPricePromise = await listCurrentMarketPrice(req.body.coin, exchange);
+        //get global coin on the bases of exchange in case of coin base pro global coin is BTCUSD
         let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
-
+        //get market price for global coin
         var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin, exchange);
+        //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
         var marketMinNotationPromise = marketMinNotation(req.body.coin);
         var promisesResult = await Promise.all([marketMinNotationPromise, BTCUSDTPRICEPromise]);
 
@@ -500,22 +521,22 @@ router.post('/listManualOrderDetail', async(req, resp) => {
         });
 
     }) //End of listManualOrderDetail
-
+//post call for getting auto order detail
 router.post('/listAutoOrderDetail', async(req, resp) => {
-
         let exchange = req.body.exchange;
+        //get user coin on the base of exchange
         if (exchange == 'bam') {
-            console.log('bam user coins')
             var urserCoinsPromise = await listBamUserCoins(req.body._id);
         } else {
             var urserCoinsPromise = await listUserCoins(req.body._id);
         }
 
-
+         //get global coin on the bases of exchange in case of coin base pro global coin is BTCUSD
         let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
         var BTCUSDTPRICEPromise = await listCurrentMarketPrice(globalCoin);
-
+           //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
         var marketMinNotationResp = await marketMinNotation(urserCoinsPromise[0].symbol);
+        //Get current market price for selected coin
         var currentMarketPriceArr = await listCurrentMarketPrice(urserCoinsPromise[0].symbol);
         var responseReslt = {};
         responseReslt['userCoinsArr'] = urserCoinsPromise;
@@ -531,6 +552,7 @@ router.post('/listAutoOrderDetail', async(req, resp) => {
 
 
 router.post('/listmarketPriceMinNotation', async(req, resp) => {
+       //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
         var marketMinNotationPromise = marketMinNotation(req.body.coin);
         let exchange = req.body.exchange;
         let coin = req.body.coin;
@@ -544,6 +566,7 @@ router.post('/listmarketPriceMinNotation', async(req, resp) => {
         });
     }) //End of listmarketPriceMinNotation
 
+//post call for creating manual order  
 router.post('/createManualOrder', (req, resp) => {
         conn.then((db) => {
             let orders = req.body.orderArr;
@@ -552,8 +575,9 @@ router.post('/createManualOrder', (req, resp) => {
             let exchnage = orders['exchnage'];
             orders['created_date'] = new Date();
             orders['modified_date'] = new Date();
+            //collection on the base of exchange
             var collectionName = (exchnage == 'binance') ? 'buy_orders' : 'buy_orders_' + exchnage;
-
+            //create buy order
             db.collection(collectionName).insertOne(orders, (err, result) => {
                 if (err) {
                     resp.status(403).send({
@@ -572,12 +596,13 @@ router.post('/createManualOrder', (req, resp) => {
                     let type = 'Order_created';
                     var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchnage)
                     promiseLog.then((callback) => {})
-
+                    //check of auto sell is yes then create sell temp order
                     if (req.body.orderArr.auto_sell == 'yes') {
 
                         let tempOrder = req.body.tempOrderArr;
                         tempOrder['created_date'] = new Date();
                         tempOrder['buy_order_id'] = buyOrderId;
+                        //Temp sell order collection on the base of exchange 
                         var tempCollection = (exchnage == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchnage;
 
                         db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
@@ -605,7 +630,7 @@ router.post('/createManualOrder', (req, resp) => {
 
 
 
-
+//post call from chart for creating manual order
 router.post('/createManualOrderByChart', (req, resp) => {
         conn.then((db) => {
             let orders = req.body.orderArr;
@@ -617,7 +642,7 @@ router.post('/createManualOrderByChart', (req, resp) => {
             orders['created_date'] = new Date();
             orders['modified_date'] = new Date();
             var collectionName = (exchnage == 'binance') ? 'buy_orders' : 'buy_orders_' + exchnage;
-
+            //create buy-orders 
             db.collection(collectionName).insertOne(orders, (err, result) => {
                 if (err) {
                     resp.status(403).send({
@@ -639,14 +664,14 @@ router.post('/createManualOrderByChart', (req, resp) => {
                     let type = 'Order_created';
                     var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchnage)
                     promiseLog.then((callback) => {})
-
+                    //if auto sell is yes the create sell order
                     if (req.body.orderArr.auto_sell == 'yes') {
 
                         let tempOrder = req.body.tempOrderArr;
                         tempOrder['created_date'] = new Date();
                         tempOrder['buy_order_id'] = buyOrderId;
                         var tempCollection = (exchnage == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchnage;
-
+                        //create sell order
                         db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
                             if (err) {
                                 resp.status(403).send({
@@ -671,7 +696,7 @@ router.post('/createManualOrderByChart', (req, resp) => {
 
 
 
-
+//post call from set for sell component the function set buy manual order for sell
 router.post('/makeManualOrderSetForSell', (req, resp) => {
         conn.then((db) => {
             let orders = req.body.orderArr;
@@ -687,7 +712,7 @@ router.post('/makeManualOrderSetForSell', (req, resp) => {
             var set = {};
             set['$set'] = orders;
             var upsert = { upsert: true }
-
+            //Update sell order collection
             db.collection(collectionName).updateOne(where, set, upsert, (err, result) => {
                 if (err) {
                     resp.status(403).send({
@@ -700,7 +725,7 @@ router.post('/makeManualOrderSetForSell', (req, resp) => {
                     updArr['sell_order_id'] = new ObjectID(sellOrderId);
                     updArr['is_sell_order'] = 'yes';
                     updArr['auto_sell'] = 'yes';
-
+                    //update buy_orders collection 
                     var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
                     var where = {};
                     where['_id'] = new ObjectID(orderId);
@@ -722,7 +747,7 @@ router.post('/makeManualOrderSetForSell', (req, resp) => {
         })
     }) //End of makeManualOrderSetForSell
 
-
+//Post call from angular component for creating parent order
 router.post('/createAutoOrder', async(req, resp) => {
         let order = req.body.orderArr;
         order['created_date'] = new Date()
@@ -733,30 +758,22 @@ router.post('/createAutoOrder', async(req, resp) => {
         });
     }) //End of createAutoOrder
 
-
+//post call from angular to edit triggers orders
 router.post('/editAutoOrder', async(req, resp) => {
         let order = req.body.orderArr;
         order['modified_date'] = new Date()
         let orderId = order['orderId'];
         var exchange = order['exchange'];
         var lth_profit = order['lth_profit'];
-
+        //get order detail which you want to update
         var buyOrderArr = await listOrderById(orderId, exchange);
         var purchased_price = buyOrderArr[0]['market_value'];
         var status = buyOrderArr[0]['status'];
-
-
-        console.log('status')
-        console.log(status)
+        //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
         if (status == 'LTH') {
-            console.log('I am here line 750 api.js')
             var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
-
-            console.log("sell_price", sell_price);
             order['sell_price'] = sell_price;
         }
-
-
 
         var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         delete order['orderId'];
@@ -778,7 +795,7 @@ router.post('/editAutoOrder', async(req, resp) => {
         });
     }) //End of editAutoOrder
 
-
+//Function for creating parent order
 function createAutoOrder(OrderArr) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -795,7 +812,7 @@ function createAutoOrder(OrderArr) {
     })
 } //End of createAutoOrder
 
-
+//function which have all prerequisite for buying or selling any order 
 function marketMinNotation(symbol) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -816,25 +833,31 @@ function marketMinNotation(symbol) {
     })
 } //End of marketMinNotation
 
+//function for getting order list from order-list angular  component 
 router.post('/listOrderListing', async(req, resp) => {
 
         var admin_id = req.body.postData.admin_id;
         var application_mode = req.body.postData.application_mode;
         var postDAta = req.body.postData;
         var search = {};
+        //if filter values exist for order list create filter on the base of selected filters
         if (postDAta.coins != '') {
+            //search on the bases of coins
             search['symbol'] = { '$in': postDAta.coins }
         }
 
         if (postDAta.order_type != '') {
+            //search on the base of order type mean manual order or trigger order
             search['order_type'] = postDAta.order_type
         }
 
         if (postDAta.trigger_type != '') {
+            //seatch on the base of specific trigger
             search['trigger_type'] = postDAta.trigger_type
         }
 
         if (postDAta.order_level != '') {
+            //search on the base of order level for auto trading
             search['order_level'] = postDAta.order_level
         }
 
@@ -849,6 +872,8 @@ router.post('/listOrderListing', async(req, resp) => {
 
         var exchange = postDAta.exchange;
         var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        //::::::::::::::::::::::::::::::::::::::::::::::::
+        //Filter_1 part for count number of parent orders
         var filter_1 = {};
         filter_1['parent_status'] = 'parent';
         filter_1['admin_id'] = admin_id;
@@ -866,12 +891,13 @@ router.post('/listOrderListing', async(req, resp) => {
                 filter_1[key] = value;
             }
         }
-
+        //:::::::::::::::::::::: End of count parent ordes Filter :::::::::::::: 
+        //count parent orders Promise
         var parentCountPromise = countCollection(collectionName, filter_1);
 
 
 
-
+        //::::::::::::: filter_2 count new orders for order listing ::::::::::::
         var filter_2 = {};
         filter_2['status'] = 'new';
         filter_2['price'] = { '$nin': ['', null] };
@@ -889,10 +915,13 @@ router.post('/listOrderListing', async(req, resp) => {
                 filter_2[key] = value;
             }
         }
-
+        //:::::::::: End of filter_2 for couting new orders :::::::::::::
+        //Promise for count new orders
         var newCountPromise = countCollection(collectionName, filter_2);
 
 
+
+        //:::::::::::::::: filter_3 for count open order :::::::::::::::::
         var filter_3 = {};
         filter_3['status'] = { '$in': ['submitted', 'FILLED'] }
         filter_3['is_sell_order'] = 'yes';
@@ -908,10 +937,13 @@ router.post('/listOrderListing', async(req, resp) => {
                 filter_3[key] = value;
             }
         }
+         //::::::::::::::::End of filter_3 for count open order :::::::::::::::::
+
+         //::::::::: Open-orders count Promise :::::::::::::::::::::::::::::::::
         var openCountPromise = countCollection(collectionName, filter_3);
 
 
-
+        //::::::::::::::: filter_33 for count filled orders :::::::::::::
         var filter_33 = {};
         filter_33['status'] = { '$in': ['submitted', 'FILLED'] }
         filter_33['admin_id'] = admin_id;
@@ -926,12 +958,14 @@ router.post('/listOrderListing', async(req, resp) => {
                 filter_33[key] = value;
             }
         }
+        //:::::::::::::::End of  filter_33 for count filled orders :::::::::::::
+        //promise of count filled orders
         var filledCountPromise = countCollection(collectionName, filter_33);
 
 
 
 
-
+        //:::::::::::; filter_4 for count all canceled orders ::::::::::::;
         var filter_4 = {};
         filter_4['status'] = 'canceled';
         filter_4['admin_id'] = admin_id;
@@ -946,10 +980,12 @@ router.post('/listOrderListing', async(req, resp) => {
                 filter_4[key] = value;
             }
         }
+        //:::::::::::: End of  filter_4 for count all canceled orders ::::::::::::;
+        //Promise for canceled count orders :::::::::::::::::
         var cancelCountPromise = countCollection(collectionName, filter_4);
 
 
-
+        //::::::: filter_5  for count all error orders ::::::::::::::::::::::: 
         var filter_5 = {};
         filter_5['status'] = 'error';
         filter_5['admin_id'] = admin_id;
@@ -964,9 +1000,11 @@ router.post('/listOrderListing', async(req, resp) => {
                 filter_5[key] = value;
             }
         }
+         //::::::: End of  filter_5  for count all error orders ::::::::::::::::::::::: 
+        //Promise for count error orders ::::::::::
         var errorCountPromise = countCollection(collectionName, filter_5);
 
-
+        //::::::::::::: filter_6 for count all lth order :::::::::::::::::::
         var filter_6 = {};
         filter_6['status'] = 'LTH';
         filter_6['admin_id'] = admin_id;
@@ -984,10 +1022,13 @@ router.post('/listOrderListing', async(req, resp) => {
                 filter_6[key] = value;
             }
         }
-
+        //::::::::::::: End of filter_6 for count all lth order :::::::::::::::::::
+        //Promise for count lth orders
         var lthCountPromise = countCollection(collectionName, filter_6);
 
 
+
+          //:::::::::::::  filter_7 for count all submitted order :::::::::::::::::::
         var filter_7 = {};
         filter_7['status'] = 'submitted';
         filter_7['admin_id'] = admin_id;
@@ -1003,11 +1044,14 @@ router.post('/listOrderListing', async(req, resp) => {
                 filter_7[key] = value;
             }
         }
-
+        //::::::::::::: End of filter_7 for count all submitted order :::::::::::::::::::
+        //promise for count submitted orders
         var submittedCountPromise = countCollection(collectionName, filter_7);
 
 
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+
+        //::::::::::::: filter_8 for count all sold order :::::::::::::::::::
         var filter_8 = {};
         filter_8['admin_id'] = admin_id;
         filter_8['application_mode'] = application_mode;
@@ -1023,11 +1067,12 @@ router.post('/listOrderListing', async(req, resp) => {
                 filter_8[key] = value;
             }
         }
-
+        //::::::::::::: End of filter_8 for count all sold order :::::::::::::::::::
+        //Promise for count all sold orders 
         var soldCountPromise = countCollection(collectionName, filter_8);
 
 
-
+        //Resolve promised for count order for all tabs
         var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise]);
 
         var parentCount = PromiseResponse[0];
@@ -1053,7 +1098,7 @@ router.post('/listOrderListing', async(req, resp) => {
         countArr['submitCount'] = submitCount;
         countArr['soldCount'] = soldCount;
         countArr['filledCount'] = filledCount;
-
+        //get user balance for listing on list-order page
         var userBalanceArr = await listUserBalance(admin_id, exchange);
         var soldOrderArr = []; //await calculateAverageOrdersProfit(req.body.postData);
         var total_profit = 0;
@@ -1075,22 +1120,21 @@ router.post('/listOrderListing', async(req, resp) => {
         }
 
         var avg_profit = 0; //total_profit / total_quantity;
-        console.log('point 1');
+        //function for listing orders 
         var orderListing = await listOrderListing(req.body.postData);
-        console.log(orderListing);
-        console.log('point 2');
         var customOrderListing = [];
         for (let index in orderListing) {
-
-
+            //get market price on the base of exchange 
             if (exchange == 'bam') {
                 var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
+                //get price of global coins
                 var BTCUSDTPRICE = await listBamCurrentMarketPrice('BTCUSDT');
 
             } else {
 
                 let currentMarketPricePromise = listCurrentMarketPrice(orderListing[index].symbol, exchange);
                 let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
+                //get price for global coins
                 var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin, exchange);
                 var responsePromise = await Promise.all([currentMarketPricePromise, BTCUSDTPRICEPromise]);
                 var currentMarketPriceArr = (typeof responsePromise[0][0] == 'undefined') ? [] : responsePromise[0][0];
@@ -1148,6 +1192,7 @@ router.post('/listOrderListing', async(req, resp) => {
             var sell_order_id = (typeof orderListing[index].sell_order_id == 'undefined') ? '' : orderListing[index].sell_order_id;
 
             if (trigger_type == 'no' && sell_order_id != '') {
+                //get sell order on the base of buy orders
                 var sellOrder = await listSellOrderById(sell_order_id, exchange);
                 if (sellOrder.length > 0) {
                     let sellArr = sellOrder[0];
@@ -1166,7 +1211,10 @@ router.post('/listOrderListing', async(req, resp) => {
             var orderSellPrice = (typeof orderListing[index].market_sold_price == 'undefined' || orderListing[index].market_sold_price == '') ? '' : orderListing[index].market_sold_price;
             var orderPurchasePrice = (typeof orderListing[index].market_value == 'undefined' || orderListing[index].market_value == '') ? 0 : orderListing[index].market_value;
             var profitLossPercentageHtml = '';
+
+            //part for calculating profit loss percentage 
             if (orderSellPrice != '') {
+                //function for calculating percentage 
                 let profitLossPercentage = calculate_percentage(orderPurchasePrice, orderSellPrice);
                 let profitLossCls = (orderSellPrice > orderPurchasePrice) ? 'success' : 'danger';
                 profitLossPercentageHtml = '<span class="text-' + profitLossCls + '"><b>' + profitLossPercentage + '%</b></span>';
@@ -1188,7 +1236,7 @@ router.post('/listOrderListing', async(req, resp) => {
             order['profitLossPercentageHtml'] = profitLossPercentageHtml;
 
 
-
+            //part for showing different status labels
             if ((status == 'FILLED' && is_sell_order == 'yes') || status == "LTH") {
                 var SellStatus = (sellOrderId == '') ? '' : await listSellOrderStatus(sellOrderId, exchange);
                 order['sell_status'] = SellStatus;
@@ -1222,6 +1270,8 @@ router.post('/listOrderListing', async(req, resp) => {
             customOrderListing.push(order)
         } //End of order Iteration
 
+        //End of labels parts
+
         var response = {};
         response['customOrderListing'] = customOrderListing;
         response['countArr'] = countArr;
@@ -1232,7 +1282,7 @@ router.post('/listOrderListing', async(req, resp) => {
         });
     }) //End of listOrderListing
 
-
+//function for getting user balance from user wallet
 function listUserBalance(admin_id, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -1250,7 +1300,7 @@ function listUserBalance(admin_id, exchange) {
     })
 } //End of listUserBalance
 
-
+//function for calculating percentage
 function calculate_percentage(purchasedPrice, sellPrice) {
     let diff = sellPrice - purchasedPrice;
     if (purchasedPrice == 0) {
@@ -1262,6 +1312,7 @@ function calculate_percentage(purchasedPrice, sellPrice) {
 
 }
 
+//get status for sell orders
 function listSellOrderStatus(sellOrderId, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -1286,7 +1337,7 @@ function listSellOrderStatus(sellOrderId, exchange) {
 } //End of listSellOrderStatus
 
 
-
+//functioin for count collection values on the bases of filtes
 function countCollection(collectionName, filter) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -1303,7 +1354,7 @@ function countCollection(collectionName, filter) {
 
 
 
-
+//function for calculation average profit for a user of all his sold orders
 function calculateAverageOrdersProfit(postDAta) {
     var filter = {};
     filter['application_mode'] = postDAta.application_mode
@@ -1349,7 +1400,7 @@ function calculateAverageOrdersProfit(postDAta) {
     })
 } //End of calculateAverageOrdersProfit
 
-
+//function for getting all order on the base of filters
 async function listOrderListing(postDAta, dbConnection) {
 
     var filter = {};
@@ -1427,6 +1478,7 @@ async function listOrderListing(postDAta, dbConnection) {
         filter['status'] = 'submitted';
     }
 
+    //if status is all the get from both buy_orders and sold_buy_orders 
     if (postDAta.status == 'all') {
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -1440,7 +1492,7 @@ async function listOrderListing(postDAta, dbConnection) {
     return orderArr;
 } //End of listOrderListing
 
-
+//function for merging both buy_orders and sold_buy_orders 
 function mergeOrdersArrays(SoldOrderArr, buyOrderArr) {
     let merged = [];
     let index1 = 0;
@@ -1468,7 +1520,7 @@ function mergeOrdersArrays(SoldOrderArr, buyOrderArr) {
 
 
 
-
+//list all orders on the base filter
 function list_orders_by_filter(collectionName, filter, pagination, limit, skip) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -1485,7 +1537,7 @@ function list_orders_by_filter(collectionName, filter, pagination, limit, skip) 
 
 
 
-
+//post call from manage coins component
 router.post('/manageCoins', async(req, resp) => {
         var urserCoinsPromise = listUserCoins(req.body.admin_id);
         var globalCoinsPromise = listGlobalCoins();
@@ -1498,7 +1550,7 @@ router.post('/manageCoins', async(req, resp) => {
         });
     }) //End of manageCoins
 
-
+//list global cons for an exchange
 function listGlobalCoins() {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -1516,7 +1568,7 @@ function listGlobalCoins() {
     })
 } //End of listGlobalCoins
 
-
+//play parent orders from order listing page
 router.post('/playOrder', async(req, resp) => {
         var playPromise = pausePlayParentOrder(req.body.orderId, req.body.status, req.body.exchange);
         let show_hide_log = 'yes';
@@ -1529,7 +1581,7 @@ router.post('/playOrder', async(req, resp) => {
         });
     }) //End of playOrder
 
-
+//pause play parent order form orders listings 
 function pausePlayParentOrder(orderId, status, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -1550,7 +1602,7 @@ function pausePlayParentOrder(orderId, status, exchange) {
 } //End of listGlobalCoins
 
 
-//Umer Abbas [25-11-19]
+//post order for play and pause parent orders 
 router.post('/togglePausePlayOrder', async(req, resp) => {
         var playPromise = togglePausePlayOrder(req.body.orderId, req.body.status, req.body.exchange);
         let show_hide_log = 'yes';
@@ -1587,7 +1639,7 @@ function togglePausePlayOrder(orderId, status, exchange) {
     })
 } //End of togglePausePlayOrder
 
-
+//function for record log agains orders
 function recordOrderLog(order_id, log_msg, type, show_hide_log, exchange) {
     return new Promise((resolve, reject) => {
         conn.then((db) => {
@@ -1610,10 +1662,11 @@ function recordOrderLog(order_id, log_msg, type, show_hide_log, exchange) {
         })
     })
 } //End of function(recordOrderLogQuery)
-
+//post call for getting orders details
 router.post('/listOrderDetail', async(req, resp) => {
         let orderId = req.body.orderId;
         let exchange = req.body.exchange;
+        //get buy_order by id
         var ordeResp = await listOrderById(orderId, exchange);
         var orderArr = {}
         if (ordeResp.length > 0) {
@@ -1646,12 +1699,15 @@ router.post('/listOrderDetail', async(req, resp) => {
     }) //End of listOrderDetail
     //*********************************************************== */
 
+    //function for getting order from buy_order or buy_sold_orders 
 function listOrderById(orderId, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
             var where = {};
             where['_id'] = new ObjectID(orderId);
             var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+
+            //we check if order is not found on buy_orders collection then search it in sold_buy_orders
             db.collection(collectionName).find(where).toArray((err, result) => {
                 if (err) {
                     resolve(err)
@@ -1674,7 +1730,7 @@ function listOrderById(orderId, exchange) {
     })
 } //End of listOrderById
 
-
+//post call from component for deleting orders
 router.post('/deleteOrder', async(req, resp) => {
         var respPromise = deleteOrder(req.body.orderId, req.body.exchange);
         let show_hide_log = 'yes';
@@ -1687,7 +1743,7 @@ router.post('/deleteOrder', async(req, resp) => {
         });
 
     }) //End of deleteOrder
-
+//delete order on the base of orderid
 function deleteOrder(orderId, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -1742,7 +1798,7 @@ router.post('/orderMoveToLth', async(req, resp) => {
 
     }) //End of orderMoveToLth
 
-
+//function for moving order to lth 
 function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -1763,12 +1819,14 @@ function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
 } //End of orderMoveToLth
 
 
-
+//post call for getting order by id
 router.post('/listOrderById', async(req, resp) => {
         let orderId = req.body.orderId;
 		let exchange = req.body.exchange;
-		var timezone = req.body.timezone;
+        var timezone = req.body.timezone;
+        //promise for  getting order by id 
         var ordeRespPromise = listOrderById(orderId, exchange);
+        //promise for gettiong order log
 		var ordrLogPromise = listOrderLog(orderId, exchange);
 	
         var resolvepromise = await Promise.all([ordeRespPromise, ordrLogPromise]);
@@ -1783,7 +1841,7 @@ router.post('/listOrderById', async(req, resp) => {
 			var timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
 			timeZoneTime = new Date(timeZoneTime);
 			var date = timeZoneTime.toLocaleString()+' '+timezone;
-
+            //Remove indicator log message
             if (ordeLog[row].type != 'indicator_log_message') {
                 html += '<tr>';
                 html += '<th scope="row" class="text-danger">' + index + '</th>';
@@ -1803,7 +1861,7 @@ router.post('/listOrderById', async(req, resp) => {
         });
     }) //End of listOrderById
 
-
+//get order log on the base of order id 
 function listOrderLog(orderId, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -1821,14 +1879,14 @@ function listOrderLog(orderId, exchange) {
     })
 } //End of listOrderLog
 
-
+//post call for sell order manually from order listing page 
 router.post('/sellOrderManually', async(req, resp) => {
 
         let orderId = req.body.orderId;
         let currentMarketPrice = req.body.currentMarketPriceByCoin;
         let exchange = req.body.exchange;
         let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-
+        //get buy order detail by id
         var ordeResp = await listOrderById(orderId, exchange);
         if (ordeResp.length > 0) {
 
@@ -1840,6 +1898,7 @@ router.post('/sellOrderManually', async(req, resp) => {
                 let quantity = (typeof buyOrderArr['quantity'] == undefined) ? '' : buyOrderArr['quantity'];
                 let coin_symbol = (typeof buyOrderArr['symbol'] == undefined) ? '' : buyOrderArr['symbol'];
                 let admin_id = (typeof buyOrderArr['admin_id'] == undefined) ? '' : buyOrderArr['admin_id'];
+                //getting user ip for trading
                 var trading_ip = await listUsrIp(admin_id);
 
                 var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now';
@@ -1857,28 +1916,28 @@ router.post('/sellOrderManually', async(req, resp) => {
 
                 var collectionName_1 = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
 
-                console.log('collectionName_1 ', collectionName_1)
+
                 var updatePromise_1 = updateOne(filter_1, update_1, collectionName_1);
 
                 var collectionName_2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;;
                 update_1['status'] = 'FILLED';
                 var updatePromise_2 = updateOne(filter_1, update_1, collectionName_2);
                 var resolvePromise = Promise.all([updatePromise_1, updatePromise_2, logPromise, logPromise_2]);
-
+                //in case of live order move it to specified api for selling
                 if (application_mode == 'live') {
                     var log_msg = "Market Order Send For Sell On:  " + parseFloat(currentMarketPrice).toFixed(8);
                     var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
                     logPromise_1.then((resp) => {})
-
+                    //send order for sell on specific ip
                     var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, 'barrier_percentile_trigger', 'sell_market_order', exchange);
 
                     SellOrderResolve.then((resp) => {})
                 } else {
-                    //End of test
+                    //if test order 
                     var log_msg = "Market Order Send For Sell On **:  " + parseFloat(currentMarketPrice).toFixed(8);
                     var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
                     logPromise_1.then((resp) => {})
-
+                    //call function for selling orders
                     sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange);
 
                 }
@@ -1893,7 +1952,7 @@ router.post('/sellOrderManually', async(req, resp) => {
     }) //End of sellOrderManually
 
 
-
+//function for updating any collection the base of collection and filtes
 function updateOne(filter, update, collectionName) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -1910,7 +1969,7 @@ function updateOne(filter, update, collectionName) {
     })
 } //End of updateCollection
 
-
+//get user ip for trading 
 function listUsrIp(admin_id) {
     return new Promise((resolve, reject) => {
         conn.then((db) => {
@@ -1933,7 +1992,7 @@ function listUsrIp(admin_id) {
     })
 } //End of listUsrIp
 
-
+//this function save the ready order for sell after that the order is sold by specified ip
 function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin_id, buy_orders_id, trading_ip, trigger_type, type, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -1961,7 +2020,7 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
         })
     })
 } //End of readySellOrderbyIp
-
+//function for selling test order 
 function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange) {
 
     (async() => {
@@ -2008,7 +2067,7 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
             var btcPriceArr = (typeof USDCURRENTVALUE[0] == 'undefined') ? [] : USDCURRENTVALUE[0];
             var BTCUSDTPRICE = (typeof btcPriceArr.market_value == 'undefined') ? btcPriceArr.price : btcPriceArr.market_value
 
-
+            //getting the coin from global coin
             let splitArr = symbol.split('USDT');
             var sellUsdPrice = (quantity * currentMarketPrice) * BTCUSDTPRICE;
             var sellUsdPrice = (typeof splitArr[1] != 'undefined' && splitArr[1] == '') ? quantity : sellUsdPrice;
@@ -2052,7 +2111,7 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
         }
     })()
 } //End of sellTestOrder
-
+//function to find from a collection on the base for search 
 function find(collectionName, search) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -2067,11 +2126,12 @@ function find(collectionName, search) {
     })
 } //End of findOne
 
-
+//post call from order listing to buy order 
 router.post('/buyOrderManually', async(req, resp) => {
         var orderId = req.body.orderId;
         var coin = req.body.coin;
         var exchange = req.body.exchange;
+        //get buy order detail
         var ordeResp = await listOrderById(orderId, exchange);
         if (ordeResp.length > 0) {
             var orderArr = ordeResp[0];
@@ -2083,7 +2143,7 @@ router.post('/buyOrderManually', async(req, resp) => {
             let symbol = (typeof orderArr['symbol'] == undefined) ? '' : orderArr['symbol'];
 
             let buy_trigger_type = (typeof orderArr['trigger_type'] == undefined) ? '' : orderArr['trigger_type'];
-
+            //geting trading ip 
             var trading_ip = await listUsrIp(admin_id);
 
             if (status == 'new') {
@@ -2104,14 +2164,18 @@ router.post('/buyOrderManually', async(req, resp) => {
                 var log_msg = "Orde Send for buy Manually On " + parseFloat(currentMarketPrice).toFixed(8);
                 var logPromise = recordOrderLog(orderId, log_msg, 'submitted', 'yes', exchange);
                 logPromise.then((callback) => {
-                    console.log(callback)
+                   // console.log(callback)
                 })
+
+                //if order mode  is live then send order from here to specific ip
                 if (application_mode == 'live') {
-                    console.log('inside  live');
+                    
                     let buy_trigger_type = '';
+                    //order send to specif ip for buying
                     var respPromise = orderReadyForBuy(orderId, buy_quantity, currentMarketPrice, symbol, admin_id, trading_ip, buy_trigger_type, 'buy_market_order', exchange);
                     respPromise.then((callback) => {})
                 } else {
+                    //function for buy test ordres
                     buyTestOrder(orderArr, currentMarketPrice, exchange);
                 }
             } //End of if status is new
@@ -2126,7 +2190,7 @@ router.post('/buyOrderManually', async(req, resp) => {
 
 
 
-
+//buy test order
 function buyTestOrder(orders, market_value, exchange) {
     (async() => {
         if (orders['status'] == 'new') {
@@ -2219,15 +2283,11 @@ function buyTestOrder(orders, market_value, exchange) {
 
 
 
-            //************ -- Make Order From Auto Sell -- *******
-
-
+            //************ -- Make Order From Auto Sell -- ******
             var auto_sell = (typeof orders['auto_sell'] == 'undefined') ? '' : orders['auto_sell'];
 
-            console.log('point one ');
-
+            //if buy order is manual order and auto sell yes then after buy the order create sell orders
             if (auto_sell == 'yes') {
-                console.log('point two ');
                 createOrderFromAutoSell(orders, exchange);
             } //if auto sell is yes
 
@@ -2240,9 +2300,8 @@ function buyTestOrder(orders, market_value, exchange) {
     })()
 } //End of buyTestOrder
 
-
+//if auto sell is yes for manual order then create sell ordrs
 function createOrderFromAutoSell(orderArr, exchange) {
-    console.log('point three ');
     var buy_order_id = orderArr['_id'];
     var auto_sell = (typeof orderArr['auto_sell'] == 'undefined') ? '' : orderArr['auto_sell'];
     var admin_id = (typeof orderArr['admin_id'] == 'undefined') ? '' : orderArr['admin_id'];
@@ -2252,13 +2311,12 @@ function createOrderFromAutoSell(orderArr, exchange) {
 
     (async() => {
         ////////////////////////////////////////////////////////////////////////
-        console.log('point four ');
+        //Double check or suto sell is yes
         if (auto_sell == 'yes') {
-            console.log('point five ');
+
             var buy_order_check = 'yes';
             //Get Sell Temp Data
-            console.log(':::::::::::: Temp sell orders ::::::::::::::');
-            console.log(buy_order_id)
+            //get temp sell order for creating sell order
             var respArr = await listTempSellOrder(buy_order_id, exchange);
             var sell_data_arr = (typeof respArr[0] == 'undefined') ? [] : respArr[0];
             var profit_type = (typeof sell_data_arr['profit_type'] == 'undefined') ? '' : sell_data_arr['profit_type'];
@@ -2319,8 +2377,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
 
 
             var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-
-
+            //create sell order from temp_sell_orders
             var order_id = await createOrder(collectionName, ins_data);
             if (buy_order_check == 'yes') {
                 //Update Buy Order
@@ -2332,6 +2389,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
                 var where = {};
                 where['_id'] = new ObjectID(buy_order_id)
                 var upsert = { 'upsert': true };
+                //function for update buy_order in the case of create sell order
                 var updPromise = updateSingle(collectionName, where, upd_data, upsert);
                 updPromise.then((callback) => {})
             }
@@ -2346,7 +2404,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
 
 } //End of createOrderFromAutoSell
 
-
+//function for creating orders buy order the base of provide data
 function createOrder(collectionName, ins_data) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -2363,7 +2421,7 @@ function createOrder(collectionName, ins_data) {
 
 
 
-
+//get temp sell order for creating auto sell orders
 function listTempSellOrder(buy_order_id, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -2382,7 +2440,7 @@ function listTempSellOrder(buy_order_id, exchange) {
     })
 } //End of listTempSellOrder
 
-
+//function for send ready order to buy to specific ip
 function orderReadyForBuy(buy_order_id, buy_quantity, market_value, coin_symbol, admin_id, trading_ip, trigger_type, type, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -2399,7 +2457,7 @@ function orderReadyForBuy(buy_order_id, buy_quantity, market_value, coin_symbol,
             insert_arr['created_date'] = new Date();
             insert_arr['global'] = 'global';
             let collection = (exchange == 'binance') ? 'ready_orders_for_buy_ip_based' : 'ready_orders_for_buy_ip_based_' + exchange;
-            console.log(collection)
+         
 
             db.collection(collection).insertOne(insert_arr, (err, result) => {
                 if (err) {
@@ -2413,7 +2471,7 @@ function orderReadyForBuy(buy_order_id, buy_quantity, market_value, coin_symbol,
 } //End of orderReadyForBuy
 
 
-
+//get sold order by id
 function listSoldOrders(primaryID, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -2434,6 +2492,7 @@ function listSoldOrders(primaryID, exchange) {
     })
 } //End of listSoldOrders
 
+//when an order sold the we copy the order from buy_orders collection to sold_buy_orders collection
 function copySoldOrders(order_id, exchange) {
     conn.then((db) => {
 
@@ -2462,7 +2521,7 @@ function copySoldOrders(order_id, exchange) {
     })
 } //End of copySoldOrders
 
-
+// Delete buy order by id
 function deleteBuyOrders(_id, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -2499,6 +2558,7 @@ function updateSingle(collection, searchQuery, updateQuery, upsert) {
     })
 } //End of update
 
+//post call frol listing order on chart 
 router.post('/listOrdersForChart', async(req, resp) => {
     var admin_id = req.body.admin_id;
     var exchange = req.body.exchange;
@@ -2506,6 +2566,7 @@ router.post('/listOrdersForChart', async(req, resp) => {
     var coin = req.body.coin;
 
     var newArr = [];
+    //function for list order for chart
     let ordersArr = await listOrdersForChart(admin_id, exchange, application_mode, coin);
     for (let row in ordersArr) {
 
@@ -2643,7 +2704,7 @@ router.post('/listOrdersForChart', async(req, resp) => {
                     newRow['sell_trail_percentage'] = sell_trail_percentage;
 
                 } else {
-
+                    //when order is manul order and buy order is new then we can sell order detail from temp sell orders
                     let tempArrResp = await listselTempOrders(buyOrderId, exchange);
 
                     if (tempArrResp.length > 0) {
@@ -2714,7 +2775,7 @@ router.post('/listOrdersForChart', async(req, resp) => {
     })
 
 })
-
+//function for getting order to show on chart 
 function listOrdersForChart(admin_id, exchange, application_mode, coin) {
     return new Promise((resolve) => {
             let filter = {};
@@ -2736,7 +2797,7 @@ function listOrdersForChart(admin_id, exchange, application_mode, coin) {
         }) //End of Promise
 } //End of listOrdersForChart
 
-
+//get sell order detail by id 
 function listSellOrderById(ID, exchange) {
     return new Promise((resolve) => {
             let filter = {};
@@ -2754,7 +2815,7 @@ function listSellOrderById(ID, exchange) {
         }) //End of Promise
 } //End of listSellOrderById
 
-
+//get temp sell order detail in case of new buy orders
 function listselTempOrders(ID, exchange) {
     return new Promise((resolve) => {
             let filter = {};
@@ -2773,7 +2834,7 @@ function listselTempOrders(ID, exchange) {
 } //End of listselTempOrders
 
 
-
+//post call for updaing buy price from chart if order is not buyed
 router.post('/updateBuyPriceFromDragging', async(req, resp) => {
         var exchange = req.body.exchange;
         var orderId = req.body.orderId;
@@ -2882,7 +2943,7 @@ router.post('/updateBuyPriceFromDragging', async(req, resp) => {
         })
 
     }) //End of updateBuyPriceFromDragging
-
+//post call for update profit and loss percentage for a specific order from chart
 router.post('/updateOrderfromdraging', async(req, resp) => {
         var exchange = req.body.exchange;
         var orderId = req.body.orderId;
@@ -2892,11 +2953,13 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
         var side = req.body.side;
         var nss = side.indexOf("profit_inBall");
 
+        //to check update profit or loss percentage
         if (nss != -1) {
             side = "profit_inBall";
         }
 
         var message = '';
+        //get buy order detail on the base of order id
         var orderArr = await listOrderById(orderId, exchange);
 
         if (orderArr.length > 0) {
@@ -2922,7 +2985,10 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
 
                 //:::::: Auto Trigger Part :::::::::: 
+                //check order is auto order 
                 if (trigger_type != 'no') {
+
+                    //In case of auto order if loss percentage is updated the change the value of initial order 
                     let iniatial_trail_stop = (typeof orderArr[index]['iniatial_trail_stop'] == 'undefined') ? 0 : orderArr[index]['iniatial_trail_stop'];
 
                     let sell_profit_percent = (typeof orderArr[index]['sell_profit_percent'] == 'undefined') ? 0 : orderArr[index]['sell_profit_percent'];
@@ -2934,6 +3000,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
 
                     //:::::::::::::::: triggers :::::::::::::::::::
+
+                    //check of  profit percentage is updated
                     if (side == 'profit_inBall') {
                         message = ' Auto Order Sell Price Changed';
                         var filter = {};
@@ -2977,9 +3045,10 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                 } else { //End of trigger type
                     //:::::::::::::::::Manual Trading :::::::::::::::::
 
+                    //check of  sell order id
                     if (sell_order_id != '') {
 
-                        ;
+                        //get sell order by id
                         var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
                         var sellOrderArr = (typeof sellOrderResp[0] == 'undefined') ? [] : sellOrderResp[0];
 
@@ -2999,7 +3068,7 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                         var calculate_new_sell_percentage = (current_data2222 * 100 / purchased_price);
 
 
-
+                        //cehck if manual order and sell price is changes
 
                         if (side == 'profit_inBall') {
                             message = "Manual Order  Profit price Changed"
@@ -3377,7 +3446,7 @@ function listSellOrderByBuyOrderId(ID, exchange) {
 
 
 
-
+//post call for Edit manual by order
 router.post('/lisEditManualOrderById', async(req, resp) => {
         let orderId = req.body.orderId;
         let exchange = req.body.exchange;
@@ -3388,7 +3457,7 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
 
         var sell_order_id = (typeof buyOrderArr['sell_order_id'] == 'undefined') ? '' : buyOrderArr['sell_order_id'];
 
-
+        //Get order log against order
         var ordrLogPromise = await listOrderLog(orderId, exchange);
         let html = '';
         let ordeLog = ordrLogPromise;
@@ -3408,10 +3477,12 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
         var sellArr = [];
         var tempSellArr = [];
         if (auto_sell == 'yes') {
+            //if sell order Exist the get value from sell order 
             if (sell_order_id != '') {
                 var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
                 var sellArr = sellOrderResp[0];
             } else {
+                //get temp sell order value of sell order not exist
                 var tempOrderResp = await listTempSellOrder(orderId, exchange);
                 var tempSellArr = tempOrderResp[0];
             }
@@ -3431,7 +3502,7 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
 
 
 
-
+//post call for updating manual orders
 router.post('/updateManualOrder', (req, resp) => {
         let buyOrderId = req.body.buyOrderId;
         let exchange = req.body.exchange;
@@ -3489,7 +3560,7 @@ router.post('/updateManualOrder', (req, resp) => {
 
     }) //End of updateManualOrder
 
-
+//post call for set manual order  
 router.post('/setForSell', async(req, resp) => {
     let sellOrderArr = req.body.sellOrderArr;
     var buy_order_id = (typeof sellOrderArr['buy_order_id'] == 'undefined') ? '' : sellOrderArr['buy_order_id'];
@@ -3500,6 +3571,7 @@ router.post('/setForSell', async(req, resp) => {
 
     let exchange = req.body.exchange;
     let buyOrderId = req.body.buyOrderId;
+    //function to set manual order for sell
     var sellOrderId = await setForSell(sellOrderArr, exchange, buy_order_id);
 
     var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -3523,7 +3595,7 @@ router.post('/setForSell', async(req, resp) => {
     });
 })
 
-
+//function to set manual sell for sell 
 function setForSell(sellOrderArr, exchange, buy_order_id) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -3564,7 +3636,7 @@ function setForSell(sellOrderArr, exchange, buy_order_id) {
 //::::::::::::::::::::::::::::::::::; /
 
 
-
+//post call from manage component to list user coin list and detail
 router.post('/manageCoins', async(req, resp) => {
         var urserCoinsPromise = listUserCoins(req.body.admin_id);
         var globalCoinsPromise = listGlobalCoins();
@@ -3738,7 +3810,7 @@ router.post('/get_orders_post', function(req, res, next) {
 // 	})
 // }
 
-
+//function for geting market prices
 async function get_market_price(coin) {
 
     return new Promise((resolve, reject) => {
@@ -3761,7 +3833,7 @@ async function get_market_price(coin) {
 
 
 
-
+//post call for getting user info for manage user component
 router.post('/get_user_info', function(req, res, next) {
     var post_data = req.body;
     let post_data_key_array = Object.keys(post_data);
@@ -3801,7 +3873,7 @@ router.post('/get_user_info', function(req, res, next) {
 
     }
 })
-
+//post call for edit user info
 router.post('/update_user_info', function(req, res, next) {
     var post_data = req.body;
     let post_data_key_array = Object.keys(post_data);
@@ -3855,7 +3927,7 @@ router.post('/update_user_info', function(req, res, next) {
 })
 
 
-
+//post call for adding user coins from global coins
 router.post('/addUserCoins', function(req, res, next) {
         var post_data = req.body;
         let post_data_key_array = Object.keys(post_data);
@@ -3899,14 +3971,13 @@ router.post('/addUserCoins', function(req, res, next) {
 
 
 
-
+//post call to all user coins
 router.post('/addUserCoin', async function(req, res, next) {
     var post_data = req.body;
     let post_data_key_array = Object.keys(post_data);
     if (post_data_key_array.length == 0) {
         res.send({ "success": "false", "message": "No data posted in a post request" })
     } else {
-        console.log(post_data, "===> post_data");
         if ("coin_arr" in post_data && "user_id" in post_data) {
             conn.then(db => {
                 let coin_arr = post_data["coin_arr"];
@@ -3928,7 +3999,7 @@ router.post('/addUserCoin', async function(req, res, next) {
                                 }
                             })
                         } else {
-                            console.log("error 2")
+                           
                             res.status(500).send({ "success": "false", "message": "Something gone wrong while finding the coin id you've posted!", "coin_id": coin_id })
                         }
                     })
@@ -3951,7 +4022,7 @@ Date.prototype.addHours = function(h) {
 
 /////////////////////rabi
 
-
+//function for getting last price for manage coins
 async function getLastPrice(coin) {
     return new Promise(async function(resolve, reject) {
         conn.then(async db => {
@@ -3969,7 +4040,7 @@ async function getLastPrice(coin) {
         })
     })
 } // End of getLastPrice
-
+//get 24 hour price change for manage coins component
 async function get24HrPriceChange(coin) {
     return new Promise(async function(resolve, reject) {
         conn.then(async db => {
@@ -4038,7 +4109,7 @@ function listBamCurrentMarketPrice(coin) {
 } //End of listBamCurrentMarketPrice
 
 
-
+//function for listing user bam coins from 
 function listBamUserCoins(admin_id) {
     return new Promise(function(resolve, reject) {
         request.post({
@@ -4059,7 +4130,7 @@ function listBamUserCoins(admin_id) {
     })
 } //End of listBamUserCoins
 
-
+//save bam credentials from setting component
 router.post('/saveBamCredentials', (req, resp) => {
         var user_id = req.body.user_id;
         var api_key = req.body.api_key;
@@ -4111,7 +4182,7 @@ function getBamCredentials(user_id) {
     })
 } //End of getBamCredentials
 
-
+//post call for calculating average profit for order listing
 router.post('/calculate_average_profit', async(req, resp) => {
     var soldOrderArr = await calculateAverageOrdersProfit(req.body.postData);
     var total_profit = 0;
@@ -4140,7 +4211,7 @@ router.post('/calculate_average_profit', async(req, resp) => {
     });
 })
 
-
+//post call for validating bam credentials
 router.post('/validate_bam_credentials', async(req, resp) => {
         let APIKEY = req.body.APIKEY;
         let APISECRET = req.body.APISECRET;
@@ -4148,7 +4219,7 @@ router.post('/validate_bam_credentials', async(req, resp) => {
         resp.status(200).send({
             message: credentials
         });
-    }) //End of validate_bam_credentials
+}) //End of validate_bam_credentials
 
 
 function validate_bam_credentials(APIKEY, APISECRET) {
@@ -4174,7 +4245,7 @@ function validate_bam_credentials(APIKEY, APISECRET) {
     })
 } //End of validate_bam_credentials
 
-
+//check error in sell for buy orders
 router.post('/get_error_in_sell', async(req, resp) => {
         let order_id = req.body.order_id;
         let exchange = req.body.exchange;
@@ -4183,7 +4254,7 @@ router.post('/get_error_in_sell', async(req, resp) => {
             message: error
         });
     }) //End of get_error_in_sell
-
+//chekc of order is in sell
 function get_error_in_sell(order_id, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -4206,7 +4277,7 @@ function get_error_in_sell(order_id, exchange) {
     })
 } //End of get_error_in_sell
 
-
+//function for removing error in sell
 router.post('/removeOrderManually', async(req, resp) => {
         let order_id = req.body.order_id;
         let exchange = req.body.exchange;
@@ -4241,7 +4312,7 @@ router.post('/removeOrderManually', async(req, resp) => {
         });
     }) //End of removeOrderManually
 
-
+//validate user password for updting exchange credentials
 router.post('/validate_user_password', async(req, resp) => {
         var password = req.body.user_password;
         let md5Pass = md5(password);
@@ -4252,7 +4323,7 @@ router.post('/validate_user_password', async(req, resp) => {
         });
     }) //End of validate_user_password
 
-
+//validate user password for chaning api credentials
 function validate_user_password(user_id, md5Pass) {
     return new Promise((resolve) => {
         var where = {};
@@ -4355,7 +4426,7 @@ function delete_log(order_id) {
 }
 
 
-
+//post call for creating index for a key in a collections
 router.post('/create_index', async(req, resp) => {
         var collection = req.body.collection;
         var index_obj = req.body.index_obj;
@@ -4366,7 +4437,7 @@ router.post('/create_index', async(req, resp) => {
         });
     }) //End of create_index
 
-
+//function for creating index on the value of key
 function create_index(collection, index_obj) {
     return new Promise((resole) => {
         conn.then((db) => {
@@ -4381,7 +4452,7 @@ function create_index(collection, index_obj) {
     })
 } //End of create_index
 
-
+//get index of a collections
 router.post('/get_index', async(req, resp) => {
         var collection = req.body.collection;
         var indexArr = await get_index(collection);
@@ -4389,7 +4460,7 @@ router.post('/get_index', async(req, resp) => {
             message: indexArr
         });
     }) //End of get_index
-
+//get index of a collection
 function get_index(collection) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -4406,7 +4477,6 @@ function get_index(collection) {
 
 router.post('/testing', async(req, resp) => {
     var respArr = await delete_log_msg(req.body.from_dt, req.body.end_dt, );
-    console.log(respArr)
     resp.status(200).send({
         message: respArr
     });
@@ -4436,7 +4506,6 @@ function delete_log_msg(from_dt, end_dt) {
 
 router.post('/testing_count', async(req, resp) => {
     var respArr = await count_log_msg(req.body.from_dt, req.body.end_dt, );
-    console.log(respArr)
     resp.status(200).send({
         message: respArr
     });
