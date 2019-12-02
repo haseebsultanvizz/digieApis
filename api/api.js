@@ -4572,7 +4572,18 @@ router.post('/is_bnb_balance_enough', async(req, resp) => {
         user_balance_arr = user_balance_arr[0];
         user_bnb_balance  = (typeof user_balance_arr['coin_balance'] == 'undefined')?0:user_balance_arr['coin_balance'];
     }
-    let btn_in_usd = user_bnb_balance*current_usd_price;
+
+    var current_pr_arr  = await listCurrentMarketPrice('BNBBTC', exchange);
+
+
+    var market_price = 0;
+    if(current_pr_arr.length >0){
+        current_pr_arr = current_pr_arr[0];
+        market_price  = (typeof current_pr_arr['price'] == 'undefined')?0:current_pr_arr['price'];
+    }
+
+
+    let btn_in_usd = (user_bnb_balance*market_price) *current_usd_price;
     resp.status(200).send({
         message: btn_in_usd
     });
