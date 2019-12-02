@@ -4521,9 +4521,6 @@ function count_log_msg(from_dt, end_dt) {
             let where = {};
             where['created_date'] = { '$gte': start_date, '$lte': end_date }
             where['show_error_log'] = 'no';
-
-
-
             db.collection('orders_history_log').count(where, (err, result) => {
                 if (err) {
                     resolve(err);
@@ -4535,5 +4532,50 @@ function count_log_msg(from_dt, end_dt) {
     })
 }
 
+
+function listUserBalancebyCoin(admin_id,symbol,exchange) {
+    return new Promise((resolve) => {
+        conn.then((db) => {
+            let where = {};
+                where['user_id'] = { $in: [new ObjectID(admin_id), admin_id] };
+                where['coin_symbol'] = symbol;
+            let collection = (exchange == 'binance') ? 'user_wallet' : 'user_wallet_' + exchange;
+            db.collection(collection).find(where).toArray((err, result) => {
+                if (err) {
+                    resolve(err)
+                } else {
+                    resolve(result);
+                }
+            })
+        })
+    })
+} //End of listUserBalancebyCoin
+
+//function if bnb balance is enough 
+router.post('/is_bnb_balance_enough', async(req, resp) => {
+    var admin_id = req.body.admin_id;
+    var symbol = req.body.symbol;
+    var exchange = req.body.exchange;
+    //function for getting user balance 
+    var user_balance_arr = await listUserBalancebyCoin(admin_id,symbol,exchange);
+
+    let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
+        //get market price for global coin
+    var price_arr  = await listCurrentMarketPrice(globalCoin, exchange);
+    var current_usd_price = 0 ;
+    if(price_arr.length >0){
+        price_arr = price_arr[0];
+        current_usd_price  = (typeof price_arr['price'] == 'undefined')?0:price_arr['price'];
+    }
+    var user_bnb_balance = 0;
+    if(user_balance_arr.length >0){
+        user_balance_arr = user_balance_arr[0];
+        user_bnb_balance  = (typeof user_balance_arr['coin_balance'] == 'undefined')?0:user_balance_arr['coin_balance'];
+    }
+    let btn_in_usd = user_bnb_balance*current_usd_price;
+    resp.status(200).send({
+        message: btn_in_usd
+    });
+})
 
 module.exports = router;
