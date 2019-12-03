@@ -223,31 +223,7 @@ router.post('/listOrdersForChart', async (req, resp) => {
 
 })
 
-//function for getting order to show on chart 
-function listOrdersForChart(admin_id, exchange, application_mode, coin) {
-    return new Promise((resolve) => {
-        let filter = {};
-        filter['status'] = { '$in': ['submitted', 'FILLED', 'new', 'LTH'] }
-        filter['price'] = { $nin: [null, ""] };
-        filter['admin_id'] = admin_id;
-        filter['application_mode'] = application_mode;
-        filter['symbol'] = coin;
-        conn.then((db) => {
-            let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-            db.collection(collection).find(filter).toArray((err, result) => {
-                if (err) {
-                    resolve(err);
-                } else {
-                    resolve(result);
-                }
-            }) //End of collection
-        }) //End of conn
-    }) //End of Promise
-} //End of listOrdersForChart
 
-router.post('/orderListing', async (req, res) => {
-
-})
 
 //Test
 router.post('/test', async (req, res) => {
