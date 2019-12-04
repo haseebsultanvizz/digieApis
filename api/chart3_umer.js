@@ -347,17 +347,17 @@ async function listUserCoins(userId) {
     })
 } //End of listUserCoins
 
-function getOrdersListing(user_id, coin, exchange, application_mode){
+function getOrdersListing(filter){
     return new Promise((resolve) => {
-        let filter = {};
-        filter['admin_id'] = user_id;
-        filter['symbol'] = coin;
-        filter['application_mode'] = application_mode;
-        filter['price'] = { '$nin': [null, ''] };
-        filter['status'] = { '$in': ['submitted', 'FILLED', 'new', 'LTH'] }
+        let where = {};
+        where['admin_id'] = filter.user_id;
+        where['symbol'] = filter.coin;
+        where['application_mode'] = filter.application_mode;
+        where['price'] = { $nin: [null, ''] };
+        where['status'] = { $in: ['submitted', 'FILLED', 'new', 'LTH'] }
         conn.then((db) => {
-            let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-            db.collection(collection).find(filter).toArray((err, result) => {
+            let collection = (filter.exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + filter.exchange;
+            db.collection(collection).find(where).toArray((err, result) => {
                 if (err) {
                     resolve(err);
                 } else {
