@@ -5,6 +5,42 @@ const conn = require('../connection/database');
 ObjectID = require('mongodb').ObjectID;
 var app = express();
 
+//TEST
+router.post('/test', (req, resp) => {
+    resp.status(200).send({
+        message: 'Api test working'
+    })
+})
+
+
+//TODO: list orders API for chart that takes user_id, coin, exchange, application_mode and return orders
+router.post('/orderListing', async (req, res)=>{
+    const user_id = req.body.user_id
+    const coin = req.body.coin
+    const exchange = req.body.exchange
+    const application_mode = req.body.application_mode
+
+    //if (typeof query !== 'undefined' && query) { //do stuff if query is defined and not null
+    if ((typeof user_id !== 'undefined' && user_id) && (typeof coin !== 'undefined' && coin) && (typeof exchange !== 'undefined' && exchange) && (typeof application_mode !== 'undefined' && application_mode)){
+        // var resOrdersArr = [];
+        let filter ={
+            'user_id': user_id,
+            'coin': coin,
+            'exchange': exchange,
+            'application_mode': application_mode,
+        };
+        let orders = await getOrdersListing(filter)
+        if (orders){
+            res.status(200).json(orders)
+        }
+    }else{
+        res.status(400).json({
+            message: 'user_id, coin, exchange, application_mode are required.'
+        })
+    }
+})//End orderListing
+
+
 //post call frol listing order on chart 
 router.post('/listOrdersForChart', async (req, resp) => {
     var admin_id = req.body.admin_id;
@@ -223,17 +259,6 @@ router.post('/listOrdersForChart', async (req, resp) => {
 
 })
 
-
-
-//Test
-router.post('/test',  (req, resp) => {
-    resp.status(200).send({
-        message: 'Api test working'
-    })
-})
-
-
-
 //post call from manage coins component
 router.post('/manageCoins', async (req, resp) => {
     var urserCoinsPromise = listUserCoins(req.body.admin_id);
@@ -319,5 +344,91 @@ async function listUserCoins(userId) {
         })
     })
 } //End of listUserCoins
+
+function getOrdersListing(user_id, coin, exchange, application_mode){
+    return new Promise((resolve) => {
+        let filter = {};
+        filter['admin_id'] = user_id;
+        filter['symbol'] = coin;
+        filter['application_mode'] = application_mode;
+        filter['price'] = { '$nin': [null, ''] };
+        filter['status'] = { '$in': ['submitted', 'FILLED', 'new', 'LTH'] }
+        conn.then((db) => {
+            let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            db.collection(collection).find(filter).toArray((err, result) => {
+                if (err) {
+                    resolve(err);
+                } else {
+                    resolve(result);
+                }
+            }) //End of collection
+        }) //End of conn
+    }) //End of Promise
+}
+
+//function for getting order to show on chart 
+function listOrdersForChart(admin_id, exchange, application_mode, coin) {
+    return new Promise((resolve) => {
+        let filter = {};
+        filter['status'] = { '$in': ['submitted', 'FILLED', 'new', 'LTH'] }
+        filter['price'] = { $nin: [null, ""] };
+        filter['admin_id'] = admin_id;
+        filter['application_mode'] = application_mode;
+        filter['symbol'] = coin;
+        conn.then((db) => {
+            let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            db.collection(collection).find(filter).toArray((err, result) => {
+                if (err) {
+                    resolve(err);
+                } else {
+                    resolve(result);
+                }
+            }) //End of collection
+        }) //End of conn
+    }) //End of Promise
+} //End of listOrdersForChart
+
+
+//function for getting current market price 
+function listCurrentMarketPrice(coin, exchange) {
+    //get market price on the base of exchange 
+    if (exchange == 'bam') {
+        return new Promise(function (resolve, reject) {
+            conn.then((db) => {
+                let where = {};
+                where['coin'] = coin;
+                db.collection('market_prices_node_bam').find(where).toArray((err, result) => {
+                    if (err) {
+                        resolve(err);
+                    } else {
+                        if (result.length > 0) {
+                            resolve(result);
+                        } else {
+                            resolve(000);
+                        }
+                    }
+                })
+            })
+        })
+    } else {
+        //****************************8 */
+        return new Promise((resolve) => {
+            let where = {};
+            where.coin = coin;
+            conn.then((db) => {
+                let collectionName = (exchange == 'binance') ? 'market_prices' : 'market_prices_' + exchange;
+                db.collection(collectionName).find(where).sort({ "created_date": -1 }).limit(1).toArray((err, result) => {
+                    if (err) {
+                        resolve(err)
+                    } else {
+                        resolve(result)
+                    }
+                })
+            })
+        })
+        //************************** */
+    }
+
+} //End of listCurrentMarketPrice
 
 module.exports = router;
