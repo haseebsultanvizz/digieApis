@@ -226,10 +226,98 @@ router.post('/listOrdersForChart', async (req, resp) => {
 
 
 //Test
-router.post('/test', async (req, res) => {
+router.post('/test',  (req, resp) => {
     resp.status(200).send({
         message: 'Api test working'
     })
 })
+
+
+
+//post call from manage coins component
+router.post('/manageCoins', async (req, resp) => {
+    var urserCoinsPromise = listUserCoins(req.body.admin_id);
+    var globalCoinsPromise = listGlobalCoins();
+    var promisesResult = await Promise.all([urserCoinsPromise, globalCoinsPromise]);
+    var responseReslt = {};
+    responseReslt['userCoins'] = promisesResult[0];
+    responseReslt['globalCoins'] = promisesResult[1];
+    resp.status(200).send({
+        message: responseReslt
+    });
+}) //End of manageCoins
+
+
+//list global cons for an exchange
+function listGlobalCoins() {
+    return new Promise((resolve) => {
+        conn.then((db) => {
+            let filter = {};
+            filter['user_id'] = 'global'
+            filter['exchange_type'] = 'binance'
+            db.collection('coins').find(filter).toArray((err, result) => {
+                if (err) {
+                    resolve(err)
+                } else {
+                    resolve(result);
+                }
+            })
+        })
+    })
+} //End of listGlobalCoins
+
+//function for getting user coins
+async function listUserCoins(userId) {
+    return new Promise((resolve) => {
+        let where = {};
+        where.user_id = userId;
+        where.symbol = { '$nin': ['', null, 'BTC', 'BNBBTC'] };
+        conn.then(async (db) => {
+            db.collection('coins').find(where).toArray(async (err, data) => {
+                if (err) {
+                    resolve(err)
+                } else {
+
+                    ///*************************************************
+
+                    var return_arr = [];
+                    var arrylen = data.length;
+                    var temlen = 0;
+
+                    (async () => {
+                        for (let index in data) {
+                            let data_element = {};
+                            //Get last price of a coin
+                            data_element['last_price'] = await getLastPrice(data[index]['symbol']);
+                            //Get 24 hour price  Change  for a coin
+                            let price_change_json = await get24HrPriceChange(data[index]['symbol']);
+
+                            try {
+                                if (price_change_json != null || Object.keys(price_change_json).length > 0) {
+                                    data_element = Object.assign(data_element, price_change_json);
+
+                                }
+                            } catch {
+
+                            }
+
+                            data_element = Object.assign(data_element, data[index])
+                            return_arr.push(data_element);
+                        }
+
+                        resolve(return_arr)
+
+                    })()
+
+
+                    ///***************************************************
+
+                    // var return_arr =  mergeContentManageCoins(result);
+                    // resolve(result)
+                }
+            })
+        })
+    })
+} //End of listUserCoins
 
 module.exports = router;
