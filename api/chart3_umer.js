@@ -31,7 +31,9 @@ router.post('/orderListing', async (req, res)=>{
         };
         let orders = await getOrdersListing(filter)
         if (orders){
-            res.status(200).json(orders)
+            res.status(200).json({
+                orders
+            })
         }
     }else{
         res.status(400).json({
