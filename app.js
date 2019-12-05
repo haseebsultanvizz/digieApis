@@ -10,6 +10,7 @@ var apiRouter  = require('./api/api');
 var graphicalTradingRouter  = require('./api/chart3');
 var digie_apis = require('./api/rabi_api');
 var coinMetaRouter  = require('./api/coin_meta');
+var chart3_umer  = require('./api/chart3_umer');
 
 var app = express();
 
@@ -40,6 +41,7 @@ app.use(function(req, res, next) {
 app.use('/apiEndPoint',apiRouter);
 app.use('/apiEndPointChart3',graphicalTradingRouter);
 app.use('/rabi_api', digie_apis);
+app.use('/api', chart3_umer);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
