@@ -3111,11 +3111,20 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                             var current_data2222 = purchased_price - updated_price;
                             var stop_loss_percentage = (current_data2222 * 100 / updated_price);
 
+                            
+                            
+                           
+                            //if user not enter stop loss we by default consider stop loss 100 percent so that order never sell by stop loss and also avoid from generating any bug
+                            var loss_price   = 0;
+                                loss_price = (parseFloat(purchased_price)* parseFloat(stop_loss_percentage))/100;
+                                loss_price = (purchased_price) - parseFloat(loss_price);
+                            
 
                             var filter = {};
                             filter['_id'] = new ObjectID(sell_order_id);
                             var update = {};
                             update['stop_loss'] = 'yes';
+                            update['iniatial_trail_stop'] = parseFloat(loss_price);
                             update['loss_percentage'] = parseFloat(stop_loss_percentage).toFixed(2);
                             update['modified_date'] = new Date();
                             var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
@@ -3163,6 +3172,13 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                             var sell_profit_percent = (current_data2222 * 100 / buy_price);
                             //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
                             //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+                              //if user not enter stop loss we by default consider stop loss 100 percent so that order never sell by stop loss and also avoid from generating any bug
+                              var loss_price   = 0;
+                              loss_price = (parseFloat(purchased_price)* parseFloat(stop_loss_percentage))/100;
+                              loss_price = (purchased_price) - parseFloat(loss_price);
+
+
                             var ins_data = {};
                             ins_data['symbol'] = symbol,
                                 ins_data['purchased_price'] = purchased_price;
@@ -3175,6 +3191,7 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 ins_data['buy_order_binance_id'] = buy_order_binance_id;
                             ins_data['stop_loss'] = stop_loss;
                             ins_data['loss_percentage'] = loss_percentage;
+                            ins_data['iniatial_trail_stop'] = parseFloat(loss_price);
                             ins_data['application_mode'] = application_mode;
                             ins_data['trigger_type'] = 'no';
                             ins_data['sell_profit_percent'] = sell_profit_percent;
