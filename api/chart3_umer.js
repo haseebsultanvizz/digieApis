@@ -387,6 +387,7 @@ async function listUserCoins(userId) {
     })
 } //End of listUserCoins
 
+//getOrdersListing
 function getOrdersListing(filter){
     return new Promise((resolve) => {
         let where = {};
@@ -406,7 +407,7 @@ function getOrdersListing(filter){
             }) //End of collection
         }) //End of conn
     }) //End of Promise
-}
+}//End getOrdersListing
 
 //function for getting order to show on chart 
 function listOrdersForChart(admin_id, exchange, application_mode, coin) {
