@@ -3595,6 +3595,7 @@ router.post('/setForSell', async(req, resp) => {
     var updArr = {};
     updArr['is_sell_order'] = 'yes';
     updArr['sell_order_id'] = sellOrderId;
+    updArr['auto_sell'] = 'yes';
 
     var where = {};
     where['_id'] = { '$in': [buyOrderId, new ObjectID(buyOrderId)] }
