@@ -32,68 +32,7 @@ router.post('/orderListing', async (req, res)=>{
         let orders = await getOrdersListing(filter)
         if (orders.length > 0){
 
-            var resOrdersArr = orders.map(obj => {
-
-                let price = (typeof obj.price !== 'undefined' && obj.price ? parseFloat(obj.price).toFixed(8) : null);
-                let buy_price = (typeof obj.market_value !== 'undefined' && obj.market_value ? parseFloat(obj.market_value).toFixed(8) : price);
-
-                let sell_order_id = (typeof obj.sell_order_id !== 'undefined' && obj.sell_order_id ? obj.sell_order_id : null)
-                let sellOrder = (sell_order_id ? await listSellOrderById(sell_order_id, exchange) : [])
-
-                let loss_price_ = null;
-                let loss_percentage = '';
-                if(obj.auto_sell !== undefined && obj.auto_sell == 'yes'){
-                    let stop_loss = '';
-                    if (sellOrder && sellOrder.length) {
-
-                        loss_percentage = (sellOrder.loss_percentage !== 'undefined') ? parseFloat(sellOrder.loss_percentage) : null;
-                        stop_loss = (typeof sellOrder.stop_loss !== 'undefined' && sellOrder.stop_loss == 'yes' ? 'yes' : 'no')
-
-                        if (stop_loss == 'yes') {
-                            loss_price_ = (price - ((price * loss_percentage) / 100)).toFixed(8);
-                            loss_price_ = (isNaN(loss_price_) ? null : loss_price_)
-                        }
-                    } else {
-
-                    }
-                }else{
-
-                }
-                
-
-                let temp_order = {
-                    _id: obj .id,
-                    price: (obj.status == 'new' ? price : buy_price) ,
-                    index: null,
-
-                    profit_price_: "0.00000390",
-                    profit_percentage: 1.23,
-                    profit_status: (obj.status == 'new' ? 'yes' : 'no'),
-                    profit_price_indx: null,
-                    profit_price_space: null,
-                    greenLine: null,
-
-                    loss_price_: loss_price_,
-                    loss_percentage: 2.3,
-                    loss_status: (obj.status == 'new' ? 'no' : 'yes'),
-                    loss_price_indx: null,
-                    loss_price_space: null,
-                    redLine: null,
-
-                    auto_sell: obj.auto_sell,
-                    buy_trail_percentage: (typeof obj.buy_trail_percentage !== 'undefined' && obj.buy_trail_percentage ? obj.buy_trail_percentage : null),
-                    lth_functionality: obj.lth_functionality,
-                    quantity: obj.quantity,
-                    sellOrderStatus: (sellOrder && sellOrder.length ? sellOrder.status : null),
-                    sell_trail_percentage: (typeof obj.sell_trail_percentage !== 'undefined' && obj.sell_trail_percentage ? obj.sell_trail_percentage : null),
-                    show_single_values: "no",
-                    status: obj.status,
-                    trigger_type: obj.trigger_type,
-                    orderType: 'ask'
-                }
-                return temp_order
-            })
-
+            var resOrdersArr = orders.map(obj =>(obj))
             res.status(200).json({
                 data: resOrdersArr
             })
