@@ -22,17 +22,57 @@ router.post('/orderListing', async (req, res)=>{
 
     //if (typeof query !== 'undefined' && query) { //do stuff if query is defined and not null
     if ((typeof user_id !== 'undefined' && user_id) && (typeof coin !== 'undefined' && coin) && (typeof exchange !== 'undefined' && exchange) && (typeof application_mode !== 'undefined' && application_mode)){
-        // var resOrdersArr = [];
         let filter ={
             'user_id': user_id,
             'coin': coin,
             'exchange': exchange,
             'application_mode': application_mode,
         };
+
         let orders = await getOrdersListing(filter)
-        if (orders){
+        if (orders.length > 0){
+
+            var resOrdersArr = orders.map(obj => {
+                let temp_order = {
+                    _id: obj .id,
+                    price: (typeof obj.price !== 'undefined' && obj.price ? parseFloat(obj.price).toFixed(8) : null),
+                    index: null,
+
+                    profit_status: "yes",
+                    profit_price_: "0.00000390",
+                    profit_percentage: 1.23,
+                    profit_price_indx: null,
+                    profit_price_space: null,
+                    greenLine: null,
+
+                    loss_status: "yes",
+                    loss_price_: "0.00000340",
+                    loss_percentage: 2.3,
+                    loss_price_indx: null,
+                    loss_price_space: null,
+                    redLine: null,
+
+                    auto_sell: obj.auto_sell,
+                    buy_trail_percentage: (typeof obj.buy_trail_percentage !== 'undefined' && obj.buy_trail_percentage ? obj.buy_trail_percentage : null),
+                    lth_functionality: null,
+                    quantity: obj.quantity,
+                    sellOrderStatus: "new",
+                    sell_trail_percentage: (typeof obj.sell_trail_percentage !== 'undefined' && obj.sell_trail_percentage ? obj.sell_trail_percentage : null),
+                    show_single_values: "no",
+                    status: obj.status,
+                    trigger_type: obj.trigger_type,
+                    orderType: 'ask'
+                }
+                return temp_order
+            })
+
             res.status(200).json({
-                orders
+                data: resOrdersArr
+            })
+        }else{
+            res.status(404).json({
+                data: [],
+                message: 'Orders not found.'
             })
         }
     }else{
@@ -357,7 +397,7 @@ function getOrdersListing(filter){
         where['status'] = { $in: ['submitted', 'FILLED', 'new', 'LTH'] }
         conn.then((db) => {
             let collection = (filter.exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + filter.exchange;
-            db.collection(collection).find(where).toArray((err, result) => {
+            db.collection(collection).find(where).limit(50).toArray((err, result) => {
                 if (err) {
                     resolve(err);
                 } else {
