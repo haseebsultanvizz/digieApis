@@ -22,17 +22,24 @@ router.post('/orderListing', async (req, res)=>{
 
     //if (typeof query !== 'undefined' && query) { //do stuff if query is defined and not null
     if ((typeof user_id !== 'undefined' && user_id) && (typeof coin !== 'undefined' && coin) && (typeof exchange !== 'undefined' && exchange) && (typeof application_mode !== 'undefined' && application_mode)){
-        // var resOrdersArr = [];
         let filter ={
             'user_id': user_id,
             'coin': coin,
             'exchange': exchange,
             'application_mode': application_mode,
         };
+
         let orders = await getOrdersListing(filter)
-        if (orders){
+        if (orders.length > 0){
+
+            var resOrdersArr = orders.map(obj =>(obj))
             res.status(200).json({
-                orders
+                data: resOrdersArr
+            })
+        }else{
+            res.status(404).json({
+                data: [],
+                message: 'Orders not found.'
             })
         }
     }else{
@@ -347,6 +354,7 @@ async function listUserCoins(userId) {
     })
 } //End of listUserCoins
 
+//getOrdersListing
 function getOrdersListing(filter){
     return new Promise((resolve) => {
         let where = {};
@@ -357,7 +365,7 @@ function getOrdersListing(filter){
         where['status'] = { $in: ['submitted', 'FILLED', 'new', 'LTH'] }
         conn.then((db) => {
             let collection = (filter.exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + filter.exchange;
-            db.collection(collection).find(where).toArray((err, result) => {
+            db.collection(collection).find(where).limit(50).toArray((err, result) => {
                 if (err) {
                     resolve(err);
                 } else {
@@ -366,7 +374,7 @@ function getOrdersListing(filter){
             }) //End of collection
         }) //End of conn
     }) //End of Promise
-}
+}//End getOrdersListing
 
 //function for getting order to show on chart 
 function listOrdersForChart(admin_id, exchange, application_mode, coin) {
