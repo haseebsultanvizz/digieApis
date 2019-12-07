@@ -2920,7 +2920,21 @@ router.post('/updateBuyPriceFromDragging', async(req, resp) => {
 
                     var new_sell_price = parseFloat(updated_buy_price) + parseFloat((updated_buy_price / 100) * sell_percentage);
 
+                /*  (: Update the sell price form here  BY Ali 7-12-2019 According to sir  :) */
+                    var filter = {};
+                    filter['_id'] = new ObjectID(orderId);
+                    var update_order = {};
+                    update_order['sell_price'] = new_sell_price;
+                    update_order['exchnage'] = exchange;
+                    var collection_order = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                    var updatePromiseBuy = updateOne(filter, update_order, collection_order);
+                    updatePromiseBuy.then((resolve) => { });
 
+                /*  (: Update the sell price form here  BY Ali 7-12-2019 According to sir  :) */
+
+
+
+  
                     var filter = {};
                     filter['_id'] = temp_order_id;
                     var update = {};
