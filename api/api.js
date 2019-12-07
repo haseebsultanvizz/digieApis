@@ -779,6 +779,11 @@ router.post('/editAutoOrder', async(req, resp) => {
         delete order['orderId'];
         var where = {};
         where['_id'] = new ObjectID(orderId);
+
+     console.log('Line Number 783 ');
+    console.log(order);
+
+
         var updPrmise = updateOne(where, order, collection);
         updPrmise.then((callback) => {})
 
