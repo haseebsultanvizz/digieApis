@@ -765,6 +765,7 @@ router.post('/editAutoOrder', async(req, resp) => {
         let orderId = order['orderId'];
         var exchange = order['exchange'];
         var lth_profit = order['lth_profit'];
+       var defined_sell_percentage = order['defined_sell_percentage'];
         //get order detail which you want to update
         var buyOrderArr = await listOrderById(orderId, exchange);
         var purchased_price = buyOrderArr[0]['market_value'];
@@ -773,6 +774,11 @@ router.post('/editAutoOrder', async(req, resp) => {
         if (status == 'LTH') {
             var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
             order['sell_price'] = sell_price;
+        }else{
+            
+            var sell_price = ((parseFloat(purchased_price) * defined_sell_percentage) / 100) + parseFloat(purchased_price);
+            order['sell_price'] = sell_price;
+        
         }
 
         var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
