@@ -2849,8 +2849,8 @@ function listselTempOrders(ID, exchange) {
 router.post('/updateBuyPriceFromDragging', async(req, resp) => {
         var exchange = req.body.exchange;
         var orderId = req.body.orderId;
-        var previous_buy_price = req.body.previous_buy_price;
-        var updated_buy_price = req.body.updated_buy_price;
+    var previous_buy_price = parseFloat(req.body.previous_buy_price);
+    var updated_buy_price = parseFloat(req.body.updated_buy_price);
 
         var buyOrderResp = await listOrderById(orderId, exchange);
         var buyOrderArr = (typeof buyOrderResp[0] == 'undefined') ? [] : buyOrderResp[0];
@@ -2924,7 +2924,7 @@ router.post('/updateBuyPriceFromDragging', async(req, resp) => {
                     var filter = {};
                     filter['_id'] = new ObjectID(orderId);
                     var update_order = {};
-                    update_order['sell_price'] = new_sell_price;
+                    update_order['sell_price'] = parseFloat((new_sell_price);
                     update_order['exchnage'] = exchange;
                     var collection_order = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
                     var updatePromiseBuy = updateOne(filter, update_order, collection_order);
