@@ -3044,7 +3044,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                         updatePromise.then((resolve) => {});
 
 
-
+                        sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
+                        calculate_new_sell_percentage = isNaN(calculate_new_sell_percentage)?0:calculate_new_sell_percentage;
+                        
                         var log_msg_1 = "Order Profit percentage Change From(" + parseFloat(sell_profit_percent).toFixed(2) + " % ) To (" + parseFloat(calculate_new_sell_percentage).toFixed(2) + " %)  From Chart";
                         var logPromise_1 = recordOrderLog(orderId, log_msg_1, 'order_profit_percentage_change', 'yes', exchange);
                         logPromise_1.then((callback) => {})
@@ -3061,6 +3063,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                         var updatePromise = updateOne(filter, update, collectionName);
                         updatePromise.then((resolve) => {});
 
+                        iniatial_trail_stop = isNaN(iniatial_trail_stop)?0:iniatial_trail_stop;
+                        updated_price = isNaN(updated_price)?0:updated_price;
 
                         var log_msg = "Order Stop Loss Updated From(" + parseFloat(iniatial_trail_stop).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
                         var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
@@ -3122,6 +3126,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
 
 
+                            sell_price = isNaN(sell_price)?0:sell_price;
+                            updated_price = isNaN(updated_price)?0:updated_price;
 
                             var log_msg = "Order sell price Updated from(" + parseFloat(sell_price).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
                             var logPromise = recordOrderLog(orderId, log_msg, 'create_sell_order', 'yes', exchange);
@@ -3167,11 +3173,15 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                             var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
                             updateBuyPromise.then((resolve) => {});
 
+                            stop_loss = isNaN(stop_loss)?0:stop_loss;
+                            updated_price = isNaN(updated_price)?0:updated_price;
 
                             var log_msg = "Order Stop Loss Updated From(" + parseFloat(stop_loss).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
                             var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                             logPromise.then((callback) => {});
 
+                            loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
+                            stop_loss_percentage = isNaN(stop_loss_percentage)?0:stop_loss_percentage;
 
                             var log_msg_1 = "Order stop Loss percentage Change From(" + parseFloat(loss_percentage).toFixed(2) + ") To (" + parseFloat(stop_loss_percentage).toFixed(2) + ")  From Chart";
                             var logPromise_1 = recordOrderLog(orderId, log_msg_1, 'order_stop_loss_percentage_change', 'yes', exchange);
@@ -3273,12 +3283,12 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 temp_arr['profit_percent'] = sell_profit_percent;
                                 temp_arr['profit_price'] = updated_price;
 
-
+                                sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
                                 var log_msg = "Order profit percentage set to (" + parseFloat(sell_profit_percent).toFixed(2) + ") %";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                                 logPromise.then((callback) => {})
 
-
+                                updated_price = isNaN(updated_price)?0:updated_price;
                                 var log_msg = "Order profit price set to (" + updated_price + ") %";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
                                 logPromise.then((callback) => {})
@@ -3303,12 +3313,12 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 temp_arr['stop_loss'] = 'yes',
                                     temp_arr['loss_percentage'] = loss_percentage;
 
-
+                                    loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
                                 var log_msg = "Order stop loss percentage set to (" + parseFloat(loss_percentage).toFixed(2) + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                                 logPromise.then((callback) => {})
 
-
+                                updated_price = isNaN(updated_price)?0:updated_price;
                                 var log_msg = "Order stop loss  set to (" + updated_price + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
                                 logPromise.then((callback) => {})
@@ -3391,12 +3401,12 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 updatePromise.then((resolve) => {});
 
 
-
+                                sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
                                 var log_msg = "Order profit percentage set to (" + parseFloat(sell_profit_percent).toFixed(2) + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                                 logPromise.then((callback) => {})
 
-
+                                updated_price = isNaN(updated_price)?0:updated_price;
                                 var log_msg = "Order profit price set to (" + updated_price + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
                                 logPromise.then((callback) => {})
@@ -3428,12 +3438,12 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
                                 var updatePromise = updateOne(filter, upd_temp, collection);
                                 updatePromise.then((resolve) => {});
-
+                                loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
                                 var log_msg = "Order stop loss percentage set to (" + parseFloat(loss_percentage).toFixed(2) + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                                 logPromise.then((callback) => {})
 
-
+                                updated_price = isNaN(updated_price)?0:updated_price;
                                 var log_msg = "Order stop loss  set to (" + updated_price + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
                                 logPromise.then((callback) => {})
