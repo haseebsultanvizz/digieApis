@@ -3469,6 +3469,8 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
         let exchange = req.body.exchange;
         var buyOrderResp = await listOrderById(orderId, exchange);
         var buyOrderArr = buyOrderResp[0];
+        var post_data = req.body
+        var  timezone = (typeof post_data.timezone == 'undefined' || post_data.timezone == '')?'America/Danmarkshavn':post_data.timezone;
 
         var auto_sell = (typeof buyOrderArr['auto_sell'] == 'undefined') ? 'no' : buyOrderArr['auto_sell'];
 
@@ -3479,17 +3481,24 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
         let html = '';
         let ordeLog = ordrLogPromise;
         var index = 1;
+
+        var index = 1;
         for (let row in ordeLog) {
-            let date = new Date(ordeLog[row].created_date).toISOString().
-            replace(/T/, ' '). // replace T with a space
-            replace(/\..+/, '');
-            html += '<tr>';
-            html += '<th scope="row" class="text-danger">' + index + '</th>';
-            html += '<td>' + ordeLog[row].log_msg + '</td>';
-            html += '<td>' + date + '</td>'
-            html += '</tr>';
-            index++;
+			var timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
+			timeZoneTime = new Date(timeZoneTime);
+			var date = timeZoneTime.toLocaleString()+' '+timezone;
+            //Remove indicator log message
+            if (ordeLog[row].type != 'indicator_log_message') {
+                html += '<tr>';
+                html += '<th scope="row" class="text-danger">' + index + '</th>';
+                html += '<td>' + ordeLog[row].log_msg + '</td>';
+                html += '<td>' + date + '</td>'
+                html += '</tr>';
+                index++;
+            }
         }
+
+    
 
         var sellArr = [];
         var tempSellArr = [];
