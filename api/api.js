@@ -1805,7 +1805,15 @@ router.post('/orderMoveToLth', async(req, resp) => {
 			var updObj = {};
 				updObj['sell_price'] = parseFloat(sell_price);
 			var updPromise = updateOne(where,updObj,collectionName);
-				updPromise.then((resolve)=>{});
+                updPromise.then((resolve)=>{});
+                
+            var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+			var where = {};
+				where['_id'] = new ObjectID(orderId);
+			var updObj = {};
+				updObj['modified_date'] = new Date();
+			var updBuyPromise = updateOne(where,updObj,buy_collection);
+                updBuyPromise.then((resolve)=>{});
 		}
 		
         var respPromise = orderMoveToLth(orderId, lth_profit, exchange, sell_price);
