@@ -671,6 +671,14 @@ router.post('/createManualOrderByChart', (req, resp) => {
                         tempOrder['created_date'] = new Date();
                         tempOrder['buy_order_id'] = buyOrderId;
                         var tempCollection = (exchnage == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchnage;
+
+
+
+                        console.log('tempOrder');
+                        console.log(tempOrder);
+
+
+
                         //create sell order
                         db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
                             if (err) {
