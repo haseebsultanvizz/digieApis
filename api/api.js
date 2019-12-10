@@ -765,6 +765,7 @@ router.post('/editAutoOrder', async(req, resp) => {
         let orderId = order['orderId'];
         var exchange = order['exchange'];
         var lth_profit = order['lth_profit'];
+       var defined_sell_percentage = order['defined_sell_percentage'];
         //get order detail which you want to update
         var buyOrderArr = await listOrderById(orderId, exchange);
         var purchased_price = buyOrderArr[0]['market_value'];
@@ -773,12 +774,22 @@ router.post('/editAutoOrder', async(req, resp) => {
         if (status == 'LTH') {
             var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
             order['sell_price'] = sell_price;
+        }else{
+            
+            var sell_price = ((parseFloat(purchased_price) * defined_sell_percentage) / 100) + parseFloat(purchased_price);
+            order['sell_price'] = sell_price;
+        
         }
 
         var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         delete order['orderId'];
         var where = {};
         where['_id'] = new ObjectID(orderId);
+
+     console.log('Line Number 783 ');
+    console.log(order);
+
+
         var updPrmise = updateOne(where, order, collection);
         updPrmise.then((callback) => {})
 
@@ -1868,7 +1879,7 @@ function listOrderLog(orderId, exchange) {
             var where = {};
             where['order_id'] = new ObjectID(orderId);
             var collection = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-            db.collection(collection).find(where,{allowDiskUse: true}).sort({created_date:-1}).toArray((err, result) => {
+            db.collection(collection).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
                 if (err) {
                     resolve(err);
                 } else {
@@ -2838,8 +2849,8 @@ function listselTempOrders(ID, exchange) {
 router.post('/updateBuyPriceFromDragging', async(req, resp) => {
         var exchange = req.body.exchange;
         var orderId = req.body.orderId;
-        var previous_buy_price = req.body.previous_buy_price;
-        var updated_buy_price = req.body.updated_buy_price;
+    var previous_buy_price = parseFloat(req.body.previous_buy_price);
+    var updated_buy_price = parseFloat(req.body.updated_buy_price);
 
         var buyOrderResp = await listOrderById(orderId, exchange);
         var buyOrderArr = (typeof buyOrderResp[0] == 'undefined') ? [] : buyOrderResp[0];
@@ -2909,7 +2920,21 @@ router.post('/updateBuyPriceFromDragging', async(req, resp) => {
 
                     var new_sell_price = parseFloat(updated_buy_price) + parseFloat((updated_buy_price / 100) * sell_percentage);
 
+                /*  (: Update the sell price form here  BY Ali 7-12-2019 According to sir  :) */
+                    var filter = {};
+                    filter['_id'] = new ObjectID(orderId);
+                    var update_order = {};
+                    update_order['sell_price'] = parseFloat(new_sell_price);
+                    update_order['exchnage'] = exchange;
+                    var collection_order = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                    var updatePromiseBuy = updateOne(filter, update_order, collection_order);
+                    updatePromiseBuy.then((resolve) => { });
 
+                /*  (: Update the sell price form here  BY Ali 7-12-2019 According to sir  :) */
+
+
+
+  
                     var filter = {};
                     filter['_id'] = temp_order_id;
                     var update = {};
