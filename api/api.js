@@ -1794,7 +1794,7 @@ router.post('/orderMoveToLth', async(req, resp) => {
         let lth_profit = req.body.lth_profit;
 		var buyOrderArr = await listOrderById(orderId, exchange);
 		var buyOrderObj = buyOrderArr[0];
-		var purchased_price = buyOrderObj['market_value'];
+		var purchased_price = (typeof buyOrderObj['market_value'] == 'undefined')?0:buyOrderObj['market_value'] ;
 		var sell_order_id = (typeof buyOrderObj['sell_order_id'] == 'undefined')?'':buyOrderObj['sell_order_id'];
 		var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price)
         if(sell_order_id !=''){
