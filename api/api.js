@@ -1410,7 +1410,8 @@ function calculateAverageOrdersProfit(postDAta) {
 
     return new Promise((resolve) => {
         conn.then((db) => {
-            db.collection(collectionName).find(filter).sort({ modified_date: -1 }).toArray((err, result) => {
+            // db.collection(collectionName).find(filter).sort({ modified_date: -1 }).toArray((err, result) => {
+                db.collection(collectionName).find(filter).toArray((err, result) => {
                 if (err) {
                     console.log(err)
                 } else {
@@ -1792,8 +1793,10 @@ router.post('/orderMoveToLth', async(req, resp) => {
         let orderId = req.body.orderId;
         let lth_profit = req.body.lth_profit;
 		var buyOrderArr = await listOrderById(orderId, exchange);
-		var buyOrderObj = buyOrderArr[0];
-		var purchased_price = buyOrderObj['market_value'];
+        var buyOrderObj = buyOrderArr[0];
+            console.log(buyOrderObj);
+
+		var purchased_price = (typeof buyOrderObj['market_value'] == 'undefined')?0:buyOrderObj['market_value'] ;
 		var sell_order_id = (typeof buyOrderObj['sell_order_id'] == 'undefined')?'':buyOrderObj['sell_order_id'];
 		var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price)
         if(sell_order_id !=''){
@@ -1804,7 +1807,15 @@ router.post('/orderMoveToLth', async(req, resp) => {
 			var updObj = {};
 				updObj['sell_price'] = parseFloat(sell_price);
 			var updPromise = updateOne(where,updObj,collectionName);
-				updPromise.then((resolve)=>{});
+                updPromise.then((resolve)=>{});
+                
+            var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+			var where = {};
+				where['_id'] = new ObjectID(orderId);
+			var updObj = {};
+				updObj['modified_date'] = new Date();
+			var updBuyPromise = updateOne(where,updObj,buy_collection);
+                updBuyPromise.then((resolve)=>{});
 		}
 		
         var respPromise = orderMoveToLth(orderId, lth_profit, exchange, sell_price);
