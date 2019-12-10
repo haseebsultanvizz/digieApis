@@ -1879,7 +1879,7 @@ function listOrderLog(orderId, exchange) {
             var where = {};
             where['order_id'] = new ObjectID(orderId);
             var collection = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-            db.collection(collection).find(where,{allowDiskUse: true}).sort({created_date:-1}).toArray((err, result) => {
+            db.collection(collection).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
                 if (err) {
                     resolve(err);
                 } else {
