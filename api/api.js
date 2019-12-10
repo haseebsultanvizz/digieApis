@@ -1870,8 +1870,16 @@ router.post('/listOrderById', async(req, resp) => {
         var index = 1;
         for (let row in ordeLog) {
 
-			var timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
-			timeZoneTime = new Date(timeZoneTime);
+            var timeZoneTime = ordeLog[row].created_date;
+            try {
+                  timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
+                 timeZoneTime = new Date(timeZoneTime);
+              }
+              catch (e) {
+                console.log(e);
+              }
+              
+
 			var date = timeZoneTime.toLocaleString()+' '+timezone;
             //Remove indicator log message
             if (ordeLog[row].type != 'indicator_log_message') {
@@ -3540,8 +3548,14 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
 
         var index = 1;
         for (let row in ordeLog) {
-			var timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
-			timeZoneTime = new Date(timeZoneTime);
+            var timeZoneTime = ordeLog[row].created_date;
+            try {
+                  timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
+                 timeZoneTime = new Date(timeZoneTime);
+              }
+              catch (e) {
+                console.log(e);
+              }
 			var date = timeZoneTime.toLocaleString()+' '+timezone;
             //Remove indicator log message
             if (ordeLog[row].type != 'indicator_log_message') {
