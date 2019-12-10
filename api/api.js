@@ -1400,7 +1400,8 @@ function calculateAverageOrdersProfit(postDAta) {
 
     return new Promise((resolve) => {
         conn.then((db) => {
-            db.collection(collectionName).find(filter).sort({ modified_date: -1 }).toArray((err, result) => {
+            // db.collection(collectionName).find(filter).sort({ modified_date: -1 }).toArray((err, result) => {
+                db.collection(collectionName).find(filter).toArray((err, result) => {
                 if (err) {
                     console.log(err)
                 } else {
