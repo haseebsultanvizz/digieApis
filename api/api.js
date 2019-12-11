@@ -630,10 +630,15 @@ router.post('/createManualOrder', (req, resp) => {
 
 
 
+
+
 //post call from chart for creating manual order
 router.post('/createManualOrderByChart', (req, resp) => {
         conn.then((db) => {
             let orders = req.body.orderArr;
+
+            console.log(orders);
+            console.log('orders');
             let orderId = req.body.orderId;
             var price = orders['price'];
             let exchnage = orders['exchange'];
