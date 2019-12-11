@@ -791,6 +791,8 @@ router.post('/editAutoOrder', async(req, resp) => {
         
         }
 
+        order['modified_date'] = new Date();
+        
         var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         delete order['orderId'];
         var where = {};
@@ -2053,6 +2055,7 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
             insert_arr['order_status'] = 'ready';
             insert_arr['global'] = 'global';
             insert_arr['created_date'] = new Date();
+            insert_arr['modified_date'] = new Date();
             let collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange;
             db.collection(collection).insertOne(insert_arr, (err, result) => {
                 if (err) {
@@ -2312,6 +2315,7 @@ function buyTestOrder(orders, market_value, exchange) {
 
                 var where_1 = {};
                 where_1['_id'] = new ObjectID(sell_order_id)
+                updOrder['modified_date'] = new Date();
                 var updtPromise_1 = updateOne(where_1, updOrder, collectionName);
                 updtPromise_1.then((callback) => {})
             }
@@ -2432,6 +2436,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
                 var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
                 var where = {};
                 where['_id'] = new ObjectID(buy_order_id)
+                upd_data['modified_date'] = new Date();
                 var upsert = { 'upsert': true };
                 //function for update buy_order in the case of create sell order
                 var updPromise = updateSingle(collectionName, where, upd_data, upsert);
@@ -2499,6 +2504,7 @@ function orderReadyForBuy(buy_order_id, buy_quantity, market_value, coin_symbol,
             insert_arr['order_type'] = type;
             insert_arr['order_status'] = 'ready';
             insert_arr['created_date'] = new Date();
+            insert_arr['modified_date'] = new Date();
             insert_arr['global'] = 'global';
             let collection = (exchange == 'binance') ? 'ready_orders_for_buy_ip_based' : 'ready_orders_for_buy_ip_based_' + exchange;
          
@@ -3628,6 +3634,7 @@ router.post('/updateManualOrder', (req, resp) => {
 
         var where = {};
         where['_id'] = new ObjectID(buyOrderId)
+        buyorderArr['modified_date'] = new Date();
         var upsert = { 'upsert': true };
         var updPromise = updateSingle(buy_order_collection, where, buyorderArr, upsert);
         updPromise.then((callback) => {});
@@ -3638,6 +3645,7 @@ router.post('/updateManualOrder', (req, resp) => {
         if (sellOrderId != '') {
             var where_1 = {};
             where_1['_id'] = new ObjectID(sellOrderId)
+            sellOrderArr['modified_date'] = new Date();
             var upsert = { 'upsert': true };
             var updPromise_1 = updateSingle(orders_collection, where_1, sellOrderArr, upsert);
             updPromise_1.then((callback) => {});
@@ -3647,6 +3655,7 @@ router.post('/updateManualOrder', (req, resp) => {
         if (tempSellOrderId != '') {
             var where_2 = {};
             where_2['_id'] = new ObjectID(tempSellOrderId)
+            tempOrderArr['modified_date'] = new Date();
             var upsert = { 'upsert': true };
             var updPromise_2 = updateSingle(temp_sell_order_collection, where_2, tempOrderArr, upsert);
             updPromise_2.then((callback) => {})
@@ -3682,6 +3691,7 @@ router.post('/setForSell', async(req, resp) => {
 
     var where = {};
     where['_id'] = { '$in': [buyOrderId, new ObjectID(buyOrderId)] }
+    updArr['modified_date'] = new Date();
     var updPrmise = updateOne(where, updArr, collection);
     updPrmise.then((callback) => {})
 
