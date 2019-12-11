@@ -30,9 +30,88 @@ router.post('/orderListing', async (req, res)=>{
         };
 
         let orders = await getOrdersListing(filter)
+
+        var resOrdersArr = []
         if (orders.length > 0){
 
-            var resOrdersArr = orders.map(obj =>(obj))
+            // var resOrdersArr = orders.map(obj =>(obj))
+
+            for(let row in orders ){
+
+                obj = orders[row]
+
+                let price = 0;
+                if (obj.status == 'new'){
+                    price = (typeof obj.price !== 'undefined' && obj.price ? parseFloat(obj.price).toFixed(8) : null);
+                }else{
+                    price = (typeof obj.purchased_price !== 'undefined' && obj.purchased_price ? parseFloat(obj.purchased_price).toFixed(8) : null);
+                }
+
+                let sell_order_id = (typeof obj.sell_order_id !== 'undefined' && obj.sell_order_id ? obj.sell_order_id : null)
+                let sellOrder = (sell_order_id ? await listSellOrderById(sell_order_id, exchange) : [])
+
+                let profit_price_ = null;
+                let defined_sell_percentage = (typeof obj.defined_sell_percentage !== 'undefined' && obj.defined_sell_percentage ? obj.defined_sell_percentage : 0);
+                let sell_profit_percent = (typeof obj.sell_profit_percent !== 'undefined' && obj.sell_profit_percent ? obj.sell_profit_percent : 0);
+                let profitPercentage = (defined_sell_percentage == 0) ? sell_profit_percent : defined_sell_percentage;
+
+                let calculateSellPrice = price + ((price / 100) * profitPercentage);
+                calculateSellPrice = parseFloat(calculateSellPrice).toFixed(8);
+
+                profit_price_ = ((typeof calculateSellPrice !== 'undefined') || calculateSellPrice != 0) ? calculateSellPrice : null;
+                profit_price_ = (Number.isNaN(parseFloat(profit_price_))) ? null : profit_price_;
+                
+
+                let loss_price_ = null;
+                let loss_percentage = '';
+                if (obj.auto_sell !== 'undefined' && obj.auto_sell == 'yes') {
+                    let stop_loss = '';
+                    if (sellOrder && sellOrder.length) {
+                        loss_percentage = (sellOrder.loss_percentage !== 'undefined') ? parseFloat(sellOrder.loss_percentage) : null;
+                        stop_loss = (typeof sellOrder.stop_loss !== 'undefined' && sellOrder.stop_loss == 'yes' ? 'yes' : 'no')
+
+                        if (stop_loss == 'yes') {
+                            loss_price_ = (price - ((price * loss_percentage) / 100)).toFixed(8);
+                            loss_price_ = (isNaN(loss_price_) ? null : loss_price_)
+                        }
+                    }
+                }
+
+
+                let temp_order =  {
+                    _id: obj.id,
+                    price: price,
+                    index: null,
+
+                    profit_price_: "0.00000390",
+                    profit_percentage: 1.23,
+                    profit_status: (obj.status == 'new' ? 'yes' : 'no'),
+                    profit_price_indx: null,
+                    profit_price_space: null,
+                    greenLine: null,
+
+                    loss_price_: loss_price_,
+                    loss_percentage: loss_percentage,
+                    loss_status: (obj.status == 'new' ? 'no' : 'yes'),
+                    loss_price_indx: null,
+                    loss_price_space: null,
+                    redLine: null,
+
+                    auto_sell: obj.auto_sell,
+                    buy_trail_percentage: (typeof obj.buy_trail_percentage !== 'undefined' && obj.buy_trail_percentage ? obj.buy_trail_percentage : null),
+                    lth_functionality: obj.lth_functionality,
+                    quantity: obj.quantity,
+                    sellOrderStatus: (sellOrder && sellOrder.length ? sellOrder.status : null),
+                    sell_trail_percentage: (typeof obj.sell_trail_percentage !== 'undefined' && obj.sell_trail_percentage ? obj.sell_trail_percentage : null),
+                    show_single_values: "no",
+                    status: obj.status,
+                    trigger_type: obj.trigger_type,
+                    orderType: 'ask'
+                }
+                resOrdersArr.push(temp_order)
+            
+            }
+
             res.status(200).json({
                 data: resOrdersArr
             })
@@ -440,5 +519,24 @@ function listCurrentMarketPrice(coin, exchange) {
     }
 
 } //End of listCurrentMarketPrice
+
+
+//get sell order detail by id 
+function listSellOrderById(ID, exchange) {
+    return new Promise((resolve, reject) => {
+        let filter = {};
+        filter['_id'] = new ObjectID(ID);
+        conn.then((db) => {
+            let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+            db.collection(collection).find(filter).toArray((err, result) => {
+                if (err) {
+                    resolve(err);
+                } else {
+                    resolve(result);
+                }
+            }) //End of collection
+        }) //End of conn
+    }) //End of Promise
+} //End of listSellOrderById
 
 module.exports = router;
