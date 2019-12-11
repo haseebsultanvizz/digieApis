@@ -670,7 +670,17 @@ router.post('/createManualOrderByChart', (req, resp) => {
                         let tempOrder = req.body.tempOrderArr;
                         tempOrder['created_date'] = new Date();
                         tempOrder['buy_order_id'] = buyOrderId;
+                        // By 10-12-2019
+                        //tempOrder['profit_price'] = parseFloat(tempOrder['profit_price']);
+                        //tempOrder['profit_percent'] = parseFloat(tempOrder['profit_percent']);
+                        // By 10-12-2019
+
                         var tempCollection = (exchnage == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchnage;
+
+                        console.log('tempOrder');
+                        console.log(tempOrder);
+
+
                         //create sell order
                         db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
                             if (err) {
@@ -765,6 +775,7 @@ router.post('/editAutoOrder', async(req, resp) => {
         let orderId = order['orderId'];
         var exchange = order['exchange'];
         var lth_profit = order['lth_profit'];
+       var defined_sell_percentage = order['defined_sell_percentage'];
         //get order detail which you want to update
         var buyOrderArr = await listOrderById(orderId, exchange);
         var purchased_price = buyOrderArr[0]['market_value'];
@@ -773,12 +784,22 @@ router.post('/editAutoOrder', async(req, resp) => {
         if (status == 'LTH') {
             var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
             order['sell_price'] = sell_price;
+        }else{
+            
+            var sell_price = ((parseFloat(purchased_price) * defined_sell_percentage) / 100) + parseFloat(purchased_price);
+            order['sell_price'] = sell_price;
+        
         }
 
         var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         delete order['orderId'];
         var where = {};
         where['_id'] = new ObjectID(orderId);
+
+     console.log('Line Number 783 ');
+    console.log(order);
+
+
         var updPrmise = updateOne(where, order, collection);
         updPrmise.then((callback) => {})
 
@@ -1389,7 +1410,8 @@ function calculateAverageOrdersProfit(postDAta) {
 
     return new Promise((resolve) => {
         conn.then((db) => {
-            db.collection(collectionName).find(filter).sort({ modified_date: -1 }).toArray((err, result) => {
+            // db.collection(collectionName).find(filter).sort({ modified_date: -1 }).toArray((err, result) => {
+                db.collection(collectionName).find(filter).toArray((err, result) => {
                 if (err) {
                     console.log(err)
                 } else {
@@ -1767,12 +1789,18 @@ function deleteOrder(orderId, exchange) {
 //When we click on move to LTH Button from order listing opentab it move the open order to LTH for any exchange
 //Changing the target profit to  LTH profit rather than normal profit
 router.post('/orderMoveToLth', async(req, resp) => {
+
+
+    console.log(req.body);
+    console.log('Response is here');
         let exchange = req.body.exchange;
         let orderId = req.body.orderId;
         let lth_profit = req.body.lth_profit;
 		var buyOrderArr = await listOrderById(orderId, exchange);
-		var buyOrderObj = buyOrderArr[0];
-		var purchased_price = buyOrderObj['market_value'];
+        var buyOrderObj = buyOrderArr[0];
+            console.log(buyOrderObj);
+
+		var purchased_price = (typeof buyOrderObj['market_value'] == 'undefined')?0:buyOrderObj['market_value'] ;
 		var sell_order_id = (typeof buyOrderObj['sell_order_id'] == 'undefined')?'':buyOrderObj['sell_order_id'];
 		var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price)
         if(sell_order_id !=''){
@@ -1783,7 +1811,15 @@ router.post('/orderMoveToLth', async(req, resp) => {
 			var updObj = {};
 				updObj['sell_price'] = parseFloat(sell_price);
 			var updPromise = updateOne(where,updObj,collectionName);
-				updPromise.then((resolve)=>{});
+                updPromise.then((resolve)=>{});
+                
+            var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+			var where = {};
+				where['_id'] = new ObjectID(orderId);
+			var updObj = {};
+				updObj['modified_date'] = new Date();
+			var updBuyPromise = updateOne(where,updObj,buy_collection);
+                updBuyPromise.then((resolve)=>{});
 		}
 		
         var respPromise = orderMoveToLth(orderId, lth_profit, exchange, sell_price);
@@ -1838,8 +1874,16 @@ router.post('/listOrderById', async(req, resp) => {
         var index = 1;
         for (let row in ordeLog) {
 
-			var timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
-			timeZoneTime = new Date(timeZoneTime);
+            var timeZoneTime = ordeLog[row].created_date;
+            try {
+                  timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
+                 timeZoneTime = new Date(timeZoneTime);
+              }
+              catch (e) {
+                console.log(e);
+              }
+              
+
 			var date = timeZoneTime.toLocaleString()+' '+timezone;
             //Remove indicator log message
             if (ordeLog[row].type != 'indicator_log_message') {
@@ -1868,7 +1912,7 @@ function listOrderLog(orderId, exchange) {
             var where = {};
             where['order_id'] = new ObjectID(orderId);
             var collection = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-            db.collection(collection).find(where,{allowDiskUse: true}).sort({created_date:-1}).toArray((err, result) => {
+            db.collection(collection).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
                 if (err) {
                     resolve(err);
                 } else {
@@ -2838,8 +2882,8 @@ function listselTempOrders(ID, exchange) {
 router.post('/updateBuyPriceFromDragging', async(req, resp) => {
         var exchange = req.body.exchange;
         var orderId = req.body.orderId;
-        var previous_buy_price = req.body.previous_buy_price;
-        var updated_buy_price = req.body.updated_buy_price;
+    var previous_buy_price = parseFloat(req.body.previous_buy_price);
+    var updated_buy_price = parseFloat(req.body.updated_buy_price);
 
         var buyOrderResp = await listOrderById(orderId, exchange);
         var buyOrderArr = (typeof buyOrderResp[0] == 'undefined') ? [] : buyOrderResp[0];
@@ -2909,7 +2953,21 @@ router.post('/updateBuyPriceFromDragging', async(req, resp) => {
 
                     var new_sell_price = parseFloat(updated_buy_price) + parseFloat((updated_buy_price / 100) * sell_percentage);
 
+                /*  (: Update the sell price form here  BY Ali 7-12-2019 According to sir  :) */
+                    var filter = {};
+                    filter['_id'] = new ObjectID(orderId);
+                    var update_order = {};
+                    update_order['sell_price'] = parseFloat(new_sell_price);
+                    update_order['exchnage'] = exchange;
+                    var collection_order = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                    var updatePromiseBuy = updateOne(filter, update_order, collection_order);
+                    updatePromiseBuy.then((resolve) => { });
 
+                /*  (: Update the sell price form here  BY Ali 7-12-2019 According to sir  :) */
+
+
+
+  
                     var filter = {};
                     filter['_id'] = temp_order_id;
                     var update = {};
@@ -3019,7 +3077,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                         updatePromise.then((resolve) => {});
 
 
-
+                        sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
+                        calculate_new_sell_percentage = isNaN(calculate_new_sell_percentage)?0:calculate_new_sell_percentage;
+                        
                         var log_msg_1 = "Order Profit percentage Change From(" + parseFloat(sell_profit_percent).toFixed(2) + " % ) To (" + parseFloat(calculate_new_sell_percentage).toFixed(2) + " %)  From Chart";
                         var logPromise_1 = recordOrderLog(orderId, log_msg_1, 'order_profit_percentage_change', 'yes', exchange);
                         logPromise_1.then((callback) => {})
@@ -3036,6 +3096,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                         var updatePromise = updateOne(filter, update, collectionName);
                         updatePromise.then((resolve) => {});
 
+                        iniatial_trail_stop = isNaN(iniatial_trail_stop)?0:iniatial_trail_stop;
+                        updated_price = isNaN(updated_price)?0:updated_price;
 
                         var log_msg = "Order Stop Loss Updated From(" + parseFloat(iniatial_trail_stop).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
                         var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
@@ -3097,6 +3159,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
 
 
+                            sell_price = isNaN(sell_price)?0:sell_price;
+                            updated_price = isNaN(updated_price)?0:updated_price;
 
                             var log_msg = "Order sell price Updated from(" + parseFloat(sell_price).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
                             var logPromise = recordOrderLog(orderId, log_msg, 'create_sell_order', 'yes', exchange);
@@ -3142,11 +3206,15 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                             var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
                             updateBuyPromise.then((resolve) => {});
 
+                            stop_loss = isNaN(stop_loss)?0:stop_loss;
+                            updated_price = isNaN(updated_price)?0:updated_price;
 
                             var log_msg = "Order Stop Loss Updated From(" + parseFloat(stop_loss).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
                             var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                             logPromise.then((callback) => {});
 
+                            loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
+                            stop_loss_percentage = isNaN(stop_loss_percentage)?0:stop_loss_percentage;
 
                             var log_msg_1 = "Order stop Loss percentage Change From(" + parseFloat(loss_percentage).toFixed(2) + ") To (" + parseFloat(stop_loss_percentage).toFixed(2) + ")  From Chart";
                             var logPromise_1 = recordOrderLog(orderId, log_msg_1, 'order_stop_loss_percentage_change', 'yes', exchange);
@@ -3248,12 +3316,12 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 temp_arr['profit_percent'] = sell_profit_percent;
                                 temp_arr['profit_price'] = updated_price;
 
-
+                                sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
                                 var log_msg = "Order profit percentage set to (" + parseFloat(sell_profit_percent).toFixed(2) + ") %";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                                 logPromise.then((callback) => {})
 
-
+                                updated_price = isNaN(updated_price)?0:updated_price;
                                 var log_msg = "Order profit price set to (" + updated_price + ") %";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
                                 logPromise.then((callback) => {})
@@ -3278,12 +3346,12 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 temp_arr['stop_loss'] = 'yes',
                                     temp_arr['loss_percentage'] = loss_percentage;
 
-
+                                    loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
                                 var log_msg = "Order stop loss percentage set to (" + parseFloat(loss_percentage).toFixed(2) + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                                 logPromise.then((callback) => {})
 
-
+                                updated_price = isNaN(updated_price)?0:updated_price;
                                 var log_msg = "Order stop loss  set to (" + updated_price + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
                                 logPromise.then((callback) => {})
@@ -3366,12 +3434,12 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 updatePromise.then((resolve) => {});
 
 
-
+                                sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
                                 var log_msg = "Order profit percentage set to (" + parseFloat(sell_profit_percent).toFixed(2) + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                                 logPromise.then((callback) => {})
 
-
+                                updated_price = isNaN(updated_price)?0:updated_price;
                                 var log_msg = "Order profit price set to (" + updated_price + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
                                 logPromise.then((callback) => {})
@@ -3403,12 +3471,12 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
                                 var updatePromise = updateOne(filter, upd_temp, collection);
                                 updatePromise.then((resolve) => {});
-
+                                loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
                                 var log_msg = "Order stop loss percentage set to (" + parseFloat(loss_percentage).toFixed(2) + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                                 logPromise.then((callback) => {})
 
-
+                                updated_price = isNaN(updated_price)?0:updated_price;
                                 var log_msg = "Order stop loss  set to (" + updated_price + ") % From Chart";
                                 var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
                                 logPromise.then((callback) => {})
@@ -3469,6 +3537,8 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
         let exchange = req.body.exchange;
         var buyOrderResp = await listOrderById(orderId, exchange);
         var buyOrderArr = buyOrderResp[0];
+        var post_data = req.body
+        var  timezone = (typeof post_data.timezone == 'undefined' || post_data.timezone == '')?'America/Danmarkshavn':post_data.timezone;
 
         var auto_sell = (typeof buyOrderArr['auto_sell'] == 'undefined') ? 'no' : buyOrderArr['auto_sell'];
 
@@ -3479,17 +3549,30 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
         let html = '';
         let ordeLog = ordrLogPromise;
         var index = 1;
+
+        var index = 1;
         for (let row in ordeLog) {
-            let date = new Date(ordeLog[row].created_date).toISOString().
-            replace(/T/, ' '). // replace T with a space
-            replace(/\..+/, '');
-            html += '<tr>';
-            html += '<th scope="row" class="text-danger">' + index + '</th>';
-            html += '<td>' + ordeLog[row].log_msg + '</td>';
-            html += '<td>' + date + '</td>'
-            html += '</tr>';
-            index++;
+            var timeZoneTime = ordeLog[row].created_date;
+            try {
+                  timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
+                 timeZoneTime = new Date(timeZoneTime);
+              }
+              catch (e) {
+                console.log(e);
+              }
+			var date = timeZoneTime.toLocaleString()+' '+timezone;
+            //Remove indicator log message
+            if (ordeLog[row].type != 'indicator_log_message') {
+                html += '<tr>';
+                html += '<th scope="row" class="text-danger">' + index + '</th>';
+                html += '<td>' + ordeLog[row].log_msg + '</td>';
+                html += '<td>' + date + '</td>'
+                html += '</tr>';
+                index++;
+            }
         }
+
+    
 
         var sellArr = [];
         var tempSellArr = [];
@@ -3595,6 +3678,7 @@ router.post('/setForSell', async(req, resp) => {
     var updArr = {};
     updArr['is_sell_order'] = 'yes';
     updArr['sell_order_id'] = sellOrderId;
+    updArr['auto_sell'] = 'yes';
 
     var where = {};
     where['_id'] = { '$in': [buyOrderId, new ObjectID(buyOrderId)] }
