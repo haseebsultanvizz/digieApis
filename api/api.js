@@ -1789,6 +1789,10 @@ function deleteOrder(orderId, exchange) {
 //When we click on move to LTH Button from order listing opentab it move the open order to LTH for any exchange
 //Changing the target profit to  LTH profit rather than normal profit
 router.post('/orderMoveToLth', async(req, resp) => {
+
+
+    console.log(req.body);
+    console.log('Response is here');
         let exchange = req.body.exchange;
         let orderId = req.body.orderId;
         let lth_profit = req.body.lth_profit;
