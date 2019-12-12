@@ -4084,7 +4084,7 @@ router.post('/createManualOrderGlobally', (req, resp) => {
 
         // Validate some of the fields i-e Quantity, Price, Symbol, Admin ID , exchange
         if (!setOrderArr['price']) {
-            res.status(400).json({ message: 'User not found' });
+            resp.status(400).json({ message: 'User not found' });
             return;
         }
         if (setOrderArr['price']=='') {
