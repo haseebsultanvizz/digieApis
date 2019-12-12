@@ -4736,34 +4736,36 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
 
             console.log(full_collection_name);
             
-            //we check of collection is already created or not
-            var collection_count  = await is_collection_already_exist(full_collection_name);
-      
-            let insertArr = {};
-            insertArr['order_id'] = new ObjectID(order_id);
-            insertArr['log_msg'] = log_msg;
-            insertArr['type'] = type;
-            insertArr['show_error_log'] = show_hide_log;
-            insertArr['created_date'] = new Date();
-            db.collection(full_collection_name).insertOne(insertArr, (err, success) => {
-                    if (err) {
-                        reject(err)
-                    } else {
-                        if(collection_count == 0){
-                          var index_obj = {};
-                                index_obj['created_date'] = -1;
-                          var createIndexPromise =  create_index(full_collection_name, index_obj);
-                              createIndexPromise.then((resolve)=>{
-                                  console.log('Index created');
-                                  console.log(resolve);
-                              });
-                        }else{
-                            resolve(success.result)
+            (async ()=>{
+                //we check of collection is already created or not
+                var collection_count  = await is_collection_already_exist(full_collection_name);
+        
+                let insertArr = {};
+                insertArr['order_id'] = new ObjectID(order_id);
+                insertArr['log_msg'] = log_msg;
+                insertArr['type'] = type;
+                insertArr['show_error_log'] = show_hide_log;
+                insertArr['created_date'] = new Date();
+                db.collection(full_collection_name).insertOne(insertArr, (err, success) => {
+                        if (err) {
+                            reject(err)
+                        } else {
+                            if(collection_count == 0){
+                            var index_obj = {};
+                                    index_obj['created_date'] = -1;
+                            var createIndexPromise =  create_index(full_collection_name, index_obj);
+                                createIndexPromise.then((resolve)=>{
+                                    console.log('Index created');
+                                    console.log(resolve);
+                                });
+                            }else{
+                                resolve(success.result)
+                            }
+                        
                         }
-                      
-                    }
                 })
                 /** */
+            })();
         })
     })
 } //End of function(create_orders_history_log)
