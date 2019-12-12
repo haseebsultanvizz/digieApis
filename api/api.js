@@ -4054,11 +4054,8 @@ router.post('/createManualOrderGlobally', (req, resp) => {
     conn.then((db) => {
         let orderArr = req.body.orderArr;
 
-        console.log('orderArr');
-        console.log(orderArr);
-
-        let orderId = orderArr['orderId'];
-        var price = orderArr['price'];
+        let orderId     = orderArr['orderId'];
+        var price         = orderArr['price'];
         let exchange = orderArr['exchange'];
 
         var setOrderArr = {}
@@ -4083,18 +4080,30 @@ router.post('/createManualOrderGlobally', (req, resp) => {
         setOrderArr['modified_date'] = new Date();
 
         // Validate some of the fields i-e Quantity, Price, Symbol, Admin ID , exchange
-        if (!setOrderArr['price']) {
-            resp.status(400).json({ message: 'User not found' });
+        if (!setOrderArr['price']) { // if price is  empty
+            resp.status(400).json({ message: 'Price cannot be empty !' });
             return;
         }
-        if (setOrderArr['price']=='') {
-        resp.status(200).send({
-            message: 'Order successfully created with auto sell'
-        });
-    }
-
-        return;
-
+        if (!setOrderArr['quantity']) { // if quantity is  empty
+            resp.status(400).json({ message: 'Quantity cannot be empty !' });
+            return;
+        }
+        if (!setOrderArr['symbol']) { // if symbol is  empty
+            resp.status(400).json({ message: 'Symbol not found' });
+            return;
+        }
+        if (!setOrderArr['admin_id']) { // if quantity is  empty
+            resp.status(400).json({ message: 'User cannot be empty !' });
+            return;
+        }
+        if (!setOrderArr['application_mode']) { // if quantity is  empty
+            resp.status(400).json({ message: 'Select Apllication mode' });
+            return;
+        }
+        if (!setOrderArr['exchange']) { // if quantity is  empty
+            resp.status(400).json({ message: 'Exchange name cannot be empty' });
+            return;
+        }
 
         // Insert data TO db  from here
         var collectionName = (exchnage == 'binance') ? 'buy_orders' : 'buy_orders_' + exchnage;
