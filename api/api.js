@@ -4655,7 +4655,7 @@ router.post('/create_index', async(req, resp) => {
 function create_index(collection, index_obj) {
     return new Promise((resole) => {
         conn.then((db) => {
-            db.collection(collection).createIndex(index_obj, (err, result) => {
+            db.collection(collection).createIndexes(index_obj, (err, result) => {
                 if (err) {
                     resole(err);
                 } else {
@@ -4849,6 +4849,7 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
                             if(collection_count == 0){
                             var index_obj = {};
                                     index_obj['created_date'] = -1;
+                                    index_obj['order_id'] = 1;
                             var createIndexPromise =  create_index(full_collection_name, index_obj);
                                 createIndexPromise.then((resolve)=>{
                                     console.log(resolve);
