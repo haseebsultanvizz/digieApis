@@ -2382,7 +2382,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
             var loss_percentage = (typeof sell_data_arr['loss_percentage'] == 'undefined') ? '' : sell_data_arr['loss_percentage'];
             var application_mode = (typeof sell_data_arr['application_mode'] == 'undefined') ? '' : sell_data_arr['application_mode'];
             var lth_functionality = (typeof sell_data_arr['lth_functionality'] == 'undefined') ? '' : sell_data_arr['lth_functionality'];
-
+            var lth_profit = (typeof sell_data_arr['lth_profit'] == 'undefined') ? '' : sell_data_arr['lth_profit'];
             var quantity = (typeof sell_data_arr['quantity'] == 'undefined') ? '' : sell_data_arr['quantity'];
 
             var ins_data = {};
@@ -2397,6 +2397,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
             ins_data['buy_order_binance_id'] = binance_order_id;
             ins_data['stop_loss'] = stop_loss;
             ins_data['lth_functionality'] = lth_functionality;
+            ins_data['lth_profit'] = lth_profit;
             ins_data['loss_percentage'] = loss_percentage;
             ins_data['application_mode'] = application_mode
             ins_data['trigger_type'] = 'no';
