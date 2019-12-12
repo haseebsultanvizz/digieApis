@@ -4870,13 +4870,15 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
 
 function  is_collection_already_exist(collName){
     return new Promise((resolve)=>{
-        let where = {};
-        db.collection(collName).count(where, (err, result) => {
-            if (err) {
-                resolve(err);
-            } else {
-                resolve(result)
-            }
+        conn.then((db)=>{
+            let where = {};
+            db.collection(collName).count(where, (err, result) => {
+                if (err) {
+                    resolve(err);
+                } else {
+                    resolve(result)
+                }
+            })
         })
     })
 }//is_collection_already_exist
