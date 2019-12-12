@@ -4831,9 +4831,7 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
             var date_mode_string = '_'+order_mode+'_'+d.getFullYear()+'_'+d.getMonth();
             //create full name of collection
             var full_collection_name = collectionName+date_mode_string;
-
-            console.log(full_collection_name);
-            
+        
             (async ()=>{
                 //we check of collection is already created or not
                 var collection_count  = await is_collection_already_exist(full_collection_name);
@@ -4853,7 +4851,6 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
                                     index_obj['created_date'] = -1;
                             var createIndexPromise =  create_index(full_collection_name, index_obj);
                                 createIndexPromise.then((resolve)=>{
-                                    console.log('Index created');
                                     console.log(resolve);
                                 });
                             }else{
@@ -4872,7 +4869,7 @@ function  is_collection_already_exist(collName){
     return new Promise((resolve)=>{
         conn.then((db)=>{
             let where = {};
-            db.collection(collName).count(where, (err, result) => {
+            db.collection(collName).countDocuments(where, (err, result) => {
                 if (err) {
                     resolve(err);
                 } else {
