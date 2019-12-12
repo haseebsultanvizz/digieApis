@@ -4059,7 +4059,7 @@ router.post('/createManualOrderGlobally', (req, resp) => {
 
         let orderId = orderArr['orderId'];
         var price = orderArr['price'];
-        let exchange = orders['exchange'];
+        let exchange = orderArr['exchange'];
 
         var setOrderArr = {}
         setOrderArr['price'] = ((orderArr['price'] != '') && (orderArr['price'] != 'undefined')) ? parseFloat(orderArr['price']) : '';
