@@ -4106,7 +4106,7 @@ router.post('/createManualOrderGlobally', (req, resp) => {
         }
 
         // Insert data TO db  from here
-        var collectionName = (exchnage == 'binance') ? 'buy_orders' : 'buy_orders_' + exchnage;
+        var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         db.collection(collectionName).insertOne(setOrderArr, (err, result) => {
             if (err) {
                 resp.status(403).send({
