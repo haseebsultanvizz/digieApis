@@ -4083,13 +4083,15 @@ router.post('/createManualOrderGlobally', (req, resp) => {
         setOrderArr['modified_date'] = new Date();
 
         // Validate some of the fields i-e Quantity, Price, Symbol, Admin ID , exchange
-        if (!setOrderArr['price'].trim()) {
-            res.status(400).json({ message: 'User not found' });
+        if (!setOrderArr['price']) {
+            resp.status(400).json({ message: 'User not found' });
             return;
         }
+        if (setOrderArr['price']=='') {
         resp.status(200).send({
             message: 'Order successfully created with auto sell'
         });
+    }
 
         return;
 
