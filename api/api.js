@@ -4806,12 +4806,12 @@ router.post('/is_bnb_balance_enough', async(req, resp) => {
 //api post End point to write log
 router.post('/create_orders_history_log', async(req, resp) => {
     var post_data = req.body;
-    var order_id = (typeof post_data['order_id'] == 'undefined')?post_data['order_id']:'';
-    var log_msg = (typeof post_data['log_msg'] == 'undefined')?post_data['log_msg']:'';
-    var type = (typeof post_data['type'] == 'undefined')?post_data['type']:'';
+    var order_id = (typeof post_data['order_id'] != 'undefined')?post_data['order_id']:'';
+    var log_msg = (typeof post_data['log_msg'] != 'undefined')?post_data['log_msg']:'';
+    var type = (typeof post_data['type'] != 'undefined')?post_data['type']:'';
     var show_hide_log = (typeof post_data['show_hide_log'] == 'undefined')?post_data['show_hide_log']:'';
-    var exchange = (typeof post_data['exchange'] == 'undefined')?post_data['exchange']:'';
-    var order_mode = (typeof post_data['order_mode'] == 'undefined')?post_data['order_mode']:'';
+    var exchange = (typeof post_data['exchange'] != 'undefined')?post_data['exchange']:'';
+    var order_mode = (typeof post_data['order_mode'] != 'undefined')?post_data['order_mode']:'';
     var log_reponse = await create_orders_history_log(order_id, log_msg, type, show_hide_log, exchange,order_mode);
 
     resp.status(200).send({
