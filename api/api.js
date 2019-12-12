@@ -4044,6 +4044,103 @@ router.post('/update_user_info', function(req, res, next) {
 })
 
 
+
+/*  Create Manual order Globally from
+@  Order will create from Chart
+@  Order will create from Mobile App
+@  Order will create from dashboard
+*/
+router.post('/createManualOrderGlobally', (req, resp) => {
+    conn.then((db) => {
+        let orderArr = req.body.orderArr;
+
+        console.log('orderArr');
+        console.log(orderArr);
+
+        let orderId = orderArr['orderId'];
+        var price = orderArr['price'];
+        let exchange = orders['exchange'];
+
+        var setOrderArr = {}
+        setOrderArr['price'] = ((orderArr['price'] != '') && (orderArr['price'] != 'undefined')) ? parseFloat(orderArr['price']) : '';
+        setOrderArr['quantity'] = ((orderArr['quantity'] != '') && (orderArr['quantity'] != 'undefined')) ? orderArr['quantity'] : '';
+        setOrderArr['symbol'] = ((orderArr['symbol'] != '') && (orderArr['symbol'] != 'undefined')) ? orderArr['symbol'] : '';
+        setOrderArr['order_type'] = ((orderArr['order_type'] != '') && (orderArr['order_type'] != 'undefined')) ? orderArr['order_type'] : '';
+        setOrderArr['admin_id'] = ((orderArr['admin_id'] != '') && (orderArr['admin_id'] != 'undefined')) ? orderArr['admin_id'] : '';
+        setOrderArr['trigger_type'] = ((orderArr['trigger_type'] != '') && (orderArr['trigger_type'] != 'undefined')) ? orderArr['trigger_type'] : '';
+        setOrderArr['application_mode'] = ((orderArr['application_mode'] != '') && (orderArr['application_mode'] != 'undefined')) ? orderArr['application_mode'] : '';
+        setOrderArr['exchange'] = ((orderArr['exchange'] != '') && (orderArr['exchange'] != 'undefined')) ? orderArr['exchange'] : '';
+        setOrderArr['status'] = ((orderArr['status'] != '') && (orderArr['status'] != 'undefined')) ? orderArr['status'] : '';
+        setOrderArr['lth_functionality'] = ((orderArr['lth_functionality'] != '') && (orderArr['lth_functionality'] != 'undefined')) ? orderArr['lth_functionality'] : '';
+        setOrderArr['lth_profit'] = ((orderArr['lth_profit'] != '') && (orderArr['lth_profit'] != 'undefined')) ? orderArr['lth_profit'] : '';
+        setOrderArr['trail_check'] = ((orderArr['trail_check'] != '') && (orderArr['trail_check'] != 'undefined')) ? orderArr['trail_check'] : '';
+        setOrderArr['trail_interval'] = ((orderArr['trail_interval'] != '') && (orderArr['trail_interval'] != 'undefined')) ? orderArr['trail_interval'] : '';
+        setOrderArr['buy_trail_percentage'] = ((orderArr['buy_trail_percentage'] != '') && (orderArr['buy_trail_percentage'] != 'undefined')) ? orderArr['buy_trail_percentage'] : '';
+        setOrderArr['buy_trail_price'] = ((orderArr['buy_trail_price'] != '') && (orderArr['buy_trail_price'] != 'undefined')) ? parseFloat(orderArr['buy_trail_price']) : '';
+        setOrderArr['auto_sell'] = ((orderArr['auto_sell'] != '') && (orderArr['auto_sell'] != 'undefined')) ? parseFloat(orderArr['auto_sell']) : '';
+        setOrderArr['iniatial_trail_stop'] = ((orderArr['iniatial_trail_stop'] != '') && (orderArr['iniatial_trail_stop'] != 'undefined')) ? orderArr['iniatial_trail_stop'] : '';
+        setOrderArr['created_date'] = new Date();
+        setOrderArr['modified_date'] = new Date();
+
+        // Validate some of the fields i-e Quantity, Price, Symbol, Admin ID , exchange
+        if (!setOrderArr['price'].trim()) {
+            res.status(400).json({ message: 'User not found' });
+            return;
+        }
+
+        // Insert data TO db  from here
+        var collectionName = (exchnage == 'binance') ? 'buy_orders' : 'buy_orders_' + exchnage;
+        db.collection(collectionName).insertOne(setOrderArr, (err, result) => {
+            if (err) {
+                resp.status(403).send({
+                    message: err
+                })
+            } else {
+                // Add logs in orders logs table 
+                var buyOrderId = result.insertedId
+                var log_msg = "Buy Order was Created at Price " + parseFloat(price).toFixed(8);
+                let profit_percent = req.body.tempOrderArr.profit_percent;
+
+                if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
+                    log_msg += ' with auto sell ' + parseFloat(profit_percent) + '%';
+                }
+                log_msg += 'With Chart';
+                let show_hide_log = 'yes';
+                let type = 'Order_created';
+                var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchnage)
+                promiseLog.then((callback) => { })
+                //if auto sell is yes then create sell order
+                if (req.body.orderArr.auto_sell == 'yes') {
+                    let tempOrder = req.body.tempOrderArr;
+                    tempOrder['created_date'] = new Date();
+                    tempOrder['buy_order_id'] = buyOrderId;
+                    tempOrder['profit_price'] = parseFloat(tempOrder['profit_price']);
+                    tempOrder['profit_percent'] = parseFloat(tempOrder['profit_percent']);
+                    var tempCollection = (exchnage == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchnage;
+                    //create sell order
+                    db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
+                        if (err) {
+                            resp.status(403).send({
+                                message: 'Some thing went wrong while Creating order'
+                            });
+                        } else {
+                            resp.status(200).send({
+                                message: 'Order successfully created with auto sell'
+                            });
+                        }
+                    })// END of  db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
+                } else {
+                    resp.status(200).send({
+                        message: 'Order created with **'
+                    });
+                }// END of  if (req.body.orderArr.auto_sell == 'yes') {
+            }
+        }) // END of   db.collection(collectionName).insertOne(setOrderArr, (err, result) =>{
+    })// END  of  conn.then((db)=>{
+})// END of  router.post('/createManualOrderGlobally',(req,resp)=>{
+
+
+
 //post call for adding user coins from global coins
 router.post('/addUserCoins', function(req, res, next) {
         var post_data = req.body;
