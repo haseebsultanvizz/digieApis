@@ -4124,7 +4124,7 @@ router.post('/createManualOrderGlobally', (req, resp) => {
                 log_msg += 'With Chart';
                 let show_hide_log = 'yes';
                 let type = 'Order_created';
-                var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchnage)
+                var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
                 promiseLog.then((callback) => { })
                 //if auto sell is yes then create sell order
                 if (req.body.orderArr.auto_sell == 'yes') {
@@ -4133,7 +4133,7 @@ router.post('/createManualOrderGlobally', (req, resp) => {
                     tempOrder['buy_order_id'] = buyOrderId;
                     tempOrder['profit_price'] = parseFloat(tempOrder['profit_price']);
                     tempOrder['profit_percent'] = parseFloat(tempOrder['profit_percent']);
-                    var tempCollection = (exchnage == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
+                    var tempCollection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
                     //create sell order
                     db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
                         if (err) {
