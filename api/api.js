@@ -4847,9 +4847,7 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
                             reject(err)
                         } else {
                             if(collection_count == 0){
-                            var index_obj = {};
-                                    index_obj['created_date'] = -1;
-                                    index_obj['order_id'] = 1;
+                            var index_obj = [{created_date:-1},{order_id:1}];
                             var createIndexPromise =  create_index(full_collection_name, index_obj);
                                 createIndexPromise.then((resolve)=>{
                                     console.log(resolve);
