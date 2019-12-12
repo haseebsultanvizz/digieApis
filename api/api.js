@@ -2382,7 +2382,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
             var loss_percentage = (typeof sell_data_arr['loss_percentage'] == 'undefined') ? '' : sell_data_arr['loss_percentage'];
             var application_mode = (typeof sell_data_arr['application_mode'] == 'undefined') ? '' : sell_data_arr['application_mode'];
             var lth_functionality = (typeof sell_data_arr['lth_functionality'] == 'undefined') ? '' : sell_data_arr['lth_functionality'];
-
+            var lth_profit = (typeof sell_data_arr['lth_profit'] == 'undefined') ? '' : sell_data_arr['lth_profit'];
             var quantity = (typeof sell_data_arr['quantity'] == 'undefined') ? '' : sell_data_arr['quantity'];
 
             var ins_data = {};
@@ -2397,6 +2397,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
             ins_data['buy_order_binance_id'] = binance_order_id;
             ins_data['stop_loss'] = stop_loss;
             ins_data['lth_functionality'] = lth_functionality;
+            ins_data['lth_profit'] = lth_profit;
             ins_data['loss_percentage'] = loss_percentage;
             ins_data['application_mode'] = application_mode
             ins_data['trigger_type'] = 'no';
@@ -4660,7 +4661,7 @@ router.post('/create_index', async(req, resp) => {
 function create_index(collection, index_obj) {
     return new Promise((resole) => {
         conn.then((db) => {
-            db.collection(collection).createIndex(index_obj, (err, result) => {
+            db.collection(collection).createIndexes(index_obj, (err, result) => {
                 if (err) {
                     resole(err);
                 } else {
@@ -4811,12 +4812,12 @@ router.post('/is_bnb_balance_enough', async(req, resp) => {
 //api post End point to write log
 router.post('/create_orders_history_log', async(req, resp) => {
     var post_data = req.body;
-    var order_id = (typeof post_data['order_id'] == 'undefined')?post_data['order_id']:'';
-    var log_msg = (typeof post_data['log_msg'] == 'undefined')?post_data['log_msg']:'';
-    var type = (typeof post_data['type'] == 'undefined')?post_data['type']:'';
+    var order_id = (typeof post_data['order_id'] != 'undefined')?post_data['order_id']:'';
+    var log_msg = (typeof post_data['log_msg'] != 'undefined')?post_data['log_msg']:'';
+    var type = (typeof post_data['type'] != 'undefined')?post_data['type']:'';
     var show_hide_log = (typeof post_data['show_hide_log'] == 'undefined')?post_data['show_hide_log']:'';
-    var exchange = (typeof post_data['exchange'] == 'undefined')?post_data['exchange']:'';
-    var order_mode = (typeof post_data['order_mode'] == 'undefined')?post_data['order_mode']:'';
+    var exchange = (typeof post_data['exchange'] != 'undefined')?post_data['exchange']:'';
+    var order_mode = (typeof post_data['order_mode'] != 'undefined')?post_data['order_mode']:'';
     var log_reponse = await create_orders_history_log(order_id, log_msg, type, show_hide_log, exchange,order_mode);
 
     resp.status(200).send({
@@ -4836,9 +4837,7 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
             var date_mode_string = '_'+order_mode+'_'+d.getFullYear()+'_'+d.getMonth();
             //create full name of collection
             var full_collection_name = collectionName+date_mode_string;
-
-            console.log(full_collection_name);
-            
+        
             (async ()=>{
                 //we check of collection is already created or not
                 var collection_count  = await is_collection_already_exist(full_collection_name);
@@ -4854,11 +4853,9 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
                             reject(err)
                         } else {
                             if(collection_count == 0){
-                            var index_obj = {};
-                                    index_obj['created_date'] = -1;
+                            var index_obj = [{created_date:-1},{order_id:1}];
                             var createIndexPromise =  create_index(full_collection_name, index_obj);
                                 createIndexPromise.then((resolve)=>{
-                                    console.log('Index created');
                                     console.log(resolve);
                                 });
                             }else{
@@ -4875,13 +4872,15 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
 
 function  is_collection_already_exist(collName){
     return new Promise((resolve)=>{
-        let where = {};
-        db.collection(collName).count(where, (err, result) => {
-            if (err) {
-                resolve(err);
-            } else {
-                resolve(result)
-            }
+        conn.then((db)=>{
+            let where = {};
+            db.collection(collName).countDocuments(where, (err, result) => {
+                if (err) {
+                    resolve(err);
+                } else {
+                    resolve(result)
+                }
+            })
         })
     })
 }//is_collection_already_exist
