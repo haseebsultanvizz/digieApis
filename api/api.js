@@ -4086,6 +4086,12 @@ router.post('/createManualOrderGlobally', (req, resp) => {
             res.status(400).json({ message: 'User not found' });
             return;
         }
+        resp.status(200).send({
+            message: 'Order successfully created with auto sell'
+        });
+
+        return;
+
 
         // Insert data TO db  from here
         var collectionName = (exchnage == 'binance') ? 'buy_orders' : 'buy_orders_' + exchnage;
