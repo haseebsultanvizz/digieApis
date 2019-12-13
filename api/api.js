@@ -572,11 +572,11 @@ router.post('/createManualOrder', (req, resp) => {
             let orders = req.body.orderArr;
             let orderId = req.body.orderId;
             var price = orders['price'];
-            let exchnage = orders['exchnage'];
+            let exchange = orders['exchange'];
             orders['created_date'] = new Date();
             orders['modified_date'] = new Date();
             //collection on the base of exchange
-            var collectionName = (exchnage == 'binance') ? 'buy_orders' : 'buy_orders_' + exchnage;
+            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             //create buy order
             db.collection(collectionName).insertOne(orders, (err, result) => {
                 if (err) {
@@ -594,7 +594,7 @@ router.post('/createManualOrder', (req, resp) => {
                     }
                     let show_hide_log = 'yes';
                     let type = 'Order_created';
-                    var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchnage)
+                    var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
                     promiseLog.then((callback) => {})
                     //check of auto sell is yes then create sell temp order
                     if (req.body.orderArr.auto_sell == 'yes') {
@@ -603,7 +603,7 @@ router.post('/createManualOrder', (req, resp) => {
                         tempOrder['created_date'] = new Date();
                         tempOrder['buy_order_id'] = buyOrderId;
                         //Temp sell order collection on the base of exchange 
-                        var tempCollection = (exchnage == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchnage;
+                        var tempCollection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
 
                         db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
                             if (err) {
@@ -641,12 +641,12 @@ router.post('/createManualOrderByChart', (req, resp) => {
             console.log('orders');
             let orderId = req.body.orderId;
             var price = orders['price'];
-            let exchnage = orders['exchange'];
+            let exchange = orders['exchange'];
 
 
             orders['created_date'] = new Date();
             orders['modified_date'] = new Date();
-            var collectionName = (exchnage == 'binance') ? 'buy_orders' : 'buy_orders_' + exchnage;
+            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             //create buy-orders 
             db.collection(collectionName).insertOne(orders, (err, result) => {
                 if (err) {
@@ -667,7 +667,7 @@ router.post('/createManualOrderByChart', (req, resp) => {
 
                     let show_hide_log = 'yes';
                     let type = 'Order_created';
-                    var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchnage)
+                    var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
                     promiseLog.then((callback) => {})
                     //if auto sell is yes the create sell order
                     if (req.body.orderArr.auto_sell == 'yes') {
@@ -680,7 +680,7 @@ router.post('/createManualOrderByChart', (req, resp) => {
                         //tempOrder['profit_percent'] = parseFloat(tempOrder['profit_percent']);
                         // By 10-12-2019
 
-                        var tempCollection = (exchnage == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchnage;
+                        var tempCollection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
 
                         console.log('tempOrder');
                         console.log(tempOrder);
@@ -2970,7 +2970,7 @@ router.post('/updateBuyPriceFromDragging', async(req, resp) => {
                     filter['_id'] = new ObjectID(orderId);
                     var update_order = {};
                     update_order['sell_price'] = parseFloat(new_sell_price);
-                    update_order['exchnage'] = exchange;
+                    update_order['exchange'] = exchange;
                     var collection_order = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
                     var updatePromiseBuy = updateOne(filter, update_order, collection_order);
                     updatePromiseBuy.then((resolve) => { });
@@ -4097,7 +4097,7 @@ router.post('/createManualOrderGlobally', (req, resp) => {
 
 
         // Insert data TO db  from here
-        var collectionName = (exchnage == 'binance') ? 'buy_orders' : 'buy_orders_' + exchnage;
+        var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         db.collection(collectionName).insertOne(setOrderArr, (err, result) => {
             if (err) {
                 resp.status(403).send({
@@ -4115,7 +4115,7 @@ router.post('/createManualOrderGlobally', (req, resp) => {
                 log_msg += 'With Chart';
                 let show_hide_log = 'yes';
                 let type = 'Order_created';
-                var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchnage)
+                var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
                 promiseLog.then((callback) => { })
                 //if auto sell is yes then create sell order
                 if (req.body.orderArr.auto_sell == 'yes') {
@@ -4124,7 +4124,7 @@ router.post('/createManualOrderGlobally', (req, resp) => {
                     tempOrder['buy_order_id'] = buyOrderId;
                     tempOrder['profit_price'] = parseFloat(tempOrder['profit_price']);
                     tempOrder['profit_percent'] = parseFloat(tempOrder['profit_percent']);
-                    var tempCollection = (exchnage == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchnage;
+                    var tempCollection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
                     //create sell order
                     db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
                         if (err) {
