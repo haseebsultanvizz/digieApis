@@ -810,7 +810,24 @@ router.post('/editAutoOrder', async(req, resp) => {
         var updPrmise = updateOne(where, order, collection);
         updPrmise.then((callback) => {})
 
-        var log_msg = "Order Was <b style='color:yellow'>Updated</b>";
+        //TODO: create detail update log Umer Abbas [13-12-19]
+        let obj_keys = Object.keys(buyOrderArr[0]);
+        let new_obj_keys = Object.keys(order);
+        let update_keys = new_obj_keys.filter(x => obj_keys.includes(x));
+        let log_message = "Order Was <b style='color:yellow'>Updated</b> ";
+        for (let i in update_keys) {
+            let upd_key = update_keys[i];
+            if (new_obj[upd_key] != obj[upd_key]) {
+                if (upd_key == 'iniatial_trail_stop' || upd_key == 'iniatial_trail_stop_copy'){
+                    log_message = ' ' + upd_key + ' updated from ' + obj[upd_key].toFixed(8) + ' to ' + new_obj[upd_key].toFixed(8) + ' .';
+                }else{
+                    log_message = ' '+upd_key+ ' updated from '+ obj[upd_key]+ ' to '+ new_obj[upd_key]+ ' .';
+                }
+            }
+        }
+        var log_msg = log_message;
+
+        // var log_msg = "Order Was <b style='color:yellow'>Updated</b>";
         let show_hide_log = 'yes';
         let type = 'order_updated';
         var promiseLog = recordOrderLog(orderId, log_msg, type, show_hide_log, exchange)
