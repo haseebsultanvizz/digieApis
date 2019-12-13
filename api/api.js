@@ -821,13 +821,13 @@ router.post('/editAutoOrder', async(req, resp) => {
             let upd_key = update_keys[i];
             if (new_obj[upd_key] != obj[upd_key]) {
                 if (upd_key == 'iniatial_trail_stop' || upd_key == 'iniatial_trail_stop_copy'){
-                    log_message += ' ' + upd_key + ' updated from ' + obj[upd_key].toFixed(8) + ' to ' + new_obj[upd_key].toFixed(8) + ' .';
+                    log_message += ' ' + upd_key + ' updated from ' + obj[upd_key].toFixed(8) + ' to ' + new_obj[upd_key].toFixed(8) + ', ';
                 }else{
-                    log_message += ' '+upd_key+ ' updated from '+ obj[upd_key]+ ' to '+ new_obj[upd_key]+ ' .';
+                    log_message += ' '+upd_key+ ' updated from '+ obj[upd_key]+ ' to '+ new_obj[upd_key]+ ', ';
                 }
             }
         }
-        var log_msg = log_message;
+        var log_msg = log_message.replace(/,\s*$/, ".");  // to remove the last comma 
 
         // var log_msg = "Order Was <b style='color:yellow'>Updated</b>";
         let show_hide_log = 'yes';
