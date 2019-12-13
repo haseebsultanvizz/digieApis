@@ -820,7 +820,7 @@ router.post('/editAutoOrder', async(req, resp) => {
         for (let i in update_keys) {
             let upd_key = update_keys[i];
             if (new_obj[upd_key] != obj[upd_key]) {
-                if (upd_key == 'iniatial_trail_stop' || upd_key == 'iniatial_trail_stop_copy'){
+                if (upd_key == 'iniatial_trail_stop' || upd_key == 'iniatial_trail_stop_copy' || upd_key == 'sell_price'){
                     log_message += ' ' + upd_key + ' updated from ' + obj[upd_key].toFixed(8) + ' to ' + new_obj[upd_key].toFixed(8) + ', ';
                 }else{
                     log_message += ' '+upd_key+ ' updated from '+ obj[upd_key]+ ' to '+ new_obj[upd_key]+ ', ';
