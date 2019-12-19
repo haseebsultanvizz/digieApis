@@ -925,7 +925,7 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_1['parent_status'] = 'parent';
         filter_1['admin_id'] = admin_id;
         filter_1['application_mode'] = application_mode;
-        filter_1['status'] = 'new'
+        filter_1['status'] = { '$in': ['new', 'takingOrder'] }
 
         if (postDAta.start_date != '' && postDAta.end_date != '') {
             let start_date = new Date(postDAta.start_date);
