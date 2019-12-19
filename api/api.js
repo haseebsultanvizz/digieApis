@@ -765,6 +765,9 @@ router.post('/makeManualOrderSetForSell', (req, resp) => {
 //Post call from angular component for creating parent order
 router.post('/createAutoOrder', async(req, resp) => {
         let order = req.body.orderArr;
+
+    console.log(order);
+    console.log('order');
         order['created_date'] = new Date()
         order['modified_date'] = new Date()
         let orderResp = await createAutoOrder(order);
