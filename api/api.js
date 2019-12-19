@@ -1506,7 +1506,7 @@ async function listOrderListing(postDAta, dbConnection) {
 
     if (postDAta.status == 'parent') {
         filter['parent_status'] = 'parent'
-        filter['status'] = 'new';
+        filter['status'] = { '$in': ['new', 'takingOrder'] };
     }
 
 
