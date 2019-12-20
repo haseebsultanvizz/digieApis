@@ -762,6 +762,9 @@ router.post('/makeManualOrderSetForSell', (req, resp) => {
 //Post call from angular component for creating parent order
 router.post('/createAutoOrder', async(req, resp) => {
         let order = req.body.orderArr;
+
+    console.log(order);
+    console.log('order');
         order['created_date'] = new Date()
         order['modified_date'] = new Date()
         let orderResp = await createAutoOrder(order);
@@ -807,7 +810,26 @@ router.post('/editAutoOrder', async(req, resp) => {
         var updPrmise = updateOne(where, order, collection);
         updPrmise.then((callback) => {})
 
-        var log_msg = "Order Was <b style='color:yellow'>Updated</b>";
+        //TODO: create detail update log Umer Abbas [13-12-19]
+        let obj = buyOrderArr[0];
+        let new_obj = order;
+        let obj_keys = Object.keys(obj);
+        let new_obj_keys = Object.keys(order);
+        let update_keys = new_obj_keys.filter(x => obj_keys.includes(x));
+        let log_message = "Order Was <b style='color:yellow'>Updated</b> ";
+        for (let i in update_keys) {
+            let upd_key = update_keys[i];
+            if (new_obj[upd_key] != obj[upd_key]) {
+                if (upd_key == 'iniatial_trail_stop' || upd_key == 'iniatial_trail_stop_copy' || upd_key == 'sell_price'){
+                    log_message += ' ' + upd_key + ' updated from ' + obj[upd_key].toFixed(8) + ' to ' + new_obj[upd_key].toFixed(8) + ', ';
+                }else{
+                    log_message += ' '+upd_key+ ' updated from '+ obj[upd_key]+ ' to '+ new_obj[upd_key]+ ', ';
+                }
+            }
+        }
+        var log_msg = log_message.replace(/,\s*$/, ".");  // to remove the last comma 
+
+        // var log_msg = "Order Was <b style='color:yellow'>Updated</b>";
         let show_hide_log = 'yes';
         let type = 'order_updated';
         var promiseLog = recordOrderLog(orderId, log_msg, type, show_hide_log, exchange)
@@ -903,7 +925,7 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_1['parent_status'] = 'parent';
         filter_1['admin_id'] = admin_id;
         filter_1['application_mode'] = application_mode;
-        filter_1['status'] = 'new'
+        filter_1['status'] = { '$in': ['new', 'takingOrder'] }
 
         if (postDAta.start_date != '' && postDAta.end_date != '') {
             let start_date = new Date(postDAta.start_date);
@@ -1481,7 +1503,7 @@ async function listOrderListing(postDAta, dbConnection) {
 
     if (postDAta.status == 'parent') {
         filter['parent_status'] = 'parent'
-        filter['status'] = 'new';
+        filter['status'] = { '$in': ['new', 'takingOrder'] };
     }
 
 
