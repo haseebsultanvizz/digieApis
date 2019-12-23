@@ -612,13 +612,15 @@ router.post('/createManualOrder', (req, resp) => {
                                 });
                             } else {
                                 resp.status(200).send({
-                                    message: 'Order successfully created'
+                                    message: 'Order successfully created',
+                                    data: buyOrderId
                                 });
                             }
                         })
                     } else {
                         resp.status(200).send({
-                            message: 'Order successfully created'
+                            message: 'Order successfully created',
+                            data: buyOrderId
                         });
                     }
                     //:::::::::::::::::::::::::::::::::
