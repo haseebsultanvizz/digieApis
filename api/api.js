@@ -2089,6 +2089,9 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
             insert_arr['created_date'] = new Date();
             insert_arr['modified_date'] = new Date();
             let collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange;
+
+            console.log('insert_arr', insert_arr);
+
             db.collection(collection).insertOne(insert_arr, (err, result) => {
                 if (err) {
                     resolve(err)
