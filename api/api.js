@@ -5,9 +5,6 @@ const conn = require('../connection/database');
 ObjectID = require('mongodb').ObjectID;
 var md5 = require('md5');
 var app = express();
-
-
-
 //********************************************************* */
 //when first time user login call this function 
 router.post('/authenticate', async function(req, resp, next) {
@@ -1967,6 +1964,8 @@ router.post('/sellOrderManually', async(req, resp) => {
 
             let buyOrderArr = ordeResp[0];
             let sell_order_id = (typeof buyOrderArr['sell_order_id'] == undefined) ? '' : buyOrderArr['sell_order_id'];
+
+            console.log("sell_order_id ",sell_order_id)
             if (sell_order_id != '') {
                 let application_mode = (typeof buyOrderArr['application_mode'] == undefined) ? '' : buyOrderArr['application_mode'];
                 let buy_order_id = buyOrderArr['_id'];
@@ -1975,6 +1974,9 @@ router.post('/sellOrderManually', async(req, resp) => {
                 let admin_id = (typeof buyOrderArr['admin_id'] == undefined) ? '' : buyOrderArr['admin_id'];
                 //getting user ip for trading
                 var trading_ip = await listUsrIp(admin_id);
+
+                console.log("trading_ip ", trading_ip)
+
 
                 var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now';
                 var logPromise = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
@@ -2000,11 +2002,14 @@ router.post('/sellOrderManually', async(req, resp) => {
                 var resolvePromise = Promise.all([updatePromise_1, updatePromise_2, logPromise, logPromise_2]);
                 //in case of live order move it to specified api for selling
                 if (application_mode == 'live') {
+
+                
                     var log_msg = "Market Order Send For Sell On:  " + parseFloat(currentMarketPrice).toFixed(8);
                     var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
                     logPromise_1.then((resp) => {})
                     //send order for sell on specific ip
                     var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, 'barrier_percentile_trigger', 'sell_market_order', exchange);
+                    console.log("SellOrderResolve ", SellOrderResolve)
 
                     SellOrderResolve.then((resp) => {})
                 } else {
@@ -2086,7 +2091,13 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
             insert_arr['created_date'] = new Date();
             insert_arr['modified_date'] = new Date();
             let collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange;
+
+            console.log('insert_arr', insert_arr);
+
             db.collection(collection).insertOne(insert_arr, (err, result) => {
+
+                console.log('result', result);
+
                 if (err) {
                     resolve(err)
                 } else {
@@ -4844,84 +4855,9 @@ router.post('/is_bnb_balance_enough', async(req, resp) => {
     });
 })
 
-//api post End point to write log
-router.post('/create_orders_history_log', async(req, resp) => {
-    var post_data = req.body;
-    var order_id = (typeof post_data['order_id'] != 'undefined')?post_data['order_id']:'';
-    var log_msg = (typeof post_data['log_msg'] != 'undefined')?post_data['log_msg']:'';
-    var type = (typeof post_data['type'] != 'undefined')?post_data['type']:'';
-    var show_hide_log = (typeof post_data['show_hide_log'] == 'undefined')?post_data['show_hide_log']:'';
-    var exchange = (typeof post_data['exchange'] != 'undefined')?post_data['exchange']:'';
-    var order_mode = (typeof post_data['order_mode'] != 'undefined')?post_data['order_mode']:'';
-    var log_reponse = await create_orders_history_log(order_id, log_msg, type, show_hide_log, exchange,order_mode);
-
-    resp.status(200).send({
-        message: log_reponse
-    })
-
-})//End of create_orders_history_log
 
 
-function create_orders_history_log(order_id, log_msg, type, show_hide_log, exchange,order_mode) {
-    return new Promise((resolve, reject) => {
-        conn.then((db) => {
-            /** */
-            var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-            var d = new Date();
-            //create collection name on the base of date and mode
-            var date_mode_string = '_'+order_mode+'_'+d.getFullYear()+'_'+d.getMonth();
-            //create full name of collection
-            var full_collection_name = collectionName+date_mode_string;
-        
-            (async ()=>{
-                //we check of collection is already created or not
-                var collection_count  = await is_collection_already_exist(full_collection_name);
-        
-                let insertArr = {};
-                insertArr['order_id'] = new ObjectID(order_id);
-                insertArr['log_msg'] = log_msg;
-                insertArr['type'] = type;
-                insertArr['show_error_log'] = show_hide_log;
-                insertArr['created_date'] = new Date();
-                db.collection(full_collection_name).insertOne(insertArr, (err, success) => {
-                        if (err) {
-                            reject(err)
-                        } else {
-                            if(collection_count == 0){
-                            var date_index = {'created_date':-1};
-                            var dateIndexPromise =  create_index(full_collection_name, date_index);
-                                dateIndexPromise.then((resolve)=>{});
 
-                                var order_index = {'order_id':1};
-                                var orderIndexPromise =  create_index(full_collection_name, order_index);
-                                orderIndexPromise.then((resolve)=>{});
-                                resolve(true);
-                            }else{
-                                resolve(success.result)
-                            }
-                        
-                        }
-                })
-                /** */
-            })();
-        })
-    })
-} //End of function(create_orders_history_log)
-
-function  is_collection_already_exist(collName){
-    return new Promise((resolve)=>{
-        conn.then((db)=>{
-            let where = {};
-            db.collection(collName).countDocuments(where, (err, result) => {
-                if (err) {
-                    resolve(err);
-                } else {
-                    resolve(result)
-                }
-            })
-        })
-    })
-}//is_collection_already_exist
 
 
 
