@@ -2093,6 +2093,9 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
             console.log('insert_arr', insert_arr);
 
             db.collection(collection).insertOne(insert_arr, (err, result) => {
+
+                console.log('result', result);
+
                 if (err) {
                     resolve(err)
                 } else {
