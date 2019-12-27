@@ -1953,8 +1953,9 @@ function listOrderLog(orderId, exchange,order_mode,order_created_date) {
                     var full_collection_name = collectionName+date_mode_string;
                 }else{
                     var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-                }
-                
+                }  
+                console.log('full_collection_name full_collection_name full_collection_name');
+                console.log(full_collection_name);
                 db.collection(full_collection_name).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
                 if (err) {
                     resolve(err);
