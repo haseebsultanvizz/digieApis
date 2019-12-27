@@ -1892,8 +1892,8 @@ router.post('/listOrderById', async(req, resp) => {
         var ordeArr = await listOrderById(orderId, exchange);
         var orderObj = ordeArr[0];
         var order_created_date = orderObj['created_date'];
-        var order_mode = orderObj['order_mode'];
-
+        var order_mode = (typeof orderObj['order_mode'] == 'undefined')?buyOrderArr['orderObj']:orderObj['order_mode'];
+        
         //promise for gettiong order log
 		var ordeLog = await listOrderLog(orderId, exchange,order_mode,order_created_date);
 	
@@ -3608,15 +3608,13 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
         var sell_order_id = (typeof buyOrderArr['sell_order_id'] == 'undefined') ? '' : buyOrderArr['sell_order_id'];
 
         var order_created_date = (typeof buyOrderArr['created_date'] == 'undefined') ? '' : buyOrderArr['created_date'];
-        var order_mode = (typeof buyOrderArr['order_mode'] == 'undefined') ? '' : buyOrderArr['order_mode'];
+        var order_mode = (typeof buyOrderArr['order_mode'] == 'undefined') ? buyOrderArr['application_mode']: buyOrderArr['order_mode'];
 
-        console.log('order_mode ',order_mode);
-        console.log('order_created_date ',order_created_date);
+
         
         //Get order log against order
         var ordrLogPromise = await listOrderLog(orderId, exchange,order_mode,order_created_date);
-        console.log('------------------');
-        console.log(ordrLogPromise);
+   
 
         let html = '';
         let ordeLog = ordrLogPromise;
