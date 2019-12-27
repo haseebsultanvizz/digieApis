@@ -1,0 +1,220 @@
+##################  Add, Edit, buy, sell, LTH, Pla/Pause APIs  ####################
+
+###
+
+POST http://34.205.124.51:3010/apiEndPoint/createManualOrder
+Content-Type: application/json
+
+{ "orderArr": {
+        "admin_id": "5c0912bffc9aadaac61dd074",
+        "application_mode": "test",
+        "auto_sell": "yes",
+        "buy_trail_percentage": 0.1, 
+        "buy_trail_price": "0.00000013", 
+        "exchange": "binance",
+        "lth_functionality": "yes", 
+        "lth_profit": 15.3, 
+        "order_type": "market_order",
+        "price":1.3e-7,
+        "quantity": 2222,
+        "sell_price":1.43e-7,  - conditional
+        "status": "new",
+        "symbol": "NCASHBTC",
+        "trail_check": "yes", 
+        "trail_interval": "0.00000000", 
+        "trigger_type": "no"
+    },
+    "tempOrderArr": {
+        "admin_id": "5c0912bffc9aadaac61dd074",
+        "application_mode": "test",
+        "iniatial_trail_stop":1.1895e-7,
+        "loss_percentage": 8.5,
+        "lth_functionality": "yes",
+        "lth_profit": 15.3,
+        "order_type": "market_order",
+        "profit_percent": 10,
+        "profit_price":1.43e-7,
+        "profit_type": "percentage",
+        "sell_trail_percentage": 0.2,
+        "stop_loss": "yes",
+        "trail_check": "yes",
+        "trail_interval":2.6000000000000003e-10
+    }
+}
+
+###
+
+POST http://34.205.124.51:3010/apiEndPoint/updateManualOrder
+Content-Type: application/json
+
+{   "exchange": "binance",
+    "buyOrderId": "5dd63766588ade0019f03168",
+    "orderArr": {
+        "activate_stop_loss_profit_percentage": 100,
+        "custom_stop_loss_percentage": 3.5,
+        "defined_sell_percentage": 1.774,
+        "exchange": "binance",
+        "iniatial_trail_stop": 0.0005231265,
+        "iniatial_trail_stop_copy": 0.0005231265,
+        "lth_functionality": "yes",
+        "lth_profit": 4.6,
+        "orderId": "5ddb9e993c63ec2698430902",
+        "sell_profit_percent": 1.774,
+        "stop_loss_rule": "custom_stop_loss",
+        "un_limit_child_orders": "no"
+    },
+    "sellOrderId": "5df84dd6052c7f78fb42abd7",
+    "sellOrderArr": {
+        "iniatial_trail_stop": 0.000028660499999999998,
+        "loss_percentage": "1.00",
+        "lth_functionality": "yes",
+        "lth_profit": 11.8,
+        "profit_type": "percentage",
+        "sell_price": 0.000029229400000000002,
+        "sell_profit_percent": "1.00",
+        "sell_trail_percentage": 0.1,
+        "stop_loss": "yes",
+        "trail_check": "yes",
+        "trail_interval": 2.895e-8
+    },
+    "tempSellOrderId": ""
+}
+
+###
+
+POST http://34.205.124.51:3010/apiEndPoint/createAutoOrder
+Content-Type: application/json
+
+{ "orderArr": {
+        "activate_stop_loss_profit_percentage": 100,
+        "admin_id": "5c0912bffc9aadaac61dd074",
+        "application_mode": "test",
+        "current_market_price": "0.00102040",
+        "custom_stop_loss_percentage": 5.5,
+        "defined_sell_percentage": 5.2,
+        "exchange": "binance",
+        "lth_functionality": "yes",
+        "lth_profit": 10.7,
+        "market_value": "",
+        "order_level": "level_15",
+        "order_mode": "test",
+        "order_type": "market_order",
+        "parent_status": "parent",
+        "pause_status": "play",
+        "price": "",
+        "quantity": 0.3,
+        "sell_profit_percent": 5.2,
+        "status": "new",
+        "stop_loss_rule": "custom_stop_loss",
+        "symbol": "ZENBTC",
+        "trigger_type": "barrier_percentile_trigger",
+        "un_limit_child_orders": "no"
+    }
+}
+
+###
+
+POST http://34.205.124.51:3010/apiEndPoint/editAutoOrder
+Content-Type: application/json
+
+{ "orderArr": {
+        "activate_stop_loss_profit_percentage": 100,
+        "custom_stop_loss_percentage": 3.5,
+        "defined_sell_percentage": 1.774,
+        "exchange": "binance",
+        "iniatial_trail_stop": 0.0005231265,
+        "iniatial_trail_stop_copy": 0.0005231265,
+        "lth_functionality": "yes",
+        "lth_profit": 4.6,
+        "orderId": "5ddb9e993c63ec2698430902",
+        "sell_profit_percent": 1.774,
+        "stop_loss_rule": "custom_stop_loss",
+        "un_limit_child_orders": "no"
+    }
+}
+
+###
+
+POST http://34.205.124.51:3010/apiEndPoint/buyOrderManually
+Content-Type: application/json
+
+{ 
+    "coin": "NEOBTC",
+    "exchange": "binance",
+    "orderId": "5df334958cff810019b21908"
+}
+
+###
+
+POST http://34.205.124.51:3010/apiEndPoint/sellOrderManually
+Content-Type: application/json
+
+{ 
+    "currentMarketPriceByCoin": "0.00053440",
+    "definedSellPrice": 0.0005355,
+    "exchange": "binance",
+    "orderId": "5ddb9e993c63ec2698430902"
+}
+
+###
+
+POST http://34.205.124.51:3010/apiEndPoint/orderMoveToLth
+Content-Type: application/json
+
+{ 
+    "exchange": "binance",
+    "lth_profit": 56,
+    "orderId": "5df7a4cd28981a0019c6e843"
+}
+
+###
+
+POST http://34.205.124.51:3010/apiEndPoint/togglePausePlayOrder
+
+###
+
+
+#################  New Global APIS  ##############
+
+POST http://34.205.124.51:3010/apiEndPoint/createManualOrderGlobally
+Content-Type: application/json
+
+{ "orderArr": {
+        "admin_id": "5c0912bffc9aadaac61dd074",
+        "application_mode": "test",
+        "auto_sell": "yes",
+        "buy_trail_percentage": 0.1,
+        "buy_trail_price": "0.00000013",
+        "exchange": "binance",
+        "lth_functionality": "yes",
+        "lth_profit": 15.3,
+        "order_type": "market_order",
+        "price":1.3e-7,
+        "quantity": 2222,
+        "sell_price":1.43e-7,
+        "status": "new",
+        "symbol": "NCASHBTC",
+        "trail_check": "yes",
+        "trail_interval": "0.00000000",
+        "trigger_type": "no"
+    },
+    "tempOrderArr": {
+        "admin_id": "5c0912bffc9aadaac61dd074",
+        "application_mode": "test",
+        "iniatial_trail_stop":1.1895e-7,
+        "loss_percentage": 8.5,
+        "lth_functionality": "yes",
+        "lth_profit": 15.3,
+        "order_type": "market_order",
+        "profit_percent": 10,
+        "profit_price":1.43e-7,
+        "profit_type": "percentage",
+        "sell_trail_percentage": 0.2,
+        "stop_loss": "yes",
+        "trail_check": "yes",
+        "trail_interval":2.6000000000000003e-10
+    }
+}
+
+
+###

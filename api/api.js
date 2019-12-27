@@ -609,13 +609,15 @@ router.post('/createManualOrder', (req, resp) => {
                                 });
                             } else {
                                 resp.status(200).send({
-                                    message: 'Order successfully created'
+                                    message: 'Order successfully created',
+                                    data: buyOrderId
                                 });
                             }
                         })
                     } else {
                         resp.status(200).send({
-                            message: 'Order successfully created'
+                            message: 'Order successfully created',
+                            data: buyOrderId
                         });
                     }
                     //:::::::::::::::::::::::::::::::::
@@ -1977,6 +1979,8 @@ router.post('/sellOrderManually', async(req, resp) => {
 
             let buyOrderArr = ordeResp[0];
             let sell_order_id = (typeof buyOrderArr['sell_order_id'] == undefined) ? '' : buyOrderArr['sell_order_id'];
+
+            console.log("sell_order_id ",sell_order_id)
             if (sell_order_id != '') {
                 let application_mode = (typeof buyOrderArr['application_mode'] == undefined) ? '' : buyOrderArr['application_mode'];
                 let buy_order_id = buyOrderArr['_id'];
@@ -1985,6 +1989,9 @@ router.post('/sellOrderManually', async(req, resp) => {
                 let admin_id = (typeof buyOrderArr['admin_id'] == undefined) ? '' : buyOrderArr['admin_id'];
                 //getting user ip for trading
                 var trading_ip = await listUsrIp(admin_id);
+
+                console.log("trading_ip ", trading_ip)
+
 
                 var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now';
                 var logPromise = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
@@ -2010,11 +2017,14 @@ router.post('/sellOrderManually', async(req, resp) => {
                 var resolvePromise = Promise.all([updatePromise_1, updatePromise_2, logPromise, logPromise_2]);
                 //in case of live order move it to specified api for selling
                 if (application_mode == 'live') {
+
+                
                     var log_msg = "Market Order Send For Sell On:  " + parseFloat(currentMarketPrice).toFixed(8);
                     var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
                     logPromise_1.then((resp) => {})
                     //send order for sell on specific ip
                     var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, 'barrier_percentile_trigger', 'sell_market_order', exchange);
+                    console.log("SellOrderResolve ", SellOrderResolve)
 
                     SellOrderResolve.then((resp) => {})
                 } else {
@@ -2096,7 +2106,13 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
             insert_arr['created_date'] = new Date();
             insert_arr['modified_date'] = new Date();
             let collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange;
+
+            console.log('insert_arr', insert_arr);
+
             db.collection(collection).insertOne(insert_arr, (err, result) => {
+
+                console.log('result', result);
+
                 if (err) {
                     resolve(err)
                 } else {
