@@ -24,16 +24,25 @@ router.post('/create_orders_history_log', async(req, resp) => {
 })//End of create_orders_history_log
 
 
-function create_orders_history_log(order_id, log_msg, type, show_hide_log, exchange,order_mode) {
+function create_orders_history_log(order_id, log_msg, type, show_hide_log, exchange,order_mode,order_created_date) {
     return new Promise((resolve, reject) => {
         conn.then((db) => {
-            /** */
-            var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-            var d = new Date();
-            //create collection name on the base of date and mode
-            var date_mode_string = '_'+order_mode+'_'+d.getFullYear()+'_'+d.getMonth();
-            //create full name of collection
-            var full_collection_name = collectionName+date_mode_string;
+
+            var created_date = new Date(order_created_date);
+            var current_date = new Date('2019-12-27T11:04:21.912Z');
+            if(created_date > current_date){
+                 /** */
+                var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
+                var d = new Date();
+                //create collection name on the base of date and mode
+                var date_mode_string = '_'+order_mode+'_'+d.getFullYear()+'_'+d.getMonth();
+                //create full name of collection
+                var full_collection_name = collectionName+date_mode_string;
+            }else{
+                var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
+            }
+
+           
         
             (async ()=>{
                 //we check of collection is already created or not
