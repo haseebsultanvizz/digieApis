@@ -3612,6 +3612,9 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
         
         //Get order log against order
         var ordrLogPromise = await listOrderLog(orderId, exchange,order_mode,order_created_date);
+        console.log('------------------');
+        console.log(ordrLogPromise);
+
         let html = '';
         let ordeLog = ordrLogPromise;
         var index = 1;
