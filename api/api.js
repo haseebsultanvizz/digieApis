@@ -3610,6 +3610,8 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
         var order_created_date = (typeof buyOrderArr['created_date'] == 'undefined') ? '' : buyOrderArr['created_date'];
         var order_mode = (typeof buyOrderArr['order_mode'] == 'undefined') ? '' : buyOrderArr['order_mode'];
 
+        console.log('order_mode ',order_mode);
+        console.log('order_created_date ',order_created_date);
         
         //Get order log against order
         var ordrLogPromise = await listOrderLog(orderId, exchange,order_mode,order_created_date);
