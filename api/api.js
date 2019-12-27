@@ -1887,16 +1887,18 @@ router.post('/listOrderById', async(req, resp) => {
 		let exchange = req.body.exchange;
         var timezone = req.body.timezone;
         //promise for  getting order by id 
-        var ordeRespPromise = listOrderById(orderId, exchange);
-        //promise for gettiong order log
-		var ordrLogPromise = listOrderLog(orderId, exchange);
-	
-        var resolvepromise = await Promise.all([ordeRespPromise, ordrLogPromise]);
-        var respArr = {};
-        respArr['ordeArr'] = resolvepromise[0];
-        let html = '';
-		let ordeLog = resolvepromise[1];
+        var ordeArr = await listOrderById(orderId, exchange);
+        var orderObj = ordeArr[0];
+        var order_created_date = orderObj['created_date'];
+        var order_mode = orderObj['order_mode'];
 
+        //promise for gettiong order log
+		var ordeLog = await listOrderLog(orderId, exchange,order_mode,order_created_date);
+	
+       
+        var respArr = {};
+        respArr['ordeArr'] = ordeArr;
+        let html = '';
         var index = 1;
         for (let row in ordeLog) {
 
@@ -1932,13 +1934,26 @@ router.post('/listOrderById', async(req, resp) => {
     }) //End of listOrderById
 
 //get order log on the base of order id 
-function listOrderLog(orderId, exchange) {
+function listOrderLog(orderId, exchange,order_mode,order_created_date) {
     return new Promise((resolve) => {
         conn.then((db) => {
             var where = {};
             where['order_id'] = new ObjectID(orderId);
-            var collection = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-            db.collection(collection).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
+            var created_date = new Date(order_created_date);
+                var current_date = new Date('2019-12-27T11:04:21.912Z');
+                if(created_date > current_date){
+                     /** */
+                    var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
+                    var d = new Date();
+                    //create collection name on the base of date and mode
+                    var date_mode_string = '_'+order_mode+'_'+d.getFullYear()+'_'+d.getMonth();
+                    //create full name of collection
+                    var full_collection_name = collectionName+date_mode_string;
+                }else{
+                    var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
+                }
+                
+                db.collection(full_collection_name).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
                 if (err) {
                     resolve(err);
                 } else {
@@ -3575,8 +3590,12 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
 
         var sell_order_id = (typeof buyOrderArr['sell_order_id'] == 'undefined') ? '' : buyOrderArr['sell_order_id'];
 
+        var order_created_date = (typeof buyOrderArr['created_date'] == 'undefined') ? '' : buyOrderArr['created_date'];
+        var order_mode = (typeof buyOrderArr['order_mode'] == 'undefined') ? '' : buyOrderArr['order_mode'];
+
+        
         //Get order log against order
-        var ordrLogPromise = await listOrderLog(orderId, exchange);
+        var ordrLogPromise = await listOrderLog(orderId, exchange,order_mode,order_created_date);
         let html = '';
         let ordeLog = ordrLogPromise;
         var index = 1;
