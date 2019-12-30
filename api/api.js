@@ -3750,7 +3750,7 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
 
         var auto_sell = (typeof buyOrderArr['auto_sell'] == 'undefined') ? 'no' : buyOrderArr['auto_sell'];
 
-        var sell_order_id = (typeof buyOrderArr['sell_order_id'] == 'undefined') ? '' : buyOrderArr['sell_order_id'];
+    var sell_order_id = (typeof buyOrderArr['sell_order_id'] == 'undefined' || buyOrderArr['sell_order_id'] == null) ? '' : buyOrderArr['sell_order_id'];
 
         var order_created_date = (typeof buyOrderArr['created_date'] == 'undefined') ? '' : buyOrderArr['created_date'];
         var order_mode = (typeof buyOrderArr['order_mode'] == 'undefined') ? buyOrderArr['application_mode']: buyOrderArr['order_mode'];
@@ -3786,8 +3786,6 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
                 index++;
             }
         }
-
-    
 
         var sellArr = [];
         var tempSellArr = [];
