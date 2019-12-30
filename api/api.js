@@ -593,7 +593,7 @@ router.post('/createManualOrder', (req, resp) => {
                     let type = 'Order_created';
                     // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
                     let order_mode = orders.application_mode;
-                    let order_created_date = new Date();
+                    var order_created_date = new Date();
                     var promiseLog = create_orders_history_log(buyOrderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
 
                     promiseLog.then((callback) => {})
@@ -672,7 +672,7 @@ router.post('/createManualOrderByChart', (req, resp) => {
                     let type = 'Order_created';
                     // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
                     let order_mode = orders.application_mode;
-                    let order_created_date = new Date();
+                    var order_created_date = new Date();
                     var promiseLog = create_orders_history_log(buyOrderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
                     promiseLog.then((callback) => {})
                     //if auto sell is yes the create sell order
@@ -756,9 +756,9 @@ router.post('/makeManualOrderSetForSell', async (req, resp) => {
                     let show_hide_log = 'yes';
                     let type = 'Order Ready For Buy';
                     // var promiseLog = recordOrderLog(orderId, log_msg, type, show_hide_log, exchange)
-                    let getBuyOrder = await listOrderById(orderId, exchange);
-                    let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                    let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                    var getBuyOrder = await listOrderById(orderId, exchange);
+                    var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                    var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                     var promiseLog = create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
                     promiseLog.then((callback) => {
 
@@ -846,9 +846,9 @@ router.post('/editAutoOrder', async(req, resp) => {
         let show_hide_log = 'yes';
         let type = 'order_updated';
         // var promiseLog = recordOrderLog(orderId, log_msg, type, show_hide_log, exchange)
-        let getBuyOrder = await listOrderById(orderId, exchange);
-        let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-        let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+        var getBuyOrder = await listOrderById(orderId, exchange);
+        var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+        var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
         var promiseLog = create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
         promiseLog.then((callback) => {
 
@@ -1640,9 +1640,9 @@ router.post('/playOrder', async(req, resp) => {
         let type = 'play pause';
         let log_msg = "Parent Order was ACTIVE Manually";
         // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange);
-        let getBuyOrder = await listOrderById(req.body.orderId, exchange);
-        let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-        let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+        var getBuyOrder = await listOrderById(req.body.orderId, exchange);
+        var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+        var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
         var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
         var promiseResponse = await Promise.all([playPromise, LogPromise]);
         resp.status(200).send({
@@ -1683,9 +1683,9 @@ router.post('/togglePausePlayOrder', async(req, resp) => {
             log_msg = 'Parent Order was set to Pause Manually';
         }
         // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange);
-        let getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
-        let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-        let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+        var getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
+        var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+        var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
         var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
         var promiseResponse = await Promise.all([playPromise, LogPromise]);
         resp.status(200).send({
@@ -1810,9 +1810,9 @@ router.post('/deleteOrder', async(req, resp) => {
         let type = 'buy_canceled';
         let log_msg = "Buy Order was Canceled";
         // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log)
-        let getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
-        let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-        let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+        var getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
+        var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+        var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
         var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
         var promiseResponse = await Promise.all([LogPromise, respPromise]);
         resp.status(200).send({
@@ -1882,9 +1882,9 @@ router.post('/orderMoveToLth', async(req, resp) => {
         let type = 'move_lth';
         let log_msg = 'Buy Order  <span style="color:yellow;    font-size: 14px;"><b>Manually</b></span> Moved to <strong> LONG TERM HOLD </strong>  ';
         // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, exchange)
-        let getBuyOrder = await listOrderById(req.body.orderId, exchange);
-        let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-        let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+        var getBuyOrder = await listOrderById(req.body.orderId, exchange);
+        var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+        var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
         var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
         var promiseResponse = await Promise.all([LogPromise, respPromise]);
         resp.status(200).send({
@@ -2027,9 +2027,9 @@ router.post('/sellOrderManually', async(req, resp) => {
 
                 var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now';
                 // var logPromise = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
-                let getBuyOrder = await listOrderById(buy_order_id, exchange);
-                let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                var getBuyOrder = await listOrderById(buy_order_id, exchange);
+                var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                 var logPromise = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
 
 
@@ -2194,9 +2194,9 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
             updatePromise_1.then((resp) => {})
             var log_msg = "Sell Market Order was <b>SUBMITTED</b>";
             // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_order_submitted', 'yes', exchange);
-            let getBuyOrder = await listOrderById(buy_order_id, exchange);
-            let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-            let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+            var getBuyOrder = await listOrderById(buy_order_id, exchange);
+            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
             var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_order_submitted', 'yes', exchange, order_mode, order_created_date)
             logPromise_1.then((resp) => {})
 
@@ -2311,9 +2311,9 @@ router.post('/buyOrderManually', async(req, resp) => {
 
                 var log_msg = "Orde Send for buy Manually On " + parseFloat(currentMarketPrice).toFixed(8);
                 // var logPromise = recordOrderLog(orderId, log_msg, 'submitted', 'yes', exchange);
-                let getBuyOrder = await listOrderById(orderId, exchange);
-                let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                var getBuyOrder = await listOrderById(orderId, exchange);
+                var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                 var logPromise = create_orders_history_log(orderId, log_msg, 'sell_filled', 'yes', exchange, order_mode, order_created_date)
                 logPromise.then((callback) => {
                    // console.log(callback)
@@ -2366,9 +2366,9 @@ function buyTestOrder(orders, market_value, exchange) {
             updPromise.then((callback) => {})
             var log_msg = "Buy Market Order was <b>SUBMITTED</b>";
             // var logPromise = recordOrderLog(id, log_msg, 'submitted', 'yes', exchange);
-            let getBuyOrder = await listOrderById(id, exchange);
-            let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-            let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+            var getBuyOrder = await listOrderById(id, exchange);
+            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
             var logPromise = create_orders_history_log(id, log_msg, 'sell_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise.then((callback) => {
 
@@ -2383,18 +2383,18 @@ function buyTestOrder(orders, market_value, exchange) {
 
             var log_msg = "Broker Fee <b>" + commission.toFixed(3) + "</b> Has been deducted from sell quantity ";
             // var logPromise_1 = recordOrderLog(id, log_msg, 'fee_deduction', 'yes', exchange);
-            let getBuyOrder = await listOrderById(id, exchange);
-            let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-            let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+            getBuyOrder = await listOrderById(id, exchange);
+            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
             var logPromise_1 = create_orders_history_log(id, log_msg, 'fee_deduction', 'yes', exchange, order_mode, order_created_date)
             logPromise_1.then((callback) => {})
 
 
             var log_msg = "Order Quantity Updated from <b>(" + quantity + ")</b> To  <b>(" + sellQty + ')</b> Due to Deduction Binance Fee from buying Coin';
             // var logPromise_2 = recordOrderLog(id, log_msg, 'fee_deduction', 'yes', exchange);
-            let getBuyOrder = await listOrderById(id, exchange);
-            let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-            let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+            var getBuyOrder = await listOrderById(id, exchange);
+            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
             var logPromise_2 = create_orders_history_log(id, log_msg, 'fee_deduction', 'yes', exchange, order_mode, order_created_date)
             logPromise_2.then((callback) => {})
 
@@ -2440,17 +2440,17 @@ function buyTestOrder(orders, market_value, exchange) {
 
             var log_msg = "Buy Market Order is <b>FILLED</b> at price " + parseFloat(market_value).toFixed(8);
             // var logPromise_3 = recordOrderLog(id, log_msg, 'market_filled', 'yes', exchange);
-            let getBuyOrder = await listOrderById(id, exchange);
-            let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-            let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+            var getBuyOrder = await listOrderById(id, exchange);
+            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
             var logPromise_3 = create_orders_history_log(id, log_msg, 'market_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise_3.then((callback) => {})
 
             var log_msg = "Broker Fee <b>" + commission.toFixed(8) + " From " + commissionAsset + "</b> has token on this Trade";
             // var logPromise_3 = recordOrderLog(id, log_msg, 'market_filled', 'yes', exchange);
-            let getBuyOrder = await listOrderById(id, exchange);
-            let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-            let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+            var getBuyOrder = await listOrderById(id, exchange);
+            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
             var logPromise_3 = create_orders_history_log(id, log_msg, 'market_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise_3.then((callback) => {})
 
@@ -2572,9 +2572,9 @@ function createOrderFromAutoSell(orderArr, exchange) {
             var log_msg = "Sell Order was Created from Auto Sell";
 
             // var logPromise = recordOrderLog(buy_order_id, log_msg, 'create_sell_order', 'yes', exchange);
-            let getBuyOrder = await listOrderById(buy_order_id, exchange);
-            let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-            let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+            var getBuyOrder = await listOrderById(buy_order_id, exchange);
+            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
             var logPromise = create_orders_history_log(buy_order_id, log_msg, 'market_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise.then((callback) => {})
         } // if($auto_sell =='yes')	
@@ -3122,9 +3122,9 @@ router.post('/updateBuyPriceFromDragging', async(req, resp) => {
         var log_msg = "Order buy price updated from(" + parseFloat(previous_buy_price).toFixed(8) + ") to " + parseFloat(updated_buy_price).toFixed(8) + "  From Chart";
 
         // var logPromise = recordOrderLog(orderId, log_msg, 'buy_price_updated', 'yes', exchange);
-        let getBuyOrder = await listOrderById(orderId, exchange);
-        let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-        let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+        var getBuyOrder = await listOrderById(orderId, exchange);
+        var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+        var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
         var logPromise = create_orders_history_log(orderId, log_msg, 'buy_price_updated', 'yes', exchange, order_mode, order_created_date)
         logPromise.then((callback) => {});
 
@@ -3222,9 +3222,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                         
                         var log_msg_1 = "Order Profit percentage Change From(" + parseFloat(sell_profit_percent).toFixed(2) + " % ) To (" + parseFloat(calculate_new_sell_percentage).toFixed(2) + " %)  From Chart";
                         // var logPromise_1 = recordOrderLog(orderId, log_msg_1, 'order_profit_percentage_change', 'yes', exchange);
-                        let getBuyOrder = await listOrderById(orderId, exchange);
-                        let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                        let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                        var getBuyOrder = await listOrderById(orderId, exchange);
+                        var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                        var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                         var logPromise_1 = create_orders_history_log(orderId, log_msg, 'order_profit_percentage_change', 'yes', exchange, order_mode, order_created_date)
                         logPromise_1.then((callback) => {})
 
@@ -3246,8 +3246,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                         var log_msg = "Order Stop Loss Updated From(" + parseFloat(iniatial_trail_stop).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
                         // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                          getBuyOrder = await listOrderById(orderId, exchange);
-                        let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                        let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                        var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                        var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                         var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
                         logPromise.then((callback) => {})
                     }
@@ -3312,9 +3312,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
                             var log_msg = "Order sell price Updated from(" + parseFloat(sell_price).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
                             // var logPromise = recordOrderLog(orderId, log_msg, 'create_sell_order', 'yes', exchange);
-                            let getBuyOrder = await listOrderById(orderId, exchange);
-                            let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                            let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                            var getBuyOrder = await listOrderById(orderId, exchange);
+                            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                            var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                             var logPromise = create_orders_history_log(orderId, log_msg, 'create_sell_order', 'yes', exchange, order_mode, order_created_date)
                             logPromise.then((callback) => {})
 
@@ -3367,9 +3367,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
                             var log_msg = "Order Stop Loss Updated From(" + parseFloat(stop_loss).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
                             // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                            let getBuyOrder = await listOrderById(orderId, exchange);
-                            let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                            let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                            var getBuyOrder = await listOrderById(orderId, exchange);
+                            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                            var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                             var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
                             logPromise.then((callback) => {});
 
@@ -3447,9 +3447,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                             updPrmise.then((callback) => {})
                             let log_msg = "Sell Order was Created";
                             // var logPromise1 = recordOrderLog(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange);
-                            let getBuyOrder = await listOrderById(buyOrderId, exchange);
-                            let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                            let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                            var getBuyOrder = await listOrderById(buyOrderId, exchange);
+                            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                            var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                             var logPromise1 = create_orders_history_log(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange, order_mode, order_created_date)
                             logPromise1.then((resolve) => {})
                                 //::::::::::: End of temp arr exist ::::::::::::::
@@ -3487,9 +3487,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
                                 var log_msg = "Order profit percentage set to (" + parseFloat(sell_profit_percent).toFixed(2) + ") %";
                                 // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                                let getBuyOrder = await listOrderById(orderId, exchange);
-                                let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                                let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                                var getBuyOrder = await listOrderById(orderId, exchange);
+                                var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                                var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                                 var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
                                 logPromise.then((callback) => {})
 
@@ -3525,9 +3525,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                     loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
                                 var log_msg = "Order stop loss percentage set to (" + parseFloat(loss_percentage).toFixed(2) + ") % From Chart";
                                 // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                                let getBuyOrder = await listOrderById(orderId, exchange);
-                                let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                                let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                                var getBuyOrder = await listOrderById(orderId, exchange);
+                                var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                                var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                                 var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
                                 logPromise.then((callback) => {})
 
@@ -3556,9 +3556,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
                             var log_msg = "Order Change Fron Normal to Auto Sell From Chart";
                             // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                            let getBuyOrder = await listOrderById(orderId, exchange);
-                            let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                            let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                            var getBuyOrder = await listOrderById(orderId, exchange);
+                            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                            var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                             var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
                             logPromise.then((callback) => {})
 
@@ -3629,9 +3629,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
                                 var log_msg = "Order profit percentage set to (" + parseFloat(sell_profit_percent).toFixed(2) + ") % From Chart";
                                 // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                                let getBuyOrder = await listOrderById(orderId, exchange);
-                                let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                                let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                                var getBuyOrder = await listOrderById(orderId, exchange);
+                                var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                                var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                                 var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
                                 logPromise.then((callback) => {})
 
@@ -3674,9 +3674,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
                                 var log_msg = "Order stop loss percentage set to (" + parseFloat(loss_percentage).toFixed(2) + ") % From Chart";
                                 // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                                let getBuyOrder = await listOrderById(orderId, exchange);
-                                let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                                let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                                var getBuyOrder = await listOrderById(orderId, exchange);
+                                var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                                var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                                 var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
                                 logPromise.then((callback) => {})
 
@@ -3908,9 +3908,9 @@ router.post('/setForSell', async(req, resp) => {
 
     let log_msg = "Sell Order was Created";
     // var logPromise1 = recordOrderLog(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange);
-    let getBuyOrder = await listOrderById(buyOrderId, exchange);
-    let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-    let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+    var getBuyOrder = await listOrderById(buyOrderId, exchange);
+    var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+    var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
     var logPromise1 = create_orders_history_log(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange, order_mode, order_created_date)
     logPromise1.then((resolve) => {})
 
@@ -4334,9 +4334,9 @@ router.post('/createManualOrderGlobally', (req, resp) => {
                 let show_hide_log = 'yes';
                 let type = 'Order_created';
                 // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
-                let getBuyOrder = await listOrderById(buyOrderId, exchange);
-                let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+                var getBuyOrder = await listOrderById(buyOrderId, exchange);
+                var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
                 var promiseLog = create_orders_history_log(buyOrderId, log_msg, 'Order_created', 'yes', exchange, order_mode, order_created_date)
                 promiseLog.then((callback) => { })
                 //if auto sell is yes then create sell order
@@ -4730,9 +4730,9 @@ router.post('/removeOrderManually', async(req, resp) => {
         var type = 'remove_error';
         var log_msg = 'Order was updated And Moved From Error To Open ***';
         // var promiseLog = recordOrderLog(order_id, log_msg, type, show_hide_log, exchange)
-        let getBuyOrder = await listOrderById(order_id, exchange);
-        let order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-        let order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
+        var getBuyOrder = await listOrderById(order_id, exchange);
+        var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+        var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : new Date())
         var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, order_mode, order_created_date)
         promiseLog.then((callback) => {});
 
