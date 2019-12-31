@@ -568,8 +568,9 @@ router.post('/createManualOrder', (req, resp) => {
         conn.then((db) => {
             let orders = req.body.orderArr;
             let orderId = req.body.orderId;
-            var price = orders['price'];
+            var price = parseFloat(orders['price']);
             let exchange = orders['exchange'];
+            orders['price'] = price;
             orders['created_date'] = new Date();
             orders['modified_date'] = new Date();
             //collection on the base of exchange
@@ -1545,6 +1546,8 @@ async function listOrderListing(postDAta, dbConnection) {
 
     //if status is all the get from both buy_orders and sold_buy_orders 
     if (postDAta.status == 'all') {
+        console.log('==============================================')
+        console.log(filter)
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter, pagination, limit, skip);
