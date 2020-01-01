@@ -5055,7 +5055,7 @@ return new Promise((resolve, reject) => {
         if (created_date > current_date) {
                     
                 var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-                var d = new Date();
+                var d = new Date(order_created_date);
                 //create collection name on the base of date and mode
                 var date_mode_string = '_'+order_mode+'_'+d.getFullYear()+'_'+d.getMonth();
                 //create full name of collection
