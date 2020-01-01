@@ -1974,7 +1974,7 @@ function listOrderLog(orderId, exchange,order_mode,order_created_date) {
     return new Promise((resolve) => {
         conn.then((db) => {
             var where = {};
-            where['order_id'] = new ObjectID(orderId);
+            where['order_id'] = {$in: [orderId, new ObjectID(orderId)]}
             var created_date = new Date(order_created_date);
                 var current_date = new Date('2019-12-27T11:04:21.912Z');
                 if(created_date > current_date){
