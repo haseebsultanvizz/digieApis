@@ -1979,12 +1979,16 @@ function listOrderLog(orderId, exchange,order_mode,order_created_date) {
                 var current_date = new Date('2019-12-27T11:04:21.912Z');
                 if(created_date > current_date){
                      /** */
+                     console.log('////////////////////////////////////////////////////////////////')
                     var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-                    var d = new Date();
+                    var d = new Date(order_created_date);
                     //create collection name on the base of date and mode
                     var date_mode_string = '_'+order_mode+'_'+d.getFullYear()+'_'+d.getMonth();
                     //create full name of collection
                     var full_collection_name = collectionName+date_mode_string;
+
+                    console.log('///////////////////////////////////////////                   ' +full_collection_name)
+
                 }else{
                     var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
                 }  
