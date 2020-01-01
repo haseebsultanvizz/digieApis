@@ -1446,7 +1446,7 @@ function calculateAverageOrdersProfit(postDAta) {
         let start_date = new Date(postDAta.start_date);
         let end_date = new Date(postDAta.end_date);
         filter['created_date'] = { '$gte': start_date, '$lte': end_date };
-    }
+    } 
 
     var exchange = postDAta.exchange;
 
