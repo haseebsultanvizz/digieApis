@@ -1928,13 +1928,17 @@ router.post('/listOrderById', async(req, resp) => {
         var order_created_date = orderObj['created_date'];
         var order_mode = (typeof orderObj['order_mode'] == 'undefined')?buyOrderArr['orderObj']:orderObj['order_mode'];
         
+    var temp_check = false;
+    if (orderObj['admin_id'] == '5c0912b7fc9aadaac61dd072' || orderObj['admin_id'] == '5c0915befc9aadaac61dd1b8') {
         //promise for gettiong order log
 		var ordeLog = await listOrderLog(orderId, exchange,order_mode,order_created_date);
-	
+    }
        
         var respArr = {};
         respArr['ordeArr'] = ordeArr;
         let html = '';
+
+    if(temp_check){
         var index = 1;
         for (let row in ordeLog) {
 
@@ -1948,6 +1952,7 @@ router.post('/listOrderById', async(req, resp) => {
               }
               
 
+            
 			var date = timeZoneTime.toLocaleString()+' '+timezone;
             //Remove indicator log message
             if (ordeLog[row].type != 'indicator_log_message') {
@@ -1961,6 +1966,7 @@ router.post('/listOrderById', async(req, resp) => {
 
 
         }
+    }
 
         respArr['logHtml'] = html;
 
