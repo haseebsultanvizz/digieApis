@@ -3810,7 +3810,8 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
 
 
         var temp_check = false;
-        if (temp_check){
+        if (buyOrderArr['admin_id'] == '5c0912b7fc9aadaac61dd072' || buyOrderArr['admin_id'] == '5c0915befc9aadaac61dd1b8'){
+            temp_check = true;
             //Get order log against order
             var ordrLogPromise = await listOrderLog(orderId, exchange,order_mode,order_created_date);
         }
