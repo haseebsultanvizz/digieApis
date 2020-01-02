@@ -1969,6 +1969,52 @@ router.post('/listOrderById', async(req, resp) => {
         });
     }) //End of listOrderById
 
+//post call for getting order log by id //Umer Abbas [2-1-19]
+router.post('/listOrderLogById', async(req, resp) => {
+        let orderId = req.body.orderId;
+		let exchange = req.body.exchange;
+        var timezone = req.body.timezone;
+    
+        //promise for gettiong order log
+		var ordeLog = await listOrderLog(orderId, exchange,order_mode,order_created_date);
+	
+        var respArr = {};
+        respArr['ordeArr'] = ordeArr;
+        let html = '';
+        var index = 1;
+        for (let row in ordeLog) {
+
+            var timeZoneTime = ordeLog[row].created_date;
+            try {
+                  timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
+                 timeZoneTime = new Date(timeZoneTime);
+              }
+              catch (e) {
+                console.log(e);
+              }
+              
+
+			var date = timeZoneTime.toLocaleString()+' '+timezone;
+            //Remove indicator log message
+            if (ordeLog[row].type != 'indicator_log_message') {
+                html += '<tr>';
+                html += '<th scope="row" class="text-danger">' + index + '</th>';
+                html += '<td>' + ordeLog[row].log_msg + '</td>';
+                html += '<td>' + date + '</td>'
+                html += '</tr>';
+                index++;
+            }
+
+
+        }
+
+        respArr['logHtml'] = html;
+
+        resp.status(200).send({
+            message: respArr
+        });
+}) //End of listOrderLogById
+
 //get order log on the base of order id 
 function listOrderLog(orderId, exchange,order_mode,order_created_date) {
     return new Promise((resolve) => {
@@ -3763,34 +3809,37 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
         var order_mode = (typeof buyOrderArr['order_mode'] == 'undefined') ? buyOrderArr['application_mode']: buyOrderArr['order_mode'];
 
 
-        
-        //Get order log against order
-        var ordrLogPromise = await listOrderLog(orderId, exchange,order_mode,order_created_date);
-   
+        var temp_check = false;
+        if (temp_check){
+            //Get order log against order
+            var ordrLogPromise = await listOrderLog(orderId, exchange,order_mode,order_created_date);
+        }
 
         let html = '';
         let ordeLog = ordrLogPromise;
         var index = 1;
 
-        var index = 1;
-        for (let row in ordeLog) {
-            var timeZoneTime = ordeLog[row].created_date;
-            try {
-                  timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
-                 timeZoneTime = new Date(timeZoneTime);
-              }
-              catch (e) {
-                console.log(e);
-              }
-			var date = timeZoneTime.toLocaleString()+' '+timezone;
-            //Remove indicator log message
-            if (ordeLog[row].type != 'indicator_log_message') {
-                html += '<tr>';
-                html += '<th scope="row" class="text-danger">' + index + '</th>';
-                html += '<td>' + ordeLog[row].log_msg + '</td>';
-                html += '<td>' + date + '</td>'
-                html += '</tr>';
-                index++;
+        if (temp_check) {
+            var index = 1;
+            for (let row in ordeLog) {
+                var timeZoneTime = ordeLog[row].created_date;
+                try {
+                    timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
+                    timeZoneTime = new Date(timeZoneTime);
+                }
+                catch (e) {
+                    console.log(e);
+                }
+                var date = timeZoneTime.toLocaleString()+' '+timezone;
+                //Remove indicator log message
+                if (ordeLog[row].type != 'indicator_log_message') {
+                    html += '<tr>';
+                    html += '<th scope="row" class="text-danger">' + index + '</th>';
+                    html += '<td>' + ordeLog[row].log_msg + '</td>';
+                    html += '<td>' + date + '</td>'
+                    html += '</tr>';
+                    index++;
+                }
             }
         }
 
