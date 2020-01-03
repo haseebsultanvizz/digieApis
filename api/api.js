@@ -1830,7 +1830,10 @@ function deleteOrder(orderId, exchange) {
             let filter = {};
             filter['_id'] = new ObjectID(orderId);
             let set = {};
-            set['$set'] = { 'status': 'canceled', 'modified_date': new Date() };
+            set['$set'] = { 
+                'status': 'canceled', 
+                'pause_status': 'pause', 
+                'modified_date': new Date() };
 
             let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             db.collection(collection).updateOne(filter, set, (err, result) => {
