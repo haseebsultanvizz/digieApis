@@ -2046,13 +2046,34 @@ function listOrderLog(orderId, exchange,order_mode,order_created_date) {
                 }  
                 console.log('full_collection_name full_collection_name full_collection_name');
                 console.log(full_collection_name);
-                db.collection(full_collection_name).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
-                if (err) {
-                    resolve(err);
-                } else {
-                    resolve(result);
+
+                if (full_collection_name == 'orders_history_log'){
+
+                    var old_logs = await db.collection('orders_history_log_2019_backup').find(where, {}).toArray()
+                    var new_logs = await db.collection(full_collection_name).find(where, {}).toArray()
+
+                    var logs = old_logs.concat(new_logs)
+                    resolve(logs)
+
+                }else{
+                    db.collection(full_collection_name).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
+                        if (err) {
+                            resolve(err);
+                        } else {
+                            resolve(result);
+                        }
+                    })
                 }
-            })
+
+
+            //     db.collection(full_collection_name).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
+            //     if (err) {
+            //         resolve(err);
+            //     } else {
+            //         resolve(result);
+            //     }
+            // })
+
         })
     })
 } //End of listOrderLog
