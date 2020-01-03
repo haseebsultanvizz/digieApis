@@ -2022,7 +2022,7 @@ router.post('/listOrderLogById', async(req, resp) => {
 //get order log on the base of order id 
 async function listOrderLog(orderId, exchange,order_mode,order_created_date) {
     return new Promise((resolve) => {
-        conn.then((db) => {
+        conn.then( async  (db) => {
             var where = {};
             where['order_id'] = {$in: [orderId, new ObjectID(orderId)]}
             var created_date = new Date(order_created_date);
