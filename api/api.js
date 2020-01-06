@@ -1446,7 +1446,14 @@ function calculateAverageOrdersProfit(postDAta) {
         let start_date = new Date(postDAta.start_date);
         let end_date = new Date(postDAta.end_date);
         filter['created_date'] = { '$gte': start_date, '$lte': end_date };
-    } 
+    } else{
+
+        if (filter['application_mode'] == 'test'){
+            let end_date = new Date()
+            let start_date = new Date(new Date().setDate(new Date().getDate() - 30))
+            filter['created_date'] = { '$gte': start_date, '$lte': end_date };
+        }
+    }
 
     var exchange = postDAta.exchange;
 
@@ -4711,6 +4718,8 @@ router.post('/calculate_average_profit', async(req, resp) => {
     var soldOrderArr = await calculateAverageOrdersProfit(req.body.postData);
     var total_profit = 0;
     var total_quantity = 0;
+
+    console.log(soldOrderArr.length)
     for (let index in soldOrderArr) {
         var market_sold_price = (typeof soldOrderArr[index]['market_sold_price'] == 'undefined') ? 0 : soldOrderArr[index]['market_sold_price'];
         market_sold_price = parseFloat((isNaN(market_sold_price)) ? 0 : market_sold_price);
@@ -4720,6 +4729,11 @@ router.post('/calculate_average_profit', async(req, resp) => {
 
         var quantity = (typeof soldOrderArr[index]['quantity'] == 'undefined') ? 0 : soldOrderArr[index]['quantity'];
         quantity = parseFloat((isNaN(quantity)) ? 0 : quantity);
+
+        if (req.body.postData.application_mode == 'test' && (isNaN(current_order_price) || isNaN(market_sold_price))){
+            // console.log(current_order_price + '   -----------------------   ' + market_sold_price)
+            continue
+        }
 
         var percentage = calculate_percentage(current_order_price, market_sold_price);
         var total_btc = quantity * current_order_price;
