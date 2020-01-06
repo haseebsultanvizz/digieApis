@@ -6,6 +6,47 @@ ObjectID = require('mongodb').ObjectID;
 var md5 = require('md5');
 var app = express();
 //********************************************************* */
+//TODO: verify old password
+//verifyOldPassword //Umer Abbas [6-1-2020]
+router.post('/verifyOldPassword', async function (req, resp) {
+    conn.then(async (db) => {
+        let post_data = req.body;
+        let user_id = req.body.user_id;
+        let password = req.body.password;
+        if (Object.keys(post_data).length > 0) {
+            if ("user_id" in post_data && "password" in post_data) {
+                let md5Password = md5(password);
+                let where = {
+                    "_id": new ObjectID(user_id),
+                    "password": md5Password
+                };
+                let reset = await db.collection("users").find(where).toArray();
+                if (reset.length > 0) {
+                    resp.status(200).send({
+                        status: true,
+                        message: 'verified successfully'
+                    });
+                } else {
+                    resp.status(200).send({
+                        status: false,
+                        message: 'Invalid User'
+                    });
+                }
+
+            } else {
+                resp.status(400).send({
+                    message: 'User Id or Password is empty'
+                });
+            }
+        } else {
+            resp.status(400).send({
+                message: 'Empty Parameters Recieved'
+            });
+        }
+
+    })
+}) //End of verifyOldPassword
+
 //when first time user login call this function 
 router.post('/authenticate', async function(req, resp, next) {
         conn.then(async(db) => {
@@ -2057,11 +2098,11 @@ async function listOrderLog(orderId, exchange,order_mode,order_created_date) {
 
                 if (full_collection_name == 'orders_history_log'){
 
-                    var old_logs = await db.collection('orders_history_log_2019_backup').find(where, {}).toArray()
+                    // var old_logs = await db.collection('orders_history_log_2019_backup').find(where, {}).toArray()
                     var new_logs = await db.collection(full_collection_name).find(where, {}).toArray()
 
-                    var logs = old_logs.concat(new_logs)
-                    resolve(logs)
+                    // var logs = old_logs.concat(new_logs)
+                    resolve(new_logs)
 
                 }else{
                     db.collection(full_collection_name).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
