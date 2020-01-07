@@ -202,21 +202,25 @@ router.post('/resetPassword', async function(req, resp) {
                     let reset = await db.collection("users").updateOne(where, set);
                     if (reset.result.ok) {
                         resp.status(200).send({
+                            status: true,
                             message: 'password reset successful'
                         });
                     } else {
                         resp.status(400).send({
+                            status: false,
                             message: 'password reset failed Invalid User'
                         });
                     }
 
                 } else {
                     resp.status(400).send({
+                        status: false,
                         message: 'User Id or Password is empty'
                     });
                 }
             } else {
                 resp.status(400).send({
+                    status: false,
                     message: 'Empty Parameters Recieved'
                 });
             }
