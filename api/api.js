@@ -4046,8 +4046,6 @@ router.post('/setForSell', async(req, resp) => {
     var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
     var logPromise1 = create_orders_history_log(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange, order_mode, order_created_date)
 
-    console.log('1 == ' + buyOrderId + '  ' + log_msg + '  set_for_sell ', ' yes ' + '     ' + exchange + '    ' + order_mode + '     ' + order_created_date)
-
     logPromise1.then((resolve) => {})
 
 
@@ -5204,8 +5202,6 @@ return new Promise((resolve, reject) => {
                 //we check of collection is already created or not
                 var collection_count  = await is_collection_already_exist(full_collection_name);
 
-                console.log('5  ********************************************   '+full_collection_name);
-
                 let insertArr = {};
                 insertArr['order_id'] = new ObjectID(order_id);
                 insertArr['log_msg'] = log_msg;
@@ -5218,7 +5214,6 @@ return new Promise((resolve, reject) => {
                         } else {
                             if(collection_count == 0){
 
-                                console.log('5==   ' + full_collection_name);
                             var date_index = {'created_date':-1};
                             var dateIndexPromise =  create_index(full_collection_name, date_index);
                                 dateIndexPromise.then((resolve)=>{});
