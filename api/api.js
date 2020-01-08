@@ -5209,6 +5209,8 @@ return new Promise((resolve, reject) => {
                 //we check of collection is already created or not
                 var collection_count  = await is_collection_already_exist(full_collection_name);
 
+                console.log('5==   '+full_collection_name);
+
                 let insertArr = {};
                 insertArr['order_id'] = new ObjectID(order_id);
                 insertArr['log_msg'] = log_msg;
