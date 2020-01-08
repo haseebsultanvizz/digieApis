@@ -2165,14 +2165,10 @@ router.post('/sellOrderManually', async(req, resp) => {
                 var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
                 var logPromise = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
 
-                console.log('1 == '+buy_order_id+'  '+ log_msg+ '  sell_manually ', ' yes '+'     ' +exchange +'    '+ order_mode + '     ' + order_created_date)
-
 
                 var log_msg = 'Send Market Orde for sell by Ip: <b>' + trading_ip + '</b> ';
                 // var logPromise_2 = recordOrderLog(buy_order_id, log_msg, 'order_ip', 'no', exchange);
                 var logPromise_2 = create_orders_history_log(buy_order_id, log_msg, 'order_ip', 'no', exchange, order_mode, order_created_date)
-
-                console.log('2 == ' + buy_order_id + '  ' + log_msg + '  order_ip ', ' no ' + '     ' + exchange + '    ' + order_mode + '     ' + order_created_date)
 
                 var update_1 = {};
                 update_1['modified_date'] = new Date();
@@ -2197,8 +2193,6 @@ router.post('/sellOrderManually', async(req, resp) => {
                     // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
                     var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
 
-                    console.log('3 == ' + buy_order_id + '  ' + log_msg + '  sell_manually ', ' yes ' + '     ' + exchange + '    ' + order_mode + '     ' + order_created_date)
-
                     logPromise_1.then((resp) => {})
                     //send order for sell on specific ip
                     var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, 'barrier_percentile_trigger', 'sell_market_order', exchange);
@@ -2210,8 +2204,6 @@ router.post('/sellOrderManually', async(req, resp) => {
                     var log_msg = "Market Order Send For Sell On **:  " + parseFloat(currentMarketPrice).toFixed(8);
                     // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
                     var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
-
-                    console.log('4 == ' + buy_order_id + '  ' + log_msg + '  sell_manually ', ' yes ' + '     ' + exchange + '    ' + order_mode + '     ' + order_created_date)
 
                     logPromise_1.then((resp) => {})
                     //call function for selling orders
@@ -4053,6 +4045,9 @@ router.post('/setForSell', async(req, resp) => {
     var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
     var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
     var logPromise1 = create_orders_history_log(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange, order_mode, order_created_date)
+
+    console.log('1 == ' + buyOrderId + '  ' + log_msg + '  set_for_sell ', ' yes ' + '     ' + exchange + '    ' + order_mode + '     ' + order_created_date)
+
     logPromise1.then((resolve) => {})
 
 
