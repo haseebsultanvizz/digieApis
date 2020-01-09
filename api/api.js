@@ -1933,7 +1933,17 @@ router.post('/orderMoveToLth', async(req, resp) => {
 				updObj['modified_date'] = new Date();
 			var updBuyPromise = updateOne(where,updObj,buy_collection);
                 updBuyPromise.then((resolve)=>{});
-		}
+        }
+        
+
+        if (typeof buyOrderObj['buy_parent_id'] != 'undefined'){
+            let where = {};
+            where['_id'] = new ObjectID(String(buyOrderObj['buy_parent_id']));
+            let updObj = {};
+            updObj['status'] = 'new';
+            let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            let updPromise = updateOne(where, updObj, collection);
+        }
 		
         var respPromise = orderMoveToLth(orderId, lth_profit, exchange, sell_price);
         let show_hide_log = 'yes';
