@@ -2014,6 +2014,17 @@ router.post('/deleteOrder', async(req, resp) => {
         var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
         var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
         var promiseResponse = await Promise.all([LogPromise, respPromise]);
+
+        if ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) && typeof getBuyOrder['buy_parent_id'] != 'undefined') {
+            let where = {};
+            where['_id'] = new ObjectID(String(getBuyOrder['buy_parent_id']));
+            let updObj = {};
+            updObj['status'] = 'new';
+            let exchange = req.body.exchange
+            let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            let updPromise = updateOne(where, updObj, collection);
+        }
+
         resp.status(200).send({
             message: promiseResponse
         });
