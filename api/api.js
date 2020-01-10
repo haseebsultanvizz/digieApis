@@ -5411,11 +5411,6 @@ return new Promise((resolve, reject) => {
                 insertArr['show_error_log'] = show_hide_log;
                 insertArr['created_date'] = new Date();
 
-                console.log('1 == full collection name')
-                console.log(full_collection_name)
-                console.log('2 == log')
-                console.log(insertArr)
-
                 db.collection(full_collection_name).insertOne(insertArr, (err, success) => {
                         if (err) {
                             reject(err)
