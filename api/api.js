@@ -3524,7 +3524,7 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                         var getBuyOrder = await listOrderById(orderId, exchange);
                         var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
                         var order_mode = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                        var logPromise_1 = create_orders_history_log(orderId, log_msg, 'order_profit_percentage_change', 'yes', exchange, order_mode, order_created_date)
+                        var logPromise_1 = create_orders_history_log(orderId, log_msg_1, 'order_profit_percentage_change', 'yes', exchange, order_mode, order_created_date)
                         logPromise_1.then((callback) => {})
 
                     } else { //End of side
