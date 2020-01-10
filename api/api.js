@@ -3447,6 +3447,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
         var side = req.body.side;
         var updated_price = req.body.updated_price;
 
+        console.log('1 == request')
+        console.log(req.body.exchange)
+
         var side = req.body.side;
         var nss = side.indexOf("profit_inBall");
 
@@ -3461,6 +3464,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
         if (orderArr.length > 0) {
             for (let index in orderArr) {
+
+                console.log('2 == listOrderById')
 
                 var orderid = orderArr[index]['_id'];
                 var trigger_type = orderArr[index]['trigger_type'];
@@ -3485,6 +3490,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                 //check order is auto order 
                 if (trigger_type != 'no') {
 
+                    console.log('3 == auto order')
+
                     //In case of auto order if loss percentage is updated the change the value of initial order 
                     let iniatial_trail_stop = (typeof orderArr[index]['iniatial_trail_stop'] == 'undefined') ? 0 : orderArr[index]['iniatial_trail_stop'];
 
@@ -3500,6 +3507,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
                     //check of  profit percentage is updated
                     if (side == 'profit_inBall') {
+
+                        console.log('4 == profit_inball')
+
                         message = ' Auto Order Sell Price Changed';
                         var filter = {};
                         filter['_id'] = new ObjectID(orderId);
@@ -3529,6 +3539,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
                     } else { //End of side
 
+                        console.log('5 == else profit_inBall')
+
                         message = "Auto Order stop Loss Changed";
                         var filter = {};
                         filter['_id'] = new ObjectID(orderId);
@@ -3554,8 +3566,12 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                 } else { //End of trigger type
                     //:::::::::::::::::Manual Trading :::::::::::::::::
 
+                    console.log('6 == Manual order')
+
                     //check of  sell order id
                     if (sell_order_id != '') {
+
+                        console.log('7 == if sell_order_id')
 
                         //get sell order by id
                         var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
@@ -3580,6 +3596,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                         //cehck if manual order and sell price is changes
 
                         if (side == 'profit_inBall') {
+
+                            console.log('8 == if profit_inBall')
+
                             message = "Manual Order  Profit price Changed"
                             var filter = {};
                             filter['_id'] = new ObjectID(sell_order_id);
@@ -3626,6 +3645,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                             logPromise_1 = create_orders_history_log(orderId, log_msg, 'order_profit_percentage_change', 'yes', exchange, order_mode, order_created_date)
                             logPromise_1.then((callback) => {})
                         } else { //End of profitable side
+
+                            console.log('9 == else profit_inBall')
+
                             message = "Manual Order  stop loss price Changed";
                             var current_data2222 = purchased_price - updated_price;
                             var stop_loss_percentage = (current_data2222 * 100 / updated_price);
@@ -3691,9 +3713,12 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
 
                     } else if (sell_order_id == '' && statsus == 'FILLED' && side == 'profit_inBall') {
+                        console.log('9 == else if sell_order_id')
+                        console.log('10 == set for sell')
                         ///:::::::::set for sell ::::::::::::::::::::::::
                         let tempArrResp = await listselTempOrders(orderId, exchange);
                         if (tempArrResp.length > 0) {
+                            console.log('11 == temp sell exist')
                             //::::::::::: if temp arr Exist ::::::::::::::::::
                             var tempObj = tempArrResp[0];
                             var stop_loss = (typeof tempObj['stop_loss'] == 'undefined') ? '' : tempObj['stop_loss'];
@@ -3757,9 +3782,11 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                     } else { //End of if sell order Exist 
                         let tempArrResp = await listselTempOrders(orderId, exchange);
 
-
+                        console.log('12 == else sell_order_id')
                         //:::::::::::::::::::
                         if (tempArrResp.length == 0) {
+                            console.log('13 == tempArrResp')
+
                             var filter = {};
                             filter['_id'] = new ObjectID(orderId);
                             var update = {};
@@ -3778,6 +3805,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
 
                             if (side == 'profit_inBall') {
+
+                                console.log('14 == profit in ball')
 
                                 message = "Manual Order profit price changed and order Set to Auto Sell";
                                 temp_arr['profit_percent'] = sell_profit_percent;
@@ -3814,6 +3843,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
 
                             } else {
+
+                                console.log('15 == else profit_inBall')
+
                                 message = "Manual Order stoploss price changed and order Set to Auto Sell"
                                 var current_data2222 = buy_price - updated_price;
                                 var loss_percentage = (current_data2222 * 100 / updated_price);
@@ -3913,6 +3945,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                             var upd_temp = {};
                             if (side == 'profit_inBall') {
 
+                                console.log('16 == profit in ball temp sell order')
+
                                 upd_temp['profit_percent'] = sell_profit_percent;
                                 upd_temp['profit_price'] = updated_price;
 
@@ -3956,6 +3990,9 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                                 updateBuyPromise.then((resolve) => {});
 
                             } else {
+
+                                console.log('17 == profit in ball temp sell order')
+
                                 message = "Manual Order stoploss price changed and order Set to Auto Sell"
                                 var current_data2222 = buy_price - updated_price;
                                 var loss_percentage = (current_data2222 * 100 / updated_price);
