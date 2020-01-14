@@ -2279,7 +2279,6 @@ async function listOrderLog(orderId, exchange,order_mode,order_created_date) {
                     resolve(new_logs)
 
                     // var old_logs = await db.collection('orders_history_log_2019_backup').find(where, {}).toArray()
-                    // var new_logs = await db.collection(full_collection_name).find(where, {}).toArray()
                     // var logs = old_logs.concat(new_logs)
 
                 }else{
@@ -2287,13 +2286,6 @@ async function listOrderLog(orderId, exchange,order_mode,order_created_date) {
                     var new_logs = await db.collection(full_collection_name).aggregate(pipeline).toArray();
                     resolve(new_logs)
 
-                    // db.collection(full_collection_name).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
-                    //     if (err) {
-                    //         resolve(err);
-                    //     } else {
-                    //         resolve(result);
-                    //     }
-                    // })
                 }
 
         })
