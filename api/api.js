@@ -5032,8 +5032,8 @@ function validate_bam_credentials(APIKEY, APISECRET) {
 
 //check error in sell for buy orders
 router.post('/get_error_in_sell', async(req, resp) => {
-        let order_id = req.body.order_id;
-        let exchange = req.body.exchange;
+        // let order_id = req.body.order_id;
+        // let exchange = req.body.exchange;
         // var error = await get_error_in_sell(order_id, exchange);
         // resp.status(200).send({
         //     message: error
