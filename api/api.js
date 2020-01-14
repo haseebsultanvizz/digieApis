@@ -2146,7 +2146,7 @@ router.post('/listOrderById', async(req, resp) => {
         var ordeArr = await listOrderById(orderId, exchange);
         var orderObj = ordeArr[0];
         var order_created_date = orderObj['created_date'];
-        var order_mode = (typeof orderObj['order_mode'] == 'undefined')?buyOrderArr['orderObj']:orderObj['order_mode'];
+        var order_mode = (typeof orderObj['order_mode'] == 'undefined') ? orderObj['application_mode'] : orderObj['order_mode'];
         
     
         //promise for gettiong order log
@@ -2198,9 +2198,14 @@ router.post('/listOrderLogById', async(req, resp) => {
         let orderId = req.body.orderId;
 		let exchange = req.body.exchange;
         var timezone = req.body.timezone;
+
+        var ordeArr = await listOrderById(orderId, exchange);
+        var orderObj = ordeArr[0];
+        var order_mode = (typeof orderObj['order_mode'] == 'undefined') ? orderObj['application_mode'] : orderObj['order_mode'];
+        var order_created_date = orderObj['created_date'];
     
         //promise for gettiong order log
-		var ordeLog = await listOrderLog(orderId, exchange,order_mode,order_created_date);
+		var ordeLog = await listOrderLog(orderId, exchange, order_mode, order_created_date);
 	
         var respArr = {};
         respArr['ordeArr'] = ordeArr;
@@ -2210,13 +2215,11 @@ router.post('/listOrderLogById', async(req, resp) => {
 
             var timeZoneTime = ordeLog[row].created_date;
             try {
-                  timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
-                 timeZoneTime = new Date(timeZoneTime);
-              }
-              catch (e) {
+                timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
+                timeZoneTime = new Date(timeZoneTime);
+            }catch (e) {
                 console.log(e);
-              }
-              
+            }  
 
 			var date = timeZoneTime.toLocaleString()+' '+timezone;
             //Remove indicator log message
@@ -2228,8 +2231,6 @@ router.post('/listOrderLogById', async(req, resp) => {
                 html += '</tr>';
                 index++;
             }
-
-
         }
 
         respArr['logHtml'] = html;
@@ -2247,50 +2248,53 @@ async function listOrderLog(orderId, exchange,order_mode,order_created_date) {
             where['order_id'] = {$in: [orderId, new ObjectID(orderId)]}
             var created_date = new Date(order_created_date);
                 var current_date = new Date('2019-12-27T11:04:21.912Z');
+
                 if(created_date > current_date){
-                     /** */
-                     console.log('////////////////////////////////////////////////////////////////')
+                    
                     var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
+                    
                     var d = new Date(order_created_date);
                     //create collection name on the base of date and mode
                     var date_mode_string = '_'+order_mode+'_'+d.getFullYear()+'_'+d.getMonth();
                     //create full name of collection
                     var full_collection_name = collectionName+date_mode_string;
 
-                    console.log('///////////////////////////////////////////                   ' +full_collection_name)
-
                 }else{
                     var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
                 }  
-                console.log('full_collection_name full_collection_name full_collection_name');
-                console.log(full_collection_name);
+                
+                var pipeline = [
+                    {
+                        $match: where
+                    },
+                    {
+                        $sort: { 'created_date': -1 }
+                    },
+                    { '$limit': 100 }
+                ];
 
                 if (full_collection_name == 'orders_history_log'){
-
-                    // var old_logs = await db.collection('orders_history_log_2019_backup').find(where, {}).toArray()
-                    var new_logs = await db.collection(full_collection_name).find(where, {}).toArray()
-
-                    // var logs = old_logs.concat(new_logs)
+      
+                    var new_logs = await db.collection(full_collection_name).aggregate(pipeline).toArray();
                     resolve(new_logs)
 
+                    // var old_logs = await db.collection('orders_history_log_2019_backup').find(where, {}).toArray()
+                    // var new_logs = await db.collection(full_collection_name).find(where, {}).toArray()
+                    // var logs = old_logs.concat(new_logs)
+
                 }else{
-                    db.collection(full_collection_name).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
-                        if (err) {
-                            resolve(err);
-                        } else {
-                            resolve(result);
-                        }
-                    })
+
+                    var new_logs = await db.collection(full_collection_name).aggregate(pipeline).toArray();
+                    resolve(new_logs)
+
+                    // db.collection(full_collection_name).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
+                    //     if (err) {
+                    //         resolve(err);
+                    //     } else {
+                    //         resolve(result);
+                    //     }
+                    // })
                 }
-
-
-            //     db.collection(full_collection_name).find(where, {}).toArray((err, result) => { // Removed 11-12-2019      (.sort({created_date:-1}))  //  (allowDiskUse: true )
-            //     if (err) {
-            //         resolve(err);
-            //     } else {
-            //         resolve(result);
-            //     }
-            // })
 
         })
     })
