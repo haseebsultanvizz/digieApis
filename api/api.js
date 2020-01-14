@@ -3493,8 +3493,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
 
                     let sell_profit_percent = (typeof orderArr[index]['sell_profit_percent'] == 'undefined') ? 0 : orderArr[index]['sell_profit_percent'];
 
-                    var current_data2222 = updated_price - buy_price;
-                    var calculate_new_sell_percentage = (current_data2222 * 100 / buy_price);
+                    var current_data2222 = updated_price - purchased_price;
+                    var calculate_new_sell_percentage = (current_data2222 * 100 / purchased_price);
 
 
 
@@ -3542,6 +3542,8 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                         filter['_id'] = new ObjectID(orderId);
                         var update = {};
                         update['iniatial_trail_stop'] = parseFloat(updated_price);
+                        update['stop_loss'] = 'yes';
+                        update['loss_percentage'] = (isNaN(calculate_new_sell_percentage) ? '' : parseFloat(parseFloat(calculate_new_sell_percentage).toFixed(8)));
                         update['modified_date'] = new Date();
                         var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
                         var updatePromise = updateOne(filter, update, collectionName);
@@ -5032,10 +5034,42 @@ function validate_bam_credentials(APIKEY, APISECRET) {
 router.post('/get_error_in_sell', async(req, resp) => {
         let order_id = req.body.order_id;
         let exchange = req.body.exchange;
-        var error = await get_error_in_sell(order_id, exchange);
-        resp.status(200).send({
-            message: error
-        });
+        // var error = await get_error_in_sell(order_id, exchange);
+        // resp.status(200).send({
+        //     message: error
+        // });
+
+    //check error in sell for buy orders
+    router.post('/get_error_in_sell', async (req, resp) => {
+        let order_id = req.body.order_id;
+        let exchange = req.body.exchange;
+        conn.then((db) => {
+            let where = {};
+            where['buy_order_id'] = { $in: [order_id, new ObjectID(order_id)] }
+            where['status'] = 'error'
+            let update = {};
+            update['status'] = 'new'
+
+            let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+            let set = {};
+            set['$set'] = update;
+            db.collection(collection).updateOne(where, set, (err, result) => {
+                if (err) {
+                    console.log(err)
+                    resp.status(200).send({
+                        message: 'something went wrong'
+                    });
+                } else {
+                    resp.status(200).send({
+                        message: 'Error removed'
+                    });
+                }
+            })
+        })
+
+    }) //End of get_error_in_sell
+
+
     }) //End of get_error_in_sell
 //chekc of order is in sell
 function get_error_in_sell(order_id, exchange) {
@@ -5477,6 +5511,37 @@ function get_buy_order(order_id, exchange){
                     }
                 }
             }) //End of collection
+        }) //End of conn
+    }) //End of Promise
+}
+
+async function get_sell_order(order_id, exchange){
+    return new Promise(async (resolve, reject) => {
+        let where = {};
+        where['buy_order_id'] = { $in: [order_id, new ObjectID(order_id)] };
+        conn.then(async  (db) => {
+
+            var sell_order = [];
+            //try find sell_order in orders
+            var collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+            sell_order = await db.collection(collection).find(where).limit(1).toArray();
+            if (sell_order.length > 0) {
+                sell_order['collection'] = collection
+                sell_order['sellArr'] = sell_order[0]
+                resolve(sell_order)
+            } else {
+                //try to find sell_order in temp_sell_orders
+                collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
+                sell_order = await db.collection(collection).find(where).limit(1).toArray();
+                if (sell_order.length > 0) {
+                    sell_order['collection'] = collection
+                    sell_order['sellArr'] = sell_order[0]
+                    resolve(sell_order)
+                } else {
+                    resolve([])
+                }
+            }
+
         }) //End of conn
     }) //End of Promise
 }
