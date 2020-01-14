@@ -2267,9 +2267,9 @@ async function listOrderLog(orderId, exchange,order_mode,order_created_date) {
                     {
                         $match: where
                     },
-                    // {
-                    //     $sort: { 'created_date': -1 }
-                    // },
+                    {
+                        $sort: { 'created_date': 1 }
+                    },
                     { '$limit': 100 }
                 ];
 
