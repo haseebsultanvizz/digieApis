@@ -4126,16 +4126,18 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
             //Check if Sell order exists then use it's values on priority
             var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             var sell_collection = buy_collection;
+            console.log('-------------------------------------------------' + buy_collection)
             var sellOrderExist = false;
 
             //try to find sell order for this buy order
             var sellArr = await get_sell_order(orderId, exchange);
 
+            
             if (sellArr.length > 0) {
-
+                
                 sellArr = sellArr[0];
-                sellArr = sellArr['sellArr'];
                 sell_collection = sellArr['collection'];
+                sellArr = sellArr['sellArr'];
                 sellOrderExist = true;
 
                 //purchased_price
@@ -5873,7 +5875,7 @@ async function get_sell_order(order_id, exchange){
             sell_order = await db.collection(collection).find(where).limit(1).toArray();
             if (sell_order.length > 0) {
                 resolve([{
-                    'collecton': collection,
+                    'collection': collection,
                     'sellArr': sell_order[0],
                 }])
             } else {
@@ -5882,7 +5884,7 @@ async function get_sell_order(order_id, exchange){
                 sell_order = await db.collection(collection).find(where).limit(1).toArray();
                 if (sell_order.length > 0) {
                     resolve([{
-                        'collecton': collection,
+                        'collection': collection,
                         'sellArr': sell_order[0],
                     }])
                 } else {
