@@ -2305,6 +2305,7 @@ router.post('/sellOrderManually', async(req, resp) => {
 
             let buyOrderArr = ordeResp[0];
             let sell_order_id = (typeof buyOrderArr['sell_order_id'] == undefined) ? '' : buyOrderArr['sell_order_id'];
+            let buyOrderStatus = (typeof buyOrderArr['status'] == undefined) ? '' : buyOrderArr['status'];
 
             console.log("sell_order_id ",sell_order_id)
             if (sell_order_id != '') {
@@ -2346,7 +2347,7 @@ router.post('/sellOrderManually', async(req, resp) => {
                 // update_1['status'] = 'FILLED';
 
                 //By Ali to avoid showing in open tab [16-1-20]
-                update_1['status'] = 'submitted_for_sell'; 
+                update_1['status'] = buyOrderStatus+'_submitted_for_sell'; 
                 
                 var updatePromise_2 = updateOne(filter_1, update_1, collectionName_2);
                 var resolvePromise = Promise.all([updatePromise_1, updatePromise_2, logPromise, logPromise_2]);
