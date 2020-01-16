@@ -2343,7 +2343,11 @@ router.post('/sellOrderManually', async(req, resp) => {
                 var updatePromise_1 = updateOne(filter_1, update_1, collectionName_1);
 
                 var collectionName_2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;;
-                update_1['status'] = 'FILLED';
+                // update_1['status'] = 'FILLED';
+
+                //By Ali to avoid showing in open tab [16-1-20]
+                update_1['status'] = 'submitted_for_sell'; 
+                
                 var updatePromise_2 = updateOne(filter_1, update_1, collectionName_2);
                 var resolvePromise = Promise.all([updatePromise_1, updatePromise_2, logPromise, logPromise_2]);
                 //in case of live order move it to specified api for selling
@@ -4126,7 +4130,6 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
             //Check if Sell order exists then use it's values on priority
             var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             var sell_collection = buy_collection;
-            console.log('-------------------------------------------------' + buy_collection)
             var sellOrderExist = false;
 
             //try to find sell order for this buy order
