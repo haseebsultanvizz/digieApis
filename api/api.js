@@ -2298,97 +2298,98 @@ async function listOrderLog(orderId, exchange,order_mode,order_created_date) {
 } //End of listOrderLog
 
 //post call for sell order manually from order listing page 
-router.post('/sellOrderManually', async(req, resp) => {
+router.post('/sellOrderManually', async (req, resp) => {
 
-        let orderId = req.body.orderId;
-        let currentMarketPrice = req.body.currentMarketPriceByCoin;
-        let exchange = req.body.exchange;
-        let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        //get buy order detail by id
-        var ordeResp = await listOrderById(orderId, exchange);
-        if (ordeResp.length > 0) {
+    let orderId = req.body.orderId;
+    let currentMarketPrice = req.body.currentMarketPriceByCoin;
+    let exchange = req.body.exchange;
+    let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    //get buy order detail by id
+    var ordeResp = await listOrderById(orderId, exchange);
+    if (ordeResp.length > 0) {
 
-            let buyOrderArr = ordeResp[0];
-            let sell_order_id = (typeof buyOrderArr['sell_order_id'] == undefined) ? '' : buyOrderArr['sell_order_id'];
+        let buyOrderArr = ordeResp[0];
+        let sell_order_id = (typeof buyOrderArr['sell_order_id'] == undefined) ? '' : buyOrderArr['sell_order_id'];
+        let buyOrderStatus = (typeof buyOrderArr['status'] == undefined) ? '' : buyOrderArr['status'];
 
-            console.log("sell_order_id ",sell_order_id)
-            if (sell_order_id != '') {
-                let application_mode = (typeof buyOrderArr['application_mode'] == undefined) ? '' : buyOrderArr['application_mode'];
-                let buy_order_id = buyOrderArr['_id'];
-                let quantity = (typeof buyOrderArr['quantity'] == undefined) ? '' : buyOrderArr['quantity'];
-                let coin_symbol = (typeof buyOrderArr['symbol'] == undefined) ? '' : buyOrderArr['symbol'];
-                let admin_id = (typeof buyOrderArr['admin_id'] == undefined) ? '' : buyOrderArr['admin_id'];
-                //getting user ip for trading
-                var trading_ip = await listUsrIp(admin_id);
+        console.log("sell_order_id ", sell_order_id)
+        if (sell_order_id != '') {
+            let application_mode = (typeof buyOrderArr['application_mode'] == undefined) ? '' : buyOrderArr['application_mode'];
+            let buy_order_id = buyOrderArr['_id'];
+            let quantity = (typeof buyOrderArr['quantity'] == undefined) ? '' : buyOrderArr['quantity'];
+            let coin_symbol = (typeof buyOrderArr['symbol'] == undefined) ? '' : buyOrderArr['symbol'];
+            let admin_id = (typeof buyOrderArr['admin_id'] == undefined) ? '' : buyOrderArr['admin_id'];
+            //getting user ip for trading
+            var trading_ip = await listUsrIp(admin_id);
 
-                console.log("trading_ip ", trading_ip)
-
-
-                var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now';
-                // var logPromise = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
-                var getBuyOrder = await listOrderById(buy_order_id, exchange);
-                var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-                var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                var logPromise = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
+            console.log("trading_ip ", trading_ip)
 
 
-                var log_msg = 'Send Market Orde for sell by Ip: <b>' + trading_ip + '</b> ';
-                // var logPromise_2 = recordOrderLog(buy_order_id, log_msg, 'order_ip', 'no', exchange);
-                var logPromise_2 = create_orders_history_log(buy_order_id, log_msg, 'order_ip', 'no', exchange, order_mode, order_created_date)
-
-                var update_1 = {};
-                update_1['modified_date'] = new Date();
-                update_1['is_manual_sold'] = 'yes';
-                var filter_1 = {};
-                filter_1['_id'] = { $in: [orderId, new ObjectID(orderId)] }
-
-                var collectionName_1 = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+            var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now';
+            // var logPromise = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
+            var getBuyOrder = await listOrderById(buy_order_id, exchange);
+            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+            var logPromise = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
 
 
-                var updatePromise_1 = updateOne(filter_1, update_1, collectionName_1);
+            var log_msg = 'Send Market Orde for sell by Ip: <b>' + trading_ip + '</b> ';
+            // var logPromise_2 = recordOrderLog(buy_order_id, log_msg, 'order_ip', 'no', exchange);
+            var logPromise_2 = create_orders_history_log(buy_order_id, log_msg, 'order_ip', 'no', exchange, order_mode, order_created_date)
 
-                var collectionName_2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;;
-                // update_1['status'] = 'FILLED';
+            var update_1 = {};
+            update_1['modified_date'] = new Date();
+            update_1['is_manual_sold'] = 'yes';
+            var filter_1 = {};
+            filter_1['_id'] = { $in: [orderId, new ObjectID(orderId)] }
 
-                //By Ali to avoid showing in open tab [16-1-20]
-                update_1['status'] = 'submitted_for_sell'; 
-                
-                var updatePromise_2 = updateOne(filter_1, update_1, collectionName_2);
-                var resolvePromise = Promise.all([updatePromise_1, updatePromise_2, logPromise, logPromise_2]);
-                //in case of live order move it to specified api for selling
-                if (application_mode == 'live') {
-
-                
-                    var log_msg = "Market Order Send For Sell On:  " + parseFloat(currentMarketPrice).toFixed(8);
-                    // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
-                    var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
-
-                    logPromise_1.then((resp) => {})
-                    //send order for sell on specific ip
-                    var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, 'barrier_percentile_trigger', 'sell_market_order', exchange);
-                    console.log("SellOrderResolve ", SellOrderResolve)
-
-                    SellOrderResolve.then((resp) => {})
-                } else {
-                    //if test order 
-                    var log_msg = "Market Order Send For Sell On **:  " + parseFloat(currentMarketPrice).toFixed(8);
-                    // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
-                    var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
-
-                    logPromise_1.then((resp) => {})
-                    //call function for selling orders
-                    sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange);
-
-                }
-            } //End of if sell order id not empty	
-        } //Order Arr End 
+            var collectionName_1 = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
 
 
-        resp.status(200).send({
-            message: ordeResp
-        });
+            var updatePromise_1 = updateOne(filter_1, update_1, collectionName_1);
 
-    }) //End of sellOrderManually
+            var collectionName_2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;;
+            // update_1['status'] = 'FILLED';
+
+            //By Ali to avoid showing in open tab [16-1-20]
+            update_1['status'] = buyOrderStatus + '_submitted_for_sell';
+
+            var updatePromise_2 = updateOne(filter_1, update_1, collectionName_2);
+            var resolvePromise = Promise.all([updatePromise_1, updatePromise_2, logPromise, logPromise_2]);
+            //in case of live order move it to specified api for selling
+            if (application_mode == 'live') {
+
+
+                var log_msg = "Market Order Send For Sell On:  " + parseFloat(currentMarketPrice).toFixed(8);
+                // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
+                var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
+
+                logPromise_1.then((resp) => { })
+                //send order for sell on specific ip
+                var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, 'barrier_percentile_trigger', 'sell_market_order', exchange);
+                console.log("SellOrderResolve ", SellOrderResolve)
+
+                SellOrderResolve.then((resp) => { })
+            } else {
+                //if test order 
+                var log_msg = "Market Order Send For Sell On **:  " + parseFloat(currentMarketPrice).toFixed(8);
+                // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
+                var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
+
+                logPromise_1.then((resp) => { })
+                //call function for selling orders
+                sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange);
+
+            }
+        } //End of if sell order id not empty	
+    } //Order Arr End 
+
+
+    resp.status(200).send({
+        message: ordeResp
+    });
+
+}) //End of sellOrderManually
 
 
 //function for updating any collection the base of collection and filtes
