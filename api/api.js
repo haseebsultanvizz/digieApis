@@ -1697,7 +1697,7 @@ async function listOrderListing(postDAta, dbConnection) {
     }
 
     if (postDAta.status == 'open') {
-        filter['status'] = { '$in': ['submitted', 'FILLED'] }
+        filter['status'] = { '$in': ['submitted', 'FILLED', 'FILLED_ERROR'] }
         filter['is_sell_order'] = 'yes';
     }
 
@@ -1722,7 +1722,7 @@ async function listOrderListing(postDAta, dbConnection) {
 
 
     if (postDAta.status == 'LTH') {
-        filter['status'] = 'LTH';
+        filter['status'] = { '$in': ['LTH', 'LTH_ERROR'] };
         filter['is_sell_order'] = 'yes';
     }
 
