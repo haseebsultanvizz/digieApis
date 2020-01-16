@@ -5491,7 +5491,7 @@ router.post('/removeOrderManually', async (req, resp) => {
 
 
     var where_3 = {};
-    where_3['buy_order_id'] = new ObjectID(order_id)
+    where_3['buy_order_id'] = { $in: [new ObjectId(order_id), order_id] }
     var upsert_2 = { 'upsert': true };
     var collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
     var upd_2 = {};
