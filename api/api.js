@@ -5462,6 +5462,16 @@ router.post('/removeOrderManually', async(req, resp) => {
         var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, order_mode, order_created_date)
         promiseLog.then((callback) => {});
 
+      
+
+
+        /*
+        @ Explode Status from here 
+        */
+          var buyOrderStatus = getBuyOrder[0]['status'];
+          var res = buyOrderStatus.split("_");
+          var beforeStatus = res[0]; 
+
 
         var where_2 = {};
         where_2['_id'] = new ObjectID(order_id)
@@ -5469,6 +5479,7 @@ router.post('/removeOrderManually', async(req, resp) => {
         var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         var upd = {};
         upd['modified_date'] = new Date();
+        upd['status'] = beforeStatus;
         var updPromise_2 = updateSingle(collectionName, where_2, upd, upsert);
         updPromise_2.then((callback) => {});
 
