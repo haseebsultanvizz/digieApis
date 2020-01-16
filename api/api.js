@@ -5453,43 +5453,54 @@ function get_error_in_sell(order_id, exchange) {
 } //End of get_error_in_sell
 
 //function for removing error in sell
-router.post('/removeOrderManually', async(req, resp) => {
-        let order_id = req.body.order_id;
-        let exchange = req.body.exchange;
+router.post('/removeOrderManually', async (req, resp) => {
+    let order_id = req.body.order_id;
+    let exchange = req.body.exchange;
 
-        var show_hide_log = 'yes';
-        var type = 'remove_error';
-        var log_msg = 'Order was updated And Moved From Error To Open ***';
-        // var promiseLog = recordOrderLog(order_id, log_msg, type, show_hide_log, exchange)
-        var getBuyOrder = await listOrderById(order_id, exchange);
-        var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-        var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, order_mode, order_created_date)
-        promiseLog.then((callback) => {});
-
-
-        var where_2 = {};
-        where_2['_id'] = new ObjectID(order_id)
-        var upsert = { 'upsert': true };
-        var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        var upd = {};
-        upd['modified_date'] = new Date();
-        var updPromise_2 = updateSingle(collectionName, where_2, upd, upsert);
-        updPromise_2.then((callback) => {});
+    var show_hide_log = 'yes';
+    var type = 'remove_error';
+    var log_msg = 'Order was updated And Moved From Error To Open ***';
+    // var promiseLog = recordOrderLog(order_id, log_msg, type, show_hide_log, exchange)
+    var getBuyOrder = await listOrderById(order_id, exchange);
+    var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+    var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+    var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, order_mode, order_created_date)
+    promiseLog.then((callback) => { });
 
 
 
-        var where_3 = {};
-        where_3['buy_order_id'] = new ObjectID(order_id)
-        var upsert_2 = { 'upsert': true };
-        var collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-        var upd_2 = {};
-        upd_2['status'] = 'new';
-        var message = await updateSingle(collection, where_3, upd_2, upsert_2);
-        resp.status(200).send({
-            message: message
-        });
-    }) //End of removeOrderManually
+
+    /*
+    @ Explode Status from here 
+    */
+    var buyOrderStatus = getBuyOrder[0]['status'];
+    var res = buyOrderStatus.split("_");
+    var beforeStatus = res[0];
+
+
+    var where_2 = {};
+    where_2['_id'] = new ObjectID(order_id)
+    var upsert = { 'upsert': true };
+    var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    var upd = {};
+    upd['modified_date'] = new Date();
+    upd['status'] = beforeStatus;
+    var updPromise_2 = updateSingle(collectionName, where_2, upd, upsert);
+    updPromise_2.then((callback) => { });
+
+
+
+    var where_3 = {};
+    where_3['buy_order_id'] = new ObjectID(order_id)
+    var upsert_2 = { 'upsert': true };
+    var collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+    var upd_2 = {};
+    upd_2['status'] = 'new';
+    var message = await updateSingle(collection, where_3, upd_2, upsert_2);
+    resp.status(200).send({
+        message: message
+    });
+}) //End of removeOrderManually
 
 //validate user password for updting exchange credentials
 router.post('/validate_user_password', async(req, resp) => {
