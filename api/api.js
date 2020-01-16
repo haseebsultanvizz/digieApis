@@ -1177,7 +1177,7 @@ router.post('/listOrderListing', async(req, resp) => {
 
         //:::::::::::::::: filter_3 for count open order :::::::::::::::::
         var filter_3 = {};
-        filter_3['status'] = { '$in': ['submitted', 'FILLED'] }
+        filter_3['status'] = { '$in': ['submitted', 'FILLED', 'FILLED_ERROR'] }
         filter_3['is_sell_order'] = 'yes';
         filter_3['admin_id'] = admin_id;
         filter_3['application_mode'] = application_mode;
@@ -1260,7 +1260,7 @@ router.post('/listOrderListing', async(req, resp) => {
 
         //::::::::::::: filter_6 for count all lth order :::::::::::::::::::
         var filter_6 = {};
-        filter_6['status'] = 'LTH';
+    filter_6['status'] = { $in: ['LTH', 'LTH_ERROR']};
         filter_6['admin_id'] = admin_id;
         filter_6['application_mode'] = application_mode;
         filter_6['is_sell_order'] = 'yes';
@@ -5407,7 +5407,7 @@ router.post('/get_error_in_sell', async(req, resp) => {
         conn.then((db) => {
             let where = {};
             where['buy_order_id'] = { $in: [order_id, new ObjectID(order_id)] }
-            where['status'] = 'error'
+            where['status'] = { $in: ['error', 'LTH_ERROR', 'FILLED_ERROR']}
             let update = {};
             update['status'] = 'new'
 
