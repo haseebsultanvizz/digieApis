@@ -5402,12 +5402,12 @@ router.post('/get_error_in_sell', async(req, resp) => {
         conn.then((db) => {
 
             //create remove error log
-            var log_msg = 'Order was updated And Removed Error ***';
-            var getBuyOrder = await listOrderById(order_id, exchange);
-            var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-            var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-            var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, order_mode, order_created_date)
-            promiseLog.then((callback) => { });
+            // var log_msg = 'Order was updated And Removed Error ***';
+            // var getBuyOrder = await listOrderById(order_id, exchange);
+            // var order_created_date = ((getBuyOrder.length > 0 && getBuyOrder[0].length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+            // var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+            // var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, order_mode, order_created_date)
+            // promiseLog.then((callback) => { });
 
             let where = {};
             where['buy_order_id'] = { $in: [order_id, new ObjectID(order_id)] }
