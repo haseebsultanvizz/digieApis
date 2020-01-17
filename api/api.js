@@ -1416,6 +1416,7 @@ router.post('/listOrderListing', async(req, resp) => {
 
             order['actualPurchasePrice'] = isNaN(actualPurchasePrice) ? '---' : actualPurchasePrice;
             order['coinPriceInBtc'] = parseFloat(coinPriceInBtc).toFixed(2);
+            order['quantity'] = (isNaN(parseFloat(parseFloat(order['quantity']).toFixed(8))) ? '' : parseFloat(parseFloat(order['quantity']).toFixed(8))) 
 
             let market_sold_price = (typeof orderListing[index].market_sold_price == 'undefined') ? 0 : orderListing[index].market_sold_price;
 
@@ -1508,9 +1509,9 @@ router.post('/listOrderListing', async(req, resp) => {
                     htmlStatus += '<span class="badge badge-success">Sold</span>';
                 }
             } else {
-                var statusClass = (status == 'error' || status == 'LTH_ERROR' || status == 'FILLED_ERROR') ? 'danger' : 'success'
+                var statusClass = (status == 'error' || status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' ) ? 'danger' : 'success'
                 status = (parent_status == 'parent') ? parent_status : status;
-                if (status == 'LTH_ERROR' || status == 'FILLED_ERROR'){
+                if (status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR'){
                     let err_lth_filled = status.replace('_', ' ')
                     htmlStatus += '<span class="badge badge-' + statusClass + '">' + err_lth_filled + '</span>';
                 }else{
@@ -5407,7 +5408,7 @@ router.post('/get_error_in_sell', async(req, resp) => {
         conn.then((db) => {
             let where = {};
             where['buy_order_id'] = { $in: [order_id, new ObjectID(order_id)] }
-            where['status'] = { $in: ['error', 'LTH_ERROR', 'FILLED_ERROR']}
+            where['status'] = { $in: ['error', 'LTH_ERROR', 'FILLED_ERROR', 'submitted_ERROR']}
             let update = {};
             update['status'] = 'new'
 
