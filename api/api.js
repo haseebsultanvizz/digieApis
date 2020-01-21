@@ -4235,6 +4235,11 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             var filter = {};
                             filter['_id'] = sellArr['_id'];
                             var update = {};
+
+                            if (typeof order['lth_functionality'] != 'undefined' && order['lth_functionality'] == 'yes'){
+                                update['lth_profit'] = new_percentage;
+                            }
+
                             update['auto_sell'] = 'yes';
                             update['sell_price'] = updated_price;
                             update['sell_profit_percent'] = new_percentage;
@@ -4249,6 +4254,11 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         var filter = {};
                         filter['_id'] = new ObjectID(orderId);
                         var update = {};
+                        
+                        if (typeof order['lth_functionality'] != 'undefined' && order['lth_functionality'] == 'yes') {
+                            update['lth_profit'] = new_percentage;
+                        }
+
                         update['auto_sell'] = 'yes';
                         update['sell_price'] = updated_price;
                         update['sell_profit_percent'] = new_percentage;
@@ -4319,6 +4329,11 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             var filter = {};
                             filter['_id'] = sellArr['_id'];
                             var update = {};
+
+                            if (typeof order['lth_functionality'] != 'undefined' && order['lth_functionality'] == 'yes') {
+                                update['lth_profit'] = new_percentage;
+                            }
+
                             update['auto_sell'] = 'yes';
                             update['sell_price'] = updated_price;
                             update['sell_profit_percent'] = new_percentage
@@ -4332,6 +4347,11 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         var filter = {};
                         filter['_id'] = new ObjectID(orderId);
                         var update = {};
+                        
+                        if (typeof order['lth_functionality'] != 'undefined' && order['lth_functionality'] == 'yes') {
+                            update['lth_profit'] = new_percentage;
+                        }
+
                         update['auto_sell'] = 'yes';
                         update['sell_price'] = updated_price;
                         update['sell_profit_percent'] = new_percentage
