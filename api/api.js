@@ -1309,6 +1309,7 @@ router.post('/listOrderListing', async(req, resp) => {
         var filter_8 = {};
         filter_8['admin_id'] = admin_id;
         filter_8['application_mode'] = application_mode;
+        filter_8['is_sell_order'] = 'sold';
 
         if (postDAta.start_date != '' && postDAta.end_date != '') {
             let start_date = new Date(postDAta.start_date);
@@ -1324,10 +1325,31 @@ router.post('/listOrderListing', async(req, resp) => {
         //::::::::::::: End of filter_8 for count all sold order :::::::::::::::::::
         //Promise for count all sold orders 
         var soldCountPromise = countCollection(collectionName, filter_8);
+        
+        //::::::::::::: filter_9 for count all lth_pause order :::::::::::::::::::
+        var filter_9 = {};
+        filter_9['admin_id'] = admin_id;
+        filter_9['application_mode'] = application_mode;
+        filter_9['is_sell_order'] = 'pause';
+
+        if (postDAta.start_date != '' && postDAta.end_date != '') {
+            let start_date = new Date(postDAta.start_date);
+            let end_date = new Date(postDAta.end_date);
+            filter_9['created_date'] = { '$gte': start_date, '$lte': end_date };
+        }
+
+        if (count > 0) {
+            for (let [key, value] of Object.entries(search)) {
+                filter_9[key] = value;
+            }
+        }
+        //::::::::::::: End of filter_9 for count all lth_pause  order :::::::::::::::::::
+        //Promise for count all lth_pause orders
+        var lthPauseCountPromise = countCollection(collectionName, filter_9);
 
 
         //Resolve promised for count order for all tabs
-        var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise]);
+    var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise]);
 
         var parentCount = PromiseResponse[0];
         var newCount = PromiseResponse[1];
@@ -1338,8 +1360,9 @@ router.post('/listOrderListing', async(req, resp) => {
         var submitCount = PromiseResponse[6];
         var soldCount = PromiseResponse[7];
         var filledCount = PromiseResponse[8];
+        var lthPauseCount = PromiseResponse[9];
 
-        var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount);
+    var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
 
         var countArr = {};
         countArr['totalCount'] = totalCount;
@@ -1352,6 +1375,7 @@ router.post('/listOrderListing', async(req, resp) => {
         countArr['submitCount'] = submitCount;
         countArr['soldCount'] = soldCount;
         countArr['filledCount'] = filledCount;
+        countArr['lthPauseCount'] = lthPauseCount;
         //get user balance for listing on list-order page
         var userBalanceArr = await listUserBalance(admin_id, exchange);
         var soldOrderArr = []; //await calculateAverageOrdersProfit(req.body.postData);
@@ -1502,8 +1526,11 @@ router.post('/listOrderListing', async(req, resp) => {
                 } else {
                     htmlStatus += '<span class="badge badge-info">WAITING FOR SELL </span>';
                 }
-            } else if (status == 'FILLED' && is_sell_order == 'sold') {
-                if (is_lth_order == 'yes') {
+            } else if (status == 'FILLED' && (is_sell_order == 'sold' || is_sell_order == 'pause')) {
+                
+                if (is_sell_order == 'pause') {
+                    htmlStatus += '<span class="badge badge-success">Paused</span>';
+                }else if (is_lth_order == 'yes') {
                     htmlStatus += '<span class="badge badge-warning">LTH</span><span class="badge badge-success">Sold</span>';
                 } else {
                     htmlStatus += '<span class="badge badge-success">Sold</span>';
@@ -1718,6 +1745,12 @@ async function listOrderListing(postDAta, dbConnection) {
     if (postDAta.status == 'sold') {
         filter['status'] = 'FILLED'
         filter['is_sell_order'] = 'sold';
+        var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+    }
+    
+    if (postDAta.status == 'lth_pause') {
+        filter['status'] = 'FILLED'
+        filter['is_sell_order'] = 'pause';
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
 
