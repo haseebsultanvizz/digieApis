@@ -1619,6 +1619,7 @@ function calculateAverageOrdersProfit(postDAta) {
     var filter = {};
     filter['application_mode'] = postDAta.application_mode
     filter['admin_id'] = postDAta.admin_id
+    filter['is_sell_order'] = 'sold'
 
     if (postDAta.coins != '') {
         filter['symbol'] = { '$in': postDAta.coins }
