@@ -1440,7 +1440,8 @@ router.post('/listOrderListing', async(req, resp) => {
 
             order['actualPurchasePrice'] = isNaN(actualPurchasePrice) ? '---' : actualPurchasePrice;
             order['coinPriceInBtc'] = parseFloat(coinPriceInBtc).toFixed(2);
-            order['quantity'] = (isNaN(parseFloat(parseFloat(order['quantity']).toFixed(8))) ? '' : parseFloat(parseFloat(order['quantity']).toFixed(8))) 
+            order['quantity'] = (isNaN(parseFloat(parseFloat(order['quantity']).toFixed(8))) ? '' : parseFloat(parseFloat(order['quantity']).toFixed(8)))
+            order['price'] = (isNaN(order['price']) ? '' : order['price'].toFixed(8))
 
             let market_sold_price = (typeof orderListing[index].market_sold_price == 'undefined') ? 0 : orderListing[index].market_sold_price;
 
