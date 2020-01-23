@@ -739,13 +739,15 @@ router.post('/listAutoOrderDetail', async(req, resp) => {
 
 router.post('/listmarketPriceMinNotation', async(req, resp) => {
        //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
-        var marketMinNotationPromise = marketMinNotation(req.body.coin);
+        // var marketMinNotationPromise = marketMinNotation(req.body.coin);
+        var marketMinNotationPromise = marketMinNotation_with_step_size(req.body.coin);
         let exchange = req.body.exchange;
         let coin = req.body.coin;
         var currentMarketPricePromise = listCurrentMarketPrice(coin, exchange);
         var promisesResult = await Promise.all([marketMinNotationPromise, currentMarketPricePromise]);
         var responseReslt = {};
-        responseReslt['marketMinNotation'] = promisesResult[0];
+        responseReslt['marketMinNotation'] = promisesResult[0].min_notation;
+        responseReslt['marketMinNotationStepSize'] = promisesResult[0].step_size;
         responseReslt['currentmarketPrice'] = promisesResult[1];
         resp.status(200).send({
             message: responseReslt
@@ -1086,6 +1088,28 @@ function marketMinNotation(symbol) {
         })
     })
 } //End of marketMinNotation
+
+//function which have all prerequisite for buying or selling any order, returns step size with min notation 
+function marketMinNotation_with_step_size(symbol) {
+    return new Promise((resolve) => {
+        conn.then((db) => {
+            let where = {};
+            where.symbol = symbol;
+            db.collection('market_min_notation').find(where).toArray((err, result) => {
+                if (err) {
+                    resolve(err);
+                } else {
+                    var obj = {}
+                    if (result.length > 0) {
+                        obj['min_notation'] = result[0].min_notation
+                        obj['step_size'] = result[0].stepSize
+                    }
+                    resolve(obj)
+                }
+            })
+        })
+    })
+} //End of marketMinNotation_with_step_size
 
 //function for getting order list from order-list angular  component 
 router.post('/listOrderListing', async(req, resp) => {
