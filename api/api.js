@@ -5488,14 +5488,6 @@ router.post('/get_error_in_sell', async(req, resp) => {
         let exchange = req.body.exchange;
         conn.then((db) => {
 
-            //create remove error log
-            // var log_msg = 'Order was updated And Removed Error ***';
-            // var getBuyOrder = await listOrderById(order_id, exchange);
-            // var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-            // var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-            // var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, order_mode, order_created_date)
-            // promiseLog.then((callback) => { });
-
             let where = {};
             where['buy_order_id'] = { $in: [order_id, new ObjectID(order_id)] }
             where['status'] = { $in: ['error', 'LTH_ERROR', 'FILLED_ERROR', 'submitted_ERROR']}
@@ -5505,16 +5497,41 @@ router.post('/get_error_in_sell', async(req, resp) => {
             let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
             let set = {};
             set['$set'] = update;
-            db.collection(collection).updateOne(where, set, (err, result) => {
+            db.collection(collection).updateOne(where, set, async (err, result) => {
                 if (err) {
                     console.log(err)
                     resp.status(200).send({
-                        message: 'something went wrong'
+                        status: false,
+                        message: 'Something went wrong'
                     });
                 } else {
-                    resp.status(200).send({
-                        message: 'Error removed'
-                    });
+                    
+                    if (result['nModified'] > 0){
+
+                        // //create remove error log
+                        // var log_msg = 'Order was updated And Removed Error ***';
+                        // var getBuyOrder = await listOrderById(order_id, exchange);
+                        
+                        // if (getBuyOrder.length > 0){
+                        //     var order_created_date = getBuyOrder[0]['created_date']
+                        //     var order_mode = getBuyOrder[0]['application_mode']
+                        //     var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, order_mode, order_created_date)
+                        //     promiseLog.then((callback) => { });
+                        // }
+
+                        resp.status(200).send({
+                            status: true,
+                            message: 'Error removed successfully',
+                            result
+                        });
+
+                    }else{
+                        resp.status(200).send({
+                            status: false,
+                            message: 'Something went wrong'
+                        });
+                    }
+
                 }
             })
         })
