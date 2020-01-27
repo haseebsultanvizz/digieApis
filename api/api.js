@@ -1562,9 +1562,9 @@ router.post('/listOrderListing', async(req, resp) => {
                     htmlStatus += '<span class="badge badge-success">Sold</span>';
                 }
             } else {
-                var statusClass = (status == 'error' || status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' ) ? 'danger' : 'success'
+                var statusClass = (status == 'error' || status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR') ? 'danger' : 'success'
                 status = (parent_status == 'parent') ? parent_status : status;
-                if (status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR'){
+                if (status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR'){
                     let err_lth_filled = status.replace('_', ' ')
                     htmlStatus += '<span class="badge badge-' + statusClass + '">' + err_lth_filled + '</span>';
                 }else{
@@ -1808,8 +1808,6 @@ async function listOrderListing(postDAta, dbConnection) {
 
     //if status is all the get from both buy_orders and sold_buy_orders 
     if (postDAta.status == 'all') {
-        console.log('==============================================')
-        console.log(filter)
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter, pagination, limit, skip);
@@ -5537,6 +5535,138 @@ router.post('/get_error_in_sell', async(req, resp) => {
         })
 
     }) //End of get_error_in_sell
+
+//remove error from orders
+router.post('/remove_error', async (req, resp) => {
+
+    let order_id = req.body.order_id;
+    let exchange = req.body.exchange;
+    conn.then( async (db) => {
+
+        //get buy order
+        let buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange; 
+        let sell_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+
+        let where = {
+            '_id': { $in: [order_id, new ObjectID(order_id)] }
+        }
+        let buy_order = await db.collection(buy_collection).find(where).limit(1).toArray();
+        if (buy_order.length > 0) {
+            buy_order = buy_order[0]
+
+            //find error in buy_order
+            let buy_status = buy_order['status']
+            var error_type = '';
+
+            var update_buy_status = '';
+            
+            if (buy_status == 'error'){
+                update_buy_status = 'new'
+                error_type = buy_status
+            } else if (buy_status = 'FILLED_ERROR' || buy_status == 'submitted_ERROR' || buy_status == 'LTH_ERROR' || buy_status == 'new_ERROR'){
+                let statusArr = buy_status.split('_');
+                update_buy_status = statusArr[0];
+                error_type = statusArr.join(' ');
+            }
+
+            //remove error from buy_order
+            let where = {
+                '_id': new ObjectID(order_id)
+            }
+            let update = {
+                '$set' : {
+                    'status': update_buy_status
+                }
+            }
+            let updated = await db.collection(buy_collection).updateOne(where, update)
+            
+            if (updated['modifiedCount'] > 0){
+
+                //remove error from sell_order
+                let where = {
+                    'buy_order_id': { $in: [order_id, new ObjectID(order_id)] }
+                }
+                let update = {
+                    '$set': {
+                        'status': 'new'
+                    }
+                }
+                let updated = await db.collection(sell_collection).updateOne(where, update)
+                
+                if (updated['modifiedCount'] > 0) {
+                    
+                    //create remove error log
+                    var log_msg = 'Order was updated And Removed ' + error_type + ' ***';
+                    var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, buy_order['application_mode'], buy_order['created_date'])
+                    promiseLog.then((callback) => { });
+                    
+                    resp.status(200).send({
+                        status: true,
+                        message: 'Error removed successfully',
+                    });
+                }else{
+                    resp.status(200).send({
+                        status: false,
+                        message: 'Something went wrong'
+                    });
+                }
+
+            }else{
+                resp.status(200).send({
+                    status: false,
+                    message: 'Something went wrong'
+                });
+            }
+
+        }else{
+            resp.status(200).send({
+                status: false,
+                message: 'Something went wrong'
+            });
+        }
+
+
+        // let where = {};
+        // where['buy_order_id'] = { $in: [order_id, new ObjectID(order_id)] }
+        // where['status'] = { $in: ['error', 'LTH_ERROR', 'FILLED_ERROR', 'submitted_ERROR'] }
+        // let update = {};
+        // update['status'] = 'new'
+
+        // let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+        // let set = {};
+        // set['$set'] = update;
+        // db.collection(collection).updateOne(where, set, async (err, result) => {
+        //     if (err) {
+        //         console.log(err)
+        //         resp.status(200).send({
+        //             status: false,
+        //             message: 'Something went wrong'
+        //         });
+        //     } else {
+
+        //         if (result['nModified'] > 0) {
+
+        //             resp.status(200).send({
+        //                 status: true,
+        //                 message: 'Error removed successfully',
+        //                 result
+        //             });
+
+        //         } else {
+        //             resp.status(200).send({
+        //                 status: false,
+        //                 message: 'Something went wrong'
+        //             });
+        //         }
+
+        //     }
+        // })
+
+
+    })
+
+}) //End of remove_error
+
 //chekc of order is in sell
 function get_error_in_sell(order_id, exchange) {
     return new Promise((resolve) => {
