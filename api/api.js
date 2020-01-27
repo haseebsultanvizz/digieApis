@@ -5575,7 +5575,8 @@ router.post('/remove_error', async (req, resp) => {
             }
             let update = {
                 '$set' : {
-                    'status': update_buy_status
+                    'status': update_buy_status,
+                    'modified_date': new Date()
                 }
             }
             let updated = await db.collection(buy_collection).updateOne(where, update)
@@ -5588,7 +5589,8 @@ router.post('/remove_error', async (req, resp) => {
                 }
                 let update = {
                     '$set': {
-                        'status': 'new'
+                        'status': 'new',
+                        'modified_date': new Date()
                     }
                 }
                 let updated = await db.collection(sell_collection).updateOne(where, update)
