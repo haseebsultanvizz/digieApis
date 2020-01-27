@@ -1178,7 +1178,7 @@ router.post('/listOrderListing', async(req, resp) => {
 
         //::::::::::::: filter_2 count new orders for order listing ::::::::::::
         var filter_2 = {};
-        filter_2['status'] = 'new';
+        filter_2['status'] = { '$in': ['new', 'new_ERROR'] };
         filter_2['price'] = { '$nin': ['', null] };
         filter_2['admin_id'] = admin_id;
         filter_2['application_mode'] = application_mode;
@@ -1224,7 +1224,7 @@ router.post('/listOrderListing', async(req, resp) => {
 
         //::::::::::::::: filter_33 for count filled orders :::::::::::::
         var filter_33 = {};
-        filter_33['status'] = { '$in': ['submitted', 'FILLED'] }
+        filter_33['status'] = { '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR'] }
         filter_33['admin_id'] = admin_id;
         filter_33['application_mode'] = application_mode;
         if (postDAta.start_date != '' && postDAta.end_date != '') {
@@ -1285,7 +1285,7 @@ router.post('/listOrderListing', async(req, resp) => {
 
         //::::::::::::: filter_6 for count all lth order :::::::::::::::::::
         var filter_6 = {};
-    filter_6['status'] = { $in: ['LTH', 'LTH_ERROR']};
+        filter_6['status'] = { $in: ['LTH', 'LTH_ERROR']};
         filter_6['admin_id'] = admin_id;
         filter_6['application_mode'] = application_mode;
         filter_6['is_sell_order'] = 'yes';
@@ -1309,7 +1309,7 @@ router.post('/listOrderListing', async(req, resp) => {
 
           //:::::::::::::  filter_7 for count all submitted order :::::::::::::::::::
         var filter_7 = {};
-        filter_7['status'] = 'submitted';
+        filter_7['status'] = { '$in': ['submitted', 'fraction_submitted_sell', 'submitted_ERROR'] }
         filter_7['admin_id'] = admin_id;
         filter_7['application_mode'] = application_mode;
         if (postDAta.start_date != '' && postDAta.end_date != '') {
@@ -1763,7 +1763,7 @@ async function listOrderListing(postDAta, dbConnection) {
 
 
     if (postDAta.status == 'filled') {
-        filter['status'] = { '$in': ['submitted', 'FILLED'] }
+        filter['status'] = { '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR'] }
     }
 
 
@@ -1794,7 +1794,7 @@ async function listOrderListing(postDAta, dbConnection) {
 
 
     if (postDAta.status == 'new') {
-        filter['status'] = 'new';
+        filter['status'] = { '$in': ['new', 'new_ERROR'] };
         filter['price'] = { '$ne': '' };
     }
 
@@ -1803,7 +1803,7 @@ async function listOrderListing(postDAta, dbConnection) {
     }
 
     if (postDAta.status == 'submitted') {
-        filter['status'] = 'submitted';
+        filter['status'] = { '$in': ['submitted', 'fraction_submitted_sell', 'submitted_ERROR'] }
     }
 
     //if status is all the get from both buy_orders and sold_buy_orders 
