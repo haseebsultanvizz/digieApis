@@ -4294,7 +4294,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             filter['_id'] = sellArr['_id'];
                             var update = {};
 
-                            if (typeof order['lth_functionality'] != 'undefined' && order['lth_functionality'] == 'yes'){
+                            if (order['status'] == 'LTH'){
                                 update['lth_profit'] = new_percentage;
                             }
 
@@ -4313,7 +4313,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         filter['_id'] = new ObjectID(orderId);
                         var update = {};
                         
-                        if (typeof order['lth_functionality'] != 'undefined' && order['lth_functionality'] == 'yes') {
+                        if (order['status'] == 'LTH') {
                             update['lth_profit'] = new_percentage;
                         }
 
@@ -4388,7 +4388,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             filter['_id'] = sellArr['_id'];
                             var update = {};
 
-                            if (typeof order['lth_functionality'] != 'undefined' && order['lth_functionality'] == 'yes') {
+                            if (order['status'] == 'LTH') {
                                 update['lth_profit'] = new_percentage;
                             }
 
@@ -4406,7 +4406,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         filter['_id'] = new ObjectID(orderId);
                         var update = {};
                         
-                        if (typeof order['lth_functionality'] != 'undefined' && order['lth_functionality'] == 'yes') {
+                        if (order['status'] == 'LTH') {
                             update['lth_profit'] = new_percentage;
                         }
 
