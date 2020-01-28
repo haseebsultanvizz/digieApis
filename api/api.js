@@ -4351,6 +4351,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             update['iniatial_trail_stop'] = updated_price;
                             update['stop_loss'] = 'yes';
                             update['loss_percentage'] = new_percentage;
+                            update['custom_stop_loss_percentage'] = new_percentage;
                             update['modified_date'] = new Date();
 
                             var updatePromise = updateOne(filter, update, sell_collection);
@@ -4365,6 +4366,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         update['iniatial_trail_stop'] = updated_price;
                         update['stop_loss'] = 'yes';
                         update['loss_percentage'] = new_percentage;
+                        update['custom_stop_loss_percentage'] = new_percentage;
                         update['modified_date'] = new Date();
 
                         // var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -4440,6 +4442,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             update['stop_loss'] = 'yes';
                             update['iniatial_trail_stop'] = updated_price;
                             update['loss_percentage'] = new_percentage;
+                            update['custom_stop_loss_percentage'] = new_percentage;
                             update['auto_sell'] = 'yes';
                             update['modified_date'] = new Date();
                             var updatePromise = updateOne(filter, update, sell_collection);
@@ -4453,6 +4456,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         update['stop_loss'] = 'yes';
                         update['iniatial_trail_stop'] = updated_price;
                         update['loss_percentage'] = new_percentage;
+                        update['custom_stop_loss_percentage'] = new_percentage;
                         update['auto_sell'] = 'yes';
                         update['modified_date'] = new Date();
                         var updatePromise = updateOne(filter, update, buy_collection);
