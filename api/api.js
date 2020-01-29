@@ -1514,7 +1514,7 @@ router.post('/listOrderListing', async(req, resp) => {
             order['targetPrice'] = (isNaN(targetPrice)) ? '---' : targetPrice
 
             var orderSellPrice = (typeof orderListing[index].market_sold_price == 'undefined' || orderListing[index].market_sold_price == '') ? '' : orderListing[index].market_sold_price;
-            var orderPurchasePrice = (typeof orderListing[index].market_value == 'undefined' || orderListing[index].market_value == '') ? 0 : orderListing[index].market_value;
+            var orderPurchasePrice = (typeof orderListing[index].purchased_price == 'undefined' || orderListing[index].purchased_price == '') ? 0 : orderListing[index].purchased_price;
             var profitLossPercentageHtml = '';
 
             //part for calculating profit loss percentage 
