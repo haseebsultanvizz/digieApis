@@ -4301,6 +4301,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             update['auto_sell'] = 'yes';
                             update['sell_price'] = updated_price;
                             update['sell_profit_percent'] = new_percentage;
+                            update['profit_percent'] = new_percentage;
                             update['defined_sell_percentage'] = new_percentage;
                             update['modified_date'] = new Date();
 
@@ -4397,6 +4398,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             update['auto_sell'] = 'yes';
                             update['sell_price'] = updated_price;
                             update['sell_profit_percent'] = new_percentage
+                            update['profit_percent'] = new_percentage
                             update['auto_sell'] = 'yes'
                             update['modified_date'] = new Date();
                             var updatePromise = updateOne(filter, update, sell_collection);
