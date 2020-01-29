@@ -4122,6 +4122,145 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
     }) //End of updateOrderfromdraging
 
 
+//post call for updaing buy price from chart if order is not buyed
+router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
+    var exchange = req.body.exchange;
+    var orderId = req.body.orderId;
+    var previous_buy_price = parseFloat(req.body.previous_buy_price);
+    var updated_buy_price = parseFloat(req.body.updated_buy_price);
+
+    //get buy order detail on the base of order id
+    var orderArr = await listOrderById(orderId, exchange);
+
+    if (orderArr.length > 0) {
+        for (let index in orderArr) {
+
+            var order = orderArr[index]
+
+            var sell_profit_percent = order['sell_profit_percent']
+            sell_profit_percent = parseFloat(parseFloat(sell_profit_percent).toFixed(8));
+            sell_profit_percent = (!isNaN(sell_profit_percent) ? sell_profit_percent : 0)
+
+            var defined_sell_percentage = order['defined_sell_percentage']
+            defined_sell_percentage = parseFloat(parseFloat(defined_sell_percentage).toFixed(8));
+            defined_sell_percentage = (!isNaN(defined_sell_percentage) ? defined_sell_percentage : 0)
+
+            //both fields are being used for the similar purpose with alternating insersition so we prioritise by sell_profit_percent
+            sell_profit_percent = (sell_profit_percent != 0 ? sell_profit_percent : defined_sell_percentage)
+
+            let loss_percentage = order['loss_percentage']
+            loss_percentage = parseFloat(parseFloat(loss_percentage).toFixed(8));
+            loss_percentage = (!isNaN(loss_percentage) ? loss_percentage : 0)
+
+            //Check if Sell order exists then use it's values on priority
+            var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            var sell_collection = buy_collection;
+            var sellOrderExist = false;
+
+            //try to find sell order for this buy order
+            var sellArr = await get_sell_order(orderId, exchange);
+
+            if (sellArr.length > 0) {
+
+                sellArr = sellArr[0];
+                sell_collection = sellArr['collection'];
+                sellArr = sellArr['sellArr'];
+                sellOrderExist = true;
+
+                var s_sell_profit_percent = sellArr['sell_profit_percent']
+                s_sell_profit_percent = parseFloat(parseFloat(s_sell_profit_percent).toFixed(8));
+                s_sell_profit_percent = (!isNaN(s_sell_profit_percent) ? s_sell_profit_percent : 0)
+
+                var s_defined_sell_percentage = sellArr['defined_sell_percentage']
+                s_defined_sell_percentage = parseFloat(parseFloat(s_defined_sell_percentage).toFixed(8));
+                s_defined_sell_percentage = (!isNaN(s_defined_sell_percentage) ? s_defined_sell_percentage : 0)
+
+                //both fields are being used for the similar purpose with alternating insersition so we prioritise by sell_profit_percent
+                s_sell_profit_percent = (s_sell_profit_percent != 0 ? s_sell_profit_percent : s_defined_sell_percentage)
+                sell_profit_percent = (s_sell_profit_percent != 0 ? s_sell_profit_percent : sell_profit_percent)
+                
+                let s_loss_percentage = sellArr['loss_percentage']
+                s_loss_percentage = parseFloat(parseFloat(s_loss_percentage).toFixed(8));
+                s_loss_percentage = (!isNaN(s_loss_percentage) ? s_loss_percentage : 0)
+                loss_percentage = (s_loss_percentage != 0 ? s_loss_percentage : loss_percentage)
+            }
+
+            var admin_id = (typeof sellArr['admin_id'] == 'undefined') ? 0 : order['admin_id'];
+            var trigger_type = order['trigger_type'];
+            var application_mode = (typeof order['application_mode'] == 'undefined') ? 0 : order['application_mode'];
+            var order_mode = application_mode
+            var order_created_date = order['created_date'];
+
+            //price can not be zero return error
+            if (updated_buy_price == 0 || (typeof trigger_type == 'undefined')) {
+                resp.status(200).send({
+                    status: false,
+                    message: 'An error occured'
+                })
+            } else {
+
+                //sell price / loss price calculation
+                let sell_price = updated_buy_price + parseFloat((sell_profit_percent * updated_buy_price) /100)
+                let loss_price = updated_buy_price - parseFloat((loss_percentage * updated_buy_price) /100)
+
+                    if (sellOrderExist) {
+
+                        var filter = {};
+                        filter['_id'] = sellArr['_id'];
+                        var update = {};
+
+                        update['price'] = updated_buy_price;
+                        if (!isNaN(sell_price)){
+                            update['sell_price'] = sell_price;
+                        }
+                        if (!isNaN(loss_price)){
+                            update['iniatial_trail_stop'] = loss_price;
+                        }
+                        update['modified_date'] = new Date();
+
+                        var updatePromise = updateOne(filter, update, sell_collection);
+                        updatePromise.then((resolve) => { });
+                    }
+
+                    var filter = {};
+                    filter['_id'] = new ObjectID(orderId);
+                    var update = {};
+
+                    update['price'] = updated_buy_price;
+                    if (!isNaN(sell_price)) {
+                        update['sell_price'] = sell_price;
+                    }
+                    if (!isNaN(loss_price)) {
+                        update['iniatial_trail_stop'] = loss_price;
+                    }
+                    update['modified_date'] = new Date();
+
+                    var updatePromise = updateOne(filter, update, buy_collection);
+                    updatePromise.then((resolve) => { });
+            }
+
+        } //End of foreach
+        
+
+        //SAVE_LOG:
+        var log_msg = "Order buy price updated from(" + parseFloat(previous_buy_price).toFixed(8) + ") to " + parseFloat(updated_buy_price).toFixed(8) + "  From Chart";
+        var order_created_date = order['created_date']
+        var order_mode = order['application_mode']
+        var logPromise = create_orders_history_log(orderId, log_msg, 'buy_price_updated', 'yes', exchange, order_mode, order_created_date)
+        logPromise.then((callback) => { });
+
+        resp.status(200).send({
+            message: 'Order Buy Price Updated Successfully'
+        })
+
+    } else {//End of order array is not empty
+
+        resp.status(200).send({
+            message: 'An error occured'
+        })
+    }
+
+}) //End of updateBuyPriceFromDraggingChart
 
 router.post('/updateOrderfromdragingChart', async (req, resp) => {
     var exchange = req.body.exchange;
