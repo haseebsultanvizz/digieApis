@@ -4282,6 +4282,112 @@ router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
 
 }) //End of updateBuyPriceFromDraggingChart
 
+//post call for updating lth profit from chart
+router.post('/updateLthProfitChart', async (req, resp) => {
+    var exchange = req.body.exchange;
+    var orderId = req.body.orderId;
+    var lth_functionality = req.body.lth_functionality;
+    var lth_profit = parseFloat(req.body.lth_profit);
+
+    //get buy order detail on the base of order id
+    var orderArr = await listOrderById(orderId, exchange);
+
+    if (orderArr.length > 0) {
+        for (let index in orderArr) {
+
+            var order = orderArr[index]
+
+            //buy_price
+            var buy_price = order['price'];
+            buy_price = parseFloat(parseFloat(buy_price).toFixed(8));
+            buy_price = (!isNaN(buy_price) ? buy_price : 0)
+            //purchased_price
+            var purchased_price = order['purchased_price'];
+            purchased_price = parseFloat(parseFloat(purchased_price).toFixed(8));
+            purchased_price = (!isNaN(purchased_price) ? purchased_price : 0)
+
+            //we if obj is new purchased_price is 0 so use buy_price instead 
+            var price = (purchased_price != 0 ? purchased_price : buy_price)
+
+            //Check if Sell order exists then use it's values on priority
+            var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            var sell_collection = buy_collection;
+            var sellOrderExist = false;
+
+            //try to find sell order for this buy order
+            var sellArr = await get_sell_order(orderId, exchange);
+
+            if (sellArr.length > 0) {
+
+                sellArr = sellArr[0];
+                sell_collection = sellArr['collection'];
+                sellArr = sellArr['sellArr'];
+                sellOrderExist = true;
+
+            }
+
+            var application_mode = (typeof order['application_mode'] == 'undefined') ? 0 : order['application_mode'];
+            var order_mode = application_mode
+            var order_created_date = order['created_date'];
+
+            if (sellOrderExist) {
+
+                var filter = {};
+                filter['_id'] = sellArr['_id'];
+                var update = {};
+
+                update['lth_functionality'] = (!isNaN(lth_profit) ? lth_functionality : '')
+                update['lth_profit'] = (!isNaN(lth_profit) ? lth_profit : '')
+
+                if (order['status'] == 'LTH' && !isNaN(price) && !isNaN(lth_profit)) {
+                    update['sell_price'] = price + parseFloat((lth_profit * price) / 100);
+                }
+
+                update['modified_date'] = new Date();
+
+                var updatePromise = updateOne(filter, update, sell_collection);
+                updatePromise.then((resolve) => { });
+            }
+
+            var filter = {};
+            filter['_id'] = new ObjectID(orderId);
+            var update = {};
+
+            update['lth_functionality'] = (!isNaN(lth_profit) ? lth_functionality : '')
+            update['lth_profit'] = (!isNaN(lth_profit) ? lth_profit :'')
+
+            if (order['status'] == 'LTH' && !isNaN(price) && !isNaN(lth_profit)) {
+                update['sell_price'] = price + parseFloat((lth_profit * price) / 100);
+            }
+
+            update['modified_date'] = new Date();
+
+            var updatePromise = updateOne(filter, update, buy_collection);
+            updatePromise.then((resolve) => { });
+
+            //SAVE_LOG:
+            var log_msg = "Order LTH profit updated from(" + order['lth_profit'] + ") to " + lth_profit + "  From Chart";
+            var order_created_date = order['created_date']
+            var order_mode = order['application_mode']
+            var logPromise = create_orders_history_log(orderId, log_msg, 'lth_profit_updated', 'yes', exchange, order_mode, order_created_date)
+            logPromise.then((callback) => { });
+            
+
+        } //End of foreach
+
+        resp.status(200).send({
+            message: 'Order LTH profit Updated Successfully'
+        })
+
+    } else {//End of order array is not empty
+
+        resp.status(200).send({
+            message: 'An error occured'
+        })
+    }
+
+}) //End of updateLthProfitChart
+
 router.post('/updateOrderfromdragingChart', async (req, resp) => {
     var exchange = req.body.exchange;
     var orderId = req.body.orderId;
