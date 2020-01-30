@@ -4327,10 +4327,15 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
             iniatial_trail_stop = parseFloat(parseFloat(iniatial_trail_stop).toFixed(8));
             iniatial_trail_stop = (!isNaN(iniatial_trail_stop) ? iniatial_trail_stop : 0)
             
-            let loss_percentage = order['loss_percentage']
-            loss_percentage = parseFloat(parseFloat(loss_percentage).toFixed(8));
-            loss_percentage = (!isNaN(loss_percentage) ? loss_percentage : 0)
-
+            if (order['trigger_type'] != 'no'){
+                var loss_percentage = order['custom_stop_loss_percentage']
+                loss_percentage = parseFloat(parseFloat(loss_percentage).toFixed(8));
+                loss_percentage = (!isNaN(loss_percentage) ? loss_percentage : 0)
+            }else{
+                var loss_percentage = order['loss_percentage']
+                loss_percentage = parseFloat(parseFloat(loss_percentage).toFixed(8));
+                loss_percentage = (!isNaN(loss_percentage) ? loss_percentage : 0)
+            }
             //Check if Sell order exists then use it's values on priority
             var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             var sell_collection = buy_collection;
@@ -4392,9 +4397,15 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                 
                 iniatial_trail_stop = (s_iniatial_trail_stop != 0 ? s_iniatial_trail_stop : iniatial_trail_stop)
                 
-                let s_loss_percentage = sellArr['loss_percentage']
-                s_loss_percentage = parseFloat(parseFloat(s_loss_percentage).toFixed(8));
-                s_loss_percentage = (!isNaN(s_loss_percentage) ? s_loss_percentage : 0)
+                if (order['trigger_type'] != 'no') {
+                    var s_loss_percentage = sellArr['loss_percentage']
+                    s_loss_percentage = parseFloat(parseFloat(s_loss_percentage).toFixed(8));
+                    s_loss_percentage = (!isNaN(s_loss_percentage) ? s_loss_percentage : 0)
+                } else {
+                    var s_loss_percentage = sellArr['loss_percentage']
+                    s_loss_percentage = parseFloat(parseFloat(s_loss_percentage).toFixed(8));
+                    s_loss_percentage = (!isNaN(s_loss_percentage) ? s_loss_percentage : 0)
+                }
                 
                 loss_percentage = (s_loss_percentage != 0 ? s_loss_percentage : loss_percentage)
 
@@ -4492,6 +4503,12 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             update['stop_loss'] = 'yes';
                             update['loss_percentage'] = new_percentage;
                             update['custom_stop_loss_percentage'] = new_percentage;
+
+                            if (typeof order['lth_proft'] == 'undefined' || order['lth_proft'] == '') {
+                                update['lth_functionality'] = 'yes'
+                                update['lth_profit'] = sell_profit_percent
+                            }
+
                             update['modified_date'] = new Date();
 
                             var updatePromise = updateOne(filter, update, sell_collection);
@@ -4507,6 +4524,12 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         update['stop_loss'] = 'yes';
                         update['loss_percentage'] = new_percentage;
                         update['custom_stop_loss_percentage'] = new_percentage;
+
+                        if (typeof order['lth_proft'] == 'undefined' || order['lth_proft'] == '') {
+                            update['lth_functionality'] = 'yes'
+                            update['lth_profit'] = sell_profit_percent
+                        }
+
                         update['modified_date'] = new Date();
 
                         // var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -4585,6 +4608,12 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             update['loss_percentage'] = new_percentage;
                             update['custom_stop_loss_percentage'] = new_percentage;
                             update['auto_sell'] = 'yes';
+
+                            if (typeof order['lth_proft'] == 'undefined' || order['lth_proft'] == '') {
+                                update['lth_functionality'] = 'yes'
+                                update['lth_profit'] = sell_profit_percent
+                            }
+
                             update['modified_date'] = new Date();
                             var updatePromise = updateOne(filter, update, sell_collection);
                             updatePromise.then((resolve) => { });
@@ -4599,6 +4628,12 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         update['loss_percentage'] = new_percentage;
                         update['custom_stop_loss_percentage'] = new_percentage;
                         update['auto_sell'] = 'yes';
+
+                        if (typeof order['lth_proft'] == 'undefined' || order['lth_proft'] == '') {
+                            update['lth_functionality'] = 'yes'
+                            update['lth_profit'] = sell_profit_percent
+                        }
+
                         update['modified_date'] = new Date();
                         var updatePromise = updateOne(filter, update, buy_collection);
                         updatePromise.then((resolve) => { });
