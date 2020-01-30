@@ -765,6 +765,17 @@ router.post('/createManualOrder', (req, resp) => {
             orders['price'] = price;
             orders['created_date'] = new Date();
             orders['modified_date'] = new Date();
+
+            //buy trail check
+            if (typeof orders['trail_check'] == 'undefined' || orders['trail_check'] != 'yes' || typeof orders['trail_interval'] == 'undefined' || orders['trail_interval'] == '' || typeof orders['buy_trail_percentage'] == 'undefined' || orders['buy_trail_percentage'] == '' || typeof orders['buy_trail_price'] == 'undefined' || orders['buy_trail_price'] == ''){
+
+                orders['trail_check'] = ''
+                orders['trail_interval'] = ''
+                orders['buy_trail_percentage'] = ''
+                orders['buy_trail_price'] = ''
+            }
+
+
             //collection on the base of exchange
             var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             //create buy order
@@ -794,6 +805,15 @@ router.post('/createManualOrder', (req, resp) => {
                     if (req.body.orderArr.auto_sell == 'yes') {
 
                         let tempOrder = req.body.tempOrderArr;
+
+                        //sell trail check
+                        if (typeof tempOrder['trail_check'] == 'undefined' || tempOrder['trail_check'] != 'yes' || typeof tempOrder['trail_interval'] == 'undefined' || tempOrder['trail_interval'] == '' || typeof tempOrder['sell_trail_percentage'] == 'undefined' || tempOrder['sell_trail_percentage'] == '') {
+
+                            tempOrder['trail_check'] = ''
+                            tempOrder['trail_interval'] = ''
+                            tempOrder['sell_trail_percentage'] = ''
+                        }
+
                         tempOrder['created_date'] = new Date();
                         tempOrder['buy_order_id'] = buyOrderId;
                         //Temp sell order collection on the base of exchange 
