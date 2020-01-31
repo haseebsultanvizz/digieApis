@@ -759,6 +759,7 @@ router.post('/listmarketPriceMinNotation', async(req, resp) => {
 router.post('/createManualOrder', (req, resp) => {
         conn.then((db) => {
             let orders = req.body.orderArr;
+            let tempOrder = req.body.tempOrderArr;
             let orderId = req.body.orderId;
             var price = parseFloat(orders['price']);
             let exchange = orders['exchange'];
@@ -775,13 +776,26 @@ router.post('/createManualOrder', (req, resp) => {
                 orders['buy_trail_price'] = ''
             }
 
+            if (typeof orders['auto_sell'] == 'undefined' || orders['auto_sell'] == 'no') {
+                orders['sell_price'] = ''
+                orders['profit_price'] = ''
+            }
+
             //set profit percentage if sell price is fixed
             if (orders['profit_type'] == 'fixed_price'){
                 let sell_profit_percent = ((parseFloat(orders['sell_price']) - parseFloat(orders['price'])) / parseFloat(orders['price'])) * 100  
                 orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
             }
-
-
+            
+            //set stop loss 
+            if (typeof tempOrder['stop_loss'] != 'undefined' && tempOrder['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrder['loss_percentage']))){
+                orders['stop_loss'] = 'yes'
+                orders['loss_percentage'] = parseFloat(tempOrder['loss_percentage']) 
+            }else{
+                orders['stop_loss'] = 'no'
+                orders['loss_percentage'] = '' 
+            }
+        
             //collection on the base of exchange
             var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             //create buy order
@@ -810,8 +824,6 @@ router.post('/createManualOrder', (req, resp) => {
                     //check of auto sell is yes then create sell temp order
                     if (req.body.orderArr.auto_sell == 'yes') {
 
-                        let tempOrder = req.body.tempOrderArr;
-
                         //sell trail check
                         if (typeof tempOrder['trail_check'] == 'undefined' || tempOrder['trail_check'] != 'yes' || typeof tempOrder['trail_interval'] == 'undefined' || tempOrder['trail_interval'] == '' || typeof tempOrder['sell_trail_percentage'] == 'undefined' || tempOrder['sell_trail_percentage'] == '') {
 
@@ -820,11 +832,25 @@ router.post('/createManualOrder', (req, resp) => {
                             tempOrder['sell_trail_percentage'] = ''
                         }
 
+                        if (typeof orders['auto_sell'] == 'undefined' || orders['auto_sell'] == 'no') {
+                            tempOrder['sell_price'] = ''
+                            tempOrder['profit_price'] = ''
+                        }
+
                         //set profit percentage if sell price is fixed
                         if (tempOrder['profit_type'] == 'fixed_price') {
                             let sell_profit_percent = ((parseFloat(tempOrder['sell_price']) - parseFloat(tempOrder['price'])) / parseFloat(tempOrder['price'])) * 100
                             tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
                             tempOrder['profit_percent'] = tempOrder['sell_profit_percent']
+                        }
+
+                        //set stop loss 
+                        if (typeof tempOrder['stop_loss'] != 'undefined' && tempOrder['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrder['loss_percentage']))) {
+                            tempOrder['stop_loss'] = 'yes'
+                            tempOrder['loss_percentage'] = parseFloat(tempOrder['loss_percentage'])
+                        } else {
+                            tempOrder['stop_loss'] = 'no'
+                            tempOrder['loss_percentage'] = ''
                         }
 
                         tempOrder['created_date'] = new Date();
