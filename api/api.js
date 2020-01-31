@@ -823,8 +823,8 @@ router.post('/createManualOrder', (req, resp) => {
                         //set profit percentage if sell price is fixed
                         if (tempOrder['profit_type'] == 'fixed_price') {
                             let sell_profit_percent = ((parseFloat(tempOrder['sell_price']) - parseFloat(tempOrder['price'])) / parseFloat(tempOrder['price'])) * 100
-                            tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? sell_profit_percent : ''
-                            tempOrder['profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+                            tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+                            tempOrder['profit_percent'] = tempOrder['sell_profit_percent']
                         }
 
                         tempOrder['created_date'] = new Date();
@@ -4946,17 +4946,34 @@ router.post('/updateManualOrder', async (req, resp) => {
 
         var where = {};
         where['_id'] = new ObjectID(buyOrderId)
+
+        //set profit percentage if sell price is fixed
+        if (buyorderArr['profit_type'] == 'fixed_price') {
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price']) 
+            let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+            buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+            buyorderArr['profit_percent'] = buyorderArr['sell_profit_percent']
+        }
+
         buyorderArr['modified_date'] = new Date();
         var upsert = { 'upsert': true };
         var updPromise = updateSingle(buy_order_collection, where, buyorderArr, upsert);
         updPromise.then((callback) => {});
 
 
-
-
         if (sellOrderId != '') {
             var where_1 = {};
             where_1['_id'] = new ObjectID(sellOrderId)
+
+            //set profit percentage if sell price is fixed
+            if (buyorderArr['profit_type'] == 'fixed_price') {
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+                sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+                sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
+                sellOrderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
+            }
+
             sellOrderArr['modified_date'] = new Date();
             var upsert = { 'upsert': true };
             var updPromise_1 = updateSingle(orders_collection, where_1, sellOrderArr, upsert);
@@ -4967,6 +4984,17 @@ router.post('/updateManualOrder', async (req, resp) => {
         if (tempSellOrderId != '') {
             var where_2 = {};
             where_2['_id'] = new ObjectID(tempSellOrderId)
+
+            //set profit percentage if sell price is fixed
+            if (buyorderArr['profit_type'] == 'fixed_price') {
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+                tempOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+                tempOrderArr['profit_percent'] = tempOrderArr['sell_profit_percent']
+                tempOrderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
+                tempOrderArr['profit_price'] = tempOrderArr['sell_price']
+            }
+
             tempOrderArr['modified_date'] = new Date();
             var upsert = { 'upsert': true };
             var updPromise_2 = updateSingle(temp_sell_order_collection, where_2, tempOrderArr, upsert);
@@ -4990,6 +5018,14 @@ router.post('/setForSell', async(req, resp) => {
         sellOrderArr['buy_order_id'] = new ObjectID(buy_order_id);
     }
 
+    //set profit percentage if sell price is fixed
+    if (sellOrderArr['profit_type'] == 'fixed_price') {
+        let purchased_price = !isNaN(parseFloat(sellOrderArr['purchased_price'])) ? parseFloat(sellOrderArr['purchased_price']) : ''
+        let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
+        sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+        sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
+    }
+
     let exchange = req.body.exchange;
     let buyOrderId = req.body.buyOrderId;
     //function to set manual order for sell
@@ -5000,6 +5036,14 @@ router.post('/setForSell', async(req, resp) => {
     updArr['is_sell_order'] = 'yes';
     updArr['sell_order_id'] = sellOrderId;
     updArr['auto_sell'] = 'yes';
+
+    //set profit percentage if sell price is fixed
+    if (sellOrderArr['profit_type'] == 'fixed_price') {
+        let purchased_price = !isNaN(parseFloat(sellOrderArr['purchased_price'])) ? parseFloat(sellOrderArr['purchased_price']) : ''
+        let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
+        updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+        updArr['profit_percent'] = updArr['sell_profit_percent']
+    }
 
     var where = {};
     where['_id'] = { '$in': [buyOrderId, new ObjectID(buyOrderId)] }
