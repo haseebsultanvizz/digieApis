@@ -775,6 +775,12 @@ router.post('/createManualOrder', (req, resp) => {
                 orders['buy_trail_price'] = ''
             }
 
+            //set profit percentage if sell price is fixed
+            if (orders['profit_type'] == 'fixed_price'){
+                let sell_profit_percent = ((parseFloat(orders['sell_price']) - parseFloat(orders['price'])) / parseFloat(orders['price'])) * 100  
+                orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+            }
+
 
             //collection on the base of exchange
             var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -812,6 +818,13 @@ router.post('/createManualOrder', (req, resp) => {
                             tempOrder['trail_check'] = ''
                             tempOrder['trail_interval'] = ''
                             tempOrder['sell_trail_percentage'] = ''
+                        }
+
+                        //set profit percentage if sell price is fixed
+                        if (tempOrder['profit_type'] == 'fixed_price') {
+                            let sell_profit_percent = ((parseFloat(tempOrder['sell_price']) - parseFloat(tempOrder['price'])) / parseFloat(tempOrder['price'])) * 100
+                            tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? sell_profit_percent : ''
+                            tempOrder['profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
                         }
 
                         tempOrder['created_date'] = new Date();
