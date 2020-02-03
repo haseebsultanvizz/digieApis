@@ -1623,7 +1623,7 @@ router.post('/listOrderListing', async(req, resp) => {
             } else {
                 var statusClass = (status == 'error' || status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR' || status == 'canceled_ERROR') ? 'danger' : 'success'
                 status = (parent_status == 'parent') ? parent_status : status;
-                if (status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR'){
+                if (status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR' || status == 'canceled_ERROR'){
                     let err_lth_filled = status.replace('_', ' ')
                     htmlStatus += '<span class="badge badge-' + statusClass + '">' + err_lth_filled + '</span>';
                 }else{
