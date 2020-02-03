@@ -1621,7 +1621,7 @@ router.post('/listOrderListing', async(req, resp) => {
                     htmlStatus += '<span class="badge badge-success">Sold</span>';
                 }
             } else {
-                var statusClass = (status == 'error' || status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR') ? 'danger' : 'success'
+                var statusClass = (status == 'error' || status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR' || status == 'canceled_ERROR') ? 'danger' : 'success'
                 status = (parent_status == 'parent') ? parent_status : status;
                 if (status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR'){
                     let err_lth_filled = status.replace('_', ' ')
