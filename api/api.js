@@ -186,6 +186,11 @@ router.post('/authenticate-old', async function(req, resp, next) {
         })
     }) //End of authenticate
 
+//TODO: Block temporarily if more than 3 unsuccessful login attempts
+async function loginAttempt(){
+    //user_soft_delete = 1
+}
+
 //when first time user login call this function 
 router.post('/authenticate', async function (req, resp, next) {
     conn.then(async (db) => {
@@ -4916,7 +4921,7 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
 
         var sellArr = [];
         var tempSellArr = [];
-        if (auto_sell == 'yes') {
+        if (auto_sell == 'yes' && (typeof buyOrderArr['is_sell_order'] != 'undefined' && buyOrderArr['is_sell_order'] != 'sold')) {
             //if sell order Exist the get value from sell order 
             if (sell_order_id != '') {
                 var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
