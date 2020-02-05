@@ -4636,7 +4636,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                 var new_percentage = (diff_price * 100 / price);
                 new_percentage = Math.abs(new_percentage)
 
-                new_percentage = parseFloat(parseFloat(new_percentage).toFixed(2));
+                new_percentage = parseFloat(parseFloat(new_percentage).toFixed(1));
                 new_percentage = (!isNaN(new_percentage) ? new_percentage : 0)
 
                 if (trigger_type != 'no') { //Auto Order
