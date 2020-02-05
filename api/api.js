@@ -824,7 +824,7 @@ router.post('/createManualOrder', (req, resp) => {
             //set stop loss 
             if (typeof tempOrder['stop_loss'] != 'undefined' && tempOrder['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrder['loss_percentage']))){
                 orders['stop_loss'] = 'yes'
-                orders['loss_percentage'] = parseFloat(tempOrder['loss_percentage']) 
+                orders['loss_percentage'] = parseFloat(parseFloat(tempOrder['loss_percentage']).toFixed(1)) 
             }else{
                 orders['stop_loss'] = 'no'
                 orders['loss_percentage'] = '' 
@@ -874,14 +874,20 @@ router.post('/createManualOrder', (req, resp) => {
                         //set profit percentage if sell price is fixed
                         if (tempOrder['profit_type'] == 'fixed_price') {
                             let sell_profit_percent = ((parseFloat(tempOrder['sell_price']) - parseFloat(tempOrder['price'])) / parseFloat(tempOrder['price'])) * 100
-                            tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+                            tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
                             tempOrder['profit_percent'] = tempOrder['sell_profit_percent']
+                        }
+
+                        //set sell profit percentage 
+                        if (orders['profit_type'] == 'percentage' || typeof tempOrder['profit_percent'] != 'undefined') {
+                            let sell_profit_percent = parseFloat(parseFloat(tempOrder['profit_percent']).toFixed(1))
+                            tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
                         }
 
                         //set stop loss 
                         if (typeof tempOrder['stop_loss'] != 'undefined' && tempOrder['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrder['loss_percentage']))) {
                             tempOrder['stop_loss'] = 'yes'
-                            tempOrder['loss_percentage'] = parseFloat(tempOrder['loss_percentage'])
+                            tempOrder['loss_percentage'] = parseFloat(parseFloat(tempOrder['loss_percentage']).toFixed(1))
                         } else {
                             tempOrder['stop_loss'] = 'no'
                             tempOrder['loss_percentage'] = ''
