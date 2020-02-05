@@ -816,8 +816,8 @@ router.post('/createManualOrder', (req, resp) => {
             }
 
             //set sell profit percentage 
-            if (orders['profit_type'] == 'percentage' || typeof orders['profit_percent'] != 'undefined') {
-                let sell_profit_percent = parseFloat(parseFloat(orders['profit_percent']).toFixed(1))
+            if (orders['profit_type'] == 'percentage' || typeof tempOrderArr['profit_percent'] != 'undefined') {
+                let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['profit_percent']).toFixed(1))
                 orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
             }
             
