@@ -6011,7 +6011,7 @@ router.post('/remove_error', async (req, resp) => {
             }
             let updated = await db.collection(buy_collection).updateOne(where, update)
             
-            if (updated['modifiedCount'] > 0){
+            if (true){
 
                 //remove error from sell_order
                 let where = {
