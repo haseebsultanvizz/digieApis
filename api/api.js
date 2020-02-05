@@ -187,9 +187,32 @@ router.post('/authenticate-old', async function(req, resp, next) {
     }) //End of authenticate
 
 //TODO: Block temporarily if more than 3 unsuccessful login attempts
-async function loginAttempt(){
+async function loginAttempt(action, username, password){
     //user_soft_delete = 1
-}
+    if(action == 'success'){
+        //TODO: reset loginAttemptCheck
+    }else{
+        //TODO: increment attempt count
+    }
+    let where = {
+        'username': '',
+        'password': ''
+    }
+    conn.then(async (db) => {
+        db.collection('coins').find(where).toArray(async (err, data) => {
+            if (err) {
+                return false
+            } else {
+                if (data.length > 0){
+                    if(data[0]['unsuccessfull_login_attempt_count'] > 0){
+
+                    }
+                }
+                return false
+            }
+        })
+    })
+}//end loginAttempt
 
 //when first time user login call this function 
 router.post('/authenticate', async function (req, resp, next) {
@@ -789,6 +812,12 @@ router.post('/createManualOrder', (req, resp) => {
             //set profit percentage if sell price is fixed
             if (orders['profit_type'] == 'fixed_price'){
                 let sell_profit_percent = ((parseFloat(orders['sell_price']) - parseFloat(orders['price'])) / parseFloat(orders['price'])) * 100  
+                orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+            }
+
+            //set sell profit percentage 
+            if (orders['profit_type'] == 'percentage' || typeof orders['profit_percent'] != 'undefined') {
+                let sell_profit_percent = parseFloat(parseFloat(orders['profit_percent']).toFixed(1))
                 orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
             }
             
