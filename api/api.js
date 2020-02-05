@@ -4956,7 +4956,8 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
 
         var sellArr = [];
         var tempSellArr = [];
-        if (auto_sell == 'yes' && (typeof buyOrderArr['is_sell_order'] != 'undefined' && buyOrderArr['is_sell_order'] != 'sold')) {
+        // if (auto_sell == 'yes' && (typeof buyOrderArr['is_sell_order'] != 'undefined' && buyOrderArr['is_sell_order'] != 'sold')) {
+        if (auto_sell == 'yes') {
             //if sell order Exist the get value from sell order 
             if (sell_order_id != '') {
                 var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
