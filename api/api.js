@@ -6855,4 +6855,21 @@ function check(name, pass) {
 
     return valid
 }
+
+router.post('/get_order_levels', async (req, resp) => {
+    conn.then(async (db) => {
+        let request = req.body
+
+        let where = {}
+        if (typeof request['status'] != 'undefined'){
+            where['status'] = request['status']
+        }
+
+        levels = await db.collection('order_levels').find(where).toArray();
+        resp.send({
+            'data': levels
+        })
+    }) //End of conn
+})
+
 module.exports = router;
