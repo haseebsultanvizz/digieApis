@@ -6872,4 +6872,12 @@ router.post('/get_order_levels', async (req, resp) => {
     }) //End of conn
 })
 
+router.post('/get_user_wallet', async (req, resp) => {
+    let request = req.body
+    let balance = await listUserBalance(request['admin_id'], request['exchange']);
+    resp.send({
+        'data': balance
+    })
+})
+
 module.exports = router;
