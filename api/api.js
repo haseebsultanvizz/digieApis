@@ -5097,36 +5097,72 @@ router.post('/updateManualOrder', async (req, resp) => {
         var where = {};
         where['_id'] = new ObjectID(buyOrderId)
 
-        //set profit percentage if sell price is fixed
-        if (buyorderArr['profit_type'] == 'fixed_price') {
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price']) 
-            let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
-            buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-            buyorderArr['profit_percent'] = buyorderArr['sell_profit_percent']
-        }
-    
-        //set sell profit percentage 
-        if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
-            let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
-            buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-        }
+        if (sellOrderId != '') {
+            //set profit percentage if sell price is fixed
+            if (buyorderArr['profit_type'] == 'fixed_price') {
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price']) 
+                let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+                buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+                buyorderArr['profit_percent'] = buyorderArr['sell_profit_percent']
+            }
+        
+            //set sell profit percentage 
+            if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+                let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
+                buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+            }
 
-        //set stop loss 
-        if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
-            buyorderArr['stop_loss'] = 'yes'
-            buyorderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
-        } else {
-            buyorderArr['stop_loss'] = 'no'
-            buyorderArr['loss_percentage'] = ''
-        }
+            //set stop loss 
+            if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
+                buyorderArr['stop_loss'] = 'yes'
+                buyorderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+            } else {
+                buyorderArr['stop_loss'] = 'no'
+                buyorderArr['loss_percentage'] = ''
+            }
 
-        //set lth profit 
-        if (typeof buyorderArr['lth_functionality'] != 'undefined' && buyorderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(buyorderArr['lth_profit']))) {
-            buyorderArr['lth_functionality'] = 'yes'
-            buyorderArr['lth_profit'] = parseFloat(parseFloat(buyorderArr['lth_profit']).toFixed(1))
-        } else {
-            buyorderArr['lth_functionality'] = 'no'
-            buyorderArr['lth_profit'] = ''
+            //set lth profit 
+            if (typeof buyorderArr['lth_functionality'] != 'undefined' && buyorderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(buyorderArr['lth_profit']))) {
+                buyorderArr['lth_functionality'] = 'yes'
+                buyorderArr['lth_profit'] = parseFloat(parseFloat(buyorderArr['lth_profit']).toFixed(1))
+            } else {
+                buyorderArr['lth_functionality'] = 'no'
+                buyorderArr['lth_profit'] = ''
+            }
+        }else{
+            //set profit percentage if sell price is fixed
+            if (buyorderArr['profit_type'] == 'fixed_price') {
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+                buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+                buyorderArr['profit_percent'] = tempOrderArr['sell_profit_percent']
+                buyorderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
+                buyorderArr['profit_price'] = buyorderArr['sell_price']
+            }
+
+            //set sell profit percentage 
+            if (buyorderArr['profit_type'] == 'percentage' && typeof tempOrderArr['sell_profit_percent'] != 'undefined') {
+                let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['sell_profit_percent']).toFixed(1))
+                buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+            }
+
+            //set stop loss 
+            if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
+                buyorderArr['stop_loss'] = 'yes'
+                buyorderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
+            } else {
+                buyorderArr['stop_loss'] = 'no'
+                buyorderArr['loss_percentage'] = ''
+            }
+
+            //set lth profit 
+            if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
+                buyorderArr['lth_functionality'] = 'yes'
+                buyorderArr['lth_profit'] = parseFloat(parseFloat(tempOrderArr['lth_profit']).toFixed(1))
+            } else {
+                buyorderArr['lth_functionality'] = 'no'
+                buyorderArr['lth_profit'] = ''
+            }
         }
 
         buyorderArr['modified_date'] = new Date();
