@@ -1126,8 +1126,8 @@ router.post('/editAutoOrder', async(req, resp) => {
             sell_profit_percent = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
             defined_sell_percentage = !isNaN(defined_sell_percentage) ? Math.abs(defined_sell_percentage) : ''
 
-            order['sell_profit_percent'] = sell_profit_percent != '' ? sell_profit_percent : defined_sell_percentage
-            order['defined_sell_percentage'] = sell_profit_percent != '' ? sell_profit_percent : defined_sell_percentage
+            order['sell_profit_percent'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent
+            order['defined_sell_percentage'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent 
         }
 
         //set stop loss 
