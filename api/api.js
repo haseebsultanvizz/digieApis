@@ -785,6 +785,11 @@ router.post('/listmarketPriceMinNotation', async(req, resp) => {
 
 //post call for creating manual order  
 router.post('/createManualOrder', (req, resp) => {
+
+    console.log('===============================================');
+    console.log(req.body);
+    console.log('===============================================');
+
         conn.then((db) => {
             let orders = req.body.orderArr;
             let tempOrder = req.body.tempOrderArr;
