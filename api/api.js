@@ -6858,13 +6858,6 @@ function check(name, pass) {
 
 router.post('/get_order_levels', async (req, resp) => {
     conn.then(async (db) => {
-        let request = req.body
-
-        let where = {}
-        if (typeof request['status'] != 'undefined' && request['status'] != ''){
-            where['status'] = request['status']
-        }
-
         levels = await db.collection('order_levels').find(where).toArray();
         resp.status(200).send({
             'data': levels
@@ -6875,7 +6868,7 @@ router.post('/get_order_levels', async (req, resp) => {
 router.post('/get_user_wallet', async (req, resp) => {
     let request = req.body
     let balance = await listUserBalance(request['admin_id'], request['exchange']);
-    resp.send({
+    resp.status(200).send({
         'data': balance
     })
 })
