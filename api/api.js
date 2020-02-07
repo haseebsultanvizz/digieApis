@@ -6237,7 +6237,7 @@ router.post('/remove_error', async (req, resp) => {
             if (buy_status == 'error'){
                 update_buy_status = 'new'
                 error_type = buy_status
-            } else if (buy_status = 'FILLED_ERROR' || buy_status == 'submitted_ERROR' || buy_status == 'LTH_ERROR' || buy_status == 'new_ERROR'){
+            } else if (buy_status == 'FILLED_ERROR' || buy_status == 'submitted_ERROR' || buy_status == 'LTH_ERROR' || buy_status == 'new_ERROR'){
                 let statusArr = buy_status.split('_');
                 update_buy_status = statusArr[0];
                 error_type = statusArr.join(' ');
@@ -6254,45 +6254,28 @@ router.post('/remove_error', async (req, resp) => {
                 }
             }
             let updated = await db.collection(buy_collection).updateOne(where, update)
-            
-            if (true){
 
-                //remove error from sell_order
-                let where = {
-                    'buy_order_id': { $in: [order_id, new ObjectID(order_id)] }
-                }
-                let update = {
-                    '$set': {
-                        'status': 'new',
-                        'modified_date': new Date()
-                    }
-                }
-                let updated = await db.collection(sell_collection).updateOne(where, update)
-                
-                if (updated['modifiedCount'] > 0) {
-                    
-                    //create remove error log
-                    var log_msg = 'Order was updated And Removed ' + error_type + ' ***';
-                    var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, buy_order['application_mode'], buy_order['created_date'])
-                    promiseLog.then((callback) => { });
-                    
-                    resp.status(200).send({
-                        status: true,
-                        message: 'Error removed successfully',
-                    });
-                }else{
-                    resp.status(200).send({
-                        status: false,
-                        message: 'Something went wrong'
-                    });
-                }
-
-            }else{
-                resp.status(200).send({
-                    status: false,
-                    message: 'Something went wrong'
-                });
+            //remove error from sell_order
+            let where2 = {
+                'buy_order_id': { $in: [order_id, new ObjectID(order_id)] }
             }
+            let update2 = {
+                '$set': {
+                    'status': 'new',
+                    'modified_date': new Date()
+                }
+            }
+            let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
+            
+            //create remove error log
+            var log_msg = 'Order was updated And Removed ' + error_type + ' ***';
+            var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, buy_order['application_mode'], buy_order['created_date'])
+            promiseLog.then((callback) => { });
+            
+            resp.status(200).send({
+                status: true,
+                message: 'Error removed successfully',
+            });
 
         }else{
             resp.status(200).send({
