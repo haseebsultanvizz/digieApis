@@ -6861,12 +6861,12 @@ router.post('/get_order_levels', async (req, resp) => {
         let request = req.body
 
         let where = {}
-        if (typeof request['status'] != 'undefined'){
+        if (typeof request['status'] != 'undefined' && request['status'] != ''){
             where['status'] = request['status']
         }
 
         levels = await db.collection('order_levels').find(where).toArray();
-        resp.send({
+        resp.status(200).send({
             'data': levels
         })
     }) //End of conn
