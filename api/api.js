@@ -6866,10 +6866,37 @@ router.post('/get_order_levels', async (req, resp) => {
 })
 
 router.post('/get_user_wallet', async (req, resp) => {
-    let request = req.body
-    let balance = await listUserBalance(request['admin_id'], request['exchange']);
-    resp.status(200).send({
-        'data': balance
+    let admin_id = req.body.admin_id
+    let exchange = req.body.exchange
+
+    conn.then(async (db) => {
+        let where = {};
+        where['user_id'] = { $in: [new ObjectID(admin_id), admin_id] };
+        let collection = (exchange == 'binance') ? 'user_wallet' : 'user_wallet_' + exchange;
+        let walletCoins = await db.collection(collection).find(where).toArray();
+        
+        let symbols = [];
+        if (walletCoins.length > 0){
+            walletCoins.forEach(function (item) { 
+                let arr1 = item['coin_symbol'].split('BTC')
+                let arr2 = item['coin_symbol'].split('USDT')
+                if ((arr1[0] == '' && arr1[1] == '') || (arr2[0] == '' && arr2[1] == '')){
+                    symbols.push(item['coin_symbol'])
+                } else if (arr1[1] == ''){
+                    symbols.push(arr1[0])
+                } else if (arr2[1] == ''){
+                    symbols.push(arr2[0])
+                }
+            })
+        }
+
+        where['coin_symbol'] = { $in: symbols }
+        let wallet2 = await db.collection(collection).find(where).toArray();
+
+        resp.status(200).send({
+            'data': wallet2
+        })
+
     })
 })
 
