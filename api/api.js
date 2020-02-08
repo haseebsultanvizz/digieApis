@@ -807,6 +807,8 @@ router.post('/createManualOrder', (req, resp) => {
                 orders['trail_interval'] = ''
                 orders['buy_trail_percentage'] = ''
                 orders['buy_trail_price'] = ''
+            }else{
+                orders['buy_trail_price'] = 0;
             }
 
             if (typeof orders['auto_sell'] == 'undefined' || orders['auto_sell'] == 'no') {
