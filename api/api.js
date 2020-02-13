@@ -1867,6 +1867,7 @@ function calculateAverageOrdersProfit(postDAta) {
     filter['application_mode'] = postDAta.application_mode
     filter['admin_id'] = postDAta.admin_id
     filter['is_sell_order'] = 'sold'
+    filter['market_sold_price'] = {'$exists': true}
 
     if (postDAta.coins != '') {
         filter['symbol'] = { '$in': postDAta.coins }
@@ -1888,13 +1889,13 @@ function calculateAverageOrdersProfit(postDAta) {
     if (postDAta.start_date != '' && postDAta.end_date != '') {
         let start_date = new Date(postDAta.start_date);
         let end_date = new Date(postDAta.end_date);
-        filter['created_date'] = { '$gte': start_date, '$lte': end_date };
+        filter['modified_date'] = { '$gte': start_date, '$lte': end_date };
     } else{
 
         if (filter['application_mode'] == 'test'){
             let end_date = new Date()
             let start_date = new Date(new Date().setDate(new Date().getDate() - 30))
-            filter['created_date'] = { '$gte': start_date, '$lte': end_date };
+            filter['modified_date'] = { '$gte': start_date, '$lte': end_date };
         }
     }
 
@@ -1905,7 +1906,7 @@ function calculateAverageOrdersProfit(postDAta) {
     return new Promise((resolve) => {
         conn.then((db) => {
             // db.collection(collectionName).find(filter).sort({ modified_date: -1 }).toArray((err, result) => {
-                db.collection(collectionName).find(filter).toArray((err, result) => {
+            db.collection(collectionName).find(filter).toArray((err, result) => {
                 if (err) {
                     console.log(err)
                 } else {
@@ -6096,19 +6097,21 @@ router.post('/calculate_average_profit', async(req, resp) => {
     var total_profit = 0;
     var total_quantity = 0;
 
-    console.log(soldOrderArr.length)
     for (let index in soldOrderArr) {
-        var market_sold_price = (typeof soldOrderArr[index]['market_sold_price'] == 'undefined') ? 0 : soldOrderArr[index]['market_sold_price'];
-        market_sold_price = parseFloat((isNaN(market_sold_price)) ? 0 : market_sold_price);
 
-        var current_order_price = (typeof soldOrderArr[index]['market_value'] == 'undefined') ? 0 : soldOrderArr[index]['market_value'];
-        current_order_price = parseFloat((isNaN(current_order_price)) ? 0 : current_order_price);
+        var market_sold_price = (typeof soldOrderArr[index]['market_sold_price'] != 'undefined' && soldOrderArr[index]['market_sold_price'] != '') ? soldOrderArr[index]['market_sold_price'] : 0;
+
+        let purchased_price = (typeof soldOrderArr[index]['purchased_price'] != 'undefined' && soldOrderArr[index]['purchased_price'] != '' ? soldOrderArr[index]['purchased_price'] : '')
+
+        let market_val = (typeof soldOrderArr[index]['market_value'] != 'undefined' && soldOrderArr[index]['market_value'] != '' ? soldOrderArr[index]['market_value'] : '')
+
+        var current_order_price = (purchased_price != '' ? purchased_price : market_val);
+        current_order_price = (isNaN(parseFloat(current_order_price)) ? 0 : current_order_price);
 
         var quantity = (typeof soldOrderArr[index]['quantity'] == 'undefined') ? 0 : soldOrderArr[index]['quantity'];
-        quantity = parseFloat((isNaN(quantity)) ? 0 : quantity);
+        quantity = (isNaN(parseFloat(quantity)) ? 0 : quantity);
 
         if (req.body.postData.application_mode == 'test' && (isNaN(current_order_price) || isNaN(market_sold_price))){
-            // console.log(current_order_price + '   -----------------------   ' + market_sold_price)
             continue
         }
 
@@ -6117,6 +6120,8 @@ router.post('/calculate_average_profit', async(req, resp) => {
         total_profit += total_btc * percentage;
         total_quantity += total_btc;
     }
+
+    // console.log(' ================ ' + total_quantity + '===============' + total_profit)
 
     var avg_profit = total_profit / total_quantity;
     var responseReslt = {};
