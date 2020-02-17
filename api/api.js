@@ -786,10 +786,6 @@ router.post('/listmarketPriceMinNotation', async(req, resp) => {
 //post call for creating manual order  
 router.post('/createManualOrder', (req, resp) => {
 
-    console.log('===============================================');
-    console.log(req.body);
-    console.log('===============================================');
-
         conn.then((db) => {
             let orders = req.body.orderArr;
             let tempOrder = req.body.tempOrderArr;
@@ -1698,7 +1694,7 @@ router.post('/listOrderListing', async(req, resp) => {
                     let sell_profit_percent = (typeof sellArr.sell_profit_percent == 'undefined') ? '--' : sellArr.sell_profit_percent;
                     var targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
                 } else {
-                    var targetPrice = '';
+                    var targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
                 }
             } else {
                 var targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
@@ -5331,7 +5327,7 @@ router.post('/setForSell', async(req, resp) => {
     updArr['is_sell_order'] = 'yes';
     updArr['sell_order_id'] = sellOrderId;
     updArr['auto_sell'] = 'yes';
-    updArr['quantity'] = parseFloat(sellOrderArr['quantity']);
+    // updArr['quantity'] = parseFloat(sellOrderArr['quantity']);
 
     //set profit percentage if sell price is fixed
     if (sellOrderArr['profit_type'] == 'fixed_price') {
