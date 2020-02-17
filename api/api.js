@@ -883,9 +883,16 @@ router.post('/createManualOrder', (req, resp) => {
                             tempOrder['profit_price'] = ''
                         }
 
+                        // //set profit percentage if sell price is fixed
+                        // if (tempOrder['profit_type'] == 'fixed_price') {
+                        //     let sell_profit_percent = ((parseFloat(tempOrder['sell_price']) - parseFloat(tempOrder['price'])) / parseFloat(tempOrder['price'])) * 100
+                        //     tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+                        //     tempOrder['profit_percent'] = tempOrder['sell_profit_percent']
+                        // }
+
                         //set profit percentage if sell price is fixed
-                        if (tempOrder['profit_type'] == 'fixed_price') {
-                            let sell_profit_percent = ((parseFloat(tempOrder['sell_price']) - parseFloat(tempOrder['price'])) / parseFloat(tempOrder['price'])) * 100
+                        if (orders['profit_type'] == 'fixed_price') {
+                            let sell_profit_percent = ((parseFloat(orders['sell_price']) - parseFloat(orders['price'])) / parseFloat(orders['price'])) * 100
                             tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
                             tempOrder['profit_percent'] = tempOrder['sell_profit_percent']
                         }
