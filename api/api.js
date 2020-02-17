@@ -1686,21 +1686,24 @@ router.post('/listOrderListing', async(req, resp) => {
 
             var sell_order_id = (typeof orderListing[index].sell_order_id == 'undefined') ? '' : orderListing[index].sell_order_id;
 
-            if (trigger_type == 'no' && sell_order_id != '') {
-                //get sell order on the base of buy orders
-                var sellOrder = await listSellOrderById(sell_order_id, exchange);
-                if (sellOrder.length > 0) {
-                    let sellArr = sellOrder[0];
-                    let sell_profit_percent = (typeof sellArr.sell_profit_percent == 'undefined') ? '--' : sellArr.sell_profit_percent;
-                    var targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
-                } else {
-                    var targetPrice = '';
-                }
-            } else {
-                var targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
-            }
+            // var targetPrice = sell_profit_percent;
 
-            targetPrice = (targetPrice == '' || targetPrice == 1000) ? '---' : parseFloat(parseFloat(targetPrice).toFixed(2));
+            // if (trigger_type == 'no' && sell_order_id != '') {
+            //     //get sell order on the base of buy orders
+            //     var sellOrder = await listSellOrderById(sell_order_id, exchange);
+            //     if (sellOrder.length > 0) {
+            //         let sellArr = sellOrder[0];
+            //         let sell_profit_percent = (typeof sellArr.sell_profit_percent == 'undefined') ? '--' : sellArr.sell_profit_percent;
+            //         targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
+            //     } else {
+            //         targetPrice = '';
+            //     }
+            // } else {
+            //     targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
+            // }
+
+            // console.log(targetPrice + '---------' + sell_profit_percent)
+            var targetPrice = (status == 'LTH') ? parseFloat(parseFloat(lth_proft).toFixed(2)) : parseFloat(parseFloat(sell_profit_percent).toFixed(2));
             order['targetPrice'] = (isNaN(targetPrice)) ? '---' : targetPrice
 
             var orderSellPrice = (typeof orderListing[index].market_sold_price == 'undefined' || orderListing[index].market_sold_price == '') ? '' : orderListing[index].market_sold_price;
