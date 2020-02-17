@@ -1694,13 +1694,13 @@ router.post('/listOrderListing', async(req, resp) => {
                     let sell_profit_percent = (typeof sellArr.sell_profit_percent == 'undefined') ? '--' : sellArr.sell_profit_percent;
                     var targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
                 } else {
-                    var targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
+                    var targetPrice = '';
                 }
             } else {
                 var targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
             }
 
-            targetPrice = (targetPrice == '' || targetPrice == 1000) ? '---' : parseFloat(targetPrice).toFixed(2);
+            targetPrice = (targetPrice == '' || targetPrice == 1000) ? '---' : parseFloat(parseFloat(targetPrice).toFixed(2));
             order['targetPrice'] = (isNaN(targetPrice)) ? '---' : targetPrice
 
             var orderSellPrice = (typeof orderListing[index].market_sold_price == 'undefined' || orderListing[index].market_sold_price == '') ? '' : orderListing[index].market_sold_price;
