@@ -1710,7 +1710,7 @@ router.post('/listOrderListing', async(req, resp) => {
             // }
 
             // console.log(targetPrice + '---------' + sell_profit_percent)
-            var targetPrice = (status == 'LTH') ? parseFloat(parseFloat(lth_proft).toFixed(2)) : parseFloat(parseFloat(sell_profit_percent).toFixed(2));
+            var targetPrice = (status == 'LTH') ? parseFloat(parseFloat(lth_profit).toFixed(2)) : parseFloat(parseFloat(sell_profit_percent).toFixed(2));
             order['targetPrice'] = (isNaN(targetPrice)) ? '---' : targetPrice
 
             var orderSellPrice = (typeof orderListing[index].market_sold_price == 'undefined' || orderListing[index].market_sold_price == '') ? '' : orderListing[index].market_sold_price;
