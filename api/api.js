@@ -5331,6 +5331,7 @@ router.post('/setForSell', async(req, resp) => {
     updArr['is_sell_order'] = 'yes';
     updArr['sell_order_id'] = sellOrderId;
     updArr['auto_sell'] = 'yes';
+    updArr['quantity'] = parseFloat(sellOrderArr['quantity']);
 
     //set profit percentage if sell price is fixed
     if (sellOrderArr['profit_type'] == 'fixed_price') {
