@@ -1595,11 +1595,13 @@ router.post('/listOrderListing', async(req, resp) => {
         countArr['lthPauseCount'] = lthPauseCount;
         //get user balance for listing on list-order page
         var userBalanceArr = []
-        if(exchange == 'binance'){
-            userBalanceArr = await get_user_wallet(admin_id, exchange)
-        }else{
-            userBalanceArr = await listUserBalance(admin_id, exchange);
-        }
+        userBalanceArr = await get_user_wallet(admin_id, exchange)
+        
+        // if(exchange == 'binance'){
+        //     userBalanceArr = await get_user_wallet(admin_id, exchange)
+        // }else{
+        //     userBalanceArr = await listUserBalance(admin_id, exchange);
+        // }
         var soldOrderArr = []; //await calculateAverageOrdersProfit(req.body.postData);
         var total_profit = 0;
         var total_quantity = 0;
