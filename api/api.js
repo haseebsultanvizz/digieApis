@@ -6971,5 +6971,58 @@ router.post('/pause_sold_order', (req, res) => {
 
     })
 })
+//End pause_sold_order
+
+router.post('/resume_order', (req, res) => {
+    conn.then(async (db) => {
+        let exchange = req.body.exchange
+        let order_id = req.body.order_id
+
+        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == ''){
+            res.send({
+                'status': true,
+                'message': 'order_id and exchange are required'
+            });
+        }else{
+            let filter = {
+                '_id': new ObjectID(order_id),
+                'is_sell_order': 'pause'
+            }
+            
+            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange)
+
+            let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
+            
+            if (data1.length > 0) {
+                obj = data1[0];
+    
+                let set = {};
+                set['$set'] = {
+                    'is_sell_order': 'resume_pause'
+                };
+                let where = {
+                    '_id': obj._id
+                }
+    
+                let update = db.collection(sold_collection).updateOne(where, set);
+    
+                let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
+                let ins = await db.collection(pause_collection).insertOne(obj);
+                
+                res.send({
+                    'status': true,
+                    'message': 'Order resumed successfully'
+                });
+            }else{
+                res.send({
+                    'status': false,
+                    'message': 'Something went wrong'
+                });
+            }
+        }
+
+    })
+})
+//End resume_order
 
 module.exports = router;
