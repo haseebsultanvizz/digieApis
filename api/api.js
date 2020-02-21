@@ -2343,7 +2343,7 @@ router.post('/orderMoveToLth', async(req, resp) => {
         var buyOrderObj = buyOrderArr[0];
             console.log(buyOrderObj);
 
-		var purchased_price = (typeof buyOrderObj['market_value'] == 'undefined')?0:buyOrderObj['market_value'] ;
+		var purchased_price = (typeof buyOrderObj['purchased_price'] == 'undefined')?0:buyOrderObj['purchased_price'] ;
 		var sell_order_id = (typeof buyOrderObj['sell_order_id'] == 'undefined')?'':buyOrderObj['sell_order_id'];
 		var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price)
         if(sell_order_id !=''){
@@ -2398,7 +2398,14 @@ function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
             let filter = {};
             filter['_id'] = new ObjectID(orderId);
             let set = {};
-            set['$set'] = { 'status': 'LTH', 'lth_profit': lth_profit, 'lth_functionality': 'yes', 'modified_date': new Date(), 'sell_price': sell_price };
+            set['$set'] = { 
+                'status': 'LTH',
+                'is_lth_order': 'yes', 
+                'lth_profit': lth_profit, 
+                'lth_functionality': 'yes', 
+                'sell_price': sell_price, 
+                'modified_date': new Date(), 
+            };
             var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             db.collection(collection).updateOne(filter, set, (err, result) => {
                 if (err) {
