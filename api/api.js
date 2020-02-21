@@ -340,6 +340,10 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.special_role = userArr['special_role'];
                             respObj.google_auth = userArr['google_auth'];
                             respObj.trigger_enable = userArr['trigger_enable'];
+
+                            //Update last login time
+                            db.collection('users').updateOne({ '_id': userArr['_id'] }, { '$set': { 'last_login_datetime': new Date() } });
+
                             resp.send(respObj);
 
                         } else {
@@ -7086,39 +7090,19 @@ router.post('/latest_user_activity', (req, res) => {
         }else{
             
             let exchanges = ['binance', 'bam']
-            let app_modes = ['live', 'test']
 
-            let latest_orders = [];
+            let latest_orders = {};
 
             await Promise.all(exchanges.map(async (exchange) => {
-                let exchange_data = {}
-                exchange_data[exchange] = []
-                await Promise.all(app_modes.map(async (application_mode) => {
 
-                    let buy_order_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                    let buy_order = await db.collection(buy_order_collection).aggregate([
-                        { $match: { 'admin_id': user_id } },
-                        { $sort: { 'created_date': -1 } },
-                        { $limit: 1 }
-                    ]).toArray();
-                    
-                    let sold_buy_order_collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
-                    let sold_buy_order = await db.collection(sold_buy_order_collection).aggregate([
-                        { $match: { 'admin_id': user_id } },
-                        { $sort: { 'modified_date': -1 } },
-                        { $limit: 1 }
-                    ]).toArray();
+                let buy_order_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                let buy_order = await db.collection(buy_order_collection).aggregate([
+                    { $match: { 'admin_id': user_id } },
+                    { $sort: { 'created_date': -1 } },
+                    { $limit: 1 }
+                ]).toArray();
 
-                    let obj = {
-                        'application_mode': application_mode,
-                        'buy_order': buy_order,
-                        'sold_buy_order': sold_buy_order
-                    }
-                    exchange_data[exchange].push(obj)
-                }));
-
-                latest_orders.push(exchange_data)
-
+                latest_orders[exchange] = buy_order[0]
             }));
 
             let user = await db.collection('users').aggregate([
@@ -7128,8 +7112,8 @@ router.post('/latest_user_activity', (req, res) => {
             let last_login = (user.length > 0 && typeof user[0].last_login_datetime != 'undefined' ? user[0].last_login_datetime : '');
 
             res.send({
+                'last_login': last_login,
                 'latest_orders': latest_orders,
-                'last_login': last_login
             })
         }
 
