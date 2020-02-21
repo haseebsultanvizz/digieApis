@@ -1745,6 +1745,7 @@ router.post('/listOrderListing', async(req, resp) => {
 
             let pause_status_arr = ['pause', 'resume_pause', 'resume_complete']
 
+            var childProfitLossPercentageHtml = '-'
             //part for showing different status labels
             if ((status == 'FILLED' && is_sell_order == 'yes') || status == "LTH") {
                 var SellStatus = (sellOrderId == '') ? '' : await listSellOrderStatus(sellOrderId, exchange);
@@ -1763,8 +1764,31 @@ router.post('/listOrderListing', async(req, resp) => {
                         htmlStatus += '<span class="badge badge-success">Paused</span>';
                     } else if (is_sell_order == 'resume_pause'){
                         htmlStatus += '<span class="badge badge-info">Resumed</span>';
+                        //TODO: find child trade current profit
+                        let child_order = await listOrderById(orderListing[index]._id, exchange)
+                        child_order = (child_order.length > 0 ? child_order[0] : false)
+                        if(child_order){
+                            let childPurchasePrice = (typeof child_order.purchased_price == 'undefined' || child_order.purchased_price == '') ? 0 : child_order.purchased_price;
+                            let childPercentage = calculate_percentage(childPurchasePrice, currentMarketPrice);
+                            if(currentMarketPrice > childPurchasePrice){
+                                childProfitLossPercentageHtml = '<span class="text-success"><b>' + childPercentage + '%</b></span>';
+                            }
+                        }
+
                     } else if (is_sell_order == 'resume_complete'){
                         htmlStatus += '<span class="badge badge-warning">Completed</span>';
+                        //TODO: find child trade profit
+                        let child_order = await listOrderById(orderListing[index]._id, exchange)
+                        child_order = (child_order.length > 0 ? child_order[0] : false)
+                        if (child_order) {
+                            let childPurchasePrice = (typeof child_order.purchased_price == 'undefined' || child_order.purchased_price == '') ? 0 : child_order.purchased_price;
+                            let marketSoldPrice = (typeof child_order.market_sold_price == 'undefined' || child_order.market_sold_price == '') ? 0 : child_order.market_sold_price;
+                            let childPercentage = calculate_percentage(childPurchasePrice, marketSoldPrice);
+                            if (marketSoldPrice > childPurchasePrice) {
+                                childProfitLossPercentageHtml = '<span class="text-success"><b>' + childPercentage + '%</b></span>';
+                            }
+                        }
+
                     }
                 }else if (is_lth_order == 'yes') {
                     htmlStatus += '<span class="badge badge-warning">LTH</span><span class="badge badge-success">Sold</span>';
@@ -1787,6 +1811,8 @@ router.post('/listOrderListing', async(req, resp) => {
             } else if (fraction_buy_type == 'parent' || fraction_buy_type == 'child') {
                 htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Buy Fraction</span>';
             }
+
+            order['childProfitLossPercentageHtml'] = childProfitLossPercentageHtml
 
 
             order['htmlStatus'] = htmlStatus;
