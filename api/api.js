@@ -1547,7 +1547,7 @@ router.post('/listOrderListing', async(req, resp) => {
         var filter_9 = {};
         filter_9['admin_id'] = admin_id;
         filter_9['application_mode'] = application_mode;
-        filter_9['is_sell_order'] = 'pause';
+        filter_9['is_sell_order'] = { '$in': ['pause', 'resume_pause', 'resume_complete']};
 
         if (postDAta.start_date != '' && postDAta.end_date != '') {
             let start_date = new Date(postDAta.start_date);
@@ -1743,6 +1743,8 @@ router.post('/listOrderListing', async(req, resp) => {
             order['profitLossPercentageHtml'] = profitLossPercentageHtml;
 
 
+            let pause_status_arr = ['pause', 'resume_pause', 'resume_complete']
+
             //part for showing different status labels
             if ((status == 'FILLED' && is_sell_order == 'yes') || status == "LTH") {
                 var SellStatus = (sellOrderId == '') ? '' : await listSellOrderStatus(sellOrderId, exchange);
@@ -1754,10 +1756,16 @@ router.post('/listOrderListing', async(req, resp) => {
                 } else {
                     htmlStatus += '<span class="badge badge-info">WAITING FOR SELL </span>';
                 }
-            } else if (status == 'FILLED' && (is_sell_order == 'sold' || is_sell_order == 'pause')) {
+            } else if (status == 'FILLED' && (is_sell_order == 'sold' || pause_status_arr.includes(is_sell_order))) {
                 
-                if (is_sell_order == 'pause') {
-                    htmlStatus += '<span class="badge badge-success">Paused</span>';
+                if (pause_status_arr.includes(is_sell_order)) {
+                    if (is_sell_order == 'pause'){
+                        htmlStatus += '<span class="badge badge-success">Paused</span>';
+                    } else if (is_sell_order == 'resume_pause'){
+                        htmlStatus += '<span class="badge badge-info">Resumed</span>';
+                    } else if (is_sell_order == 'resume_complete'){
+                        htmlStatus += '<span class="badge badge-warning">Completed</span>';
+                    }
                 }else if (is_lth_order == 'yes') {
                     htmlStatus += '<span class="badge badge-warning">LTH</span><span class="badge badge-success">Sold</span>';
                 } else {
@@ -1979,7 +1987,7 @@ async function listOrderListing(postDAta, dbConnection) {
     
     if (postDAta.status == 'lth_pause') {
         filter['status'] = 'FILLED'
-        filter['is_sell_order'] = 'pause';
+        filter['is_sell_order'] = { '$in': ['pause', 'resume_pause', 'resume_complete'] };
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
 
@@ -6115,6 +6123,9 @@ router.post('/calculate_average_profit', async(req, resp) => {
     var total_profit = 0;
     var total_quantity = 0;
 
+    var profit_percentage_sum = 0;
+    var total_trades = 0;
+
     for (let index in soldOrderArr) {
 
         var market_sold_price = (typeof soldOrderArr[index]['market_sold_price'] != 'undefined' && soldOrderArr[index]['market_sold_price'] != '') ? soldOrderArr[index]['market_sold_price'] : 0;
@@ -6137,15 +6148,20 @@ router.post('/calculate_average_profit', async(req, resp) => {
         var total_btc = quantity * current_order_price;
         total_profit += total_btc * percentage;
         total_quantity += total_btc;
+
+        profit_percentage_sum = parseFloat(profit_percentage_sum) + parseFloat(percentage)
+        total_trades +=1
+
     }
 
-    // console.log(' ================ ' + total_quantity + '===============' + total_profit)
+    let avg_per_trade =  profit_percentage_sum / total_trades 
 
     var avg_profit = total_profit / total_quantity;
     var responseReslt = {};
     responseReslt['avg_profit'] = avg_profit;
     resp.status(200).send({
-        message: avg_profit
+        message: avg_profit,
+        avg_per_trade:avg_per_trade 
     });
 })
 
