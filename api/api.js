@@ -552,6 +552,27 @@ async function listUserCoins(userId) {
     })
 } //End of listUserCoins
 
+//function for getting user coins
+async function getUserCoins(userId, exchange) {
+    return new Promise((resolve) => {
+        let where = {};
+        where.user_id = userId;
+        where.symbol = { '$nin': ['', null, 'BTC', 'BNBBTC'] };
+        conn.then(async(db) => {
+
+            let coins_collection = (exchange == 'binance'? 'coins': 'coins_'+exchange)
+
+            db.collection(coins_collection).find(where).toArray(async(err, data) => {
+                if (err) {
+                    resolve(err)
+                } else {
+                    resolve(data)
+                }
+            })
+        })
+    })
+} //End of getUserCoins
+
 //Depricated //Umer Abbas [25-11-19] => please use the API calls provided by waqar (Bam)[http://35.171.172.15:3001/api/listCurrentmarketPrice],params['coin', 'exchange'], (Binance)[http://35.171.172.15:3000/api/listCurrentmarketPrice], params['coin', 'exchange']
 router.post('/listCurrentmarketPrice', async(req, resp) => {
         let exchange = req.body.exchange;
@@ -803,7 +824,7 @@ router.post('/createManualOrder', (req, resp) => {
             //buy trail check
             if (typeof orders['trail_check'] == 'undefined' || orders['trail_check'] != 'yes' || typeof orders['trail_interval'] == 'undefined' || orders['trail_interval'] == '' || typeof orders['buy_trail_percentage'] == 'undefined' || orders['buy_trail_percentage'] == '' || typeof orders['buy_trail_price'] == 'undefined' || orders['buy_trail_price'] == ''){
 
-                orders['trail_check'] = ''
+                orders['trail_check'] = 'no'
                 orders['trail_interval'] = ''
                 orders['buy_trail_percentage'] = ''
                 orders['buy_trail_price'] = ''
@@ -877,7 +898,7 @@ router.post('/createManualOrder', (req, resp) => {
                         //sell trail check
                         if (typeof tempOrder['trail_check'] == 'undefined' || tempOrder['trail_check'] != 'yes' || typeof tempOrder['trail_interval'] == 'undefined' || tempOrder['trail_interval'] == '' || typeof tempOrder['sell_trail_percentage'] == 'undefined' || tempOrder['sell_trail_percentage'] == '') {
 
-                            tempOrder['trail_check'] = ''
+                            tempOrder['trail_check'] = 'no'
                             tempOrder['trail_interval'] = ''
                             tempOrder['sell_trail_percentage'] = ''
                         }
@@ -2117,7 +2138,23 @@ router.post('/manageCoins', async(req, resp) => {
         resp.status(200).send({
             message: responseReslt
         });
-    }) //End of manageCoins
+}) //End of manageCoins
+
+router.post('/get_user_coins', async(req, resp) => {
+
+        let exchange = req.body.exchange
+        let admin_id = req.body.admin_id
+
+        var urserCoinsPromise = getUserCoins(admin_id, exchange);
+        var globalCoinsPromise = getGlobalCoins(exchange);
+        var promisesResult = await Promise.all([urserCoinsPromise, globalCoinsPromise]);
+        var responseReslt = {};
+        responseReslt['userCoins'] = promisesResult[0];
+        responseReslt['globalCoins'] = promisesResult[1];
+        resp.status(200).send({
+            message: responseReslt
+        });
+}) //End of manageCoins
 
 //list global cons for an exchange
 function listGlobalCoins() {
@@ -2127,6 +2164,33 @@ function listGlobalCoins() {
             filter['user_id'] = 'global'
             filter['exchange_type'] = 'binance'
             db.collection('coins').find(filter).toArray((err, result) => {
+                if (err) {
+                    resolve(err)
+                } else {
+                    resolve(result);
+                }
+            })
+        })
+    })
+} //End of listGlobalCoins
+
+//list global cons for an exchange
+function getGlobalCoins(exchange) {
+    return new Promise((resolve) => {
+        conn.then((db) => {
+            let filter = {};
+            filter['user_id'] = 'global'
+            filter['exchange_type'] = 'binance'
+
+            let coins_collection = ''
+            if(exchange == 'binance'){
+                coins_collection = 'coins'
+            }else{
+                coins_collection = 'coins_'+exchange
+                delete filter['exchange_type']
+            }
+
+            db.collection(coins_collection).find(filter).toArray((err, result) => {
                 if (err) {
                     resolve(err)
                 } else {
@@ -5481,18 +5545,18 @@ function setForSell(sellOrderArr, exchange, buy_order_id) {
 //::::::::::::::::::::::::::::::::::; /
 
 
-//post call from manage component to list user coin list and detail
-router.post('/manageCoins', async(req, resp) => {
-        var urserCoinsPromise = listUserCoins(req.body.admin_id);
-        var globalCoinsPromise = listGlobalCoins();
-        var promisesResult = await Promise.all([urserCoinsPromise, globalCoinsPromise]);
-        var responseReslt = {};
-        responseReslt['userCoins'] = promisesResult[0];
-        responseReslt['globalCoins'] = promisesResult[1];
-        resp.status(200).send({
-            message: responseReslt
-        });
-    }) //End of manageCoins
+// //post call from manage component to list user coin list and detail
+// router.post('/manageCoins', async(req, resp) => {
+//         var urserCoinsPromise = listUserCoins(req.body.admin_id);
+//         var globalCoinsPromise = listGlobalCoins();
+//         var promisesResult = await Promise.all([urserCoinsPromise, globalCoinsPromise]);
+//         var responseReslt = {};
+//         responseReslt['userCoins'] = promisesResult[0];
+//         responseReslt['globalCoins'] = promisesResult[1];
+//         resp.status(200).send({
+//             message: responseReslt
+//         });
+//     }) //End of manageCoins
 
 router.post('/get_orders_post', function(req, res, next) {
     conn.then(db => {
@@ -5937,17 +6001,16 @@ router.post('/addUserCoin', async function(req, res, next) {
 
     conn.then(async (db) => {
 
+        let exchange = req.body.exchange
         let symbols = req.body.symbols
         let user_id = req.body.user_id
-        if (typeof symbols == 'undefined' || typeof user_id == 'undefined' || user_id == '') {
+        if (typeof symbols == 'undefined' || typeof user_id == 'undefined' || user_id == '' || typeof exchange == 'undefined' || exchange == '') {
             res.send({
                 'status': true,
-                'message': 'user_id and symbols array are required'
+                'message': 'exchange, user_id and symbols array are required'
             });
         } else {
-            //Delete all user coins
-            db.collection("coins").deleteMany({ "user_id": user_id });
-
+            
             //insert user coins
             if (symbols.length > 0){
                 let where = {
@@ -5955,7 +6018,19 @@ router.post('/addUserCoin', async function(req, res, next) {
                     'symbol' : {'$in': symbols},
                     'exchange_type' : 'binance'
                 }
-                let data1 = await db.collection('coins').find(where).toArray();
+                
+                let coins_collection = ''
+                if(exchange == 'binance'){
+                    coins_collection = 'coins'
+                }else{
+                    coins_collection = 'coins_'+exchange
+                    delete where['exchange_type']
+                }
+                
+                //Delete all user coins
+                db.collection(coins_collection).deleteMany({ "user_id": user_id });
+
+                let data1 = await db.collection(coins_collection).find(where).toArray();
 
                 let add_coins = [];
                 if (data1.length > 0){
@@ -5970,7 +6045,7 @@ router.post('/addUserCoin', async function(req, res, next) {
                         add_coins.push(obj)
                     })
                     if (add_coins.length > 0){
-                        let ins = await db.collection('coins').insertMany(add_coins);
+                        let ins = await db.collection(coins_collection).insertMany(add_coins);
                     }
                 }
             }
