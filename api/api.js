@@ -1589,9 +1589,33 @@ router.post('/listOrderListing', async(req, resp) => {
         //Promise for count all lth_pause orders
         var lthPauseCountPromise = countCollection(collectionName, filter_9);
 
+        
+        //Count all tab
+        let filter_all = {};
+        filter_all['application_mode'] = postDAta.application_mode
+        filter_all['admin_id'] = postDAta.admin_id
+
+        if (postDAta.start_date != '' && postDAta.end_date != '') {
+            let start_date = new Date(postDAta.start_date);
+            let end_date = new Date(postDAta.end_date);
+            filter_all['created_date'] = { '$gte': start_date, '$lte': end_date };
+        }
+
+        if (count > 0) {
+            for (let [key, value] of Object.entries(search)) {
+                filter_all[key] = value;
+            }
+        }
+        let soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+        let all1Promise = countCollection(soldOrdercollection, filter_all);
+        // filter_all['parent_status'] = {'$exists': false}
+        let buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        let all2Promise = countCollection(buyOrdercollection, filter_all);
+        //End count All tab
+    
 
         //Resolve promised for count order for all tabs
-    var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise]);
+    var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise]);
 
         var parentCount = PromiseResponse[0];
         var newCount = PromiseResponse[1];
@@ -1603,8 +1627,12 @@ router.post('/listOrderListing', async(req, resp) => {
         var soldCount = PromiseResponse[7];
         var filledCount = PromiseResponse[8];
         var lthPauseCount = PromiseResponse[9];
+        var all1Count = PromiseResponse[10];
+        var all2Count = PromiseResponse[11];
 
-    var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
+    // var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
+
+    var totalCount = parseFloat(all1Count) + parseFloat(all2Count);
 
         var countArr = {};
         countArr['totalCount'] = totalCount;
