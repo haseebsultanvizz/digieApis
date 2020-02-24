@@ -1121,8 +1121,6 @@ router.post('/makeManualOrderSetForSell', async (req, resp) => {
 router.post('/createAutoOrder', async(req, resp) => {
         let order = req.body.orderArr;
 
-    console.log(order);
-    console.log('order');
         order['created_date'] = new Date()
         order['modified_date'] = new Date()
         let orderResp = await createAutoOrder(order);
@@ -1141,7 +1139,7 @@ router.post('/editAutoOrder', async(req, resp) => {
        var defined_sell_percentage = order['defined_sell_percentage'];
         //get order detail which you want to update
         var buyOrderArr = await listOrderById(orderId, exchange);
-        var purchased_price = buyOrderArr[0]['market_value'];
+        var purchased_price = buyOrderArr[0]['purchased_price'];
         var status = buyOrderArr[0]['status'];
         //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
         if (status == 'LTH') {
@@ -1170,6 +1168,11 @@ router.post('/editAutoOrder', async(req, resp) => {
             order['stop_loss'] = 'yes'
             order['loss_percentage'] = parseFloat(parseFloat(order['custom_stop_loss_percentage']).toFixed(1))
             order['custom_stop_loss_percentage'] = order['loss_percentage']
+
+            let purchased_price = !isNaN(parseFloat(purchased_price)) ? parseFloat(purchased_price) : parseFloat(buyOrderArr[0]['price'])
+            let loss_price = (parseFloat(purchased_price) * parseFloat(order['loss_percentage'])) / 100;
+            order['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
         } else {
             order['stop_loss'] = 'no'
             order['loss_percentage'] = ''
@@ -1191,9 +1194,6 @@ router.post('/editAutoOrder', async(req, resp) => {
         delete order['orderId'];
         var where = {};
         where['_id'] = new ObjectID(orderId);
-
-     console.log('Line Number 783 ');
-    console.log(order);
 
 
         var updPrmise = updateOne(where, order, collection);
@@ -5275,7 +5275,7 @@ router.post('/updateManualOrder', async (req, resp) => {
                 buyorderArr['stop_loss'] = 'yes'
                 buyorderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
 
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(buyorderArr['loss_percentage']) : parseFloat(getBuyOrder[0]['price'])
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
                 let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
                 buyorderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
 
@@ -5314,7 +5314,7 @@ router.post('/updateManualOrder', async (req, resp) => {
                 buyorderArr['stop_loss'] = 'yes'
                 buyorderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
 
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(buyorderArr['loss_percentage']) : parseFloat(getBuyOrder[0]['price'])
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
                 let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
                 buyorderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
 
@@ -5363,7 +5363,7 @@ router.post('/updateManualOrder', async (req, resp) => {
                 sellOrderArr['stop_loss'] = 'yes'
                 sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
 
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(sellOrderArr['loss_percentage']) : parseFloat(getBuyOrder[0]['price'])
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
                 let loss_price = (parseFloat(purchased_price) * parseFloat(sellOrderArr['loss_percentage'])) / 100;
                 sellOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
 
