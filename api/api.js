@@ -5246,6 +5246,11 @@ router.post('/updateManualOrder', async (req, resp) => {
             if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
                 buyorderArr['stop_loss'] = 'yes'
                 buyorderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(buyorderArr['loss_percentage']) : parseFloat(getBuyOrder[0]['price'])
+                let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
+                tempOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
             } else {
                 buyorderArr['stop_loss'] = 'no'
                 buyorderArr['loss_percentage'] = ''
@@ -5280,6 +5285,11 @@ router.post('/updateManualOrder', async (req, resp) => {
             if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
                 buyorderArr['stop_loss'] = 'yes'
                 buyorderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
+
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(buyorderArr['loss_percentage']) : parseFloat(getBuyOrder[0]['price'])
+                let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
+                tempOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
             } else {
                 buyorderArr['stop_loss'] = 'no'
                 buyorderArr['loss_percentage'] = ''
@@ -5324,6 +5334,11 @@ router.post('/updateManualOrder', async (req, resp) => {
             if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
                 sellOrderArr['stop_loss'] = 'yes'
                 sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(sellOrderArr['loss_percentage']) : parseFloat(getBuyOrder[0]['price'])
+                let loss_price = (parseFloat(purchased_price) * parseFloat(sellOrderArr['loss_percentage'])) / 100;
+                tempOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
             } else {
                 sellOrderArr['stop_loss'] = 'no'
                 sellOrderArr['loss_percentage'] = ''
@@ -5369,6 +5384,11 @@ router.post('/updateManualOrder', async (req, resp) => {
             if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
                 tempOrderArr['stop_loss'] = 'yes'
                 tempOrderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
+
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                let loss_price = (parseFloat(purchased_price) * parseFloat(tempOrderArr['loss_percentage'])) / 100;
+                tempOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
             } else {
                 tempOrderArr['stop_loss'] = 'no'
                 tempOrderArr['loss_percentage'] = ''
