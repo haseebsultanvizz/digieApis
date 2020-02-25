@@ -6345,11 +6345,23 @@ function validate_bam_credentials(APIKEY, APISECRET) {
         });
         binance.balance((error, balances) => {
             if (error) {
+
+                //invalid Credentials 
+                let where = {'api_key': APIKEY,'api_secret': APISECRET}
+                let set = {'$set': {'status': 'credentials_error'}}
+                conn.then(async (db) => {  await db.collection('bam_credentials').updateOne(where, set) })
+
                 let message = {};
                 message['status'] = 'error';
                 message['message'] = error.body;
                 resolve(message);
             } else {
+
+                //valid Credentials
+                let where = {'api_key': APIKEY, 'api_secret': APISECRET }
+                let set = { '$set': { 'status': 'active' } }
+                conn.then(async (db) => { await db.collection('bam_credentials').updateOne(where, set) })
+
                 let message = {};
                 message['status'] = 'success';
                 message['message'] = balances;
