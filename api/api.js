@@ -6336,7 +6336,7 @@ router.post('/validate_bam_credentials', async(req, resp) => {
 }) //End of validate_bam_credentials
 
 
-function validate_bam_credentials(APIKEY, APISECRET) {
+function validate_bam_credentials(APIKEY, APISECRET, user_id='') {
     return new Promise((resolve, reject) => {
         binance = require('node-binance-api')().options({
             APIKEY: APIKEY,
@@ -6346,19 +6346,21 @@ function validate_bam_credentials(APIKEY, APISECRET) {
         binance.balance((error, balances) => {
             if (error) {
 
-                //invalid Credentials 
+                //invalid Credentials
                 let where = {'api_key': APIKEY,'api_secret': APISECRET}
+                if (user_id != '') { where['user_id'] = user_id}
                 let set = {'$set': {'status': 'credentials_error'}}
                 conn.then(async (db) => {  await db.collection('bam_credentials').updateOne(where, set) })
-
+                
                 let message = {};
                 message['status'] = 'error';
                 message['message'] = error.body;
                 resolve(message);
             } else {
-
+                
                 //valid Credentials
                 let where = {'api_key': APIKEY, 'api_secret': APISECRET }
+                if (user_id != '') { where['user_id'] = user_id}
                 let set = { '$set': { 'status': 'active' } }
                 conn.then(async (db) => { await db.collection('bam_credentials').updateOne(where, set) })
 
