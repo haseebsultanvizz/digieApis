@@ -1419,7 +1419,7 @@ router.post('/listOrderListing', async(req, resp) => {
 
         //:::::::::::::::: filter_3 for count open order :::::::::::::::::
         var filter_3 = {};
-        filter_3['status'] = { '$in': ['submitted', 'FILLED', 'FILLED_ERROR'] }
+        filter_3['status'] = { '$in': ['FILLED', 'FILLED_ERROR'] }
         filter_3['is_sell_order'] = 'yes';
         filter_3['admin_id'] = admin_id;
         filter_3['application_mode'] = application_mode;
@@ -2047,7 +2047,7 @@ async function listOrderListing(postDAta, dbConnection) {
     }
 
     if (postDAta.status == 'open') {
-        filter['status'] = { '$in': ['submitted', 'FILLED', 'FILLED_ERROR'] }
+        filter['status'] = { '$in': ['FILLED', 'FILLED_ERROR'] }
         filter['is_sell_order'] = 'yes';
     }
 
