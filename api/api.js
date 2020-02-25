@@ -1139,7 +1139,7 @@ router.post('/editAutoOrder', async(req, resp) => {
        var defined_sell_percentage = order['defined_sell_percentage'];
         //get order detail which you want to update
         var buyOrderArr = await listOrderById(orderId, exchange);
-        var purchased_price = buyOrderArr[0]['purchased_price'];
+    var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0]['purchased_price'] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
         var status = buyOrderArr[0]['status'];
         //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
         if (status == 'LTH') {
@@ -1169,7 +1169,7 @@ router.post('/editAutoOrder', async(req, resp) => {
             order['loss_percentage'] = parseFloat(parseFloat(order['custom_stop_loss_percentage']).toFixed(1))
             order['custom_stop_loss_percentage'] = order['loss_percentage']
 
-            let purchased_price = !isNaN(parseFloat(purchased_price)) ? parseFloat(purchased_price) : parseFloat(buyOrderArr[0]['price'])
+            // let purchased_price = !isNaN(parseFloat(purchased_price)) ? parseFloat(purchased_price) : parseFloat(buyOrderArr[0]['price'])
             let loss_price = (parseFloat(purchased_price) * parseFloat(order['loss_percentage'])) / 100;
             order['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
 
