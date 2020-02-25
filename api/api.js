@@ -6245,6 +6245,7 @@ router.post('/saveBamCredentials', (req, resp) => {
                 if (err) {
                     console.log(err);
                 } else {
+                    let validation = validate_bam_credentials(api_key, api_secret, user_id)
                     resp.status(200).send({ "success": "true", "message": "Credentials Updated Successfully" })
                 }
             })
