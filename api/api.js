@@ -1376,10 +1376,15 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_1['application_mode'] = application_mode;
         filter_1['status'] = { '$in': ['new', 'takingOrder'] }
 
-        if (postDAta.start_date != '' && postDAta.end_date != '') {
-            let start_date = new Date(postDAta.start_date);
-            let end_date = new Date(postDAta.end_date);
-            filter_1['created_date'] = { '$gte': start_date, '$lte': end_date }
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_1['created_date'] = obj;
         }
 
         if (count > 0) {
@@ -1400,10 +1405,15 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_2['admin_id'] = admin_id;
         filter_2['application_mode'] = application_mode;
 
-        if (postDAta.start_date != '' && postDAta.end_date != '') {
-            let start_date = new Date(postDAta.start_date);
-            let end_date = new Date(postDAta.end_date);
-            filter_2['created_date'] = { '$gte': start_date, '$lte': end_date }
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_2['created_date'] = obj;
         }
 
         if (count > 0) {
@@ -1423,10 +1433,16 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_3['is_sell_order'] = 'yes';
         filter_3['admin_id'] = admin_id;
         filter_3['application_mode'] = application_mode;
-        if (postDAta.start_date != '' && postDAta.end_date != '') {
-            let start_date = new Date(postDAta.start_date);
-            let end_date = new Date(postDAta.end_date);
-            filter_3['created_date'] = { '$gte': start_date, '$lte': end_date }
+        
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_3['created_date'] = obj;
         }
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
@@ -1444,10 +1460,16 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_33['status'] = { '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR'] }
         filter_33['admin_id'] = admin_id;
         filter_33['application_mode'] = application_mode;
-        if (postDAta.start_date != '' && postDAta.end_date != '') {
-            let start_date = new Date(postDAta.start_date);
-            let end_date = new Date(postDAta.end_date);
-            filter_33['created_date'] = { '$gte': start_date, '$lte': end_date }
+        
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_33['created_date'] = obj;
         }
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
@@ -1466,10 +1488,16 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_4['status'] = 'canceled';
         filter_4['admin_id'] = admin_id;
         filter_4['application_mode'] = application_mode;
-        if (postDAta.start_date != '' && postDAta.end_date != '') {
-            let start_date = new Date(postDAta.start_date);
-            let end_date = new Date(postDAta.end_date);
-            filter_4['created_date'] = { '$gte': start_date, '$lte': end_date }
+        
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_4['created_date'] = obj;
         }
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
@@ -1486,10 +1514,16 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_5['status'] = 'error';
         filter_5['admin_id'] = admin_id;
         filter_5['application_mode'] = application_mode;
-        if (postDAta.start_date != '' && postDAta.end_date != '') {
-            let start_date = new Date(postDAta.start_date);
-            let end_date = new Date(postDAta.end_date);
-            filter_5['created_date'] = { '$gte': start_date, '$lte': end_date }
+        
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_5['created_date'] = obj;
         }
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
@@ -1507,11 +1541,15 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_6['application_mode'] = application_mode;
         filter_6['is_sell_order'] = 'yes';
 
-
-        if (postDAta.start_date != '' && postDAta.end_date != '') {
-            let start_date = new Date(postDAta.start_date);
-            let end_date = new Date(postDAta.end_date);
-            filter_6['created_date'] = { '$gte': start_date, '$lte': end_date }
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_6['created_date'] = obj;
         }
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
@@ -1529,12 +1567,17 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_7['status'] = { '$in': ['submitted', 'fraction_submitted_sell', 'submitted_ERROR'] }
         filter_7['admin_id'] = admin_id;
         filter_7['application_mode'] = application_mode;
-        if (postDAta.start_date != '' && postDAta.end_date != '') {
-            let start_date = new Date(postDAta.start_date);
-            let end_date = new Date(postDAta.end_date);
-            filter_7['created_date'] = { '$gte': start_date, '$lte': end_date }
+        
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_7['created_date'] = obj;
         }
-
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_7[key] = value;
@@ -1553,10 +1596,15 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_8['application_mode'] = application_mode;
         filter_8['is_sell_order'] = 'sold';
 
-        if (postDAta.start_date != '' && postDAta.end_date != '') {
-            let start_date = new Date(postDAta.start_date);
-            let end_date = new Date(postDAta.end_date);
-            filter_8['created_date'] = { '$gte': start_date, '$lte': end_date };
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_8['created_date'] = obj;
         }
 
         if (count > 0) {
@@ -1574,10 +1622,15 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_9['application_mode'] = application_mode;
         filter_9['is_sell_order'] = { '$in': ['pause', 'resume_pause', 'resume_complete']};
 
-        if (postDAta.start_date != '' && postDAta.end_date != '') {
-            let start_date = new Date(postDAta.start_date);
-            let end_date = new Date(postDAta.end_date);
-            filter_9['created_date'] = { '$gte': start_date, '$lte': end_date };
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_9['created_date'] = obj;
         }
 
         if (count > 0) {
@@ -1595,10 +1648,15 @@ router.post('/listOrderListing', async(req, resp) => {
         filter_all['application_mode'] = postDAta.application_mode
         filter_all['admin_id'] = postDAta.admin_id
 
-        if (postDAta.start_date != '' && postDAta.end_date != '') {
-            let start_date = new Date(postDAta.start_date);
-            let end_date = new Date(postDAta.end_date);
-            filter_all['created_date'] = { '$gte': start_date, '$lte': end_date };
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_all['created_date'] = obj;
         }
 
         if (count > 0) {
@@ -1981,10 +2039,16 @@ function calculateAverageOrdersProfit(postDAta) {
     }
 
 
-    if (postDAta.start_date != '' && postDAta.end_date != '') {
-        let start_date = new Date(postDAta.start_date);
-        let end_date = new Date(postDAta.end_date);
-        filter['modified_date'] = { '$gte': start_date, '$lte': end_date };
+    if (postDAta.application_mode == 'live' && (postDAta.start_date != '' || postDAta.end_date != '')) {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter['modified_date'] = obj;
+
     } else{
 
         if (filter['application_mode'] == 'test'){
@@ -2040,10 +2104,15 @@ async function listOrderListing(postDAta, dbConnection) {
     }
 
 
-    if (postDAta.start_date != '' && postDAta.end_date != '') {
-        let start_date = new Date(postDAta.start_date);
-        let end_date = new Date(postDAta.end_date);
-        filter['created_date'] = { '$gte': start_date, '$lte': end_date };
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != ''){
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != ''){
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter['created_date'] = obj;
     }
 
     if (postDAta.status == 'open') {
