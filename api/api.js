@@ -4623,7 +4623,7 @@ router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
                             update['sell_price'] = sell_price;
                         }
                         if (!isNaN(loss_price)){
-                            update['iniatial_trail_stop'] = loss_price;
+                            update['iniatial_trail_stop'] = parseFloat(loss_price);
                         }
                         update['modified_date'] = new Date();
 
@@ -4640,7 +4640,7 @@ router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
                         update['sell_price'] = sell_price;
                     }
                     if (!isNaN(loss_price)) {
-                        update['iniatial_trail_stop'] = loss_price;
+                        update['iniatial_trail_stop'] = parseFloat(loss_price);
                     }
                     update['modified_date'] = new Date();
 
@@ -5014,7 +5014,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             filter['_id'] = sellArr['_id'];
                             var update = {};
                             update['auto_sell'] = 'yes';
-                            update['iniatial_trail_stop'] = updated_price;
+                            update['iniatial_trail_stop'] = parseFloat(updated_price);
                             update['stop_loss'] = 'yes';
                             update['loss_percentage'] = new_percentage;
                             update['custom_stop_loss_percentage'] = new_percentage;
@@ -5035,7 +5035,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         filter['_id'] = new ObjectID(orderId);
                         var update = {};
                         update['auto_sell'] = 'yes';
-                        update['iniatial_trail_stop'] = updated_price;
+                        update['iniatial_trail_stop'] = parseFloat(updated_price);
                         update['stop_loss'] = 'yes';
                         update['loss_percentage'] = new_percentage;
                         update['custom_stop_loss_percentage'] = new_percentage;
@@ -5119,7 +5119,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             filter['_id'] = sellArr['_id'];
                             var update = {};
                             update['stop_loss'] = 'yes';
-                            update['iniatial_trail_stop'] = updated_price;
+                            update['iniatial_trail_stop'] = parseFloat(updated_price);
                             update['loss_percentage'] = new_percentage;
                             update['custom_stop_loss_percentage'] = new_percentage;
                             update['auto_sell'] = 'yes';
@@ -5139,7 +5139,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         filter['_id'] = new ObjectID(orderId);
                         var update = {};
                         update['stop_loss'] = 'yes';
-                        update['iniatial_trail_stop'] = updated_price;
+                        update['iniatial_trail_stop'] = parseFloat(updated_price);
                         update['loss_percentage'] = new_percentage;
                         update['custom_stop_loss_percentage'] = new_percentage;
                         update['auto_sell'] = 'yes';
@@ -5984,7 +5984,7 @@ router.post('/createManualOrderGlobally', (req, resp) => {
         setOrderArr['buy_trail_percentage'] = ((orderArr['buy_trail_percentage'] != '') && (orderArr['buy_trail_percentage'] != 'undefined')) ? orderArr['buy_trail_percentage'] : '';
         setOrderArr['buy_trail_price'] = ((orderArr['buy_trail_price'] != '') && (orderArr['buy_trail_price'] != 'undefined')) ? parseFloat(orderArr['buy_trail_price']) : '';
         setOrderArr['auto_sell'] = ((orderArr['auto_sell'] != '') && (orderArr['auto_sell'] != 'undefined')) ? parseFloat(orderArr['auto_sell']) : '';
-        setOrderArr['iniatial_trail_stop'] = ((orderArr['iniatial_trail_stop'] != '') && (orderArr['iniatial_trail_stop'] != 'undefined')) ? orderArr['iniatial_trail_stop'] : '';
+        setOrderArr['iniatial_trail_stop'] = ((orderArr['iniatial_trail_stop'] != '') && (orderArr['iniatial_trail_stop'] != 'undefined')) ? parseFloat(orderArr['iniatial_trail_stop']) : '';
         setOrderArr['created_date'] = new Date();
         setOrderArr['modified_date'] = new Date();
 
