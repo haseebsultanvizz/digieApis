@@ -7120,14 +7120,21 @@ async function get_sell_order(order_id, exchange){
 }
 
 router.post('/umer', async (req, resp) => {
-    let show_hide_log = 'yes';
-    let type = 'remove_error';
-    let created_date = new Date();
-    let oid = new ObjectID('5e05f0a9b55cc50019373fde');
-    $res = create_orders_history_log(oid, 'test 2222222222 ', 'remove_error', 'yes', 'binance', 'test', created_date);
-    resp.status(200).send({
-        message: $res
-    });
+    // let show_hide_log = 'yes';
+    // let type = 'remove_error';
+    // let created_date = new Date();
+    // let oid = new ObjectID('5e05f0a9b55cc50019373fde');
+    // $res = create_orders_history_log(oid, 'test 2222222222 ', 'remove_error', 'yes', 'binance', 'test', created_date);
+
+    const forwarded = req.headers['x-forwarded-for']
+    const ip = forwarded ? forwarded.split(/, /)[0] : req.connection.remoteAddress
+    resp.send({
+        'ips': req.ips,
+        'ip': ip,
+        'req_id': req.ip,
+        'remoteAddress': req.connection.remoteAddress,
+        'headers': req.headers,
+    })
 })
 /**
  * 
