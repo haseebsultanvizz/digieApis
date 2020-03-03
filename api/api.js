@@ -1758,11 +1758,18 @@ router.post('/listOrderListing', async(req, resp) => {
 
 
 
-            var convertToBtc = orderListing[index].quantity * currentMarketPrice;
+            if (orderListing[index].status == 'new'){
+                var convertToBtc = orderListing[index].quantity * currentMarketPrice;
+                let splitArr = orderListing[index].symbol.split('USDT');
+                var coinPriceInBtc = ((splitArr.length > 1) && (splitArr[1] == '')) ? ((orderListing[index].quantity) * currentMarketPrice) : (BTCUSDTPRICE * convertToBtc);
+            }else{
+             
+                let order_price = (typeof orderListing[index].purchased_price != 'undefined' && orderListing[index].purchased_price != '' && !isNaN(parseFloat(orderListing[index].purchased_price)) ? parseFloat(orderListing[index].purchased_price) : currentMarketPrice)
 
-            let splitArr = orderListing[index].symbol.split('USDT');
-
-            var coinPriceInBtc = ((splitArr.length > 1) && (splitArr[1] == '')) ? ((orderListing[index].quantity) * currentMarketPrice) : (BTCUSDTPRICE * convertToBtc);
+                var convertToBtc = orderListing[index].quantity * order_price;
+                let splitArr = orderListing[index].symbol.split('USDT');
+                var coinPriceInBtc = ((splitArr.length > 1) && (splitArr[1] == '')) ? ((orderListing[index].quantity) * order_price) : (BTCUSDTPRICE * convertToBtc);
+            }
 
 
             var order = orderListing[index];
