@@ -815,6 +815,7 @@ router.post('/createManualOrder', (req, resp) => {
             let orders = req.body.orderArr;
             let tempOrder = req.body.tempOrderArr;
             let orderId = req.body.orderId;
+            let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
             var price = parseFloat(orders['price']);
             let exchange = orders['exchange'];
             orders['price'] = price;
@@ -878,7 +879,7 @@ router.post('/createManualOrder', (req, resp) => {
                 } else {
                     //:::::::::::::::::::::::::::::::::
                     var buyOrderId = result.insertedId
-                    var log_msg = "Buy Order was Created at Price " + parseFloat(price).toFixed(8);
+                    var log_msg = "Buy Order was Created "+interfaceType+" at Price " + parseFloat(price).toFixed(8);
                     let profit_percent = req.body.tempOrderArr.profit_percent;
 
                     if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
@@ -1131,6 +1132,8 @@ router.post('/createAutoOrder', async(req, resp) => {
 
 //post call from angular to edit triggers orders
 router.post('/editAutoOrder', async(req, resp) => {
+
+        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
         let order = req.body.orderArr;
         order['modified_date'] = new Date()
         let orderId = order['orderId'];
@@ -1205,7 +1208,7 @@ router.post('/editAutoOrder', async(req, resp) => {
         let obj_keys = Object.keys(obj);
         let new_obj_keys = Object.keys(order);
         let update_keys = new_obj_keys.filter(x => obj_keys.includes(x));
-        let log_message = "Order Was <b style='color:yellow'>Updated</b> ";
+        let log_message = "Order Was <b style='color:yellow'>Updated</b> "+interfaceType+" ";
         for (let i in update_keys) {
             let upd_key = update_keys[i];
             if (new_obj[upd_key] != obj[upd_key]) {
@@ -2345,14 +2348,15 @@ function pausePlayParentOrder(orderId, status, exchange) {
 
 //post order for play and pause parent orders 
 router.post('/togglePausePlayOrder', async(req, resp) => {
+        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from '+req.body.interface : '');
         var playPromise = togglePausePlayOrder(req.body.orderId, req.body.status, req.body.exchange);
         let show_hide_log = 'yes';
         let type = 'play pause';
         let log_msg = '';
         if (req.body.status == 'play') {
-            log_msg = 'Parent Order was set to Play Manually';
+            log_msg = 'Parent Order was set to Play Manually '+interfaceType;
         } else if (req.body.status == 'pause') {
-            log_msg = 'Parent Order was set to Pause Manually';
+            log_msg = 'Parent Order was set to Pause Manually '+interfaceType;
         }
         // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange);
         var getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
@@ -2477,10 +2481,11 @@ function listOrderById(orderId, exchange) {
 
 //post call from component for deleting orders
 router.post('/deleteOrder', async(req, resp) => {
+        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
         var respPromise = deleteOrder(req.body.orderId, req.body.exchange);
         let show_hide_log = 'yes';
         let type = 'buy_canceled';
-        let log_msg = "Buy Order was Canceled";
+        let log_msg = "Buy Order was Canceled "+interfaceType;
         // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log)
         var getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
         var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
@@ -2531,16 +2536,13 @@ function deleteOrder(orderId, exchange) {
 //Changing the target profit to  LTH profit rather than normal profit
 router.post('/orderMoveToLth', async(req, resp) => {
 
-
-    console.log(req.body);
-    console.log('Response is here');
+        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
         let exchange = req.body.exchange;
         let orderId = req.body.orderId;
         let lth_profit = req.body.lth_profit;
 		var buyOrderArr = await listOrderById(orderId, exchange);
         var buyOrderObj = buyOrderArr[0];
-            console.log(buyOrderObj);
-
+        
 		var purchased_price = (typeof buyOrderObj['purchased_price'] == 'undefined')?0:buyOrderObj['purchased_price'] ;
 		var sell_order_id = (typeof buyOrderObj['sell_order_id'] == 'undefined')?'':buyOrderObj['sell_order_id'];
 		var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price)
@@ -2576,7 +2578,7 @@ router.post('/orderMoveToLth', async(req, resp) => {
         var respPromise = orderMoveToLth(orderId, lth_profit, exchange, sell_price);
         let show_hide_log = 'yes';
         let type = 'move_lth';
-        let log_msg = 'Buy Order  <span style="color:yellow;    font-size: 14px;"><b>Manually</b></span> Moved to <strong> LONG TERM HOLD </strong>  ';
+        let log_msg = 'Buy Order  <span style="color:yellow;    font-size: 14px;"><b>Manually</b></span> Moved to <strong> LONG TERM HOLD </strong>  '+interfaceType;
         // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, exchange)
         var getBuyOrder = await listOrderById(req.body.orderId, exchange);
         var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
@@ -2775,6 +2777,7 @@ async function listOrderLog(orderId, exchange,order_mode,order_created_date) {
 //post call for sell order manually from order listing page 
 router.post('/sellOrderManually', async (req, resp) => {
 
+    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     let orderId = req.body.orderId;
     let currentMarketPrice = req.body.currentMarketPriceByCoin;
     let exchange = req.body.exchange;
@@ -2800,7 +2803,7 @@ router.post('/sellOrderManually', async (req, resp) => {
             console.log("trading_ip ", trading_ip)
 
 
-            var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now';
+            var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now '+interfaceType;
             // var logPromise = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
             var getBuyOrder = await listOrderById(buy_order_id, exchange);
             var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
@@ -3056,6 +3059,8 @@ function find(collectionName, search) {
 
 //post call from order listing to buy order 
 router.post('/buyOrderManually', async(req, resp) => {
+
+        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
         var orderId = req.body.orderId;
         var coin = req.body.coin;
         var exchange = req.body.exchange;
@@ -3089,7 +3094,7 @@ router.post('/buyOrderManually', async(req, resp) => {
                 currentMarketPrice = parseFloat(currentMarketPrice);
 
 
-                var log_msg = "Orde Send for buy Manually On " + parseFloat(currentMarketPrice).toFixed(8);
+                var log_msg = "Orde Send for buy Manually On " + parseFloat(currentMarketPrice).toFixed(8)+" "+interfaceType;
                 // var logPromise = recordOrderLog(orderId, log_msg, 'submitted', 'yes', exchange);
                 var getBuyOrder = await listOrderById(orderId, exchange);
                 var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
@@ -5302,6 +5307,9 @@ router.post('/lisEditManualOrderById', async(req, resp) => {
 
 //post call for updating manual orders
 router.post('/updateManualOrder', async (req, resp) => {
+
+        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+
         let buyOrderId = req.body.buyOrderId;
         let exchange = req.body.exchange;
         let sellOrderId = req.body.sellOrderId;
@@ -5314,7 +5322,7 @@ router.post('/updateManualOrder', async (req, resp) => {
 
         let show_hide_log = 'yes';
         let type = 'order_update';
-        let log_msg = "Order has been updated";
+        let log_msg = "Order has been updated "+interfaceType;
         // var logPromise = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange);
         getBuyOrder = await listOrderById(buyOrderId, exchange);
         order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
@@ -6510,6 +6518,7 @@ router.post('/get_error_in_sell', async(req, resp) => {
 //remove error from orders
 router.post('/remove_error', async (req, resp) => {
 
+    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     let order_id = req.body.order_id;
     let exchange = req.body.exchange;
     conn.then( async (db) => {
@@ -6565,7 +6574,7 @@ router.post('/remove_error', async (req, resp) => {
             let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
             
             //create remove error log
-            var log_msg = 'Order was updated And Removed ' + error_type + ' ***';
+            var log_msg = 'Order was updated And Removed ' + error_type + ' '+interfaceType+' ***';
             var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, buy_order['application_mode'], buy_order['created_date'])
             promiseLog.then((callback) => { });
             
