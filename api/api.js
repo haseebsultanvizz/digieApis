@@ -6142,40 +6142,36 @@ router.post('/addUserCoin', async function(req, res, next) {
                 'message': 'exchange, user_id and symbols array are required'
             });
         } else {
-            
+
+            let coins_collection = (exchange == 'binance' ? 'coins' : 'coins_' + exchange)
+            //Delete all user coins
+            db.collection(coins_collection).deleteMany({ "user_id": user_id });
+
             //insert user coins
             if (symbols.length > 0){
                 let where = {
                     'user_id' : 'global',
                     'symbol' : {'$in': symbols},
-                    'exchange_type' : 'binance'
+                }
+                if (coins_collection == 'coins'){
+                    where['exchange_type'] = 'binance'
                 }
                 
-                let coins_collection = ''
-                if(exchange == 'binance'){
-                    coins_collection = 'coins'
-                }else{
-                    coins_collection = 'coins_'+exchange
-                    delete where['exchange_type']
-                }
-                
-                //Delete all user coins
-                db.collection(coins_collection).deleteMany({ "user_id": user_id });
-
                 let data1 = await db.collection(coins_collection).find(where).toArray();
-
                 let add_coins = [];
                 if (data1.length > 0){
-                    data1.forEach(coin=> {
+                    await Promise.all(data1.map(coin=> {
                         let obj = {
                             "user_id": user_id,
                             "symbol": coin['symbol'],
                             "coin_name": coin['coin_name'],
                             "coin_logo": coin['coin_logo'],
-                            "exchange_type": coin['exchange_type'] 
+                        }
+                        if (typeof coin['coin_logo'] != 'undefined'){
+                            obj["exchange_type"] = coin['coin_logo']
                         }
                         add_coins.push(obj)
-                    })
+                    }))
                     if (add_coins.length > 0){
                         let ins = await db.collection(coins_collection).insertMany(add_coins);
                     }
