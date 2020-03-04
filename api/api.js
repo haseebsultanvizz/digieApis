@@ -831,6 +831,7 @@ router.post('/createManualOrder', (req, resp) => {
                 orders['buy_trail_price'] = ''
             }else{
                 orders['buy_trail_price'] = 0;
+                orders['trail_interval'] = parseFloat(orders['trail_interval'])
             }
 
             if (typeof orders['auto_sell'] == 'undefined' || orders['auto_sell'] == 'no') {
@@ -902,6 +903,8 @@ router.post('/createManualOrder', (req, resp) => {
                             tempOrder['trail_check'] = ''
                             tempOrder['trail_interval'] = ''
                             tempOrder['sell_trail_percentage'] = ''
+                        }else{
+                            tempOrder['trail_interval'] = parseFloat(tempOrder['trail_interval'])
                         }
 
                         if (typeof orders['auto_sell'] == 'undefined' || orders['auto_sell'] == 'no') {
@@ -3282,7 +3285,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
             var sell_profit_price = (typeof sell_data_arr['profit_price'] == 'undefined') ? '' : sell_data_arr['profit_price'];
             var order_type = (typeof sell_data_arr['order_type'] == 'undefined') ? '' : sell_data_arr['order_type'];
             var trail_check = (typeof sell_data_arr['trail_check'] == 'undefined') ? '' : sell_data_arr['trail_check'];
-            var trail_interval = (typeof sell_data_arr['trail_interval'] == 'undefined') ? '' : sell_data_arr['trail_interval'];
+            var trail_interval = (typeof sell_data_arr['trail_interval'] == 'undefined') ? '' : parseFloat(sell_data_arr['trail_interval']);
             var stop_loss = (typeof sell_data_arr['stop_loss'] == 'undefined') ? '' : sell_data_arr['stop_loss'];
             var loss_percentage = (typeof sell_data_arr['loss_percentage'] == 'undefined') ? '' : sell_data_arr['loss_percentage'];
             var application_mode = (typeof sell_data_arr['application_mode'] == 'undefined') ? '' : sell_data_arr['application_mode'];
@@ -3324,12 +3327,12 @@ function createOrderFromAutoSell(orderArr, exchange) {
             }
             if (trail_check != '') {
                 ins_data['trail_check'] = 'yes';
-                ins_data['trail_interval'] = trail_interval;
+                ins_data['trail_interval'] = parseFloat(trail_interval);
                 ins_data['sell_trail_price'] = sell_price;
                 ins_data['status'] = 'new';
             } else {
                 ins_data['trail_check'] = 'no';
-                ins_data['trail_interval'] = '0';
+                ins_data['trail_interval'] = 0;
                 ins_data['sell_trail_price'] = '0';
                 ins_data['status'] = 'new';
             }
@@ -4241,7 +4244,7 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                             ins_data['sell_profit_percent'] = sell_profit_percent;
                             ins_data['sell_price'] = updated_price;
                             ins_data['trail_check'] = 'no';
-                            ins_data['trail_interval'] = '0';
+                            ins_data['trail_interval'] = 0;
                             ins_data['buy_trail_percentage'] = '0';
                             ins_data['buy_trail_price'] = '0';
                             ins_data['status'] = 'new';
@@ -5376,6 +5379,11 @@ router.post('/updateManualOrder', async (req, resp) => {
                 buyorderArr['lth_functionality'] = 'no'
                 buyorderArr['lth_profit'] = ''
             }
+
+            if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != ''){
+                buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
+            }
+
         }else{
             //set profit percentage if sell price is fixed
             if (buyorderArr['profit_type'] == 'fixed_price') {
@@ -5415,6 +5423,11 @@ router.post('/updateManualOrder', async (req, resp) => {
                 buyorderArr['lth_functionality'] = 'no'
                 buyorderArr['lth_profit'] = ''
             }
+
+            if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
+                buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
+            }
+
         }
 
         buyorderArr['modified_date'] = new Date();
@@ -5465,6 +5478,10 @@ router.post('/updateManualOrder', async (req, resp) => {
                 sellOrderArr['lth_profit'] = ''
             }
 
+            if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
+                sellOrderArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
+            }
+
             sellOrderArr['modified_date'] = new Date();
             var upsert = { 'upsert': true };
             var updPromise_1 = updateSingle(orders_collection, where_1, sellOrderArr, upsert);
@@ -5513,6 +5530,10 @@ router.post('/updateManualOrder', async (req, resp) => {
             } else {
                 tempOrderArr['lth_functionality'] = 'no'
                 tempOrderArr['lth_profit'] = ''
+            }
+
+            if (typeof tempOrderArr['trail_interval'] != 'undefined' && tempOrderArr['trail_interval'] != '') {
+                tempOrderArr['trail_interval'] = parseFloat(tempOrderArr['trail_interval'])
             }
 
             tempOrderArr['modified_date'] = new Date();
@@ -5570,6 +5591,10 @@ router.post('/setForSell', async(req, resp) => {
         sellOrderArr['lth_profit'] = ''
     }
 
+    if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
+        sellOrderArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
+    }
+
     let exchange = req.body.exchange;
     let buyOrderId = req.body.buyOrderId;
     //function to set manual order for sell
@@ -5612,6 +5637,10 @@ router.post('/setForSell', async(req, resp) => {
     } else {
         updArr['lth_functionality'] = 'no'
         updArr['lth_profit'] = ''
+    }
+
+    if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
+        updArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
     }
 
     var where = {};
@@ -5995,7 +6024,7 @@ router.post('/createManualOrderGlobally', (req, resp) => {
         setOrderArr['lth_functionality'] = ((orderArr['lth_functionality'] != '') && (orderArr['lth_functionality'] != 'undefined')) ? orderArr['lth_functionality'] : '';
         setOrderArr['lth_profit'] = ((orderArr['lth_profit'] != '') && (orderArr['lth_profit'] != 'undefined')) ? orderArr['lth_profit'] : '';
         setOrderArr['trail_check'] = ((orderArr['trail_check'] != '') && (orderArr['trail_check'] != 'undefined')) ? orderArr['trail_check'] : '';
-        setOrderArr['trail_interval'] = ((orderArr['trail_interval'] != '') && (orderArr['trail_interval'] != 'undefined')) ? orderArr['trail_interval'] : '';
+        setOrderArr['trail_interval'] = ((orderArr['trail_interval'] != '') && (orderArr['trail_interval'] != 'undefined')) ? parseFloat(orderArr['trail_interval']) : '';
         setOrderArr['buy_trail_percentage'] = ((orderArr['buy_trail_percentage'] != '') && (orderArr['buy_trail_percentage'] != 'undefined')) ? orderArr['buy_trail_percentage'] : '';
         setOrderArr['buy_trail_price'] = ((orderArr['buy_trail_price'] != '') && (orderArr['buy_trail_price'] != 'undefined')) ? parseFloat(orderArr['buy_trail_price']) : '';
         setOrderArr['auto_sell'] = ((orderArr['auto_sell'] != '') && (orderArr['auto_sell'] != 'undefined')) ? parseFloat(orderArr['auto_sell']) : '';
