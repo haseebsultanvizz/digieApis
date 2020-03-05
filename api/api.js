@@ -903,8 +903,10 @@ router.post('/createManualOrder', (req, resp) => {
                             tempOrder['trail_check'] = ''
                             tempOrder['trail_interval'] = ''
                             tempOrder['sell_trail_percentage'] = ''
+                            tempOrder['sell_trail_price'] = ''
                         }else{
                             tempOrder['trail_interval'] = parseFloat(tempOrder['trail_interval'])
+                            tempOrder['sell_trail_price'] = 0
                         }
 
                         if (typeof orders['auto_sell'] == 'undefined' || orders['auto_sell'] == 'no') {
