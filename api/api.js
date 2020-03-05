@@ -3327,15 +3327,15 @@ function createOrderFromAutoSell(orderArr, exchange) {
                 ins_data['sell_profit_price'] = sell_profit_price;
                 ins_data['sell_price'] = sell_price;
             }
-            if (trail_check != '') {
+            if (trail_check == 'yes') {
                 ins_data['trail_check'] = 'yes';
                 ins_data['trail_interval'] = parseFloat(trail_interval);
-                ins_data['sell_trail_price'] = sell_price;
+                ins_data['sell_trail_price'] = 0;
                 ins_data['status'] = 'new';
             } else {
                 ins_data['trail_check'] = 'no';
                 ins_data['trail_interval'] = 0;
-                ins_data['sell_trail_price'] = '0';
+                ins_data['sell_trail_price'] = 0;
                 ins_data['status'] = 'new';
             }
 
