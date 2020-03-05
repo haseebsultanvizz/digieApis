@@ -6198,8 +6198,8 @@ router.post('/addUserCoin', async function(req, res, next) {
                             "coin_name": coin['coin_name'],
                             "coin_logo": coin['coin_logo'],
                         }
-                        if (typeof coin['coin_logo'] != 'undefined'){
-                            obj["exchange_type"] = coin['coin_logo']
+                        if (exchange == 'binance'){
+                            obj["exchange_type"] = exchange 
                         }
                         add_coins.push(obj)
                     }))
