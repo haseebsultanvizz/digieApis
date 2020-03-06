@@ -7283,6 +7283,59 @@ router.post('/pause_sold_order', (req, res) => {
 })
 //End pause_sold_order
 
+router.post('/pause_lth_order', (req, res) => {
+
+    conn.then(async (db) => {
+
+        let exchange = req.body.exchange
+        let order_id = req.body.order_id
+
+        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == ''){
+            res.send({
+                'status': false,
+                'message': 'order_id and exchange are required'
+            });
+        }else{
+            let filter = {
+                '_id': new ObjectID(order_id)
+            }
+            
+            let collection = (exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange)
+
+            let data1 = await db.collection(collection).find(filter).limit(1).toArray();
+            
+            if (data1.length > 0) {
+                obj = data1[0];
+    
+                let set = {};
+                set['$set'] = {
+                    'status': 'lth_pause'
+                };
+                let where = {
+                    '_id': obj._id
+                }
+    
+                let update = db.collection(collection).updateOne(where, set);
+    
+                let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
+                let ins = await db.collection(pause_collection).insertOne(obj);
+                
+                res.send({
+                    'status': true,
+                    'message': 'Order paused successfully'
+                });
+            }else{
+                res.send({
+                    'status': false,
+                    'message': 'Something went wrong'
+                });
+            }
+        }
+
+    })
+})
+//End pause_lth_order
+
 router.post('/resume_order', (req, res) => {
     conn.then(async (db) => {
         let exchange = req.body.exchange
