@@ -2498,9 +2498,9 @@ router.post('/deleteOrder', async(req, resp) => {
         var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
         var promiseResponse = await Promise.all([LogPromise, respPromise]);
 
-        if ((getBuyOrder.length > 0 ) && typeof getBuyOrder['buy_parent_id'] != 'undefined') {
+        if ((getBuyOrder.length > 0 ) && typeof getBuyOrder[0]['buy_parent_id'] != 'undefined') {
             let where = {};
-            where['_id'] = new ObjectID(String(getBuyOrder['buy_parent_id']));
+            where['_id'] = new ObjectID(String(getBuyOrder[0]['buy_parent_id']));
             let updObj = {};
             updObj['status'] = 'new';
             let exchange = req.body.exchange
