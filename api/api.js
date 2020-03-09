@@ -7336,6 +7336,38 @@ router.post('/pause_lth_order', (req, res) => {
 })
 //End pause_lth_order
 
+router.post('/getUserbalance', (req, res) => {
+    conn.then(async (db) => {
+        let exchange = req.body.exchange
+        let admin_id = req.body.user_id
+
+        if (typeof exchange == 'undefined' || exchange == '' || typeof admin_id == 'undefined' || admin_id == '') {
+            res.send({
+                'status': false,
+                'message': 'user_id and exchange are required'
+            });
+        } else {
+
+            let userbalance = await get_user_wallet(admin_id, exchange);
+
+            if (userbalance.length > 0) {
+                res.send({
+                    'status': true,
+                    'balance': userbalance,
+                    'message': 'Data found successfully'
+                });
+            } else {
+                res.send({
+                    'status': false,
+                    'message': 'Something went wrong'
+                });
+            }
+        }
+
+    })
+})
+//End getUserbalance
+
 router.post('/resume_order', (req, res) => {
     conn.then(async (db) => {
         let exchange = req.body.exchange
@@ -7429,6 +7461,6 @@ router.post('/latest_user_activity', (req, res) => {
 
     })
 })
-//End resume_order
+//End latest_user_activity
 
 module.exports = router;
