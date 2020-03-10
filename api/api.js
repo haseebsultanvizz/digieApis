@@ -7406,8 +7406,8 @@ router.post('/resume_order', (req, res) => {
     
                 let update = db.collection(sold_collection).updateOne(where, set);
     
-                let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
-                let ins = await db.collection(pause_collection).insertOne(obj);
+                // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
+                // let ins = await db.collection(pause_collection).insertOne(obj);
                 
                 res.send({
                     'status': true,
