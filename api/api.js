@@ -7320,7 +7320,7 @@ router.post('/pause_lth_order', (req, res) => {
                 //Update Status in sell Orders also
                 let sell_order_collection = (exchange == 'binance' ? 'orders' : 'orders_' + exchange)
                 if (typeof obj.sell_order_id != 'undefined'){
-                    update = db.collection(sell_order_collection).updateOne({ '_id': new ObjectID(String(sell_order_id))}, set);
+                    update = db.collection(sell_order_collection).updateOne({ '_id': new ObjectID(String(obj.sell_order_id))}, set);
                 }
                 // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
                 // let ins = await db.collection(pause_collection).insertOne(obj);
