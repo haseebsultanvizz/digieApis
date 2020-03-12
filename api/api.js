@@ -1204,10 +1204,22 @@ router.post('/editAutoOrder', async(req, resp) => {
         delete order['orderId'];
         var where = {};
         where['_id'] = new ObjectID(orderId);
-
-
         var updPrmise = updateOne(where, order, collection);
         updPrmise.then((callback) => {})
+
+        
+        
+        //Update sell_price in Sell Order
+        if (typeof buyOrderArr[0]['sell_order_id'] != 'undefined'){
+            let sell_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+            var where = {};
+            let sell_order = {
+                'sell_price': order['sell_price']
+            }
+            where['_id'] = new ObjectID(String(buyOrderArr[0]['sell_order_id']));
+            var updPrmise = updateOne(where, sell_order, sell_collection);
+            updPrmise.then((callback) => { })
+        }
 
         //TODO: create detail update log Umer Abbas [13-12-19]
         let obj = buyOrderArr[0];
