@@ -344,7 +344,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             //Update last login time
                             db.collection('users').updateOne({ '_id': userArr['_id'] }, { '$set': { 'last_login_datetime': new Date() } });
 
-                            send_notification(respObj.id, 'security_alerts', 'high', 'Your account is just logged in ', '', '', '', 'web')
+                            send_notification(respObj.id, 'security_alerts', 'high', 'Your account is just logged In ', '', '', '', 'web')
 
                             resp.send(respObj);
 
@@ -894,8 +894,11 @@ router.post('/createManualOrder', (req, resp) => {
                     let order_mode = orders.application_mode;
                     var order_created_date = new Date();
                     var promiseLog = create_orders_history_log(buyOrderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-
                     promiseLog.then((callback) => {})
+
+                    //Send Notification
+                    send_notification(orders.admin_id, 'news_alerts', 'medium', log_msg, buyOrderId, exchange, orders.symbol, orders.application_mode, '')
+
                     //check of auto sell is yes then create sell temp order
                     if (req.body.orderArr.auto_sell == 'yes') {
 
@@ -1216,6 +1219,7 @@ router.post('/editAutoOrder', async(req, resp) => {
         let new_obj_keys = Object.keys(order);
         let update_keys = new_obj_keys.filter(x => obj_keys.includes(x));
         let log_message = "Order Was <b style='color:yellow'>Updated</b> "+interfaceType+" ";
+        let notification_msg = log_message;
         for (let i in update_keys) {
             let upd_key = update_keys[i];
             if (new_obj[upd_key] != obj[upd_key]) {
@@ -1239,6 +1243,9 @@ router.post('/editAutoOrder', async(req, resp) => {
         promiseLog.then((callback) => {
 
         })
+
+        //Send Notification
+        send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', notification_msg, orderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
         resp.status(200).send({
             message: 'updated'
@@ -2374,6 +2381,10 @@ router.post('/togglePausePlayOrder', async(req, resp) => {
         resp.status(200).send({
             message: promiseResponse
         });
+
+        //Send Notification
+        send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', log_msg, req.body.orderId, req.body.exchange, getBuyOrder[0]['symbol'], order_mode, '')
+
     }) //End of playOrder
 
 function togglePausePlayOrder(orderId, status, exchange) {
@@ -2500,6 +2511,9 @@ router.post('/deleteOrder', async(req, resp) => {
         var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
         var promiseResponse = await Promise.all([LogPromise, respPromise]);
 
+        //Send Notification
+        send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'low', log_msg, req.body.orderId, req.body.exchange, getBuyOrder[0]['symbol'], order_mode, '')
+
         if ((getBuyOrder.length > 0 ) && typeof getBuyOrder[0]['buy_parent_id'] != 'undefined') {
             let where = {};
             where['_id'] = new ObjectID(String(getBuyOrder[0]['buy_parent_id']));
@@ -2592,6 +2606,10 @@ router.post('/orderMoveToLth', async(req, resp) => {
         var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
         var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
         var promiseResponse = await Promise.all([LogPromise, respPromise]);
+
+        //Send Notification
+        send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', log_msg, req.body.orderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
+
         resp.status(200).send({
             message: promiseResponse
         });
@@ -2817,6 +2835,8 @@ router.post('/sellOrderManually', async (req, resp) => {
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             var logPromise = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
 
+            //Send Notification
+            send_notification(getBuyOrder[0]['admin_id'], 'sell_alerts', 'medium', log_msg, buy_order_id, exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
             var log_msg = 'Send Market Orde for sell by Ip: <b>' + trading_ip + '</b> ';
             // var logPromise_2 = recordOrderLog(buy_order_id, log_msg, 'order_ip', 'no', exchange);
@@ -3101,7 +3121,7 @@ router.post('/buyOrderManually', async(req, resp) => {
                 currentMarketPrice = parseFloat(currentMarketPrice);
 
 
-                var log_msg = "Orde Send for buy Manually On " + parseFloat(currentMarketPrice).toFixed(8)+" "+interfaceType;
+                var log_msg = "Order Send for buy Manually On " + parseFloat(currentMarketPrice).toFixed(8)+" "+interfaceType;
                 // var logPromise = recordOrderLog(orderId, log_msg, 'submitted', 'yes', exchange);
                 var getBuyOrder = await listOrderById(orderId, exchange);
                 var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
@@ -3110,6 +3130,9 @@ router.post('/buyOrderManually', async(req, resp) => {
                 logPromise.then((callback) => {
                    // console.log(callback)
                 })
+
+                //Send Notification
+                send_notification(getBuyOrder[0]['admin_id'], 'buy_alerts', 'medium', log_msg, orderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
                 //if order mode  is live then send order from here to specific ip
                 if (application_mode == 'live') {
@@ -5337,6 +5360,8 @@ router.post('/updateManualOrder', async (req, resp) => {
         var logPromise = create_orders_history_log(buyOrderId, log_msg, 'order_update', 'yes', exchange, order_mode, order_created_date)
         logPromise.then((resolve) => {})
 
+        //Send Notification
+        send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', log_msg, buyOrderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
         var orders_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
         var buy_order_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -6606,6 +6631,9 @@ router.post('/remove_error', async (req, resp) => {
             var log_msg = 'Order was updated And Removed ' + error_type + ' '+interfaceType+' ***';
             var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, buy_order['application_mode'], buy_order['created_date'])
             promiseLog.then((callback) => { });
+
+            //Send Notification
+            send_notification(buy_order['admin_id'], 'news_alerts', 'medium', log_msg, order_id, exchange, buy_order['symbol'], buy_order['application_mode'], '')
             
             resp.status(200).send({
                 status: true,
@@ -7062,7 +7090,7 @@ return new Promise((resolve, reject) => {
 
                         }
                 })
-                
+
             })();
         })
     })
@@ -7470,34 +7498,53 @@ router.post('/latest_user_activity', (req, res) => {
 })
 //End latest_user_activity
 
-async function send_notification(admin_id, type, priority, message, order_id = '', exchange = '', symbol = '', interface = ''){
+async function send_notification(admin_id, type, priority, message, order_id = '', exchange = '', symbol = '', application_mode = '', interface = ''){
+
+    /*
+    // Notifications can only be of the following types and priorities
+    let types = [
+        "security_alerts",
+        "buy_alerts",
+        "sell_alerts",
+        "trading_alerts",
+        "withdraw_alerts",
+        "news_alerts"
+    ]
+    let priorities = [
+        'high',
+        'medium',
+        'low'
+    ]
+    */
 
     if (admin_id == '5c0912b7fc9aadaac61dd072'){
-        var options = {
-            method: 'POST',
-            url: 'https://app.digiebot.com/admin/Api_services/send_notification',
-            headers: {
-                'cache-control': 'no-cache',
-                'Connection': 'keep-alive',
-                'Accept-Encoding': 'gzip, deflate',
-                'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-                'Cache-Control': 'no-cache',
-                'Accept': '*/*',
-                'User-Agent': 'PostmanRuntime/7.20.1',
-                'Content-Type': 'application/json'
-            },
-            json: {
-                'admin_id': admin_id,
-                'type': type,
-                'priority': priority,
-                'message': message,
-                'order_id': order_id,
-                'exchange': exchange,
-                'symbol': symbol,
-                'interface': interface
-            }
-        };
-        request(options, function (error, response, body) { });
+        // if(application_mode == 'live'){
+            var options = {
+                method: 'POST',
+                url: 'https://app.digiebot.com/admin/Api_services/send_notification',
+                headers: {
+                    'cache-control': 'no-cache',
+                    'Connection': 'keep-alive',
+                    'Accept-Encoding': 'gzip, deflate',
+                    'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                    'Cache-Control': 'no-cache',
+                    'Accept': '*/*',
+                    'User-Agent': 'PostmanRuntime/7.20.1',
+                    'Content-Type': 'application/json'
+                },
+                json: {
+                    'admin_id': admin_id,
+                    'type': type,
+                    'priority': priority,
+                    'message': message,
+                    'order_id': order_id,
+                    'exchange': exchange,
+                    'symbol': symbol,
+                    'interface': interface
+                }
+            };
+            request(options, function (error, response, body) { });
+        // }
     }
     return true;
 } 
