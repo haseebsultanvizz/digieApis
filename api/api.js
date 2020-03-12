@@ -7475,7 +7475,7 @@ async function send_notification(admin_id, type, priority, message, order_id = '
     if (admin_id == '5c0912b7fc9aadaac61dd072'){
         var options = {
             method: 'POST',
-            url: 'https://app.digiebot.com/admin/Api_services/test_notification',
+            url: 'https://app.digiebot.com/admin/Api_services/send_notification',
             headers: {
                 'cache-control': 'no-cache',
                 'Connection': 'keep-alive',
