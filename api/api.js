@@ -6629,16 +6629,18 @@ router.post('/remove_error', async (req, resp) => {
                 let updated = await db.collection(buy_collection).updateOne(where, update)
     
                 //remove error from sell_order
-                let where2 = {
-                    'buy_order_id': { $in: [order_id, new ObjectID(order_id)] }
-                }
-                let update2 = {
-                    '$set': {
-                        'status': 'new',
-                        'modified_date': new Date()
+                if (typeof buy_order['sell_order_id'] != 'undefined'){
+                    let where2 = {
+                        '_id': new ObjectID(String(buy_order['sell_order_id']))
                     }
+                    let update2 = {
+                        '$set': {
+                            'status': 'new',
+                            'modified_date': new Date()
+                        }
+                    }
+                    let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
                 }
-                let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
                 
                 //create remove error log
                 var log_msg = 'Order was updated And Removed ' + error_type + ' '+interfaceType+' ***';
