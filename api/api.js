@@ -1174,6 +1174,7 @@ router.post('/editAutoOrder', async(req, resp) => {
 
             order['sell_profit_percent'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent
             order['defined_sell_percentage'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent 
+            order['is_sell_order'] = 'yes';
         }
 
         //set stop loss 
