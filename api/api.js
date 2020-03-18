@@ -1734,6 +1734,8 @@ router.post('/listOrderListing', async(req, resp) => {
         countArr['soldCount'] = soldCount;
         countArr['filledCount'] = filledCount;
         countArr['lthPauseCount'] = lthPauseCount;
+        countArr['totalBuyCount'] = all2Count;
+        countArr['totalSoldCount'] = all1Count;
         //get user balance for listing on list-order page
         var userBalanceArr = []
         userBalanceArr = await get_user_wallet(admin_id, exchange)
@@ -2140,7 +2142,6 @@ async function listOrderListing(postDAta, dbConnection) {
         filter['order_level'] = postDAta.order_level
     }
 
-
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
         if (postDAta.start_date != ''){
@@ -2157,12 +2158,9 @@ async function listOrderListing(postDAta, dbConnection) {
         filter['is_sell_order'] = 'yes';
     }
 
-
     if (postDAta.status == 'filled') {
         filter['status'] = { '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR'] }
     }
-
-
 
     if (postDAta.status == 'sold') {
         filter['status'] = 'FILLED'
@@ -2176,18 +2174,15 @@ async function listOrderListing(postDAta, dbConnection) {
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
 
-
     if (postDAta.status == 'parent') {
         filter['parent_status'] = 'parent'
         filter['status'] = { '$in': ['new', 'takingOrder'] };
     }
 
-
     if (postDAta.status == 'LTH') {
         filter['status'] = { '$in': ['LTH', 'LTH_ERROR'] };
         filter['is_sell_order'] = 'yes';
     }
-
 
     if (postDAta.status == 'new') {
         filter['status'] = { '$in': ['new', 'new_ERROR'] };
@@ -2207,8 +2202,9 @@ async function listOrderListing(postDAta, dbConnection) {
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter, pagination, limit, skip);
-        var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter, pagination, limit, skip);
-        var returnArr = mergeOrdersArrays(SoldOrderArr, buyOrderArr);
+        var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter, pagination, limit, skip);        
+        // var returnArr = mergeOrdersArrays(SoldOrderArr, buyOrderArr);
+        var returnArr = SoldOrderArr.concat(buyOrderArr);
         var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
     } else {
         var orderArr = await list_orders_by_filter(collectionName, filter, pagination, limit, skip);
