@@ -187,32 +187,63 @@ router.post('/authenticate-old', async function(req, resp, next) {
     }) //End of authenticate
 
 //TODO: Block temporarily if more than 3 unsuccessful login attempts
-async function loginAttempt(action, username, password){
-    //user_soft_delete = 1
-    if(action == 'success'){
-        //TODO: reset loginAttemptCheck
-    }else{
-        //TODO: increment attempt count
-    }
-    let where = {
-        'username': '',
-        'password': ''
-    }
-    conn.then(async (db) => {
-        db.collection('coins').find(where).toArray(async (err, data) => {
-            if (err) {
-                return false
-            } else {
-                if (data.length > 0){
-                    if(data[0]['unsuccessfull_login_attempt_count'] > 0){
+async function blockLoginAttempt(username, action){
+    return new Promise(async function(resolve, reject){  
+        let where = {
+            'username': username,
+        }
+        conn.then(async (db) => {
+            db.collection('users').find(where).toArray(async (err, data) => {
+                if (err) {
+                    resolve(false)
+                } else {
+                    if (data.length > 0) {
+                        if(action == 'temp_block_check'){
+                            if (typeof data[0]['login_attempt_block_time'] != 'undefined' && data[0]['login_attempt_block_time'] != ''){
+                                let login_attempt_block_time =  new Date(String(data[0]['login_attempt_block_time']))
+                                //15 minutes block time
+                                let login_block_expiry = new Date(login_attempt_block_time.getTime() + 15 * 60000);
+                                let current_time = new Date()
+                                // console.log(login_block_expiry, '  =================  ', current_time)
+                                if (login_block_expiry >= current_time) {
+                                    resolve(true)
+                                }else{
+                                    blockLoginAttempt(username, 'reset')
+                                    resolve(false)
+                                }
+                            }
+                            resolve(false)
+                        } else if (action == 'increment'){
+                            var set= {
+                                'unsuccessfull_login_attempt_count': (typeof data[0]['unsuccessfull_login_attempt_count'] != 'undefined' && data[0]['unsuccessfull_login_attempt_count'] != '' && !isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) ? data[0]['unsuccessfull_login_attempt_count'] + 1 : 1)
+                            }
+                            if (set['unsuccessfull_login_attempt_count'] >= 3){
+                                set['login_attempt_block_time'] = new Date()
+                                // set['user_soft_delete'] = 1
+                            }
+                            db.collection('users').updateOne(where, {'$set': set})
 
+                            if (set['unsuccessfull_login_attempt_count'] >= 3) {
+                                resolve(true)
+                            }
+                            resolve(false)
+                        } else if (action == 'reset'){
+                            let set = {
+                                'unsuccessfull_login_attempt_count': 0,
+                                'login_attempt_block_time': '',
+                                // 'user_soft_delete': ''
+                            }
+                            db.collection('users').updateOne(where, { '$set': set })
+                            resolve(true)
+                        }
+                        resolve(false)
                     }
+                    resolve(false)
                 }
-                return false
-            }
+            })
         })
     })
-}//end loginAttempt
+}//end blockLoginAttempt
 
 //when first time user login call this function 
 router.post('/authenticate', async function (req, resp, next) {
@@ -305,53 +336,67 @@ router.post('/authenticate', async function (req, resp, next) {
                 where['user_soft_delete'] = '0';
                 conn.then((db) => {
                     let UserPromise = db.collection('users').find(where).toArray();
-                    UserPromise.then((userArr) => {
+                    UserPromise.then(async (userArr) => {
                         let respObj = {};
                         if (userArr.length > 0) {
-                            userArr = userArr[0];
-                            let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
-                            let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
-                            if (api_key == '' || api_secret == '' || api_key == null || api_secret == null) {
-                                var check_api_settings = 'no';
+                            if (await blockLoginAttempt(username, 'temp_block_check')) {
+                                resp.status(400).send({
+                                    message: 'User temporary blocked for 15 minutes due to 3 unsuccessful login attempts.'
+                                });
                             } else {
-                                var check_api_settings = 'yes';
+                                //Reset temporary block
+                                blockLoginAttempt(username, 'reset')
+
+                                userArr = userArr[0];
+                                let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
+                                let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
+                                if (api_key == '' || api_secret == '' || api_key == null || api_secret == null) {
+                                    var check_api_settings = 'no';
+                                } else {
+                                    var check_api_settings = 'yes';
+                                }
+                                let application_mode = (typeof userArr['application_mode'] == 'undefined') ? '' : userArr['application_mode'];
+
+                                if (application_mode == "" || application_mode == null || application_mode == 'no') {
+                                    var app_mode = 'test';
+                                } else {
+                                    var app_mode = (application_mode == 'both') ? 'live' : application_mode;
+                                }
+
+                                respObj.id = userArr['_id'];
+                                respObj.username = userArr['username'];
+                                respObj.firstName = userArr['first_name'];
+                                respObj.lastName = userArr['last_name'];
+                                respObj.profile_image = userArr['profile_image'];
+                                respObj.role = 'admin'; //userArr['user_role'];
+                                respObj.token = `fake-jwt-token.`;
+                                respObj.email_address = userArr['email_address'];
+                                respObj.timezone = userArr['timezone'];
+                                respObj.check_api_settings = check_api_settings;
+                                respObj.application_mode = app_mode
+                                respObj.leftmenu = userArr['leftmenu'];
+                                respObj.user_role = userArr['user_role'];
+                                respObj.special_role = userArr['special_role'];
+                                respObj.google_auth = userArr['google_auth'];
+                                respObj.trigger_enable = userArr['trigger_enable'];
+
+                                //Update last login time
+                                db.collection('users').updateOne({ '_id': userArr['_id'] }, { '$set': { 'last_login_datetime': new Date() } });
+
+                                send_notification(respObj.id, 'security_alerts', 'high', 'Your account is just logged In ', '', '', '', 'web')
+
+                                resp.send(respObj);
                             }
-                            let application_mode = (typeof userArr['application_mode'] == 'undefined') ? '' : userArr['application_mode'];
-
-                            if (application_mode == "" || application_mode == null || application_mode == 'no') {
-                                var app_mode = 'test';
-                            } else {
-                                var app_mode = (application_mode == 'both') ? 'live' : application_mode;
-                            }
-
-                            respObj.id = userArr['_id'];
-                            respObj.username = userArr['username'];
-                            respObj.firstName = userArr['first_name'];
-                            respObj.lastName = userArr['last_name'];
-                            respObj.profile_image = userArr['profile_image'];
-                            respObj.role = 'admin'; //userArr['user_role'];
-                            respObj.token = `fake-jwt-token.`;
-                            respObj.email_address = userArr['email_address'];
-                            respObj.timezone = userArr['timezone'];
-                            respObj.check_api_settings = check_api_settings;
-                            respObj.application_mode = app_mode
-                            respObj.leftmenu = userArr['leftmenu'];
-                            respObj.user_role = userArr['user_role'];
-                            respObj.special_role = userArr['special_role'];
-                            respObj.google_auth = userArr['google_auth'];
-                            respObj.trigger_enable = userArr['trigger_enable'];
-
-                            //Update last login time
-                            db.collection('users').updateOne({ '_id': userArr['_id'] }, { '$set': { 'last_login_datetime': new Date() } });
-
-                            send_notification(respObj.id, 'security_alerts', 'high', 'Your account is just logged In ', '', '', '', 'web')
-
-                            resp.send(respObj);
-
                         } else {
-                            resp.status(400).send({
-                                message: 'username or Password Incorrect'
-                            });
+                            if(await blockLoginAttempt(username, 'increment')){
+                                resp.status(400).send({
+                                    message: 'User temporary blocked for 15 minutes due to 3 unsuccessful login attempts.'
+                                });
+                            }else{
+                                resp.status(400).send({
+                                    message: 'username or Password Incorrect'
+                                });
+                            }
                         }
                     })
                 })
