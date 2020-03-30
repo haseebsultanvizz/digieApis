@@ -1,4 +1,3 @@
-
 var express = require('express');
 var router = express.Router();
 var request = require('request');
@@ -53,142 +52,152 @@ router.post('/verifyOldPassword', async function (req, resp) {
 }) //End of verifyOldPassword
 
 //when first time user login call this function 
-router.post('/authenticate-old', async function(req, resp, next) {
-        conn.then(async(db) => {
-            let username = req.body.username;
-            let pass = req.body.password;
-            //Convert password to md5
-            let md5Pass = md5(pass);
-            let where = {};
-            //Function for sup password so that we can login for any user
-            let global_password_arr = await db.collection("superadmin_settings").find({ "subtype": "superadmin_password" }).toArray();
-            let global_password = global_password_arr[0]['updated_system_password'];
-            //We compare if login password is global password then we allow to login on the base of global password
-            if (pass == global_password) {
-                /////////// IP CHECK HERE
-                ////////////
+router.post('/authenticate-old', async function (req, resp, next) {
+    conn.then(async (db) => {
+        let username = req.body.username;
+        let pass = req.body.password;
+        //Convert password to md5
+        let md5Pass = md5(pass);
+        let where = {};
+        //Function for sup password so that we can login for any user
+        let global_password_arr = await db.collection("superadmin_settings").find({
+            "subtype": "superadmin_password"
+        }).toArray();
+        let global_password = global_password_arr[0]['updated_system_password'];
+        //We compare if login password is global password then we allow to login on the base of global password
+        if (pass == global_password) {
+            /////////// IP CHECK HERE
+            ////////////
 
-                //If we Allow only trusted ips
-                var trustedIps = ['203.99.181.69', '203.99.181.17'];
-                var requestIP = String(req.connection.remoteAddress);
-                requestIP.replace("::ffff:", '');
-                if (true) {
-                
-                    where['$or'] = [{ username: username }, { email_address: username }]
-                    where['status'] = '0';
-                    where['user_soft_delete'] = '0';
+            //If we Allow only trusted ips
+            var trustedIps = ['203.99.181.69', '203.99.181.17'];
+            var requestIP = String(req.connection.remoteAddress);
+            requestIP.replace("::ffff:", '');
+            if (true) {
 
-                    let UserPromise = db.collection('users').find(where).toArray();
-                    UserPromise.then((userArr) => {
-                        let respObj = {};
-                        if (userArr.length > 0) {
-                            userArr = userArr[0];
-                            let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
-                            let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
-                            if (api_key == '' || api_secret == '' || api_key == null || api_secret == null) {
-                                var check_api_settings = 'no';
-                            } else {
-                                var check_api_settings = 'yes';
-                            }
-                            let application_mode = (typeof userArr['application_mode'] == 'undefined') ? '' : userArr['application_mode'];
-
-                            if (application_mode == "" || application_mode == null || application_mode == 'no') {
-                                var app_mode = 'test';
-                            } else {
-                                var app_mode = (application_mode == 'both') ? 'live' : application_mode;
-                            }
-
-                            respObj.id = userArr['_id'];
-                            respObj.username = userArr['username'];
-                            respObj.firstName = userArr['first_name'];
-                            respObj.lastName = userArr['last_name'];
-                            respObj.profile_image = userArr['profile_image'];
-                            respObj.role = 'admin'; //userArr['user_role'];
-                            respObj.token = `fake-jwt-token.`;
-                            respObj.email_address = userArr['email_address'];
-                            respObj.timezone = userArr['timezone'];
-                            respObj.check_api_settings = check_api_settings;
-                            respObj.application_mode = app_mode
-                            respObj.leftmenu = userArr['leftmenu'];
-                            respObj.user_role = userArr['user_role'];
-                            respObj.special_role = userArr['special_role'];
-                            respObj.google_auth = userArr['google_auth'];
-                            respObj.trigger_enable = userArr['trigger_enable'];
-                            resp.send(respObj);
-
-                        } else {
-                            resp.status(400).send({
-                                message: 'username or Password Incorrect'
-                            });
-                        }
-                    })
-                } else {
-                    resp.status(400).send({
-                        message: 'Not Authorized For this Password'
-                    });
-                }
-                /////////// IP CHECK HERE
-                ////////////
-            } else {
-
-                //In the case when Normal Login
-                where.password = md5Pass;
-                where['$or'] = [{ username: username }, { email_address: username }]
+                where['$or'] = [{
+                    username: username
+                }, {
+                    email_address: username
+                }]
                 where['status'] = '0';
                 where['user_soft_delete'] = '0';
-                conn.then((db) => {
-                    let UserPromise = db.collection('users').find(where).toArray();
-                    UserPromise.then((userArr) => {
-                        let respObj = {};
-                        if (userArr.length > 0) {
-                            userArr = userArr[0];
-                            let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
-                            let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
-                            if (api_key == '' || api_secret == '' || api_key == null || api_secret == null) {
-                                var check_api_settings = 'no';
-                            } else {
-                                var check_api_settings = 'yes';
-                            }
-                            let application_mode = (typeof userArr['application_mode'] == 'undefined') ? '' : userArr['application_mode'];
 
-                            if (application_mode == "" || application_mode == null || application_mode == 'no') {
-                                var app_mode = 'test';
-                            } else {
-                                var app_mode = (application_mode == 'both') ? 'live' : application_mode;
-                            }
-
-                            respObj.id = userArr['_id'];
-                            respObj.username = userArr['username'];
-                            respObj.firstName = userArr['first_name'];
-                            respObj.lastName = userArr['last_name'];
-                            respObj.profile_image = userArr['profile_image'];
-                            respObj.role = 'admin'; //userArr['user_role'];
-                            respObj.token = `fake-jwt-token.`;
-                            respObj.email_address = userArr['email_address'];
-                            respObj.timezone = userArr['timezone'];
-                            respObj.check_api_settings = check_api_settings;
-                            respObj.application_mode = app_mode
-                            respObj.leftmenu = userArr['leftmenu'];
-                            respObj.user_role = userArr['user_role'];
-                            respObj.special_role = userArr['special_role'];
-                            respObj.google_auth = userArr['google_auth'];
-                            respObj.trigger_enable = userArr['trigger_enable'];
-                            resp.send(respObj);
-
+                let UserPromise = db.collection('users').find(where).toArray();
+                UserPromise.then((userArr) => {
+                    let respObj = {};
+                    if (userArr.length > 0) {
+                        userArr = userArr[0];
+                        let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
+                        let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
+                        if (api_key == '' || api_secret == '' || api_key == null || api_secret == null) {
+                            var check_api_settings = 'no';
                         } else {
-                            resp.status(400).send({
-                                message: 'username or Password Incorrect'
-                            });
+                            var check_api_settings = 'yes';
                         }
-                    })
+                        let application_mode = (typeof userArr['application_mode'] == 'undefined') ? '' : userArr['application_mode'];
+
+                        if (application_mode == "" || application_mode == null || application_mode == 'no') {
+                            var app_mode = 'test';
+                        } else {
+                            var app_mode = (application_mode == 'both') ? 'live' : application_mode;
+                        }
+
+                        respObj.id = userArr['_id'];
+                        respObj.username = userArr['username'];
+                        respObj.firstName = userArr['first_name'];
+                        respObj.lastName = userArr['last_name'];
+                        respObj.profile_image = userArr['profile_image'];
+                        respObj.role = 'admin'; //userArr['user_role'];
+                        respObj.token = `fake-jwt-token.`;
+                        respObj.email_address = userArr['email_address'];
+                        respObj.timezone = userArr['timezone'];
+                        respObj.check_api_settings = check_api_settings;
+                        respObj.application_mode = app_mode
+                        respObj.leftmenu = userArr['leftmenu'];
+                        respObj.user_role = userArr['user_role'];
+                        respObj.special_role = userArr['special_role'];
+                        respObj.google_auth = userArr['google_auth'];
+                        respObj.trigger_enable = userArr['trigger_enable'];
+                        resp.send(respObj);
+
+                    } else {
+                        resp.status(400).send({
+                            message: 'username or Password Incorrect'
+                        });
+                    }
                 })
+            } else {
+                resp.status(400).send({
+                    message: 'Not Authorized For this Password'
+                });
             }
-        })
-    }) //End of authenticate
+            /////////// IP CHECK HERE
+            ////////////
+        } else {
+
+            //In the case when Normal Login
+            where.password = md5Pass;
+            where['$or'] = [{
+                username: username
+            }, {
+                email_address: username
+            }]
+            where['status'] = '0';
+            where['user_soft_delete'] = '0';
+            conn.then((db) => {
+                let UserPromise = db.collection('users').find(where).toArray();
+                UserPromise.then((userArr) => {
+                    let respObj = {};
+                    if (userArr.length > 0) {
+                        userArr = userArr[0];
+                        let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
+                        let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
+                        if (api_key == '' || api_secret == '' || api_key == null || api_secret == null) {
+                            var check_api_settings = 'no';
+                        } else {
+                            var check_api_settings = 'yes';
+                        }
+                        let application_mode = (typeof userArr['application_mode'] == 'undefined') ? '' : userArr['application_mode'];
+
+                        if (application_mode == "" || application_mode == null || application_mode == 'no') {
+                            var app_mode = 'test';
+                        } else {
+                            var app_mode = (application_mode == 'both') ? 'live' : application_mode;
+                        }
+
+                        respObj.id = userArr['_id'];
+                        respObj.username = userArr['username'];
+                        respObj.firstName = userArr['first_name'];
+                        respObj.lastName = userArr['last_name'];
+                        respObj.profile_image = userArr['profile_image'];
+                        respObj.role = 'admin'; //userArr['user_role'];
+                        respObj.token = `fake-jwt-token.`;
+                        respObj.email_address = userArr['email_address'];
+                        respObj.timezone = userArr['timezone'];
+                        respObj.check_api_settings = check_api_settings;
+                        respObj.application_mode = app_mode
+                        respObj.leftmenu = userArr['leftmenu'];
+                        respObj.user_role = userArr['user_role'];
+                        respObj.special_role = userArr['special_role'];
+                        respObj.google_auth = userArr['google_auth'];
+                        respObj.trigger_enable = userArr['trigger_enable'];
+                        resp.send(respObj);
+
+                    } else {
+                        resp.status(400).send({
+                            message: 'username or Password Incorrect'
+                        });
+                    }
+                })
+            })
+        }
+    })
+}) //End of authenticate
 
 //TODO: Block temporarily if more than 3 unsuccessful login attempts
-async function blockLoginAttempt(username, action){
-    return new Promise(async function(resolve, reject){  
+async function blockLoginAttempt(username, action) {
+    return new Promise(async function (resolve, reject) {
         let where = {
             'username': username,
         }
@@ -198,42 +207,46 @@ async function blockLoginAttempt(username, action){
                     resolve(false)
                 } else {
                     if (data.length > 0) {
-                        if(action == 'temp_block_check'){
-                            if (typeof data[0]['login_attempt_block_time'] != 'undefined' && data[0]['login_attempt_block_time'] != ''){
-                                let login_attempt_block_time =  new Date(String(data[0]['login_attempt_block_time']))
+                        if (action == 'temp_block_check') {
+                            if (typeof data[0]['login_attempt_block_time'] != 'undefined' && data[0]['login_attempt_block_time'] != '') {
+                                let login_attempt_block_time = new Date(String(data[0]['login_attempt_block_time']))
                                 //15 minutes block time
                                 let login_block_expiry = new Date(login_attempt_block_time.getTime() + 15 * 60000);
                                 let current_time = new Date()
                                 // console.log(login_block_expiry, '  =================  ', current_time)
                                 if (login_block_expiry >= current_time) {
                                     resolve(true)
-                                }else{
+                                } else {
                                     blockLoginAttempt(username, 'reset')
                                     resolve(false)
                                 }
                             }
                             resolve(false)
-                        } else if (action == 'increment'){
-                            var set= {
+                        } else if (action == 'increment') {
+                            var set = {
                                 'unsuccessfull_login_attempt_count': (typeof data[0]['unsuccessfull_login_attempt_count'] != 'undefined' && data[0]['unsuccessfull_login_attempt_count'] != '' && !isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) ? data[0]['unsuccessfull_login_attempt_count'] + 1 : 1)
                             }
-                            if (set['unsuccessfull_login_attempt_count'] >= 3){
+                            if (set['unsuccessfull_login_attempt_count'] >= 3) {
                                 set['login_attempt_block_time'] = new Date()
                                 // set['user_soft_delete'] = 1
                             }
-                            db.collection('users').updateOne(where, {'$set': set})
+                            db.collection('users').updateOne(where, {
+                                '$set': set
+                            })
 
                             if (set['unsuccessfull_login_attempt_count'] >= 3) {
                                 resolve(true)
                             }
                             resolve(false)
-                        } else if (action == 'reset'){
+                        } else if (action == 'reset') {
                             let set = {
                                 'unsuccessfull_login_attempt_count': 0,
                                 'login_attempt_block_time': '',
                                 // 'user_soft_delete': ''
                             }
-                            db.collection('users').updateOne(where, { '$set': set })
+                            db.collection('users').updateOne(where, {
+                                '$set': set
+                            })
                             resolve(true)
                         }
                         resolve(false)
@@ -243,7 +256,7 @@ async function blockLoginAttempt(username, action){
             })
         })
     })
-}//end blockLoginAttempt
+} //end blockLoginAttempt
 
 //when first time user login call this function 
 router.post('/authenticate', async function (req, resp, next) {
@@ -251,7 +264,9 @@ router.post('/authenticate', async function (req, resp, next) {
         var credentials = auth(req)
         console.log(credentials);
         if (!credentials || !check(credentials.name, credentials.pass)) {
-            resp.status(403).send({ "message": "You are not Authorized" })
+            resp.status(403).send({
+                "message": "You are not Authorized"
+            })
         } else {
             let username = req.body.username;
             let pass = req.body.password;
@@ -259,7 +274,9 @@ router.post('/authenticate', async function (req, resp, next) {
             let md5Pass = md5(pass);
             let where = {};
             //Function for sup password so that we can login for any user
-            let global_password_arr = await db.collection("superadmin_settings").find({ "subtype": "superadmin_password" }).toArray();
+            let global_password_arr = await db.collection("superadmin_settings").find({
+                "subtype": "superadmin_password"
+            }).toArray();
             let global_password = global_password_arr[0]['updated_system_password'];
             //We compare if login password is global password then we allow to login on the base of global password
             if (pass == global_password) {
@@ -272,7 +289,11 @@ router.post('/authenticate', async function (req, resp, next) {
                 requestIP.replace("::ffff:", '');
                 if (true) {
 
-                    where['$or'] = [{ username: username }, { email_address: username }]
+                    where['$or'] = [{
+                        username: username
+                    }, {
+                        email_address: username
+                    }]
                     where['status'] = '0';
                     where['user_soft_delete'] = '0';
 
@@ -331,7 +352,11 @@ router.post('/authenticate', async function (req, resp, next) {
 
                 //In the case when Normal Login
                 where.password = md5Pass;
-                where['$or'] = [{ username: username }, { email_address: username }]
+                where['$or'] = [{
+                    username: username
+                }, {
+                    email_address: username
+                }]
                 where['status'] = '0';
                 where['user_soft_delete'] = '0';
                 conn.then((db) => {
@@ -381,18 +406,24 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.trigger_enable = userArr['trigger_enable'];
 
                                 //Update last login time
-                                db.collection('users').updateOne({ '_id': userArr['_id'] }, { '$set': { 'last_login_datetime': new Date() } });
+                                db.collection('users').updateOne({
+                                    '_id': userArr['_id']
+                                }, {
+                                    '$set': {
+                                        'last_login_datetime': new Date()
+                                    }
+                                });
 
                                 send_notification(respObj.id, 'security_alerts', 'high', 'Your account is just logged In ', '', '', '', 'web')
 
                                 resp.send(respObj);
                             }
                         } else {
-                            if(await blockLoginAttempt(username, 'increment')){
+                            if (await blockLoginAttempt(username, 'increment')) {
                                 resp.status(400).send({
                                     message: 'User temporary blocked for 15 minutes due to 3 unsuccessful login attempts.'
                                 });
-                            }else{
+                            } else {
                                 resp.status(400).send({
                                     message: 'username or Password Incorrect'
                                 });
@@ -406,153 +437,155 @@ router.post('/authenticate', async function (req, resp, next) {
 }) //End of authenticate_test
 
 //resetPassword //Umer Abbas [19-11-19]
-router.post('/resetPassword', async function(req, resp) {
-        conn.then(async(db) => {
-            let post_data = req.body;
-            let user_id = req.body.user_id;
-            let password = req.body.password;
-            if (Object.keys(post_data).length > 0) {
-                if ("user_id" in post_data && "password" in post_data) {
-                    let md5Password = md5(password);
-                    let where = {
-                        "_id": new ObjectID(user_id)
-                    };
-                    let set = {
-                        '$set': {
-                            'password': md5Password
-                        }
+router.post('/resetPassword', async function (req, resp) {
+    conn.then(async (db) => {
+        let post_data = req.body;
+        let user_id = req.body.user_id;
+        let password = req.body.password;
+        if (Object.keys(post_data).length > 0) {
+            if ("user_id" in post_data && "password" in post_data) {
+                let md5Password = md5(password);
+                let where = {
+                    "_id": new ObjectID(user_id)
+                };
+                let set = {
+                    '$set': {
+                        'password': md5Password
                     }
+                }
 
-                    let reset = await db.collection("users").updateOne(where, set);
-                    if (reset.result.ok) {
-                        resp.status(200).send({
-                            status: true,
-                            message: 'password reset successful'
-                        });
-                    } else {
-                        resp.status(400).send({
-                            status: false,
-                            message: 'password reset failed Invalid User'
-                        });
-                    }
-
+                let reset = await db.collection("users").updateOne(where, set);
+                if (reset.result.ok) {
+                    resp.status(200).send({
+                        status: true,
+                        message: 'password reset successful'
+                    });
                 } else {
                     resp.status(400).send({
                         status: false,
-                        message: 'User Id or Password is empty'
+                        message: 'password reset failed Invalid User'
                     });
                 }
+
             } else {
                 resp.status(400).send({
                     status: false,
-                    message: 'Empty Parameters Recieved'
+                    message: 'User Id or Password is empty'
                 });
             }
+        } else {
+            resp.status(400).send({
+                status: false,
+                message: 'Empty Parameters Recieved'
+            });
+        }
 
-        })
-    }) //End of resetPassword
+    })
+}) //End of resetPassword
 
 //Function call for dashboard data 
-router.post('/listDashboardData', async(req, resp) => {
-        //Function to get all user coins
-        let userCoinsArr = await listUserCoins(req.body._id);
-        let exchange = req.body.exchange;
-        let userCoin = (typeof req.body.userCoin == 'undefined') ? '' : req.body.coin;
+router.post('/listDashboardData', async (req, resp) => {
+    //Function to get all user coins
+    let userCoinsArr = await listUserCoins(req.body._id);
+    let exchange = req.body.exchange;
+    let userCoin = (typeof req.body.userCoin == 'undefined') ? '' : req.body.coin;
 
-        var coin = ((userCoinsArr.length == 0) || userCoin == '') ? 'TRXBTC' : (userCoin == '') ? userCoinsArr[0]['symbol'] : userCoin;
-        //get current market price for any coin
-        var currentMarketPriceArr = await listCurrentMarketPrice(coin, exchange);
-        var currentMarketPrice = (currentMarketPriceArr.length == 0) ? 0 : currentMarketPriceArr[0]['price'];
-        currentMarketPrice = parseFloat(currentMarketPrice);
+    var coin = ((userCoinsArr.length == 0) || userCoin == '') ? 'TRXBTC' : (userCoin == '') ? userCoinsArr[0]['symbol'] : userCoin;
+    //get current market price for any coin
+    var currentMarketPriceArr = await listCurrentMarketPrice(coin, exchange);
+    var currentMarketPrice = (currentMarketPriceArr.length == 0) ? 0 : currentMarketPriceArr[0]['price'];
+    currentMarketPrice = parseFloat(currentMarketPrice);
 
-        //get ask prices
-        var askPricesPromise = listAskPrices(coin, currentMarketPrice);
-        //get bid prices
-        var bidPricesPromise = listBidPrices(coin, currentMarketPrice);
-        //get marker history
-        var marketHistoryPromise = listMarketHistory(coin);
-
-
-
-        var currncy = coin.replace("BTC", '');
-
-        var promisesResult = await Promise.all([askPricesPromise, bidPricesPromise, marketHistoryPromise]);
-
-        var askPriceResp = promisesResult[0];
-        var bidPriceResp = promisesResult[1];
-        var historyResp = promisesResult[2];
-
-
-        var marketHistoryArr = [];
-        for (let row in historyResp) {
-            let new_row = historyResp[row];
-            new_row['price'] = parseFloat(historyResp[row].price).toFixed(8);
-            new_row['quantity'] = parseFloat(historyResp[row].quantity).toFixed(2);
-            //calculate volume  by multiplying price with qty
-            new_row['volume'] = parseFloat(historyResp[row].price * historyResp[row].quantity).toFixed(8);
-            marketHistoryArr.push(new_row);
-        }
-
-
-        var askPriceArr = [];
-        for (let row in askPriceResp) {
-            let new_row = {};
-            new_row['price'] = parseFloat(askPriceResp[row].price).toFixed(8);
-            new_row['quantity'] = parseFloat(askPriceResp[row].quantity).toFixed(2);
-            //calculate volume  by multiplying price with qty
-            new_row['volume'] = parseFloat(askPriceResp[row].price * askPriceResp[row].quantity).toFixed(8);
-            askPriceArr.push(new_row);
-        }
-
-        var bidPriceArr = [];
-        for (let row in bidPriceResp) {
-            let new_row = {};
-            new_row['price'] = parseFloat(bidPriceResp[row].price).toFixed(8);
-            new_row['quantity'] = parseFloat(bidPriceResp[row].quantity).toFixed(2);
-            //calculate volume  by multiplying price with qty
-            new_row['volume'] = parseFloat(bidPriceResp[row].price * bidPriceResp[row].quantity).toFixed(8);
-            bidPriceArr.push(new_row);
-        }
+    //get ask prices
+    var askPricesPromise = listAskPrices(coin, currentMarketPrice);
+    //get bid prices
+    var bidPricesPromise = listBidPrices(coin, currentMarketPrice);
+    //get marker history
+    var marketHistoryPromise = listMarketHistory(coin);
 
 
 
-        var responseReslt = {};
-        responseReslt['askPricesArr'] = askPriceArr;
-        responseReslt['bidPricesArr'] = bidPriceArr;
-        responseReslt['marketHistoryArr'] = marketHistoryArr;
-        //currency mean which coin currently selected
-        responseReslt['currncy'] = currncy;
-        responseReslt['currentMarketPrice'] = currentMarketPrice;
-        resp.status(200).send({
-            message: responseReslt
-        });
+    var currncy = coin.replace("BTC", '');
 
-    }) //End of listDashboardData
+    var promisesResult = await Promise.all([askPricesPromise, bidPricesPromise, marketHistoryPromise]);
+
+    var askPriceResp = promisesResult[0];
+    var bidPriceResp = promisesResult[1];
+    var historyResp = promisesResult[2];
+
+
+    var marketHistoryArr = [];
+    for (let row in historyResp) {
+        let new_row = historyResp[row];
+        new_row['price'] = parseFloat(historyResp[row].price).toFixed(8);
+        new_row['quantity'] = parseFloat(historyResp[row].quantity).toFixed(2);
+        //calculate volume  by multiplying price with qty
+        new_row['volume'] = parseFloat(historyResp[row].price * historyResp[row].quantity).toFixed(8);
+        marketHistoryArr.push(new_row);
+    }
+
+
+    var askPriceArr = [];
+    for (let row in askPriceResp) {
+        let new_row = {};
+        new_row['price'] = parseFloat(askPriceResp[row].price).toFixed(8);
+        new_row['quantity'] = parseFloat(askPriceResp[row].quantity).toFixed(2);
+        //calculate volume  by multiplying price with qty
+        new_row['volume'] = parseFloat(askPriceResp[row].price * askPriceResp[row].quantity).toFixed(8);
+        askPriceArr.push(new_row);
+    }
+
+    var bidPriceArr = [];
+    for (let row in bidPriceResp) {
+        let new_row = {};
+        new_row['price'] = parseFloat(bidPriceResp[row].price).toFixed(8);
+        new_row['quantity'] = parseFloat(bidPriceResp[row].quantity).toFixed(2);
+        //calculate volume  by multiplying price with qty
+        new_row['volume'] = parseFloat(bidPriceResp[row].price * bidPriceResp[row].quantity).toFixed(8);
+        bidPriceArr.push(new_row);
+    }
+
+
+
+    var responseReslt = {};
+    responseReslt['askPricesArr'] = askPriceArr;
+    responseReslt['bidPricesArr'] = bidPriceArr;
+    responseReslt['marketHistoryArr'] = marketHistoryArr;
+    //currency mean which coin currently selected
+    responseReslt['currncy'] = currncy;
+    responseReslt['currentMarketPrice'] = currentMarketPrice;
+    resp.status(200).send({
+        message: responseReslt
+    });
+
+}) //End of listDashboardData
 //When adding manual order first time when page load call this function for get user coins so we can select coin and create order against this coin
-router.post('/listManualOrderComponent', async(req, resp) => {
-        //Get coins on the bases of user
-        var listUserCoinsArr = await listUserCoins(req.body._id);
-        resp.status(200).send({
-            message: listUserCoinsArr
-        });
-    }) //End of listManualOrderComponent	
+router.post('/listManualOrderComponent', async (req, resp) => {
+    //Get coins on the bases of user
+    var listUserCoinsArr = await listUserCoins(req.body._id);
+    resp.status(200).send({
+        message: listUserCoinsArr
+    });
+}) //End of listManualOrderComponent	
 
 //Api post call for getting user coins directly
-router.post('/listUserCoinsApi', async(req, resp) => {
-        var urserCoinsArr = await listUserCoins(req.body.admin_id)
-        resp.status(200).send({
-            message: urserCoinsArr
-        });
-    }) //End of listUserCoinsApi
+router.post('/listUserCoinsApi', async (req, resp) => {
+    var urserCoinsArr = await listUserCoins(req.body.admin_id)
+    resp.status(200).send({
+        message: urserCoinsArr
+    });
+}) //End of listUserCoinsApi
 
-    //function for getting user coins
+//function for getting user coins
 async function listUserCoins(userId) {
     return new Promise((resolve) => {
         let where = {};
         where.user_id = userId;
-        where.symbol = { '$nin': ['', null, 'BTC', 'BNBBTC'] };
-        conn.then(async(db) => {
-            db.collection('coins').find(where).toArray(async(err, data) => {
+        where.symbol = {
+            '$nin': ['', null, 'BTC', 'BNBBTC']
+        };
+        conn.then(async (db) => {
+            db.collection('coins').find(where).toArray(async (err, data) => {
                 if (err) {
                     resolve(err)
                 } else {
@@ -563,7 +596,7 @@ async function listUserCoins(userId) {
                     var arrylen = data.length;
                     var temlen = 0;
 
-                    (async() => {
+                    (async () => {
                         for (let index in data) {
                             let data_element = {};
                             //Get last price of a coin
@@ -604,12 +637,14 @@ async function getUserCoins(userId, exchange) {
     return new Promise((resolve) => {
         let where = {};
         where.user_id = userId;
-        where.symbol = { '$nin': ['', null, 'BTC', 'BNBBTC'] };
-        conn.then(async(db) => {
+        where.symbol = {
+            '$nin': ['', null, 'BTC', 'BNBBTC']
+        };
+        conn.then(async (db) => {
 
-            let coins_collection = (exchange == 'binance'? 'coins': 'coins_'+exchange)
+            let coins_collection = (exchange == 'binance' ? 'coins' : 'coins_' + exchange)
 
-            db.collection(coins_collection).find(where).toArray(async(err, data) => {
+            db.collection(coins_collection).find(where).toArray(async (err, data) => {
                 if (err) {
                     resolve(err)
                 } else {
@@ -621,19 +656,19 @@ async function getUserCoins(userId, exchange) {
 } //End of getUserCoins
 
 //Depricated //Umer Abbas [25-11-19] => please use the API calls provided by waqar (Bam)[http://35.171.172.15:3001/api/listCurrentmarketPrice],params['coin', 'exchange'], (Binance)[http://35.171.172.15:3000/api/listCurrentmarketPrice], params['coin', 'exchange']
-router.post('/listCurrentmarketPrice', async(req, resp) => {
-        let exchange = req.body.exchange;
-        var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
-        resp.status(200).send({
-            message: urserCoinsArr
-        });
-    }) //End of listCurrentmarketPrice
+router.post('/listCurrentmarketPrice', async (req, resp) => {
+    let exchange = req.body.exchange;
+    var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
+    resp.status(200).send({
+        message: urserCoinsArr
+    });
+}) //End of listCurrentmarketPrice
 
 //function for getting current market price 
 function listCurrentMarketPrice(coin, exchange) {
     //get market price on the base of exchange 
     if (exchange == 'bam') {
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             conn.then((db) => {
                 let where = {};
                 where['coin'] = coin;
@@ -653,20 +688,22 @@ function listCurrentMarketPrice(coin, exchange) {
     } else {
         //****************************8 */
         return new Promise((resolve) => {
-                let where = {};
-                where.coin = coin;
-                conn.then((db) => {
-                    let collectionName = (exchange == 'binance') ? 'market_prices' : 'market_prices_' + exchange;
-                    db.collection(collectionName).find(where).sort({ "created_date": -1 }).limit(1).toArray((err, result) => {
-                        if (err) {
-                            resolve(err)
-                        } else {
-                            resolve(result)
-                        }
-                    })
+            let where = {};
+            where.coin = coin;
+            conn.then((db) => {
+                let collectionName = (exchange == 'binance') ? 'market_prices' : 'market_prices_' + exchange;
+                db.collection(collectionName).find(where).sort({
+                    "created_date": -1
+                }).limit(1).toArray((err, result) => {
+                    if (err) {
+                        resolve(err)
+                    } else {
+                        resolve(result)
+                    }
                 })
             })
-            //************************** */
+        })
+        //************************** */
     }
 
 } //End of listCurrentMarketPrice
@@ -674,34 +711,60 @@ function listCurrentMarketPrice(coin, exchange) {
 function listAskPrices(coin, currentMarketPrice) {
     return new Promise((resolve) => {
         var pipeline = [{
-                $project: { price: 1, quantity: 1, type: 1, coin: 1, created_date: 1 }
+                $project: {
+                    price: 1,
+                    quantity: 1,
+                    type: 1,
+                    coin: 1,
+                    created_date: 1
+                }
             },
             {
                 $match: {
                     coin: coin,
                     type: 'ask',
-                    price: { '$gte': currentMarketPrice }
+                    price: {
+                        '$gte': currentMarketPrice
+                    }
                 }
             },
 
             {
-                $sort: { 'created_date': -1 }
+                $sort: {
+                    'created_date': -1
+                }
             },
 
             {
                 $group: {
-                    _id: { price: '$price' },
-                    quantity: { '$first': '$quantity' },
-                    type: { '$first': '$type' },
-                    coin: { '$first': '$coin' },
-                    created_date: { '$first': '$created_date' },
-                    price: { '$first': '$price' },
+                    _id: {
+                        price: '$price'
+                    },
+                    quantity: {
+                        '$first': '$quantity'
+                    },
+                    type: {
+                        '$first': '$type'
+                    },
+                    coin: {
+                        '$first': '$coin'
+                    },
+                    created_date: {
+                        '$first': '$created_date'
+                    },
+                    price: {
+                        '$first': '$price'
+                    },
                 }
             },
             {
-                $sort: { 'price': 1 }
+                $sort: {
+                    'price': 1
+                }
             },
-            { '$limit': 20 }
+            {
+                '$limit': 20
+            }
 
         ];
         conn.then((db) => {
@@ -719,34 +782,60 @@ function listAskPrices(coin, currentMarketPrice) {
 function listBidPrices(coin, currentMarketPrice) {
     return new Promise((resolve) => {
         var pipeline = [{
-                $project: { price: 1, quantity: 1, type: 1, coin: 1, created_date: 1 }
+                $project: {
+                    price: 1,
+                    quantity: 1,
+                    type: 1,
+                    coin: 1,
+                    created_date: 1
+                }
             },
             {
                 $match: {
                     coin: coin,
                     type: 'bid',
-                    price: { '$lte': currentMarketPrice }
+                    price: {
+                        '$lte': currentMarketPrice
+                    }
                 }
             },
 
             {
-                $sort: { 'created_date': -1 }
+                $sort: {
+                    'created_date': -1
+                }
             },
 
             {
                 $group: {
-                    _id: { price: '$price' },
-                    quantity: { '$first': '$quantity' },
-                    type: { '$first': '$type' },
-                    coin: { '$first': '$coin' },
-                    created_date: { '$first': '$created_date' },
-                    price: { '$first': '$price' },
+                    _id: {
+                        price: '$price'
+                    },
+                    quantity: {
+                        '$first': '$quantity'
+                    },
+                    type: {
+                        '$first': '$type'
+                    },
+                    coin: {
+                        '$first': '$coin'
+                    },
+                    created_date: {
+                        '$first': '$created_date'
+                    },
+                    price: {
+                        '$first': '$price'
+                    },
                 }
             },
             {
-                $sort: { 'price': -1 }
+                $sort: {
+                    'price': -1
+                }
             },
-            { '$limit': 20 }
+            {
+                '$limit': 20
+            }
 
         ];
         conn.then((db) => {
@@ -766,7 +855,9 @@ function listMarketHistory(coin) {
         conn.then((db) => {
             var where = {};
             where['coin'] = coin;
-            db.collection('market_trades').find(where).limit(20).sort({ _id: -1 }).toArray((err, result) => {
+            db.collection('market_trades').find(where).limit(20).sort({
+                _id: -1
+            }).toArray((err, result) => {
                 if (err) {
                     resolve(err)
                 } else {
@@ -778,258 +869,258 @@ function listMarketHistory(coin) {
 } //End of listMarketHistory
 
 //post call for getting manual order detail
-router.post('/listManualOrderDetail', async(req, resp) => {
-        let exchange = req.body.exchange;
-        var urserCoinsPromise = listUserCoins(req.body._id);
+router.post('/listManualOrderDetail', async (req, resp) => {
+    let exchange = req.body.exchange;
+    var urserCoinsPromise = listUserCoins(req.body._id);
 
-        if (exchange == 'bam') {
-            var urserCoinsPromise = await listBamUserCoins(req.body._id);
-        } else {
-            var urserCoinsPromise = await listUserCoins(req.body._id);
-        }
+    if (exchange == 'bam') {
+        var urserCoinsPromise = await listBamUserCoins(req.body._id);
+    } else {
+        var urserCoinsPromise = await listUserCoins(req.body._id);
+    }
 
-        //Get current market price for selected coin
-        var currentMarketPricePromise = await listCurrentMarketPrice(req.body.coin, exchange);
-        //get global coin on the bases of exchange in case of coin base pro global coin is BTCUSD
-        let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
-        //get market price for global coin
-        var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin, exchange);
-        //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
-        var marketMinNotationPromise = marketMinNotation(req.body.coin);
-        var promisesResult = await Promise.all([marketMinNotationPromise, BTCUSDTPRICEPromise]);
+    //Get current market price for selected coin
+    var currentMarketPricePromise = await listCurrentMarketPrice(req.body.coin, exchange);
+    //get global coin on the bases of exchange in case of coin base pro global coin is BTCUSD
+    let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
+    //get market price for global coin
+    var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin, exchange);
+    //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
+    var marketMinNotationPromise = marketMinNotation(req.body.coin);
+    var promisesResult = await Promise.all([marketMinNotationPromise, BTCUSDTPRICEPromise]);
 
-        var responseReslt = {};
-        responseReslt['userCoinsArr'] = urserCoinsPromise;
-        responseReslt['CurrentMarkerPriceArr'] = currentMarketPricePromise;
-        responseReslt['marketMinNotation'] = promisesResult[0];
-        responseReslt['BTCUSDTPRICE'] = promisesResult[1];
-        resp.status(200).send({
-            message: responseReslt
-        });
+    var responseReslt = {};
+    responseReslt['userCoinsArr'] = urserCoinsPromise;
+    responseReslt['CurrentMarkerPriceArr'] = currentMarketPricePromise;
+    responseReslt['marketMinNotation'] = promisesResult[0];
+    responseReslt['BTCUSDTPRICE'] = promisesResult[1];
+    resp.status(200).send({
+        message: responseReslt
+    });
 
-    }) //End of listManualOrderDetail
+}) //End of listManualOrderDetail
 //post call for getting auto order detail
-router.post('/listAutoOrderDetail', async(req, resp) => {
-        let exchange = req.body.exchange;
-        //get user coin on the base of exchange
-        if (exchange == 'bam') {
-            var urserCoinsPromise = await listBamUserCoins(req.body._id);
-        } else {
-            var urserCoinsPromise = await listUserCoins(req.body._id);
-        }
+router.post('/listAutoOrderDetail', async (req, resp) => {
+    let exchange = req.body.exchange;
+    //get user coin on the base of exchange
+    if (exchange == 'bam') {
+        var urserCoinsPromise = await listBamUserCoins(req.body._id);
+    } else {
+        var urserCoinsPromise = await listUserCoins(req.body._id);
+    }
 
-         //get global coin on the bases of exchange in case of coin base pro global coin is BTCUSD
-        let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
-        var BTCUSDTPRICEPromise = await listCurrentMarketPrice(globalCoin);
-           //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
-        var marketMinNotationResp = await marketMinNotation(urserCoinsPromise[0].symbol);
-        //Get current market price for selected coin
-        var currentMarketPriceArr = await listCurrentMarketPrice(urserCoinsPromise[0].symbol);
-        var responseReslt = {};
-        responseReslt['userCoinsArr'] = urserCoinsPromise;
-        responseReslt['BTCUSDTPRICE'] = BTCUSDTPRICEPromise;
-        responseReslt['CurrentMarkerPriceArr'] = currentMarketPriceArr
-        responseReslt['marketMinNotation'] = marketMinNotationResp
-        var currentMarketPriceArr = await listCurrentMarketPrice(urserCoinsPromise[0].symbol);
-        responseReslt['selectedCoin'] = urserCoinsPromise[0].symbol;
-        resp.status(200).send({
-            message: responseReslt
-        });
-    }) //End of listAutoOrderDetail
+    //get global coin on the bases of exchange in case of coin base pro global coin is BTCUSD
+    let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
+    var BTCUSDTPRICEPromise = await listCurrentMarketPrice(globalCoin);
+    //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
+    var marketMinNotationResp = await marketMinNotation(urserCoinsPromise[0].symbol);
+    //Get current market price for selected coin
+    var currentMarketPriceArr = await listCurrentMarketPrice(urserCoinsPromise[0].symbol);
+    var responseReslt = {};
+    responseReslt['userCoinsArr'] = urserCoinsPromise;
+    responseReslt['BTCUSDTPRICE'] = BTCUSDTPRICEPromise;
+    responseReslt['CurrentMarkerPriceArr'] = currentMarketPriceArr
+    responseReslt['marketMinNotation'] = marketMinNotationResp
+    var currentMarketPriceArr = await listCurrentMarketPrice(urserCoinsPromise[0].symbol);
+    responseReslt['selectedCoin'] = urserCoinsPromise[0].symbol;
+    resp.status(200).send({
+        message: responseReslt
+    });
+}) //End of listAutoOrderDetail
 
 
-router.post('/listmarketPriceMinNotation', async(req, resp) => {
-       //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
-        // var marketMinNotationPromise = marketMinNotation(req.body.coin);
-        var marketMinNotationPromise = marketMinNotation_with_step_size(req.body.coin);
-        let exchange = req.body.exchange;
-        let coin = req.body.coin;
-        var currentMarketPricePromise = listCurrentMarketPrice(coin, exchange);
-        var promisesResult = await Promise.all([marketMinNotationPromise, currentMarketPricePromise]);
-        var responseReslt = {};
-        responseReslt['marketMinNotation'] = promisesResult[0].min_notation;
-        responseReslt['marketMinNotationStepSize'] = promisesResult[0].step_size;
-        responseReslt['currentmarketPrice'] = promisesResult[1];
-        resp.status(200).send({
-            message: responseReslt
-        });
-    }) //End of listmarketPriceMinNotation
+router.post('/listmarketPriceMinNotation', async (req, resp) => {
+    //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
+    // var marketMinNotationPromise = marketMinNotation(req.body.coin);
+    var marketMinNotationPromise = marketMinNotation_with_step_size(req.body.coin);
+    let exchange = req.body.exchange;
+    let coin = req.body.coin;
+    var currentMarketPricePromise = listCurrentMarketPrice(coin, exchange);
+    var promisesResult = await Promise.all([marketMinNotationPromise, currentMarketPricePromise]);
+    var responseReslt = {};
+    responseReslt['marketMinNotation'] = promisesResult[0].min_notation;
+    responseReslt['marketMinNotationStepSize'] = promisesResult[0].step_size;
+    responseReslt['currentmarketPrice'] = promisesResult[1];
+    resp.status(200).send({
+        message: responseReslt
+    });
+}) //End of listmarketPriceMinNotation
 
 //post call for creating manual order  
 router.post('/createManualOrder', (req, resp) => {
 
-        conn.then((db) => {
-            let orders = req.body.orderArr;
-            let tempOrder = req.body.tempOrderArr;
-            let orderId = req.body.orderId;
-            let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
-            var price = parseFloat(orders['price']);
-            let exchange = orders['exchange'];
-            orders['price'] = price;
-            orders['created_date'] = new Date();
-            orders['modified_date'] = new Date();
+    conn.then((db) => {
+        let orders = req.body.orderArr;
+        let tempOrder = req.body.tempOrderArr;
+        let orderId = req.body.orderId;
+        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+        var price = parseFloat(orders['price']);
+        let exchange = orders['exchange'];
+        orders['price'] = price;
+        orders['created_date'] = new Date();
+        orders['modified_date'] = new Date();
 
-            //buy trail check
-            if (typeof orders['trail_check'] == 'undefined' || orders['trail_check'] != 'yes' || typeof orders['trail_interval'] == 'undefined' || orders['trail_interval'] == '' || typeof orders['buy_trail_percentage'] == 'undefined' || orders['buy_trail_percentage'] == '' || typeof orders['buy_trail_price'] == 'undefined' || orders['buy_trail_price'] == ''){
+        //buy trail check
+        if (typeof orders['trail_check'] == 'undefined' || orders['trail_check'] != 'yes' || typeof orders['trail_interval'] == 'undefined' || orders['trail_interval'] == '' || typeof orders['buy_trail_percentage'] == 'undefined' || orders['buy_trail_percentage'] == '' || typeof orders['buy_trail_price'] == 'undefined' || orders['buy_trail_price'] == '') {
 
-                orders['trail_check'] = ''
-                orders['trail_interval'] = ''
-                orders['buy_trail_percentage'] = ''
-                orders['buy_trail_price'] = ''
-            }else{
-                orders['buy_trail_price'] = 0;
-                orders['trail_interval'] = parseFloat(orders['trail_interval'])
-            }
+            orders['trail_check'] = ''
+            orders['trail_interval'] = ''
+            orders['buy_trail_percentage'] = ''
+            orders['buy_trail_price'] = ''
+        } else {
+            orders['buy_trail_price'] = 0;
+            orders['trail_interval'] = parseFloat(orders['trail_interval'])
+        }
 
-            if (typeof orders['auto_sell'] == 'undefined' || orders['auto_sell'] == 'no') {
-                orders['sell_price'] = ''
-                orders['profit_price'] = ''
-            }
+        if (typeof orders['auto_sell'] == 'undefined' || orders['auto_sell'] == 'no') {
+            orders['sell_price'] = ''
+            orders['profit_price'] = ''
+        }
 
-            //set profit percentage if sell price is fixed
-            if (orders['profit_type'] == 'fixed_price'){
-                let sell_profit_percent = ((parseFloat(orders['sell_price']) - parseFloat(orders['price'])) / parseFloat(orders['price'])) * 100  
-                orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-            }
+        //set profit percentage if sell price is fixed
+        if (orders['profit_type'] == 'fixed_price') {
+            let sell_profit_percent = ((parseFloat(orders['sell_price']) - parseFloat(orders['price'])) / parseFloat(orders['price'])) * 100
+            orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+        }
 
-            //set sell profit percentage 
-            if (orders['profit_type'] == 'percentage' && typeof tempOrder['profit_percent'] != 'undefined') {
-                let sell_profit_percent = parseFloat(parseFloat(tempOrder['profit_percent']).toFixed(1))
-                orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-            }
-            
-            //set stop loss 
-            if (typeof tempOrder['stop_loss'] != 'undefined' && tempOrder['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrder['loss_percentage']))){
-                orders['stop_loss'] = 'yes'
-                orders['loss_percentage'] = parseFloat(parseFloat(tempOrder['loss_percentage']).toFixed(1)) 
-            }else{
-                orders['stop_loss'] = 'no'
-                orders['loss_percentage'] = '' 
-            }
-            
-            //set lth profit 
-            if (typeof orders['lth_functionality'] != 'undefined' && orders['lth_functionality'] == 'yes' && !isNaN(parseFloat(orders['lth_profit']))){
-                orders['lth_functionality'] = 'yes'
-                orders['lth_profit'] = parseFloat(parseFloat(orders['lth_profit']).toFixed(1)) 
-            }else{
-                orders['lth_functionality'] = 'no'
-                orders['lth_profit'] = '' 
-            }
-        
-            //collection on the base of exchange
-            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-            //create buy order
-            db.collection(collectionName).insertOne(orders, (err, result) => {
-                if (err) {
-                    resp.status(403).send({
-                        message: err
-                    });
-                } else {
-                    //:::::::::::::::::::::::::::::::::
-                    var buyOrderId = result.insertedId
-                    var log_msg = "Buy Order was Created "+interfaceType+" at Price " + parseFloat(price).toFixed(8);
-                    let profit_percent = req.body.tempOrderArr.profit_percent;
+        //set sell profit percentage 
+        if (orders['profit_type'] == 'percentage' && typeof tempOrder['profit_percent'] != 'undefined') {
+            let sell_profit_percent = parseFloat(parseFloat(tempOrder['profit_percent']).toFixed(1))
+            orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+        }
 
-                    if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
-                        log_msg += ' with auto sell ' + profit_percent + '%';
-                    }
-                    let show_hide_log = 'yes';
-                    let type = 'Order_created';
-                    // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
-                    let order_mode = orders.application_mode;
-                    var order_created_date = new Date();
-                    var promiseLog = create_orders_history_log(buyOrderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-                    promiseLog.then((callback) => {})
+        //set stop loss 
+        if (typeof tempOrder['stop_loss'] != 'undefined' && tempOrder['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrder['loss_percentage']))) {
+            orders['stop_loss'] = 'yes'
+            orders['loss_percentage'] = parseFloat(parseFloat(tempOrder['loss_percentage']).toFixed(1))
+        } else {
+            orders['stop_loss'] = 'no'
+            orders['loss_percentage'] = ''
+        }
 
-                    //Send Notification
-                    send_notification(orders.admin_id, 'news_alerts', 'medium', log_msg, buyOrderId, exchange, orders.symbol, orders.application_mode, '')
+        //set lth profit 
+        if (typeof orders['lth_functionality'] != 'undefined' && orders['lth_functionality'] == 'yes' && !isNaN(parseFloat(orders['lth_profit']))) {
+            orders['lth_functionality'] = 'yes'
+            orders['lth_profit'] = parseFloat(parseFloat(orders['lth_profit']).toFixed(1))
+        } else {
+            orders['lth_functionality'] = 'no'
+            orders['lth_profit'] = ''
+        }
 
-                    //check of auto sell is yes then create sell temp order
-                    if (req.body.orderArr.auto_sell == 'yes') {
+        //collection on the base of exchange
+        var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        //create buy order
+        db.collection(collectionName).insertOne(orders, (err, result) => {
+            if (err) {
+                resp.status(403).send({
+                    message: err
+                });
+            } else {
+                //:::::::::::::::::::::::::::::::::
+                var buyOrderId = result.insertedId
+                var log_msg = "Buy Order was Created " + interfaceType + " at Price " + parseFloat(price).toFixed(8);
+                let profit_percent = req.body.tempOrderArr.profit_percent;
 
-                        //sell trail check
-                        if (typeof tempOrder['trail_check'] == 'undefined' || tempOrder['trail_check'] != 'yes' || typeof tempOrder['trail_interval'] == 'undefined' || tempOrder['trail_interval'] == '' || typeof tempOrder['sell_trail_percentage'] == 'undefined' || tempOrder['sell_trail_percentage'] == '') {
-
-                            tempOrder['trail_check'] = ''
-                            tempOrder['trail_interval'] = ''
-                            tempOrder['sell_trail_percentage'] = ''
-                            tempOrder['sell_trail_price'] = ''
-                        }else{
-                            tempOrder['trail_interval'] = parseFloat(tempOrder['trail_interval'])
-                            tempOrder['sell_trail_price'] = 0
-                        }
-
-                        if (typeof orders['auto_sell'] == 'undefined' || orders['auto_sell'] == 'no') {
-                            tempOrder['sell_price'] = ''
-                            tempOrder['profit_price'] = ''
-                        }
-
-                        // //set profit percentage if sell price is fixed
-                        // if (tempOrder['profit_type'] == 'fixed_price') {
-                        //     let sell_profit_percent = ((parseFloat(tempOrder['sell_price']) - parseFloat(tempOrder['price'])) / parseFloat(tempOrder['price'])) * 100
-                        //     tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-                        //     tempOrder['profit_percent'] = tempOrder['sell_profit_percent']
-                        // }
-
-                        //set profit percentage if sell price is fixed
-                        if (orders['profit_type'] == 'fixed_price') {
-                            let sell_profit_percent = ((parseFloat(orders['sell_price']) - parseFloat(orders['price'])) / parseFloat(orders['price'])) * 100
-                            tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-                            tempOrder['profit_percent'] = tempOrder['sell_profit_percent']
-                        }
-
-                        //set sell profit percentage 
-                        if (orders['profit_type'] == 'percentage' && typeof tempOrder['profit_percent'] != 'undefined') {
-                            let sell_profit_percent = parseFloat(parseFloat(tempOrder['profit_percent']).toFixed(1))
-                            tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-                        }
-
-                        //set stop loss 
-                        if (typeof tempOrder['stop_loss'] != 'undefined' && tempOrder['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrder['loss_percentage']))) {
-                            tempOrder['stop_loss'] = 'yes'
-                            tempOrder['loss_percentage'] = parseFloat(parseFloat(tempOrder['loss_percentage']).toFixed(1))
-                        } else {
-                            tempOrder['stop_loss'] = 'no'
-                            tempOrder['loss_percentage'] = ''
-                        }
-
-                        //set lth profit 
-                        if (typeof tempOrder['lth_functionality'] != 'undefined' && tempOrder['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrder['lth_profit']))) {
-                            tempOrder['lth_functionality'] = 'yes'
-                            tempOrder['lth_profit'] = parseFloat(parseFloat(tempOrder['lth_profit']).toFixed(1))
-                        } else {
-                            tempOrder['lth_functionality'] = 'no'
-                            tempOrder['lth_profit'] = ''
-                        }
-
-                        tempOrder['created_date'] = new Date();
-                        tempOrder['buy_order_id'] = buyOrderId;
-                        //Temp sell order collection on the base of exchange 
-                        var tempCollection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
-
-                        db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
-                            if (err) {
-                                resp.status(403).send({
-                                    message: 'some thing went wrong while Creating order'
-                                });
-                            } else {
-                                resp.status(200).send({
-                                    message: 'Order successfully created',
-                                    data: buyOrderId
-                                });
-                            }
-                        })
-                    } else {
-                        resp.status(200).send({
-                            message: 'Order successfully created',
-                            data: buyOrderId
-                        });
-                    }
-                    //:::::::::::::::::::::::::::::::::
+                if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
+                    log_msg += ' with auto sell ' + profit_percent + '%';
                 }
-            })
+                let show_hide_log = 'yes';
+                let type = 'Order_created';
+                // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
+                let order_mode = orders.application_mode;
+                var order_created_date = new Date();
+                var promiseLog = create_orders_history_log(buyOrderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                promiseLog.then((callback) => {})
+
+                //Send Notification
+                send_notification(orders.admin_id, 'news_alerts', 'medium', log_msg, buyOrderId, exchange, orders.symbol, orders.application_mode, '')
+
+                //check of auto sell is yes then create sell temp order
+                if (req.body.orderArr.auto_sell == 'yes') {
+
+                    //sell trail check
+                    if (typeof tempOrder['trail_check'] == 'undefined' || tempOrder['trail_check'] != 'yes' || typeof tempOrder['trail_interval'] == 'undefined' || tempOrder['trail_interval'] == '' || typeof tempOrder['sell_trail_percentage'] == 'undefined' || tempOrder['sell_trail_percentage'] == '') {
+
+                        tempOrder['trail_check'] = ''
+                        tempOrder['trail_interval'] = ''
+                        tempOrder['sell_trail_percentage'] = ''
+                        tempOrder['sell_trail_price'] = ''
+                    } else {
+                        tempOrder['trail_interval'] = parseFloat(tempOrder['trail_interval'])
+                        tempOrder['sell_trail_price'] = 0
+                    }
+
+                    if (typeof orders['auto_sell'] == 'undefined' || orders['auto_sell'] == 'no') {
+                        tempOrder['sell_price'] = ''
+                        tempOrder['profit_price'] = ''
+                    }
+
+                    // //set profit percentage if sell price is fixed
+                    // if (tempOrder['profit_type'] == 'fixed_price') {
+                    //     let sell_profit_percent = ((parseFloat(tempOrder['sell_price']) - parseFloat(tempOrder['price'])) / parseFloat(tempOrder['price'])) * 100
+                    //     tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+                    //     tempOrder['profit_percent'] = tempOrder['sell_profit_percent']
+                    // }
+
+                    //set profit percentage if sell price is fixed
+                    if (orders['profit_type'] == 'fixed_price') {
+                        let sell_profit_percent = ((parseFloat(orders['sell_price']) - parseFloat(orders['price'])) / parseFloat(orders['price'])) * 100
+                        tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+                        tempOrder['profit_percent'] = tempOrder['sell_profit_percent']
+                    }
+
+                    //set sell profit percentage 
+                    if (orders['profit_type'] == 'percentage' && typeof tempOrder['profit_percent'] != 'undefined') {
+                        let sell_profit_percent = parseFloat(parseFloat(tempOrder['profit_percent']).toFixed(1))
+                        tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+                    }
+
+                    //set stop loss 
+                    if (typeof tempOrder['stop_loss'] != 'undefined' && tempOrder['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrder['loss_percentage']))) {
+                        tempOrder['stop_loss'] = 'yes'
+                        tempOrder['loss_percentage'] = parseFloat(parseFloat(tempOrder['loss_percentage']).toFixed(1))
+                    } else {
+                        tempOrder['stop_loss'] = 'no'
+                        tempOrder['loss_percentage'] = ''
+                    }
+
+                    //set lth profit 
+                    if (typeof tempOrder['lth_functionality'] != 'undefined' && tempOrder['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrder['lth_profit']))) {
+                        tempOrder['lth_functionality'] = 'yes'
+                        tempOrder['lth_profit'] = parseFloat(parseFloat(tempOrder['lth_profit']).toFixed(1))
+                    } else {
+                        tempOrder['lth_functionality'] = 'no'
+                        tempOrder['lth_profit'] = ''
+                    }
+
+                    tempOrder['created_date'] = new Date();
+                    tempOrder['buy_order_id'] = buyOrderId;
+                    //Temp sell order collection on the base of exchange 
+                    var tempCollection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
+
+                    db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
+                        if (err) {
+                            resp.status(403).send({
+                                message: 'some thing went wrong while Creating order'
+                            });
+                        } else {
+                            resp.status(200).send({
+                                message: 'Order successfully created',
+                                data: buyOrderId
+                            });
+                        }
+                    })
+                } else {
+                    resp.status(200).send({
+                        message: 'Order successfully created',
+                        data: buyOrderId
+                    });
+                }
+                //:::::::::::::::::::::::::::::::::
+            }
         })
-    }) //End of createManualOrder
+    })
+}) //End of createManualOrder
 
 
 
@@ -1038,290 +1129,292 @@ router.post('/createManualOrder', (req, resp) => {
 
 //post call from chart for creating manual order
 router.post('/createManualOrderByChart', (req, resp) => {
-        conn.then((db) => {
-            let orders = req.body.orderArr;
+    conn.then((db) => {
+        let orders = req.body.orderArr;
 
-            console.log(orders);
-            console.log('orders');
-            let orderId = req.body.orderId;
-            var price = orders['price'];
-            let exchange = orders['exchange'];
-
-
-            orders['created_date'] = new Date();
-            orders['modified_date'] = new Date();
-            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-            //create buy-orders 
-            db.collection(collectionName).insertOne(orders, (err, result) => {
-                if (err) {
-                    resp.status(403).send({
-                        message: err
-                    });
-                } else {
-                    //:::::::::::::::::::::::::::::::::
-                    var buyOrderId = result.insertedId
-                    var log_msg = "Buy Order was Created at Price " + parseFloat(price).toFixed(8);
-                    let profit_percent = req.body.tempOrderArr.profit_percent;
-
-                    if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
-                        log_msg += ' with auto sell ' + profit_percent + '%';
-                    }
-
-                    log_msg += 'With Chart';
-
-                    let show_hide_log = 'yes';
-                    let type = 'Order_created';
-                    // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
-                    let order_mode = orders.application_mode;
-                    var order_created_date = new Date();
-                    var promiseLog = create_orders_history_log(buyOrderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-                    promiseLog.then((callback) => {})
-                    //if auto sell is yes the create sell order
-                    if (req.body.orderArr.auto_sell == 'yes') {
-
-                        let tempOrder = req.body.tempOrderArr;
-                        tempOrder['created_date'] = new Date();
-                        tempOrder['buy_order_id'] = buyOrderId;
-                        // By 10-12-2019
-                        //tempOrder['profit_price'] = parseFloat(tempOrder['profit_price']);
-                        //tempOrder['profit_percent'] = parseFloat(tempOrder['profit_percent']);
-                        // By 10-12-2019
-
-                        var tempCollection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
-
-                        console.log('tempOrder');
-                        console.log(tempOrder);
+        console.log(orders);
+        console.log('orders');
+        let orderId = req.body.orderId;
+        var price = orders['price'];
+        let exchange = orders['exchange'];
 
 
-                        //create sell order
-                        db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
-                            if (err) {
-                                resp.status(403).send({
-                                    message: 'some thing went wrong while Creating order'
-                                });
-                            } else {
-                                resp.status(200).send({
-                                    message: 'Order successfully created with auto sell'
-                                });
-                            }
-                        })
-                    } else {
-                        resp.status(200).send({
-                            message: 'Order created with**'
-                        });
-                    }
-                    //:::::::::::::::::::::::::::::::::
+        orders['created_date'] = new Date();
+        orders['modified_date'] = new Date();
+        var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        //create buy-orders 
+        db.collection(collectionName).insertOne(orders, (err, result) => {
+            if (err) {
+                resp.status(403).send({
+                    message: err
+                });
+            } else {
+                //:::::::::::::::::::::::::::::::::
+                var buyOrderId = result.insertedId
+                var log_msg = "Buy Order was Created at Price " + parseFloat(price).toFixed(8);
+                let profit_percent = req.body.tempOrderArr.profit_percent;
+
+                if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
+                    log_msg += ' with auto sell ' + profit_percent + '%';
                 }
-            })
+
+                log_msg += 'With Chart';
+
+                let show_hide_log = 'yes';
+                let type = 'Order_created';
+                // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
+                let order_mode = orders.application_mode;
+                var order_created_date = new Date();
+                var promiseLog = create_orders_history_log(buyOrderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                promiseLog.then((callback) => {})
+                //if auto sell is yes the create sell order
+                if (req.body.orderArr.auto_sell == 'yes') {
+
+                    let tempOrder = req.body.tempOrderArr;
+                    tempOrder['created_date'] = new Date();
+                    tempOrder['buy_order_id'] = buyOrderId;
+                    // By 10-12-2019
+                    //tempOrder['profit_price'] = parseFloat(tempOrder['profit_price']);
+                    //tempOrder['profit_percent'] = parseFloat(tempOrder['profit_percent']);
+                    // By 10-12-2019
+
+                    var tempCollection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
+
+                    console.log('tempOrder');
+                    console.log(tempOrder);
+
+
+                    //create sell order
+                    db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
+                        if (err) {
+                            resp.status(403).send({
+                                message: 'some thing went wrong while Creating order'
+                            });
+                        } else {
+                            resp.status(200).send({
+                                message: 'Order successfully created with auto sell'
+                            });
+                        }
+                    })
+                } else {
+                    resp.status(200).send({
+                        message: 'Order created with**'
+                    });
+                }
+                //:::::::::::::::::::::::::::::::::
+            }
         })
-    }) //End of createManualOrderByChart
+    })
+}) //End of createManualOrderByChart
 
 
 
 //post call from set for sell component the function set buy manual order for sell
 router.post('/makeManualOrderSetForSell', async (req, resp) => {
-        conn.then((db) => {
-            let orders = req.body.orderArr;
-            let orderId = req.body.orderId;
-            let exchange = orders['exchange'];
-            orders['created_date'] = new Date();
-            orders['modified_date'] = new Date();
+    conn.then((db) => {
+        let orders = req.body.orderArr;
+        let orderId = req.body.orderId;
+        let exchange = orders['exchange'];
+        orders['created_date'] = new Date();
+        orders['modified_date'] = new Date();
 
-            var collectionName = (exchange == 'binance' || exchange == '') ? 'orders' : 'orders_' + exchange;
-            var where = {};
-            where['_id'] = (orderId == '') ? '' : new ObjectID(orderId);
+        var collectionName = (exchange == 'binance' || exchange == '') ? 'orders' : 'orders_' + exchange;
+        var where = {};
+        where['_id'] = (orderId == '') ? '' : new ObjectID(orderId);
 
-            var set = {};
-            set['$set'] = orders;
-            var upsert = { upsert: true }
-            //Update sell order collection
-            db.collection(collectionName).updateOne(where, set, upsert, async (err, result) => {
-                if (err) {
-                    resp.status(403).send({
-                        message: 'some thing went wrong'
-                    });
-                } else {
-                    let sellOrderId = (result.upsertedId == null) ? orderId : result.upsertedId._id;
-                    let updArr = {}
-                    updArr['modified_date'] = new Date();
-                    updArr['sell_order_id'] = new ObjectID(sellOrderId);
-                    updArr['is_sell_order'] = 'yes';
-                    updArr['auto_sell'] = 'yes';
-                    //update buy_orders collection 
-                    var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                    var where = {};
-                    where['_id'] = new ObjectID(orderId);
-                    var updPrmise = updateOne(where, updArr, collection);
-                    updPrmise.then( (callback) => {})
-                    var log_msg = "Sell Order was Created";
-                    let show_hide_log = 'yes';
-                    let type = 'Order Ready For Buy';
-                    // var promiseLog = recordOrderLog(orderId, log_msg, type, show_hide_log, exchange)
-                    var getBuyOrder = await listOrderById(orderId, exchange);
-                    var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                    var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                    var promiseLog = create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-                    promiseLog.then((callback) => {
+        var set = {};
+        set['$set'] = orders;
+        var upsert = {
+            upsert: true
+        }
+        //Update sell order collection
+        db.collection(collectionName).updateOne(where, set, upsert, async (err, result) => {
+            if (err) {
+                resp.status(403).send({
+                    message: 'some thing went wrong'
+                });
+            } else {
+                let sellOrderId = (result.upsertedId == null) ? orderId : result.upsertedId._id;
+                let updArr = {}
+                updArr['modified_date'] = new Date();
+                updArr['sell_order_id'] = new ObjectID(sellOrderId);
+                updArr['is_sell_order'] = 'yes';
+                updArr['auto_sell'] = 'yes';
+                //update buy_orders collection 
+                var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                var where = {};
+                where['_id'] = new ObjectID(orderId);
+                var updPrmise = updateOne(where, updArr, collection);
+                updPrmise.then((callback) => {})
+                var log_msg = "Sell Order was Created";
+                let show_hide_log = 'yes';
+                let type = 'Order Ready For Buy';
+                // var promiseLog = recordOrderLog(orderId, log_msg, type, show_hide_log, exchange)
+                var getBuyOrder = await listOrderById(orderId, exchange);
+                var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                var promiseLog = create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                promiseLog.then((callback) => {
 
-                    })
-                    resp.status(200).send({
-                        message: 'Order successfully Ready for buy'
-                    });
+                })
+                resp.status(200).send({
+                    message: 'Order successfully Ready for buy'
+                });
 
-                } //End of success result	
-            })
+            } //End of success result	
         })
-    }) //End of makeManualOrderSetForSell
+    })
+}) //End of makeManualOrderSetForSell
 
 //Post call from angular component for creating parent order
-router.post('/createAutoOrder', async(req, resp) => {
-        let order = req.body.orderArr;
+router.post('/createAutoOrder', async (req, resp) => {
+    let order = req.body.orderArr;
 
-        order['created_date'] = new Date()
-        order['modified_date'] = new Date()
-        let orderResp = await createAutoOrder(order);
-        resp.status(200).send({
-            message: orderResp
-        });
-    }) //End of createAutoOrder
+    order['created_date'] = new Date()
+    order['modified_date'] = new Date()
+    let orderResp = await createAutoOrder(order);
+    resp.status(200).send({
+        message: orderResp
+    });
+}) //End of createAutoOrder
 
 //post call from angular to edit triggers orders
-router.post('/editAutoOrder', async(req, resp) => {
+router.post('/editAutoOrder', async (req, resp) => {
 
-        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
-        let order = req.body.orderArr;
-        order['modified_date'] = new Date()
-        let orderId = order['orderId'];
-        var exchange = order['exchange'];
-        var lth_profit = order['lth_profit'];
-       var defined_sell_percentage = order['defined_sell_percentage'];
-        //get order detail which you want to update
-        var buyOrderArr = await listOrderById(orderId, exchange);
+    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+    let order = req.body.orderArr;
+    order['modified_date'] = new Date()
+    let orderId = order['orderId'];
+    var exchange = order['exchange'];
+    var lth_profit = order['lth_profit'];
+    var defined_sell_percentage = order['defined_sell_percentage'];
+    //get order detail which you want to update
+    var buyOrderArr = await listOrderById(orderId, exchange);
     var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0]['purchased_price'] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
-        var status = buyOrderArr[0]['status'];
-        //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
-        if (status == 'LTH') {
-            var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
-            order['sell_price'] = sell_price;
-        }else{
-            var sell_price = ((parseFloat(purchased_price) * defined_sell_percentage) / 100) + parseFloat(purchased_price);
-            order['sell_price'] = sell_price;
-        }
+    var status = buyOrderArr[0]['status'];
+    //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
+    if (status == 'LTH') {
+        var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
+        order['sell_price'] = sell_price;
+    } else {
+        var sell_price = ((parseFloat(purchased_price) * defined_sell_percentage) / 100) + parseFloat(purchased_price);
+        order['sell_price'] = sell_price;
+    }
 
-        //set sell profit percentage 
-        if (order['defined_sell_percentage'] != 'undefined' || typeof order['sell_profit_percent'] != 'undefined') {
+    //set sell profit percentage 
+    if (order['defined_sell_percentage'] != 'undefined' || typeof order['sell_profit_percent'] != 'undefined') {
 
-            let sell_profit_percent = parseFloat(parseFloat(order['sell_profit_percent']).toFixed(1))
-            let defined_sell_percentage = parseFloat(parseFloat(order['defined_sell_percentage']).toFixed(1))
+        let sell_profit_percent = parseFloat(parseFloat(order['sell_profit_percent']).toFixed(1))
+        let defined_sell_percentage = parseFloat(parseFloat(order['defined_sell_percentage']).toFixed(1))
 
-            sell_profit_percent = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-            defined_sell_percentage = !isNaN(defined_sell_percentage) ? Math.abs(defined_sell_percentage) : ''
+        sell_profit_percent = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+        defined_sell_percentage = !isNaN(defined_sell_percentage) ? Math.abs(defined_sell_percentage) : ''
 
-            order['sell_profit_percent'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent
-            order['defined_sell_percentage'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent 
-            order['is_sell_order'] = 'yes';
-        }
+        order['sell_profit_percent'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent
+        order['defined_sell_percentage'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent
+        order['is_sell_order'] = 'yes';
+    }
 
-        //set stop loss 
-        if (typeof order['stop_loss_rule'] != 'undefined' && order['stop_loss_rule'] == 'custom_stop_loss' && !isNaN(parseFloat(order['custom_stop_loss_percentage']))) {
-            order['stop_loss'] = 'yes'
-            order['loss_percentage'] = parseFloat(parseFloat(order['custom_stop_loss_percentage']).toFixed(1))
-            order['custom_stop_loss_percentage'] = order['loss_percentage']
+    //set stop loss 
+    if (typeof order['stop_loss_rule'] != 'undefined' && order['stop_loss_rule'] == 'custom_stop_loss' && !isNaN(parseFloat(order['custom_stop_loss_percentage']))) {
+        order['stop_loss'] = 'yes'
+        order['loss_percentage'] = parseFloat(parseFloat(order['custom_stop_loss_percentage']).toFixed(1))
+        order['custom_stop_loss_percentage'] = order['loss_percentage']
 
-            // let purchased_price = !isNaN(parseFloat(purchased_price)) ? parseFloat(purchased_price) : parseFloat(buyOrderArr[0]['price'])
-            let loss_price = (parseFloat(purchased_price) * parseFloat(order['loss_percentage'])) / 100;
-            order['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+        // let purchased_price = !isNaN(parseFloat(purchased_price)) ? parseFloat(purchased_price) : parseFloat(buyOrderArr[0]['price'])
+        let loss_price = (parseFloat(purchased_price) * parseFloat(order['loss_percentage'])) / 100;
+        order['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
 
-        } else {
-            order['stop_loss'] = 'no'
-            order['loss_percentage'] = ''
-            order['custom_stop_loss_percentage'] = ''
-        }
+    } else {
+        order['stop_loss'] = 'no'
+        order['loss_percentage'] = ''
+        order['custom_stop_loss_percentage'] = ''
+    }
 
-        //set lth profit 
-        if (typeof order['lth_functionality'] != 'undefined' && order['lth_functionality'] == 'yes' && !isNaN(parseFloat(order['lth_profit']))) {
-            order['lth_functionality'] = 'yes'
-            order['lth_profit'] = parseFloat(parseFloat(order['lth_profit']).toFixed(1))
-        } else {
-            order['lth_functionality'] = 'no'
-            order['lth_profit'] = ''
-        }
+    //set lth profit 
+    if (typeof order['lth_functionality'] != 'undefined' && order['lth_functionality'] == 'yes' && !isNaN(parseFloat(order['lth_profit']))) {
+        order['lth_functionality'] = 'yes'
+        order['lth_profit'] = parseFloat(parseFloat(order['lth_profit']).toFixed(1))
+    } else {
+        order['lth_functionality'] = 'no'
+        order['lth_profit'] = ''
+    }
 
-        order['modified_date'] = new Date();
-        
-        var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        delete order['orderId'];
+    order['modified_date'] = new Date();
+
+    var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    delete order['orderId'];
+    var where = {};
+    where['_id'] = new ObjectID(orderId);
+    var updPrmise = updateOne(where, order, collection);
+    updPrmise.then((callback) => {})
+
+
+
+    //Update sell_price in Sell Order
+    if (typeof buyOrderArr[0]['sell_order_id'] != 'undefined') {
+        let sell_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
         var where = {};
-        where['_id'] = new ObjectID(orderId);
-        var updPrmise = updateOne(where, order, collection);
+        let sell_order = {
+            'sell_price': order['sell_price']
+        }
+        where['_id'] = new ObjectID(String(buyOrderArr[0]['sell_order_id']));
+        var updPrmise = updateOne(where, sell_order, sell_collection);
         updPrmise.then((callback) => {})
+    }
 
-        
-        
-        //Update sell_price in Sell Order
-        if (typeof buyOrderArr[0]['sell_order_id'] != 'undefined'){
-            let sell_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-            var where = {};
-            let sell_order = {
-                'sell_price': order['sell_price']
-            }
-            where['_id'] = new ObjectID(String(buyOrderArr[0]['sell_order_id']));
-            var updPrmise = updateOne(where, sell_order, sell_collection);
-            updPrmise.then((callback) => { })
-        }
-
-        //TODO: create detail update log Umer Abbas [13-12-19]
-        let obj = buyOrderArr[0];
-        let new_obj = order;
-        let obj_keys = Object.keys(obj);
-        let new_obj_keys = Object.keys(order);
-        let update_keys = new_obj_keys.filter(x => obj_keys.includes(x));
-        let log_message = "Order Was <b style='color:yellow'>Updated</b> "+interfaceType+" ";
-        let notification_msg = log_message;
-        for (let i in update_keys) {
-            let upd_key = update_keys[i];
-            if (new_obj[upd_key] != obj[upd_key]) {
-                if (upd_key == 'iniatial_trail_stop' || upd_key == 'iniatial_trail_stop_copy' || upd_key == 'sell_price'){
-                    log_message += ' ' + upd_key + ' updated from ' + obj[upd_key].toFixed(8) + ' to ' + new_obj[upd_key].toFixed(8) + ', ';
-                }else{
-                    log_message += ' '+upd_key+ ' updated from '+ obj[upd_key]+ ' to '+ new_obj[upd_key]+ ', ';
-                }
+    //TODO: create detail update log Umer Abbas [13-12-19]
+    let obj = buyOrderArr[0];
+    let new_obj = order;
+    let obj_keys = Object.keys(obj);
+    let new_obj_keys = Object.keys(order);
+    let update_keys = new_obj_keys.filter(x => obj_keys.includes(x));
+    let log_message = "Order Was <b style='color:yellow'>Updated</b> " + interfaceType + " ";
+    let notification_msg = log_message;
+    for (let i in update_keys) {
+        let upd_key = update_keys[i];
+        if (new_obj[upd_key] != obj[upd_key]) {
+            if (upd_key == 'iniatial_trail_stop' || upd_key == 'iniatial_trail_stop_copy' || upd_key == 'sell_price') {
+                log_message += ' ' + upd_key + ' updated from ' + obj[upd_key].toFixed(8) + ' to ' + new_obj[upd_key].toFixed(8) + ', ';
+            } else {
+                log_message += ' ' + upd_key + ' updated from ' + obj[upd_key] + ' to ' + new_obj[upd_key] + ', ';
             }
         }
-        var log_msg = log_message.replace(/,\s*$/, ".");  // to remove the last comma 
+    }
+    var log_msg = log_message.replace(/,\s*$/, "."); // to remove the last comma 
 
-        // var log_msg = "Order Was <b style='color:yellow'>Updated</b>";
-        let show_hide_log = 'yes';
-        let type = 'order_updated';
-        // var promiseLog = recordOrderLog(orderId, log_msg, type, show_hide_log, exchange)
-        var getBuyOrder = await listOrderById(orderId, exchange);
-        var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-        var promiseLog = create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-        promiseLog.then((callback) => {
+    // var log_msg = "Order Was <b style='color:yellow'>Updated</b>";
+    let show_hide_log = 'yes';
+    let type = 'order_updated';
+    // var promiseLog = recordOrderLog(orderId, log_msg, type, show_hide_log, exchange)
+    var getBuyOrder = await listOrderById(orderId, exchange);
+    var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+    var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+    var promiseLog = create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+    promiseLog.then((callback) => {
 
-        })
+    })
 
-        //Send Notification
-        send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', notification_msg, orderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
+    //Send Notification
+    send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', notification_msg, orderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
-        resp.status(200).send({
-            message: 'updated'
-        });
-    }) //End of editAutoOrder
+    resp.status(200).send({
+        message: 'updated'
+    });
+}) //End of editAutoOrder
 
 //Function for creating parent order
 function createAutoOrder(OrderArr) {
 
     //set sell profit percentage 
     if (OrderArr['defined_sell_percentage'] != 'undefined' || typeof OrderArr['sell_profit_percent'] != 'undefined') {
-        
+
         let sell_profit_percent = parseFloat(parseFloat(OrderArr['sell_profit_percent']).toFixed(1))
         let defined_sell_percentage = parseFloat(parseFloat(OrderArr['defined_sell_percentage']).toFixed(1))
 
         sell_profit_percent = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
         defined_sell_percentage = !isNaN(defined_sell_percentage) ? Math.abs(defined_sell_percentage) : ''
-        
+
         OrderArr['sell_profit_percent'] = sell_profit_percent != '' ? sell_profit_percent : defined_sell_percentage
         OrderArr['defined_sell_percentage'] = sell_profit_percent != '' ? sell_profit_percent : defined_sell_percentage
     }
@@ -1405,633 +1498,656 @@ function marketMinNotation_with_step_size(symbol) {
 } //End of marketMinNotation_with_step_size
 
 //function for getting order list from order-list angular  component 
-router.post('/listOrderListing', async(req, resp) => {
+router.post('/listOrderListing', async (req, resp) => {
 
-        var admin_id = req.body.postData.admin_id;
-        var application_mode = req.body.postData.application_mode;
-        var postDAta = req.body.postData;
-        var search = {};
-        //if filter values exist for order list create filter on the base of selected filters
-        if (postDAta.coins != '') {
-            //search on the bases of coins
-            search['symbol'] = { '$in': postDAta.coins }
+    var admin_id = req.body.postData.admin_id;
+    var application_mode = req.body.postData.application_mode;
+    var postDAta = req.body.postData;
+    var search = {};
+    //if filter values exist for order list create filter on the base of selected filters
+    if (postDAta.coins != '') {
+        //search on the bases of coins
+        search['symbol'] = {
+            '$in': postDAta.coins
         }
+    }
 
-        if (postDAta.order_type != '') {
-            //search on the base of order type mean manual order or trigger order
-            search['order_type'] = postDAta.order_type
+    if (postDAta.order_type != '') {
+        //search on the base of order type mean manual order or trigger order
+        search['order_type'] = postDAta.order_type
+    }
+
+    if (postDAta.trigger_type != '') {
+        //seatch on the base of specific trigger
+        search['trigger_type'] = postDAta.trigger_type
+    }
+
+    if (postDAta.order_level != '') {
+        //search on the base of order level for auto trading
+        search['order_level'] = postDAta.order_level
+    }
+
+
+    var count = 0;
+    var i;
+    for (i in search) {
+        if (search.hasOwnProperty(i)) {
+            count++;
         }
+    }
 
-        if (postDAta.trigger_type != '') {
-            //seatch on the base of specific trigger
-            search['trigger_type'] = postDAta.trigger_type
+    var exchange = postDAta.exchange;
+    var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    //::::::::::::::::::::::::::::::::::::::::::::::::
+    //Filter_1 part for count number of parent orders
+    var filter_1 = {};
+    filter_1['parent_status'] = 'parent';
+    filter_1['admin_id'] = admin_id;
+    filter_1['application_mode'] = application_mode;
+    filter_1['status'] = {
+        '$in': ['new', 'takingOrder']
+    }
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-
-        if (postDAta.order_level != '') {
-            //search on the base of order level for auto trading
-            search['order_level'] = postDAta.order_level
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
+        filter_1['created_date'] = obj;
+    }
 
-
-        var count = 0;
-        var i;
-        for (i in search) {
-            if (search.hasOwnProperty(i)) {
-                count++;
-            }
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_1[key] = value;
         }
+    }
+    //:::::::::::::::::::::: End of count parent ordes Filter :::::::::::::: 
+    //count parent orders Promise
+    var parentCountPromise = countCollection(collectionName, filter_1);
 
-        var exchange = postDAta.exchange;
-        var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        //::::::::::::::::::::::::::::::::::::::::::::::::
-        //Filter_1 part for count number of parent orders
-        var filter_1 = {};
-        filter_1['parent_status'] = 'parent';
-        filter_1['admin_id'] = admin_id;
-        filter_1['application_mode'] = application_mode;
-        filter_1['status'] = { '$in': ['new', 'takingOrder'] }
 
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_1['created_date'] = obj;
+
+    //::::::::::::: filter_2 count new orders for order listing ::::::::::::
+    var filter_2 = {};
+    filter_2['status'] = {
+        '$in': ['new', 'new_ERROR']
+    };
+    filter_2['price'] = {
+        '$nin': ['', null]
+    };
+    filter_2['admin_id'] = admin_id;
+    filter_2['application_mode'] = application_mode;
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_1[key] = value;
-            }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
-        //:::::::::::::::::::::: End of count parent ordes Filter :::::::::::::: 
-        //count parent orders Promise
-        var parentCountPromise = countCollection(collectionName, filter_1);
+        filter_2['created_date'] = obj;
+    }
 
-
-
-        //::::::::::::: filter_2 count new orders for order listing ::::::::::::
-        var filter_2 = {};
-        filter_2['status'] = { '$in': ['new', 'new_ERROR'] };
-        filter_2['price'] = { '$nin': ['', null] };
-        filter_2['admin_id'] = admin_id;
-        filter_2['application_mode'] = application_mode;
-
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_2['created_date'] = obj;
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_2[key] = value;
         }
+    }
+    //:::::::::: End of filter_2 for couting new orders :::::::::::::
+    //Promise for count new orders
+    var newCountPromise = countCollection(collectionName, filter_2);
 
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_2[key] = value;
-            }
+
+
+    //:::::::::::::::: filter_3 for count open order :::::::::::::::::
+    var filter_3 = {};
+    filter_3['status'] = {
+        '$in': ['FILLED', 'FILLED_ERROR']
+    }
+    filter_3['is_sell_order'] = 'yes';
+    filter_3['is_lth_order'] = {
+        $ne: 'yes'
+    };
+    filter_3['admin_id'] = admin_id;
+    filter_3['application_mode'] = application_mode;
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-        //:::::::::: End of filter_2 for couting new orders :::::::::::::
-        //Promise for count new orders
-        var newCountPromise = countCollection(collectionName, filter_2);
-
-
-
-        //:::::::::::::::: filter_3 for count open order :::::::::::::::::
-        var filter_3 = {};
-        filter_3['status'] = { '$in': ['FILLED', 'FILLED_ERROR'] }
-        filter_3['is_sell_order'] = 'yes';
-        filter_3['admin_id'] = admin_id;
-        filter_3['application_mode'] = application_mode;
-        
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_3['created_date'] = obj;
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_3[key] = value;
-            }
+        filter_3['created_date'] = obj;
+    }
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_3[key] = value;
         }
-         //::::::::::::::::End of filter_3 for count open order :::::::::::::::::
+    }
+    //::::::::::::::::End of filter_3 for count open order :::::::::::::::::
 
-         //::::::::: Open-orders count Promise :::::::::::::::::::::::::::::::::
-        var openCountPromise = countCollection(collectionName, filter_3);
+    //::::::::: Open-orders count Promise :::::::::::::::::::::::::::::::::
+    var openCountPromise = countCollection(collectionName, filter_3);
 
 
-        //::::::::::::::: filter_33 for count filled orders :::::::::::::
-        var filter_33 = {};
-        filter_33['status'] = { '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR'] }
-        filter_33['admin_id'] = admin_id;
-        filter_33['application_mode'] = application_mode;
-        
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_33['created_date'] = obj;
+    //::::::::::::::: filter_33 for count filled orders :::::::::::::
+    var filter_33 = {};
+    filter_33['status'] = {
+        '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
+    }
+    filter_33['admin_id'] = admin_id;
+    filter_33['application_mode'] = application_mode;
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_33[key] = value;
-            }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
-        //:::::::::::::::End of  filter_33 for count filled orders :::::::::::::
-        //promise of count filled orders
-        var filledCountPromise = countCollection(collectionName, filter_33);
-
-
-
-
-        //:::::::::::; filter_4 for count all canceled orders ::::::::::::;
-        var filter_4 = {};
-        filter_4['status'] = 'canceled';
-        filter_4['admin_id'] = admin_id;
-        filter_4['application_mode'] = application_mode;
-        
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_4['created_date'] = obj;
+        filter_33['created_date'] = obj;
+    }
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_33[key] = value;
         }
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_4[key] = value;
-            }
+    }
+    //:::::::::::::::End of  filter_33 for count filled orders :::::::::::::
+    //promise of count filled orders
+    var filledCountPromise = countCollection(collectionName, filter_33);
+
+
+
+
+    //:::::::::::; filter_4 for count all canceled orders ::::::::::::;
+    var filter_4 = {};
+    filter_4['status'] = 'canceled';
+    filter_4['admin_id'] = admin_id;
+    filter_4['application_mode'] = application_mode;
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-        //:::::::::::: End of  filter_4 for count all canceled orders ::::::::::::;
-        //Promise for canceled count orders :::::::::::::::::
-        var cancelCountPromise = countCollection(collectionName, filter_4);
-
-
-        //::::::: filter_5  for count all error orders ::::::::::::::::::::::: 
-        var filter_5 = {};
-        filter_5['status'] = 'error';
-        filter_5['admin_id'] = admin_id;
-        filter_5['application_mode'] = application_mode;
-        
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_5['created_date'] = obj;
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_5[key] = value;
-            }
+        filter_4['created_date'] = obj;
+    }
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_4[key] = value;
         }
-         //::::::: End of  filter_5  for count all error orders ::::::::::::::::::::::: 
-        //Promise for count error orders ::::::::::
-        var errorCountPromise = countCollection(collectionName, filter_5);
+    }
+    //:::::::::::: End of  filter_4 for count all canceled orders ::::::::::::;
+    //Promise for canceled count orders :::::::::::::::::
+    var cancelCountPromise = countCollection(collectionName, filter_4);
 
-        //::::::::::::: filter_6 for count all lth order :::::::::::::::::::
-        var filter_6 = {};
-        filter_6['status'] = { $in: ['LTH', 'LTH_ERROR']};
-        filter_6['admin_id'] = admin_id;
-        filter_6['application_mode'] = application_mode;
-        filter_6['is_sell_order'] = 'yes';
 
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_6['created_date'] = obj;
+    //::::::: filter_5  for count all error orders ::::::::::::::::::::::: 
+    var filter_5 = {};
+    filter_5['status'] = 'error';
+    filter_5['admin_id'] = admin_id;
+    filter_5['application_mode'] = application_mode;
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_6[key] = value;
-            }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
-        //::::::::::::: End of filter_6 for count all lth order :::::::::::::::::::
-        //Promise for count lth orders
-        var lthCountPromise = countCollection(collectionName, filter_6);
-
-
-
-          //:::::::::::::  filter_7 for count all submitted order :::::::::::::::::::
-        var filter_7 = {};
-        filter_7['status'] = { '$in': ['submitted', 'fraction_submitted_sell', 'submitted_ERROR'] }
-        filter_7['admin_id'] = admin_id;
-        filter_7['application_mode'] = application_mode;
-        
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_7['created_date'] = obj;
+        filter_5['created_date'] = obj;
+    }
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_5[key] = value;
         }
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_7[key] = value;
-            }
+    }
+    //::::::: End of  filter_5  for count all error orders ::::::::::::::::::::::: 
+    //Promise for count error orders ::::::::::
+    var errorCountPromise = countCollection(collectionName, filter_5);
+
+    //::::::::::::: filter_6 for count all lth order :::::::::::::::::::
+    var filter_6 = {};
+    filter_6['status'] = {
+        $in: ['LTH', 'LTH_ERROR']
+    };
+    filter_6['admin_id'] = admin_id;
+    filter_6['application_mode'] = application_mode;
+    filter_6['is_sell_order'] = 'yes';
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-        //::::::::::::: End of filter_7 for count all submitted order :::::::::::::::::::
-        //promise for count submitted orders
-        var submittedCountPromise = countCollection(collectionName, filter_7);
-
-
-        var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
-
-        //::::::::::::: filter_8 for count all sold order :::::::::::::::::::
-        var filter_8 = {};
-        filter_8['admin_id'] = admin_id;
-        filter_8['application_mode'] = application_mode;
-        filter_8['is_sell_order'] = 'sold';
-
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_8['created_date'] = obj;
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
-
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_8[key] = value;
-            }
+        filter_6['created_date'] = obj;
+    }
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_6[key] = value;
         }
-        //::::::::::::: End of filter_8 for count all sold order :::::::::::::::::::
-        //Promise for count all sold orders 
-        var soldCountPromise = countCollection(collectionName, filter_8);
-        
-        //::::::::::::: filter_9 for count all lth_pause order :::::::::::::::::::
-        var filter_9 = {};
-        filter_9['admin_id'] = admin_id;
-        filter_9['application_mode'] = application_mode;
-        filter_9['is_sell_order'] = { '$in': ['pause', 'resume_pause', 'resume_complete']};
+    }
+    //::::::::::::: End of filter_6 for count all lth order :::::::::::::::::::
+    //Promise for count lth orders
+    var lthCountPromise = countCollection(collectionName, filter_6);
 
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_9['created_date'] = obj;
+
+
+    //:::::::::::::  filter_7 for count all submitted order :::::::::::::::::::
+    var filter_7 = {};
+    filter_7['status'] = {
+        '$in': ['submitted', 'fraction_submitted_sell', 'submitted_ERROR']
+    }
+    filter_7['admin_id'] = admin_id;
+    filter_7['application_mode'] = application_mode;
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_9[key] = value;
-            }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
-        //::::::::::::: End of filter_9 for count all lth_pause  order :::::::::::::::::::
-        //Promise for count all lth_pause orders
-        var lthPauseCountPromise = countCollection(collectionName, filter_9);
-
-        
-        //Count all tab
-        let filter_all = {};
-        filter_all['application_mode'] = postDAta.application_mode
-        filter_all['admin_id'] = postDAta.admin_id
-
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_all['created_date'] = obj;
+        filter_7['created_date'] = obj;
+    }
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_7[key] = value;
         }
+    }
+    //::::::::::::: End of filter_7 for count all submitted order :::::::::::::::::::
+    //promise for count submitted orders
+    var submittedCountPromise = countCollection(collectionName, filter_7);
 
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_all[key] = value;
-            }
+
+    var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+
+    //::::::::::::: filter_8 for count all sold order :::::::::::::::::::
+    var filter_8 = {};
+    filter_8['admin_id'] = admin_id;
+    filter_8['application_mode'] = application_mode;
+    filter_8['is_sell_order'] = 'sold';
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-        let soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
-        let all1Promise = countCollection(soldOrdercollection, filter_all);
-        // filter_all['parent_status'] = {'$exists': false}
-        let buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        let all2Promise = countCollection(buyOrdercollection, filter_all);
-        //End count All tab
-    
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter_8['created_date'] = obj;
+    }
 
-        //Resolve promised for count order for all tabs
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_8[key] = value;
+        }
+    }
+    //::::::::::::: End of filter_8 for count all sold order :::::::::::::::::::
+    //Promise for count all sold orders 
+    var soldCountPromise = countCollection(collectionName, filter_8);
+
+    //::::::::::::: filter_9 for count all lth_pause order :::::::::::::::::::
+    var filter_9 = {};
+    filter_9['admin_id'] = admin_id;
+    filter_9['application_mode'] = application_mode;
+    filter_9['is_sell_order'] = {
+        '$in': ['pause', 'resume_pause', 'resume_complete']
+    };
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter_9['created_date'] = obj;
+    }
+
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_9[key] = value;
+        }
+    }
+    //::::::::::::: End of filter_9 for count all lth_pause  order :::::::::::::::::::
+    //Promise for count all lth_pause orders
+    var lthPauseCountPromise = countCollection(collectionName, filter_9);
+
+
+    //Count all tab
+    let filter_all = {};
+    filter_all['application_mode'] = postDAta.application_mode
+    filter_all['admin_id'] = postDAta.admin_id
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter_all['created_date'] = obj;
+    }
+
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_all[key] = value;
+        }
+    }
+    let soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+    let all1Promise = countCollection(soldOrdercollection, filter_all);
+    // filter_all['parent_status'] = {'$exists': false}
+    let buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    let all2Promise = countCollection(buyOrdercollection, filter_all);
+    //End count All tab
+
+
+    //Resolve promised for count order for all tabs
     var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise]);
 
-        var parentCount = PromiseResponse[0];
-        var newCount = PromiseResponse[1];
-        var openCount = PromiseResponse[2];
-        var cancelCount = PromiseResponse[3];
-        var errorCount = PromiseResponse[4];
-        var lthCount = PromiseResponse[5];
-        var submitCount = PromiseResponse[6];
-        var soldCount = PromiseResponse[7];
-        var filledCount = PromiseResponse[8];
-        var lthPauseCount = PromiseResponse[9];
-        var all1Count = PromiseResponse[10];
-        var all2Count = PromiseResponse[11];
+    var parentCount = PromiseResponse[0];
+    var newCount = PromiseResponse[1];
+    var openCount = PromiseResponse[2];
+    var cancelCount = PromiseResponse[3];
+    var errorCount = PromiseResponse[4];
+    var lthCount = PromiseResponse[5];
+    var submitCount = PromiseResponse[6];
+    var soldCount = PromiseResponse[7];
+    var filledCount = PromiseResponse[8];
+    var lthPauseCount = PromiseResponse[9];
+    var all1Count = PromiseResponse[10];
+    var all2Count = PromiseResponse[11];
 
     // var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
 
     var totalCount = parseFloat(all1Count) + parseFloat(all2Count);
 
-        var countArr = {};
-        countArr['totalCount'] = totalCount;
-        countArr['parentCount'] = parentCount;
-        countArr['newCount'] = newCount;
-        countArr['openCount'] = openCount;
-        countArr['canceledCount'] = cancelCount;
-        countArr['errorCount'] = errorCount;
-        countArr['lthCount'] = lthCount;
-        countArr['submitCount'] = submitCount;
-        countArr['soldCount'] = soldCount;
-        countArr['filledCount'] = filledCount;
-        countArr['lthPauseCount'] = lthPauseCount;
-        countArr['totalBuyCount'] = all2Count;
-        countArr['totalSoldCount'] = all1Count;
-        //get user balance for listing on list-order page
-        var userBalanceArr = []
-        userBalanceArr = await get_user_wallet(admin_id, exchange)
-        
-        // if(exchange == 'binance'){
-        //     userBalanceArr = await get_user_wallet(admin_id, exchange)
-        // }else{
-        //     userBalanceArr = await listUserBalance(admin_id, exchange);
-        // }
-        var soldOrderArr = []; //await calculateAverageOrdersProfit(req.body.postData);
-        var total_profit = 0;
-        var total_quantity = 0;
-        for (let index in soldOrderArr) {
-            var market_sold_price = (typeof soldOrderArr[index]['market_sold_price'] == 'undefined') ? 0 : soldOrderArr[index]['market_sold_price'];
-            market_sold_price = parseFloat((isNaN(market_sold_price)) ? 0 : market_sold_price);
+    var countArr = {};
+    countArr['totalCount'] = totalCount;
+    countArr['parentCount'] = parentCount;
+    countArr['newCount'] = newCount;
+    countArr['openCount'] = openCount;
+    countArr['canceledCount'] = cancelCount;
+    countArr['errorCount'] = errorCount;
+    countArr['lthCount'] = lthCount;
+    countArr['submitCount'] = submitCount;
+    countArr['soldCount'] = soldCount;
+    countArr['filledCount'] = filledCount;
+    countArr['lthPauseCount'] = lthPauseCount;
+    countArr['totalBuyCount'] = all2Count;
+    countArr['totalSoldCount'] = all1Count;
+    //get user balance for listing on list-order page
+    var userBalanceArr = []
+    userBalanceArr = await get_user_wallet(admin_id, exchange)
 
-            var current_order_price = (typeof soldOrderArr[index]['market_value'] == 'undefined') ? 0 : soldOrderArr[index]['market_value'];
-            current_order_price = parseFloat((isNaN(current_order_price)) ? 0 : current_order_price);
+    // if(exchange == 'binance'){
+    //     userBalanceArr = await get_user_wallet(admin_id, exchange)
+    // }else{
+    //     userBalanceArr = await listUserBalance(admin_id, exchange);
+    // }
+    var soldOrderArr = []; //await calculateAverageOrdersProfit(req.body.postData);
+    var total_profit = 0;
+    var total_quantity = 0;
+    for (let index in soldOrderArr) {
+        var market_sold_price = (typeof soldOrderArr[index]['market_sold_price'] == 'undefined') ? 0 : soldOrderArr[index]['market_sold_price'];
+        market_sold_price = parseFloat((isNaN(market_sold_price)) ? 0 : market_sold_price);
 
-            var quantity = (typeof soldOrderArr[index]['quantity'] == 'undefined') ? 0 : soldOrderArr[index]['quantity'];
-            quantity = parseFloat((isNaN(quantity)) ? 0 : quantity);
+        var current_order_price = (typeof soldOrderArr[index]['market_value'] == 'undefined') ? 0 : soldOrderArr[index]['market_value'];
+        current_order_price = parseFloat((isNaN(current_order_price)) ? 0 : current_order_price);
 
-            var percentage = calculate_percentage(current_order_price, market_sold_price);
-            var total_btc = quantity * current_order_price;
-            total_profit += total_btc * percentage;
-            total_quantity += total_btc;
+        var quantity = (typeof soldOrderArr[index]['quantity'] == 'undefined') ? 0 : soldOrderArr[index]['quantity'];
+        quantity = parseFloat((isNaN(quantity)) ? 0 : quantity);
+
+        var percentage = calculate_percentage(current_order_price, market_sold_price);
+        var total_btc = quantity * current_order_price;
+        total_profit += total_btc * percentage;
+        total_quantity += total_btc;
+    }
+
+    var avg_profit = 0; //total_profit / total_quantity;
+    //function for listing orders 
+    var orderListing = await listOrderListing(req.body.postData);
+    var customOrderListing = [];
+    for (let index in orderListing) {
+        //get market price on the base of exchange 
+        if (exchange == 'bam') {
+            var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
+            //get price of global coins
+            var BTCUSDTPRICE = await listBamCurrentMarketPrice('BTCUSDT');
+
+        } else {
+
+            let currentMarketPricePromise = listCurrentMarketPrice(orderListing[index].symbol, exchange);
+            let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
+            //get price for global coins
+            var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin, exchange);
+            var responsePromise = await Promise.all([currentMarketPricePromise, BTCUSDTPRICEPromise]);
+            var currentMarketPriceArr = (typeof responsePromise[0][0] == 'undefined') ? [] : responsePromise[0][0];
+            var currentMarketPrice = (typeof (currentMarketPriceArr.price) == 'undefined') ? 0 : currentMarketPriceArr.price;
+            var btcPriceArr = (typeof responsePromise[1][0] == 'undefined') ? [] : responsePromise[1][0];
+            var BTCUSDTPRICE = (typeof btcPriceArr.market_value == 'undefined') ? btcPriceArr.price : btcPriceArr.market_value;
         }
 
-        var avg_profit = 0; //total_profit / total_quantity;
-        //function for listing orders 
-        var orderListing = await listOrderListing(req.body.postData);
-        var customOrderListing = [];
-        for (let index in orderListing) {
-            //get market price on the base of exchange 
-            if (exchange == 'bam') {
-                var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
-                //get price of global coins
-                var BTCUSDTPRICE = await listBamCurrentMarketPrice('BTCUSDT');
-
-            } else {
-
-                let currentMarketPricePromise = listCurrentMarketPrice(orderListing[index].symbol, exchange);
-                let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
-                //get price for global coins
-                var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin, exchange);
-                var responsePromise = await Promise.all([currentMarketPricePromise, BTCUSDTPRICEPromise]);
-                var currentMarketPriceArr = (typeof responsePromise[0][0] == 'undefined') ? [] : responsePromise[0][0];
-                var currentMarketPrice = (typeof(currentMarketPriceArr.price) == 'undefined') ? 0 : currentMarketPriceArr.price;
-                var btcPriceArr = (typeof responsePromise[1][0] == 'undefined') ? [] : responsePromise[1][0];
-                var BTCUSDTPRICE = (typeof btcPriceArr.market_value == 'undefined') ? btcPriceArr.price : btcPriceArr.market_value;
-            }
 
 
+        if (orderListing[index].status == 'new') {
+            var convertToBtc = orderListing[index].quantity * currentMarketPrice;
+            let splitArr = orderListing[index].symbol.split('USDT');
+            var coinPriceInBtc = ((splitArr.length > 1) && (splitArr[1] == '')) ? ((orderListing[index].quantity) * currentMarketPrice) : (BTCUSDTPRICE * convertToBtc);
+        } else {
 
-            if (orderListing[index].status == 'new'){
-                var convertToBtc = orderListing[index].quantity * currentMarketPrice;
-                let splitArr = orderListing[index].symbol.split('USDT');
-                var coinPriceInBtc = ((splitArr.length > 1) && (splitArr[1] == '')) ? ((orderListing[index].quantity) * currentMarketPrice) : (BTCUSDTPRICE * convertToBtc);
-            }else{
-             
-                let order_price = (typeof orderListing[index].purchased_price != 'undefined' && orderListing[index].purchased_price != '' && !isNaN(parseFloat(orderListing[index].purchased_price)) ? parseFloat(orderListing[index].purchased_price) : currentMarketPrice)
+            let order_price = (typeof orderListing[index].purchased_price != 'undefined' && orderListing[index].purchased_price != '' && !isNaN(parseFloat(orderListing[index].purchased_price)) ? parseFloat(orderListing[index].purchased_price) : currentMarketPrice)
 
-                var convertToBtc = orderListing[index].quantity * order_price;
-                let splitArr = orderListing[index].symbol.split('USDT');
-                var coinPriceInBtc = ((splitArr.length > 1) && (splitArr[1] == '')) ? ((orderListing[index].quantity) * order_price) : (BTCUSDTPRICE * convertToBtc);
-            }
+            var convertToBtc = orderListing[index].quantity * order_price;
+            let splitArr = orderListing[index].symbol.split('USDT');
+            var coinPriceInBtc = ((splitArr.length > 1) && (splitArr[1] == '')) ? ((orderListing[index].quantity) * order_price) : (BTCUSDTPRICE * convertToBtc);
+        }
 
 
-            var order = orderListing[index];
-            order['customCurrentMarketPrice'] = parseFloat(currentMarketPrice).toFixed(8);
+        var order = orderListing[index];
+        order['customCurrentMarketPrice'] = parseFloat(currentMarketPrice).toFixed(8);
 
-            let buy_trail_price = (typeof orderListing[index].buy_trail_price == 'undefined') ? 0 : orderListing[index].buy_trail_price;
-            order['buy_trail_price_custom'] = (orderListing[index].trail_check == 'yes') ? (parseFloat(buy_trail_price).toFixed(8)) : '---';
+        let buy_trail_price = (typeof orderListing[index].buy_trail_price == 'undefined') ? 0 : orderListing[index].buy_trail_price;
+        order['buy_trail_price_custom'] = (orderListing[index].trail_check == 'yes') ? (parseFloat(buy_trail_price).toFixed(8)) : '---';
 
-            let actualPurchasePrice = (orderListing[index].status != 'new' && orderListing[index].status != 'eror') ? parseFloat(orderListing[index].purchased_price).toFixed(8) : parseFloat(currentMarketPrice).toFixed(8);
+        let actualPurchasePrice = (orderListing[index].status != 'new' && orderListing[index].status != 'eror') ? parseFloat(orderListing[index].purchased_price).toFixed(8) : parseFloat(currentMarketPrice).toFixed(8);
 
-            order['actualPurchasePrice'] = isNaN(actualPurchasePrice) ? '---' : actualPurchasePrice;
-            order['coinPriceInBtc'] = parseFloat(coinPriceInBtc).toFixed(2);
-            order['quantity'] = (isNaN(parseFloat(parseFloat(order['quantity']).toFixed(8))) ? '' : parseFloat(parseFloat(order['quantity']).toFixed(8)))
-            order['price'] = (isNaN(order['price']) ? '' : parseFloat(order['price']).toFixed(8))
+        order['actualPurchasePrice'] = isNaN(actualPurchasePrice) ? '---' : actualPurchasePrice;
+        order['coinPriceInBtc'] = parseFloat(coinPriceInBtc).toFixed(2);
+        order['quantity'] = (isNaN(parseFloat(parseFloat(order['quantity']).toFixed(8))) ? '' : parseFloat(parseFloat(order['quantity']).toFixed(8)))
+        order['price'] = (isNaN(order['price']) ? '' : parseFloat(order['price']).toFixed(8))
 
-            let market_sold_price = (typeof orderListing[index].market_sold_price == 'undefined') ? 0 : orderListing[index].market_sold_price;
+        let market_sold_price = (typeof orderListing[index].market_sold_price == 'undefined') ? 0 : orderListing[index].market_sold_price;
 
-            order['actualSoldPrice'] = parseFloat(isNaN(market_sold_price) ? '---' : market_sold_price).toFixed(8);
+        order['actualSoldPrice'] = parseFloat(isNaN(market_sold_price) ? '---' : market_sold_price).toFixed(8);
 
 
 
 
-            var htmlStatus = '';
+        var htmlStatus = '';
 
-            var status = (typeof orderListing[index].status == 'undefined') ? '' : orderListing[index].status
-            var is_sell_order = (typeof orderListing[index].is_sell_order == 'undefined') ? '' : orderListing[index].is_sell_order;
-            var sellOrderId = (typeof orderListing[index].sell_order_id != 'undefined') ? orderListing[index].sell_order_id : '';
-            var is_lth_order = (typeof orderListing[index].is_lth_order == 'undefined') ? '' : orderListing[index].is_lth_order
-            var fraction_sell_type = (typeof orderListing[index].fraction_sell_type == 'undefined') ? '' : orderListing[index].fraction_sell_type;
-            var fraction_buy_type = (typeof orderListing[index].fraction_buy_type == 'undefined') ? '' : orderListing[index].fraction_buy_type;
+        var status = (typeof orderListing[index].status == 'undefined') ? '' : orderListing[index].status
+        var is_sell_order = (typeof orderListing[index].is_sell_order == 'undefined') ? '' : orderListing[index].is_sell_order;
+        var sellOrderId = (typeof orderListing[index].sell_order_id != 'undefined') ? orderListing[index].sell_order_id : '';
+        var is_lth_order = (typeof orderListing[index].is_lth_order == 'undefined') ? '' : orderListing[index].is_lth_order
+        var fraction_sell_type = (typeof orderListing[index].fraction_sell_type == 'undefined') ? '' : orderListing[index].fraction_sell_type;
+        var fraction_buy_type = (typeof orderListing[index].fraction_buy_type == 'undefined') ? '' : orderListing[index].fraction_buy_type;
 
-            var parent_status = (typeof orderListing[index].parent_status == 'undefined') ? '' : orderListing[index].parent_status;
-
-
+        var parent_status = (typeof orderListing[index].parent_status == 'undefined') ? '' : orderListing[index].parent_status;
 
 
-            var sell_profit_percent = (typeof orderListing[index].sell_profit_percent == 'undefined') ? '' : orderListing[index].sell_profit_percent;
-            var lth_profit = (typeof orderListing[index].lth_profit == 'undefined') ? '' : orderListing[index].lth_profit;
 
-            var trigger_type = (typeof orderListing[index].trigger_type == 'undefined') ? '' : orderListing[index].trigger_type;
 
-            var sell_order_id = (typeof orderListing[index].sell_order_id == 'undefined') ? '' : orderListing[index].sell_order_id;
+        var sell_profit_percent = (typeof orderListing[index].sell_profit_percent == 'undefined') ? '' : orderListing[index].sell_profit_percent;
+        var lth_profit = (typeof orderListing[index].lth_profit == 'undefined') ? '' : orderListing[index].lth_profit;
 
-            // var targetPrice = sell_profit_percent;
+        var trigger_type = (typeof orderListing[index].trigger_type == 'undefined') ? '' : orderListing[index].trigger_type;
 
-            // if (trigger_type == 'no' && sell_order_id != '') {
-            //     //get sell order on the base of buy orders
-            //     var sellOrder = await listSellOrderById(sell_order_id, exchange);
-            //     if (sellOrder.length > 0) {
-            //         let sellArr = sellOrder[0];
-            //         let sell_profit_percent = (typeof sellArr.sell_profit_percent == 'undefined') ? '--' : sellArr.sell_profit_percent;
-            //         targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
-            //     } else {
-            //         targetPrice = '';
-            //     }
-            // } else {
-            //     targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
-            // }
+        var sell_order_id = (typeof orderListing[index].sell_order_id == 'undefined') ? '' : orderListing[index].sell_order_id;
 
-            // console.log(targetPrice + '---------' + sell_profit_percent)
-            var targetPrice = (status == 'LTH') ? parseFloat(parseFloat(lth_profit).toFixed(2)) : parseFloat(parseFloat(sell_profit_percent).toFixed(2));
-            order['targetPrice'] = (isNaN(targetPrice)) ? '---' : targetPrice
+        // var targetPrice = sell_profit_percent;
 
-            var orderSellPrice = (typeof orderListing[index].market_sold_price == 'undefined' || orderListing[index].market_sold_price == '') ? '' : orderListing[index].market_sold_price;
-            var orderPurchasePrice = (typeof orderListing[index].purchased_price == 'undefined' || orderListing[index].purchased_price == '') ? 0 : orderListing[index].purchased_price;
-            var profitLossPercentageHtml = '';
+        // if (trigger_type == 'no' && sell_order_id != '') {
+        //     //get sell order on the base of buy orders
+        //     var sellOrder = await listSellOrderById(sell_order_id, exchange);
+        //     if (sellOrder.length > 0) {
+        //         let sellArr = sellOrder[0];
+        //         let sell_profit_percent = (typeof sellArr.sell_profit_percent == 'undefined') ? '--' : sellArr.sell_profit_percent;
+        //         targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
+        //     } else {
+        //         targetPrice = '';
+        //     }
+        // } else {
+        //     targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
+        // }
 
-            //part for calculating profit loss percentage 
-            if (orderSellPrice != '') {
-                //function for calculating percentage 
-                let profitLossPercentage = calculate_percentage(orderPurchasePrice, orderSellPrice);
-                let profitLossCls = (orderSellPrice > orderPurchasePrice) ? 'success' : 'danger';
-                profitLossPercentageHtml = '<span class="text-' + profitLossCls + '"><b>' + profitLossPercentage + '%</b></span>';
-            } else {
-                if (status == 'FILLED' || status == 'LTH') {
-                    if (is_sell_order == 'yes' || status == 'LTH') {
-                        let percentage = calculate_percentage(orderPurchasePrice, currentMarketPrice);
-                        let PLCls = (currentMarketPrice > orderPurchasePrice) ? 'success' : 'danger'
-                        profitLossPercentageHtml = '<span class="text-' + PLCls + '"><b>' + percentage + '%</b></span>';
-                    } else {
-                        profitLossPercentageHtml = '<span class="text-default"><b>---</b></span>';
-                    }
+        // console.log(targetPrice + '---------' + sell_profit_percent)
+        var targetPrice = (status == 'LTH') ? parseFloat(parseFloat(lth_profit).toFixed(2)) : parseFloat(parseFloat(sell_profit_percent).toFixed(2));
+        order['targetPrice'] = (isNaN(targetPrice)) ? '---' : targetPrice
+
+        var orderSellPrice = (typeof orderListing[index].market_sold_price == 'undefined' || orderListing[index].market_sold_price == '') ? '' : orderListing[index].market_sold_price;
+        var orderPurchasePrice = (typeof orderListing[index].purchased_price == 'undefined' || orderListing[index].purchased_price == '') ? 0 : orderListing[index].purchased_price;
+        var profitLossPercentageHtml = '';
+
+        //part for calculating profit loss percentage 
+        if (orderSellPrice != '') {
+            //function for calculating percentage 
+            let profitLossPercentage = calculate_percentage(orderPurchasePrice, orderSellPrice);
+            let profitLossCls = (orderSellPrice > orderPurchasePrice) ? 'success' : 'danger';
+            profitLossPercentageHtml = '<span class="text-' + profitLossCls + '"><b>' + profitLossPercentage + '%</b></span>';
+        } else {
+            if (status == 'FILLED' || status == 'LTH') {
+                if (is_sell_order == 'yes' || status == 'LTH') {
+                    let percentage = calculate_percentage(orderPurchasePrice, currentMarketPrice);
+                    let PLCls = (currentMarketPrice > orderPurchasePrice) ? 'success' : 'danger'
+                    profitLossPercentageHtml = '<span class="text-' + PLCls + '"><b>' + percentage + '%</b></span>';
                 } else {
-                    profitLossPercentageHtml = '<span class="text-default"><b>-</b></span>';
+                    profitLossPercentageHtml = '<span class="text-default"><b>---</b></span>';
                 }
-            } //End of profit loss Percentage
+            } else {
+                profitLossPercentageHtml = '<span class="text-default"><b>-</b></span>';
+            }
+        } //End of profit loss Percentage
 
 
-            order['profitLossPercentageHtml'] = profitLossPercentageHtml;
+        order['profitLossPercentageHtml'] = profitLossPercentageHtml;
 
 
-            let pause_status_arr = ['pause', 'resume_pause', 'resume_complete']
+        let pause_status_arr = ['pause', 'resume_pause', 'resume_complete']
 
-            var childProfitLossPercentageHtml = '-'
-            //part for showing different status labels
-            if ((status == 'FILLED' && is_sell_order == 'yes') || status == "LTH") {
-                var SellStatus = (sellOrderId == '') ? '' : await listSellOrderStatus(sellOrderId, exchange);
-                order['sell_status'] = SellStatus;
-                if (SellStatus == 'error') {
-                    htmlStatus += '<span class="badge badge-danger">ERROR IN SELL</span>';
-                } else if (SellStatus == 'submitted') {
-                    htmlStatus += '<span class="badge badge-success">SUBMITTED FOR SELL</span>';
-                } else {
-                    htmlStatus += '<span class="badge badge-info">WAITING FOR SELL </span>';
-                }
-            } else if (status == 'FILLED' && (is_sell_order == 'sold' || pause_status_arr.includes(is_sell_order))) {
-                
-                if (pause_status_arr.includes(is_sell_order)) {
-                    if (is_sell_order == 'pause'){
-                        htmlStatus += '<span class="badge badge-success">Paused</span>';
-                    } else if (is_sell_order == 'resume_pause'){
-                        htmlStatus += '<span class="badge badge-info">Resumed</span>';
-                        //TODO: find child trade current profit
-                        let child_order = await listOrderById(orderListing[index]._id, exchange)
-                        child_order = (child_order.length > 0 ? child_order[0] : false)
-                        if(child_order){
-                            let childPurchasePrice = (typeof child_order.purchased_price == 'undefined' || child_order.purchased_price == '') ? 0 : child_order.purchased_price;
-                            let childPercentage = calculate_percentage(childPurchasePrice, currentMarketPrice);
-                            if(currentMarketPrice > childPurchasePrice){
-                                childProfitLossPercentageHtml = '<span class="text-success"><b>' + childPercentage + '%</b></span>';
-                            }
+        var childProfitLossPercentageHtml = '-'
+        //part for showing different status labels
+        if ((status == 'FILLED' && is_sell_order == 'yes') || status == "LTH") {
+            var SellStatus = (sellOrderId == '') ? '' : await listSellOrderStatus(sellOrderId, exchange);
+            order['sell_status'] = SellStatus;
+            if (SellStatus == 'error') {
+                htmlStatus += '<span class="badge badge-danger">ERROR IN SELL</span>';
+            } else if (SellStatus == 'submitted') {
+                htmlStatus += '<span class="badge badge-success">SUBMITTED FOR SELL</span>';
+            } else {
+                htmlStatus += '<span class="badge badge-info">WAITING FOR SELL </span>';
+            }
+        } else if (status == 'FILLED' && (is_sell_order == 'sold' || pause_status_arr.includes(is_sell_order))) {
+
+            if (pause_status_arr.includes(is_sell_order)) {
+                if (is_sell_order == 'pause') {
+                    htmlStatus += '<span class="badge badge-success">Paused</span>';
+                } else if (is_sell_order == 'resume_pause') {
+                    htmlStatus += '<span class="badge badge-info">Resumed</span>';
+                    //TODO: find child trade current profit
+                    let child_order = await listOrderById(orderListing[index]._id, exchange)
+                    child_order = (child_order.length > 0 ? child_order[0] : false)
+                    if (child_order) {
+                        let childPurchasePrice = (typeof child_order.purchased_price == 'undefined' || child_order.purchased_price == '') ? 0 : child_order.purchased_price;
+                        let childPercentage = calculate_percentage(childPurchasePrice, currentMarketPrice);
+                        if (currentMarketPrice > childPurchasePrice) {
+                            childProfitLossPercentageHtml = '<span class="text-success"><b>' + childPercentage + '%</b></span>';
                         }
-
-                    } else if (is_sell_order == 'resume_complete'){
-                        htmlStatus += '<span class="badge badge-warning">Completed</span>';
-                        //TODO: find child trade profit
-                        let child_order = await listOrderById(orderListing[index]._id, exchange)
-                        child_order = (child_order.length > 0 ? child_order[0] : false)
-                        if (child_order) {
-                            let childPurchasePrice = (typeof child_order.purchased_price == 'undefined' || child_order.purchased_price == '') ? 0 : child_order.purchased_price;
-                            let marketSoldPrice = (typeof child_order.market_sold_price == 'undefined' || child_order.market_sold_price == '') ? 0 : child_order.market_sold_price;
-                            let childPercentage = calculate_percentage(childPurchasePrice, marketSoldPrice);
-                            if (marketSoldPrice > childPurchasePrice) {
-                                childProfitLossPercentageHtml = '<span class="text-success"><b>' + childPercentage + '%</b></span>';
-                            }
-                        }
-
                     }
-                }else if (is_lth_order == 'yes') {
-                    htmlStatus += '<span class="badge badge-warning">LTH</span><span class="badge badge-success">Sold</span>';
-                } else {
-                    htmlStatus += '<span class="badge badge-success">Sold</span>';
+
+                } else if (is_sell_order == 'resume_complete') {
+                    htmlStatus += '<span class="badge badge-warning">Completed</span>';
+                    //TODO: find child trade profit
+                    let child_order = await listOrderById(orderListing[index]._id, exchange)
+                    child_order = (child_order.length > 0 ? child_order[0] : false)
+                    if (child_order) {
+                        let childPurchasePrice = (typeof child_order.purchased_price == 'undefined' || child_order.purchased_price == '') ? 0 : child_order.purchased_price;
+                        let marketSoldPrice = (typeof child_order.market_sold_price == 'undefined' || child_order.market_sold_price == '') ? 0 : child_order.market_sold_price;
+                        let childPercentage = calculate_percentage(childPurchasePrice, marketSoldPrice);
+                        if (marketSoldPrice > childPurchasePrice) {
+                            childProfitLossPercentageHtml = '<span class="text-success"><b>' + childPercentage + '%</b></span>';
+                        }
+                    }
+
                 }
+            } else if (is_lth_order == 'yes') {
+                htmlStatus += '<span class="badge badge-warning">LTH</span><span class="badge badge-success">Sold</span>';
             } else {
-                var statusClass = (status == 'error' || status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR' || status == 'canceled_ERROR') ? 'danger' : 'success'
-                status = (parent_status == 'parent') ? parent_status : status;
-                if (status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR' || status == 'canceled_ERROR'){
-                    let err_lth_filled = status.replace('_', ' ')
-                    htmlStatus += '<span class="badge badge-' + statusClass + '">' + err_lth_filled + '</span>';
-                }else{
-                    htmlStatus += '<span class="badge badge-' + statusClass + '">' + status + '</span>';
-                }
+                htmlStatus += '<span class="badge badge-success">Sold</span>';
             }
-
-            if (fraction_sell_type == 'parent' || fraction_sell_type == 'child') {
-                htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Sell Fraction</span>';
-            } else if (fraction_buy_type == 'parent' || fraction_buy_type == 'child') {
-                htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Buy Fraction</span>';
+        } else {
+            var statusClass = (status == 'error' || status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR' || status == 'canceled_ERROR') ? 'danger' : 'success'
+            status = (parent_status == 'parent') ? parent_status : status;
+            if (status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR' || status == 'canceled_ERROR') {
+                let err_lth_filled = status.replace('_', ' ')
+                htmlStatus += '<span class="badge badge-' + statusClass + '">' + err_lth_filled + '</span>';
+            } else {
+                htmlStatus += '<span class="badge badge-' + statusClass + '">' + status + '</span>';
             }
+        }
 
-            order['childProfitLossPercentageHtml'] = childProfitLossPercentageHtml
+        if (fraction_sell_type == 'parent' || fraction_sell_type == 'child') {
+            htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Sell Fraction</span>';
+        } else if (fraction_buy_type == 'parent' || fraction_buy_type == 'child') {
+            htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Buy Fraction</span>';
+        }
+
+        order['childProfitLossPercentageHtml'] = childProfitLossPercentageHtml
 
 
-            order['htmlStatus'] = htmlStatus;
-            customOrderListing.push(order)
-        } //End of order Iteration
+        order['htmlStatus'] = htmlStatus;
+        customOrderListing.push(order)
+    } //End of order Iteration
 
-        //End of labels parts
+    //End of labels parts
 
-        var response = {};
-        response['customOrderListing'] = customOrderListing;
-        response['countArr'] = countArr;
-        response['userBalanceArr'] = userBalanceArr;
-        response['avg_profit'] = avg_profit;
-        resp.status(200).send({
-            message: response
-        });
-    }) //End of listOrderListing
+    var response = {};
+    response['customOrderListing'] = customOrderListing;
+    response['countArr'] = countArr;
+    response['userBalanceArr'] = userBalanceArr;
+    response['avg_profit'] = avg_profit;
+    resp.status(200).send({
+        message: response
+    });
+}) //End of listOrderListing
 
 //function for getting user balance from user wallet
 function listUserBalance(admin_id, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
             let where = {};
-            where['user_id'] = { $in: [new ObjectID(admin_id), admin_id] };
+            where['user_id'] = {
+                $in: [new ObjectID(admin_id), admin_id]
+            };
             let collection = (exchange == 'binance') ? 'user_wallet' : 'user_wallet_' + exchange;
             db.collection(collection).find(where).toArray((err, result) => {
                 if (err) {
@@ -2062,7 +2178,9 @@ function listSellOrderStatus(sellOrderId, exchange) {
         conn.then((db) => {
             let where = {};
             const checkForHexRegExp = new RegExp('^[0-9a-fA-F]{24}$');
-            where['_id'] = (checkForHexRegExp.test(sellOrderId)) ? { '$in': [sellOrderId, new ObjectID(sellOrderId)] } : '';
+            where['_id'] = (checkForHexRegExp.test(sellOrderId)) ? {
+                '$in': [sellOrderId, new ObjectID(sellOrderId)]
+            } : '';
             let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
             db.collection(collection).find(where).toArray((err, result) => {
                 if (err) {
@@ -2104,10 +2222,14 @@ function calculateAverageOrdersProfit(postDAta) {
     filter['application_mode'] = postDAta.application_mode
     filter['admin_id'] = postDAta.admin_id
     filter['is_sell_order'] = 'sold'
-    filter['market_sold_price'] = {'$exists': true}
+    filter['market_sold_price'] = {
+        '$exists': true
+    }
 
     if (postDAta.coins != '') {
-        filter['symbol'] = { '$in': postDAta.coins }
+        filter['symbol'] = {
+            '$in': postDAta.coins
+        }
     }
 
     if (postDAta.order_type != '') {
@@ -2124,21 +2246,24 @@ function calculateAverageOrdersProfit(postDAta) {
 
 
     if (postDAta.application_mode == 'live' && (postDAta.start_date != '' || postDAta.end_date != '')) {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter['modified_date'] = obj;
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter['modified_date'] = obj;
 
-    } else{
+    } else {
 
-        if (filter['application_mode'] == 'test'){
+        if (filter['application_mode'] == 'test') {
             let end_date = new Date()
             let start_date = new Date(new Date().setDate(new Date().getDate() - 30))
-            filter['modified_date'] = { '$gte': start_date, '$lte': end_date };
+            filter['modified_date'] = {
+                '$gte': start_date,
+                '$lte': end_date
+            };
         }
     }
 
@@ -2172,7 +2297,9 @@ async function listOrderListing(postDAta, dbConnection) {
     filter['admin_id'] = postDAta.admin_id
     var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
     if (postDAta.coins != '') {
-        filter['symbol'] = { '$in': postDAta.coins }
+        filter['symbol'] = {
+            '$in': postDAta.coins
+        }
     }
 
     if (postDAta.order_type != '') {
@@ -2189,22 +2316,29 @@ async function listOrderListing(postDAta, dbConnection) {
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
-        if (postDAta.start_date != ''){
+        if (postDAta.start_date != '') {
             obj['$gte'] = new Date(postDAta.start_date);
         }
-        if (postDAta.end_date != ''){
+        if (postDAta.end_date != '') {
             obj['$lte'] = new Date(postDAta.end_date);
         }
         filter['created_date'] = obj;
     }
 
     if (postDAta.status == 'open') {
-        filter['status'] = { '$in': ['FILLED', 'FILLED_ERROR'] }
+        filter['status'] = {
+            '$in': ['FILLED', 'FILLED_ERROR']
+        }
         filter['is_sell_order'] = 'yes';
+        filter['is_lth_order'] = {
+            $ne: 'yes'
+        };
     }
 
     if (postDAta.status == 'filled') {
-        filter['status'] = { '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR'] }
+        filter['status'] = {
+            '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
+        }
     }
 
     if (postDAta.status == 'sold') {
@@ -2212,26 +2346,36 @@ async function listOrderListing(postDAta, dbConnection) {
         filter['is_sell_order'] = 'sold';
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
-    
+
     if (postDAta.status == 'lth_pause') {
         filter['status'] = 'FILLED'
-        filter['is_sell_order'] = { '$in': ['pause', 'resume_pause', 'resume_complete'] };
+        filter['is_sell_order'] = {
+            '$in': ['pause', 'resume_pause', 'resume_complete']
+        };
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
 
     if (postDAta.status == 'parent') {
         filter['parent_status'] = 'parent'
-        filter['status'] = { '$in': ['new', 'takingOrder'] };
+        filter['status'] = {
+            '$in': ['new', 'takingOrder']
+        };
     }
 
     if (postDAta.status == 'LTH') {
-        filter['status'] = { '$in': ['LTH', 'LTH_ERROR'] };
+        filter['status'] = {
+            '$in': ['LTH', 'LTH_ERROR']
+        };
         filter['is_sell_order'] = 'yes';
     }
 
     if (postDAta.status == 'new') {
-        filter['status'] = { '$in': ['new', 'new_ERROR'] };
-        filter['price'] = { '$ne': '' };
+        filter['status'] = {
+            '$in': ['new', 'new_ERROR']
+        };
+        filter['price'] = {
+            '$ne': ''
+        };
     }
 
     if (postDAta.status == 'canceled') {
@@ -2239,7 +2383,9 @@ async function listOrderListing(postDAta, dbConnection) {
     }
 
     if (postDAta.status == 'submitted') {
-        filter['status'] = { '$in': ['submitted', 'fraction_submitted_sell', 'submitted_ERROR'] }
+        filter['status'] = {
+            '$in': ['submitted', 'fraction_submitted_sell', 'submitted_ERROR']
+        }
     }
 
     //if status is all the get from both buy_orders and sold_buy_orders 
@@ -2247,7 +2393,7 @@ async function listOrderListing(postDAta, dbConnection) {
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter, pagination, limit, skip);
-        var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter, pagination, limit, skip);        
+        var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter, pagination, limit, skip);
         // var returnArr = mergeOrdersArrays(SoldOrderArr, buyOrderArr);
         var returnArr = SoldOrderArr.concat(buyOrderArr);
         var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
@@ -2289,7 +2435,9 @@ function mergeOrdersArrays(SoldOrderArr, buyOrderArr) {
 function list_orders_by_filter(collectionName, filter, pagination, limit, skip) {
     return new Promise((resolve) => {
         conn.then((db) => {
-            db.collection(collectionName).find(filter, pagination).limit(limit).skip(skip).sort({ modified_date: -1 }).toArray((err, result) => {
+            db.collection(collectionName).find(filter, pagination).limit(limit).skip(skip).sort({
+                modified_date: -1
+            }).toArray((err, result) => {
                 if (err) {
                     console.log(err)
                 } else {
@@ -2303,32 +2451,32 @@ function list_orders_by_filter(collectionName, filter, pagination, limit, skip) 
 
 
 //post call from manage coins component
-router.post('/manageCoins', async(req, resp) => {
-        var urserCoinsPromise = listUserCoins(req.body.admin_id);
-        var globalCoinsPromise = listGlobalCoins();
-        var promisesResult = await Promise.all([urserCoinsPromise, globalCoinsPromise]);
-        var responseReslt = {};
-        responseReslt['userCoins'] = promisesResult[0];
-        responseReslt['globalCoins'] = promisesResult[1];
-        resp.status(200).send({
-            message: responseReslt
-        });
+router.post('/manageCoins', async (req, resp) => {
+    var urserCoinsPromise = listUserCoins(req.body.admin_id);
+    var globalCoinsPromise = listGlobalCoins();
+    var promisesResult = await Promise.all([urserCoinsPromise, globalCoinsPromise]);
+    var responseReslt = {};
+    responseReslt['userCoins'] = promisesResult[0];
+    responseReslt['globalCoins'] = promisesResult[1];
+    resp.status(200).send({
+        message: responseReslt
+    });
 }) //End of manageCoins
 
-router.post('/get_user_coins', async(req, resp) => {
+router.post('/get_user_coins', async (req, resp) => {
 
-        let exchange = req.body.exchange
-        let admin_id = req.body.admin_id
+    let exchange = req.body.exchange
+    let admin_id = req.body.admin_id
 
-        var urserCoinsPromise = getUserCoins(admin_id, exchange);
-        var globalCoinsPromise = getGlobalCoins(exchange);
-        var promisesResult = await Promise.all([urserCoinsPromise, globalCoinsPromise]);
-        var responseReslt = {};
-        responseReslt['userCoins'] = promisesResult[0];
-        responseReslt['globalCoins'] = promisesResult[1];
-        resp.status(200).send({
-            message: responseReslt
-        });
+    var urserCoinsPromise = getUserCoins(admin_id, exchange);
+    var globalCoinsPromise = getGlobalCoins(exchange);
+    var promisesResult = await Promise.all([urserCoinsPromise, globalCoinsPromise]);
+    var responseReslt = {};
+    responseReslt['userCoins'] = promisesResult[0];
+    responseReslt['globalCoins'] = promisesResult[1];
+    resp.status(200).send({
+        message: responseReslt
+    });
 }) //End of manageCoins
 
 //list global cons for an exchange
@@ -2358,10 +2506,10 @@ function getGlobalCoins(exchange) {
             filter['exchange_type'] = 'binance'
 
             let coins_collection = ''
-            if(exchange == 'binance'){
+            if (exchange == 'binance') {
                 coins_collection = 'coins'
-            }else{
-                coins_collection = 'coins_'+exchange
+            } else {
+                coins_collection = 'coins_' + exchange
                 delete filter['exchange_type']
             }
 
@@ -2377,21 +2525,21 @@ function getGlobalCoins(exchange) {
 } //End of listGlobalCoins
 
 //play parent orders from order listing page
-router.post('/playOrder', async(req, resp) => {
-        var playPromise = pausePlayParentOrder(req.body.orderId, req.body.status, req.body.exchange);
-        let show_hide_log = 'yes';
-        let type = 'play pause';
-        let log_msg = "Parent Order was ACTIVE Manually";
-        // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange);
-        var getBuyOrder = await listOrderById(req.body.orderId, exchange);
-        var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-        var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-        var promiseResponse = await Promise.all([playPromise, LogPromise]);
-        resp.status(200).send({
-            message: promiseResponse
-        });
-    }) //End of playOrder
+router.post('/playOrder', async (req, resp) => {
+    var playPromise = pausePlayParentOrder(req.body.orderId, req.body.status, req.body.exchange);
+    let show_hide_log = 'yes';
+    let type = 'play pause';
+    let log_msg = "Parent Order was ACTIVE Manually";
+    // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange);
+    var getBuyOrder = await listOrderById(req.body.orderId, exchange);
+    var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+    var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+    var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+    var promiseResponse = await Promise.all([playPromise, LogPromise]);
+    resp.status(200).send({
+        message: promiseResponse
+    });
+}) //End of playOrder
 
 //pause play parent order form orders listings 
 function pausePlayParentOrder(orderId, status, exchange) {
@@ -2400,7 +2548,9 @@ function pausePlayParentOrder(orderId, status, exchange) {
             let filter = {};
             filter['_id'] = new ObjectID(orderId);
             let set = {};
-            set['$set'] = { 'pause_status': status }
+            set['$set'] = {
+                'pause_status': status
+            }
             let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             db.collection(collection).updateOne(filter, set, (err, result) => {
                 if (err) {
@@ -2415,31 +2565,31 @@ function pausePlayParentOrder(orderId, status, exchange) {
 
 
 //post order for play and pause parent orders 
-router.post('/togglePausePlayOrder', async(req, resp) => {
-        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from '+req.body.interface : '');
-        var playPromise = togglePausePlayOrder(req.body.orderId, req.body.status, req.body.exchange);
-        let show_hide_log = 'yes';
-        let type = 'play pause';
-        let log_msg = '';
-        if (req.body.status == 'play') {
-            log_msg = 'Parent Order was set to Play Manually '+interfaceType;
-        } else if (req.body.status == 'pause') {
-            log_msg = 'Parent Order was set to Pause Manually '+interfaceType;
-        }
-        // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange);
-        var getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
-        var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-        var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
-        var promiseResponse = await Promise.all([playPromise, LogPromise]);
-        resp.status(200).send({
-            message: promiseResponse
-        });
+router.post('/togglePausePlayOrder', async (req, resp) => {
+    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+    var playPromise = togglePausePlayOrder(req.body.orderId, req.body.status, req.body.exchange);
+    let show_hide_log = 'yes';
+    let type = 'play pause';
+    let log_msg = '';
+    if (req.body.status == 'play') {
+        log_msg = 'Parent Order was set to Play Manually ' + interfaceType;
+    } else if (req.body.status == 'pause') {
+        log_msg = 'Parent Order was set to Pause Manually ' + interfaceType;
+    }
+    // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange);
+    var getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
+    var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+    var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+    var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
+    var promiseResponse = await Promise.all([playPromise, LogPromise]);
+    resp.status(200).send({
+        message: promiseResponse
+    });
 
-        //Send Notification
-        send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', log_msg, req.body.orderId, req.body.exchange, getBuyOrder[0]['symbol'], order_mode, '')
+    //Send Notification
+    send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', log_msg, req.body.orderId, req.body.exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
-    }) //End of playOrder
+}) //End of playOrder
 
 function togglePausePlayOrder(orderId, status, exchange) {
     return new Promise((resolve) => {
@@ -2447,7 +2597,9 @@ function togglePausePlayOrder(orderId, status, exchange) {
             let filter = {};
             filter['_id'] = new ObjectID(orderId);
             let set = {};
-            set['$set'] = { 'pause_status': status }
+            set['$set'] = {
+                'pause_status': status
+            }
             let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             db.collection(collection).updateOne(filter, set, (err, result) => {
                 if (err) {
@@ -2473,54 +2625,54 @@ function recordOrderLog(order_id, log_msg, type, show_hide_log, exchange) {
             insertArr['show_error_log'] = show_hide_log;
             insertArr['created_date'] = new Date();
             db.collection(collectionName).insertOne(insertArr, (err, success) => {
-                    if (err) {
-                        reject(err)
-                    } else {
-                        resolve(success.result)
-                    }
-                })
-                /** */
+                if (err) {
+                    reject(err)
+                } else {
+                    resolve(success.result)
+                }
+            })
+            /** */
         })
     })
 } //End of function(recordOrderLogQuery)
 //post call for getting orders details
-router.post('/listOrderDetail', async(req, resp) => {
-        let orderId = req.body.orderId;
-        let exchange = req.body.exchange;
-        //get buy_order by id
-        var ordeResp = await listOrderById(orderId, exchange);
-        var orderArr = {}
-        if (ordeResp.length > 0) {
-            var orderArr = ordeResp[0];
-            var sell_auto_manual = "";
-            if (typeof orderArr['is_sell_order'] !== 'undefined' && orderArr['is_sell_order'] == 'sold') {
-                if (typeof orderArr['is_manual_sold'] !== 'undefined' && orderArr['is_manual_sold'] == 'yes') {
-                    sell_auto_manual = "manual";
-                } else {
-                    sell_auto_manual = "auto";
-                }
+router.post('/listOrderDetail', async (req, resp) => {
+    let orderId = req.body.orderId;
+    let exchange = req.body.exchange;
+    //get buy_order by id
+    var ordeResp = await listOrderById(orderId, exchange);
+    var orderArr = {}
+    if (ordeResp.length > 0) {
+        var orderArr = ordeResp[0];
+        var sell_auto_manual = "";
+        if (typeof orderArr['is_sell_order'] !== 'undefined' && orderArr['is_sell_order'] == 'sold') {
+            if (typeof orderArr['is_manual_sold'] !== 'undefined' && orderArr['is_manual_sold'] == 'yes') {
+                sell_auto_manual = "manual";
+            } else {
+                sell_auto_manual = "auto";
             }
+        }
 
-            orderArr['sell_auto_manual'] = sell_auto_manual;
+        orderArr['sell_auto_manual'] = sell_auto_manual;
 
-            var coutnChilds = 0;
-            if (typeof orderArr['parent_status'] !== 'undefined' && orderArr['parent_status'] == 'parent') {
-                var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                var filter = {};
-                filter['buy_parent_id'] = new ObjectID(orderId);
-                var coutnChilds = await countCollection(collectionName, filter);
-            }
-            orderArr['coutnChilds'] = coutnChilds;
-        } //end of length greater then zero
+        var coutnChilds = 0;
+        if (typeof orderArr['parent_status'] !== 'undefined' && orderArr['parent_status'] == 'parent') {
+            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            var filter = {};
+            filter['buy_parent_id'] = new ObjectID(orderId);
+            var coutnChilds = await countCollection(collectionName, filter);
+        }
+        orderArr['coutnChilds'] = coutnChilds;
+    } //end of length greater then zero
 
 
-        resp.status(200).send({
-            message: orderArr
-        })
-    }) //End of listOrderDetail
-    //*********************************************************== */
+    resp.status(200).send({
+        message: orderArr
+    })
+}) //End of listOrderDetail
+//*********************************************************== */
 
-    //function for getting order from buy_order or buy_sold_orders 
+//function for getting order from buy_order or buy_sold_orders 
 function listOrderById(orderId, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -2552,37 +2704,37 @@ function listOrderById(orderId, exchange) {
 } //End of listOrderById
 
 //post call from component for deleting orders
-router.post('/deleteOrder', async(req, resp) => {
-        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
-        var respPromise = deleteOrder(req.body.orderId, req.body.exchange);
-        let show_hide_log = 'yes';
-        let type = 'buy_canceled';
-        let log_msg = "Buy Order was Canceled "+interfaceType;
-        // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log)
-        var getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
-        var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-        var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
-        var promiseResponse = await Promise.all([LogPromise, respPromise]);
+router.post('/deleteOrder', async (req, resp) => {
+    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+    var respPromise = deleteOrder(req.body.orderId, req.body.exchange);
+    let show_hide_log = 'yes';
+    let type = 'buy_canceled';
+    let log_msg = "Buy Order was Canceled " + interfaceType;
+    // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log)
+    var getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
+    var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+    var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+    var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
+    var promiseResponse = await Promise.all([LogPromise, respPromise]);
 
-        //Send Notification
-        send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'low', log_msg, req.body.orderId, req.body.exchange, getBuyOrder[0]['symbol'], order_mode, '')
+    //Send Notification
+    send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'low', log_msg, req.body.orderId, req.body.exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
-        if ((getBuyOrder.length > 0 ) && typeof getBuyOrder[0]['buy_parent_id'] != 'undefined') {
-            let where = {};
-            where['_id'] = new ObjectID(String(getBuyOrder[0]['buy_parent_id']));
-            let updObj = {};
-            updObj['status'] = 'new';
-            let exchange = req.body.exchange
-            let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-            let updPromise = updateOne(where, updObj, collection);
-        }
+    if ((getBuyOrder.length > 0) && typeof getBuyOrder[0]['buy_parent_id'] != 'undefined') {
+        let where = {};
+        where['_id'] = new ObjectID(String(getBuyOrder[0]['buy_parent_id']));
+        let updObj = {};
+        updObj['status'] = 'new';
+        let exchange = req.body.exchange
+        let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        let updPromise = updateOne(where, updObj, collection);
+    }
 
-        resp.status(200).send({
-            message: promiseResponse
-        });
+    resp.status(200).send({
+        message: promiseResponse
+    });
 
-    }) //End of deleteOrder
+}) //End of deleteOrder
 //delete order on the base of orderid
 function deleteOrder(orderId, exchange) {
     return new Promise((resolve) => {
@@ -2590,10 +2742,11 @@ function deleteOrder(orderId, exchange) {
             let filter = {};
             filter['_id'] = new ObjectID(orderId);
             let set = {};
-            set['$set'] = { 
-                'status': 'canceled', 
-                'pause_status': 'pause', 
-                'modified_date': new Date() };
+            set['$set'] = {
+                'status': 'canceled',
+                'pause_status': 'pause',
+                'modified_date': new Date()
+            };
 
             let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             db.collection(collection).updateOne(filter, set, (err, result) => {
@@ -2609,66 +2762,66 @@ function deleteOrder(orderId, exchange) {
 
 //When we click on move to LTH Button from order listing opentab it move the open order to LTH for any exchange
 //Changing the target profit to  LTH profit rather than normal profit
-router.post('/orderMoveToLth', async(req, resp) => {
+router.post('/orderMoveToLth', async (req, resp) => {
 
-        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
-        let exchange = req.body.exchange;
-        let orderId = req.body.orderId;
-        let lth_profit = req.body.lth_profit;
-		var buyOrderArr = await listOrderById(orderId, exchange);
-        var buyOrderObj = buyOrderArr[0];
-        
-		var purchased_price = (typeof buyOrderObj['purchased_price'] == 'undefined')?0:buyOrderObj['purchased_price'] ;
-		var sell_order_id = (typeof buyOrderObj['sell_order_id'] == 'undefined')?'':buyOrderObj['sell_order_id'];
-		var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price)
-        if(sell_order_id !=''){
-            //Target sell price change to the lth taher than to the noraml price
-			var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-			var where = {};
-				where['_id'] = new ObjectID(sell_order_id);
-			var updObj = {};
-				updObj['sell_price'] = parseFloat(sell_price);
-			var updPromise = updateOne(where,updObj,collectionName);
-                updPromise.then((resolve)=>{});
-                
-            var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-			var where = {};
-				where['_id'] = new ObjectID(orderId);
-			var updObj = {};
-				updObj['modified_date'] = new Date();
-			var updBuyPromise = updateOne(where,updObj,buy_collection);
-                updBuyPromise.then((resolve)=>{});
-        }
-        
+    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+    let exchange = req.body.exchange;
+    let orderId = req.body.orderId;
+    let lth_profit = req.body.lth_profit;
+    var buyOrderArr = await listOrderById(orderId, exchange);
+    var buyOrderObj = buyOrderArr[0];
 
-        if (typeof buyOrderObj['buy_parent_id'] != 'undefined'){
-            let where = {};
-            where['_id'] = new ObjectID(String(buyOrderObj['buy_parent_id']));
-            let updObj = {};
-            updObj['status'] = 'new';
-            let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-            let updPromise = updateOne(where, updObj, collection);
-        }
-		
-        var respPromise = orderMoveToLth(orderId, lth_profit, exchange, sell_price);
-        let show_hide_log = 'yes';
-        let type = 'move_lth';
-        let log_msg = 'Buy Order  <span style="color:yellow;    font-size: 14px;"><b>Manually</b></span> Moved to <strong> LONG TERM HOLD </strong>  '+interfaceType;
-        // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, exchange)
-        var getBuyOrder = await listOrderById(req.body.orderId, exchange);
-        var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-        var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-        var promiseResponse = await Promise.all([LogPromise, respPromise]);
+    var purchased_price = (typeof buyOrderObj['purchased_price'] == 'undefined') ? 0 : buyOrderObj['purchased_price'];
+    var sell_order_id = (typeof buyOrderObj['sell_order_id'] == 'undefined') ? '' : buyOrderObj['sell_order_id'];
+    var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price)
+    if (sell_order_id != '') {
+        //Target sell price change to the lth taher than to the noraml price
+        var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+        var where = {};
+        where['_id'] = new ObjectID(sell_order_id);
+        var updObj = {};
+        updObj['sell_price'] = parseFloat(sell_price);
+        var updPromise = updateOne(where, updObj, collectionName);
+        updPromise.then((resolve) => {});
 
-        //Send Notification
-        send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', log_msg, req.body.orderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
+        var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        var where = {};
+        where['_id'] = new ObjectID(orderId);
+        var updObj = {};
+        updObj['modified_date'] = new Date();
+        var updBuyPromise = updateOne(where, updObj, buy_collection);
+        updBuyPromise.then((resolve) => {});
+    }
 
-        resp.status(200).send({
-            message: promiseResponse
-        });
 
-    }) //End of orderMoveToLth
+    if (typeof buyOrderObj['buy_parent_id'] != 'undefined') {
+        let where = {};
+        where['_id'] = new ObjectID(String(buyOrderObj['buy_parent_id']));
+        let updObj = {};
+        updObj['status'] = 'new';
+        let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        let updPromise = updateOne(where, updObj, collection);
+    }
+
+    var respPromise = orderMoveToLth(orderId, lth_profit, exchange, sell_price);
+    let show_hide_log = 'yes';
+    let type = 'move_lth';
+    let log_msg = 'Buy Order  <span style="color:yellow;    font-size: 14px;"><b>Manually</b></span> Moved to <strong> LONG TERM HOLD </strong>  ' + interfaceType;
+    // var LogPromise = recordOrderLog(req.body.orderId, log_msg, type, show_hide_log, exchange)
+    var getBuyOrder = await listOrderById(req.body.orderId, exchange);
+    var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+    var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+    var LogPromise = create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+    var promiseResponse = await Promise.all([LogPromise, respPromise]);
+
+    //Send Notification
+    send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', log_msg, req.body.orderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
+
+    resp.status(200).send({
+        message: promiseResponse
+    });
+
+}) //End of orderMoveToLth
 
 //function for moving order to lth 
 function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
@@ -2677,13 +2830,13 @@ function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
             let filter = {};
             filter['_id'] = new ObjectID(orderId);
             let set = {};
-            set['$set'] = { 
+            set['$set'] = {
                 'status': 'LTH',
-                'is_lth_order': 'yes', 
-                'lth_profit': lth_profit, 
-                'lth_functionality': 'yes', 
-                'sell_price': sell_price, 
-                'modified_date': new Date(), 
+                'is_lth_order': 'yes',
+                'lth_profit': lth_profit,
+                'lth_functionality': 'yes',
+                'sell_price': sell_price,
+                'modified_date': new Date(),
             };
             var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             db.collection(collection).updateOne(filter, set, (err, result) => {
@@ -2699,155 +2852,163 @@ function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
 
 
 //post call for getting order by id
-router.post('/listOrderById', async(req, resp) => {
-        let orderId = req.body.orderId;
-		let exchange = req.body.exchange;
-        var timezone = req.body.timezone;
-        //promise for  getting order by id 
-        var ordeArr = await listOrderById(orderId, exchange);
-        var orderObj = ordeArr[0];
-        var order_created_date = orderObj['created_date'];
-        var order_mode = (typeof orderObj['order_mode'] == 'undefined') ? orderObj['application_mode'] : orderObj['order_mode'];
-        
-    
-        //promise for gettiong order log
-		var ordeLog = await listOrderLog(orderId, exchange,order_mode,order_created_date);
-    
-       
-        var respArr = {};
-        respArr['ordeArr'] = ordeArr;
-        let html = '';
-
-        var index = 1;
-        for (let row in ordeLog) {
-
-            var timeZoneTime = ordeLog[row].created_date;
-            try {
-                  timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
-                 timeZoneTime = new Date(timeZoneTime);
-              }
-              catch (e) {
-                console.log(e);
-              }
-              
-
-            
-			var date = timeZoneTime.toLocaleString()+' '+timezone;
-            //Remove indicator log message
-            if (ordeLog[row].type != 'indicator_log_message') {
-                html += '<tr>';
-                html += '<th scope="row" class="text-danger">' + index + '</th>';
-                html += '<td>' + ordeLog[row].log_msg + '</td>';
-                html += '<td>' + date + '</td>'
-                html += '</tr>';
-                index++;
-            }
+router.post('/listOrderById', async (req, resp) => {
+    let orderId = req.body.orderId;
+    let exchange = req.body.exchange;
+    var timezone = req.body.timezone;
+    //promise for  getting order by id 
+    var ordeArr = await listOrderById(orderId, exchange);
+    var orderObj = ordeArr[0];
+    var order_created_date = orderObj['created_date'];
+    var order_mode = (typeof orderObj['order_mode'] == 'undefined') ? orderObj['application_mode'] : orderObj['order_mode'];
 
 
+    //promise for gettiong order log
+    var ordeLog = await listOrderLog(orderId, exchange, order_mode, order_created_date);
+
+
+    var respArr = {};
+    respArr['ordeArr'] = ordeArr;
+    let html = '';
+
+    var index = 1;
+    for (let row in ordeLog) {
+
+        var timeZoneTime = ordeLog[row].created_date;
+        try {
+            timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {
+                timeZone: timezone
+            });
+            timeZoneTime = new Date(timeZoneTime);
+        } catch (e) {
+            console.log(e);
         }
-    
 
-        respArr['logHtml'] = html;
 
-        resp.status(200).send({
-            message: respArr
-        });
-    }) //End of listOrderById
+
+        var date = timeZoneTime.toLocaleString() + ' ' + timezone;
+        //Remove indicator log message
+        if (ordeLog[row].type != 'indicator_log_message') {
+            html += '<tr>';
+            html += '<th scope="row" class="text-danger">' + index + '</th>';
+            html += '<td>' + ordeLog[row].log_msg + '</td>';
+            html += '<td>' + date + '</td>'
+            html += '</tr>';
+            index++;
+        }
+
+
+    }
+
+
+    respArr['logHtml'] = html;
+
+    resp.status(200).send({
+        message: respArr
+    });
+}) //End of listOrderById
 
 //post call for getting order log by id //Umer Abbas [2-1-19]
-router.post('/listOrderLogById', async(req, resp) => {
-        let orderId = req.body.orderId;
-		let exchange = req.body.exchange;
-        var timezone = req.body.timezone;
+router.post('/listOrderLogById', async (req, resp) => {
+    let orderId = req.body.orderId;
+    let exchange = req.body.exchange;
+    var timezone = req.body.timezone;
 
-        var ordeArr = await listOrderById(orderId, exchange);
-        var orderObj = ordeArr[0];
-        var order_mode = (typeof orderObj['order_mode'] == 'undefined') ? orderObj['application_mode'] : orderObj['order_mode'];
-        var order_created_date = orderObj['created_date'];
-    
-        //promise for gettiong order log
-		var ordeLog = await listOrderLog(orderId, exchange, order_mode, order_created_date);
-	
-        var respArr = {};
-        respArr['ordeArr'] = ordeArr;
-        let html = '';
-        var index = 1;
-        for (let row in ordeLog) {
+    var ordeArr = await listOrderById(orderId, exchange);
+    var orderObj = ordeArr[0];
+    var order_mode = (typeof orderObj['order_mode'] == 'undefined') ? orderObj['application_mode'] : orderObj['order_mode'];
+    var order_created_date = orderObj['created_date'];
 
-            var timeZoneTime = ordeLog[row].created_date;
-            try {
-                timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
-                timeZoneTime = new Date(timeZoneTime);
-            }catch (e) {
-                console.log(e);
-            }  
+    //promise for gettiong order log
+    var ordeLog = await listOrderLog(orderId, exchange, order_mode, order_created_date);
 
-			var date = timeZoneTime.toLocaleString()+' '+timezone;
-            //Remove indicator log message
-            if (ordeLog[row].type != 'indicator_log_message') {
-                html += '<tr>';
-                html += '<th scope="row" class="text-danger">' + index + '</th>';
-                html += '<td>' + ordeLog[row].log_msg + '</td>';
-                html += '<td>' + date + '</td>'
-                html += '</tr>';
-                index++;
-            }
+    var respArr = {};
+    respArr['ordeArr'] = ordeArr;
+    let html = '';
+    var index = 1;
+    for (let row in ordeLog) {
+
+        var timeZoneTime = ordeLog[row].created_date;
+        try {
+            timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {
+                timeZone: timezone
+            });
+            timeZoneTime = new Date(timeZoneTime);
+        } catch (e) {
+            console.log(e);
         }
 
-        respArr['logHtml'] = html;
+        var date = timeZoneTime.toLocaleString() + ' ' + timezone;
+        //Remove indicator log message
+        if (ordeLog[row].type != 'indicator_log_message') {
+            html += '<tr>';
+            html += '<th scope="row" class="text-danger">' + index + '</th>';
+            html += '<td>' + ordeLog[row].log_msg + '</td>';
+            html += '<td>' + date + '</td>'
+            html += '</tr>';
+            index++;
+        }
+    }
 
-        resp.status(200).send({
-            message: respArr
-        });
+    respArr['logHtml'] = html;
+
+    resp.status(200).send({
+        message: respArr
+    });
 }) //End of listOrderLogById
 
 //get order log on the base of order id 
-async function listOrderLog(orderId, exchange,order_mode,order_created_date) {
+async function listOrderLog(orderId, exchange, order_mode, order_created_date) {
     return new Promise((resolve) => {
-        conn.then( async  (db) => {
+        conn.then(async (db) => {
             var where = {};
-            where['order_id'] = {$in: [orderId, new ObjectID(orderId)]}
+            where['order_id'] = {
+                $in: [orderId, new ObjectID(orderId)]
+            }
             var created_date = new Date(order_created_date);
-                var current_date = new Date('2019-12-27T11:04:21.912Z');
+            var current_date = new Date('2019-12-27T11:04:21.912Z');
 
-                if(created_date > current_date){
-                    
-                    var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-                    
-                    var d = new Date(order_created_date);
-                    //create collection name on the base of date and mode
-                    var date_mode_string = '_'+order_mode+'_'+d.getFullYear()+'_'+d.getMonth();
-                    //create full name of collection
-                    var full_collection_name = collectionName+date_mode_string;
+            if (created_date > current_date) {
 
-                }else{
-                    var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
-                }  
-                
-                var pipeline = [
-                    {
-                        $match: where
-                    },
-                    {
-                        $sort: { 'created_date': -1 }
-                    },
-                    { '$limit': 100 }
-                ];
+                var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
 
-                if (full_collection_name == 'orders_history_log'){
-      
-                    var new_logs = await db.collection(full_collection_name).aggregate(pipeline).toArray();
-                    resolve(new_logs)
+                var d = new Date(order_created_date);
+                //create collection name on the base of date and mode
+                var date_mode_string = '_' + order_mode + '_' + d.getFullYear() + '_' + d.getMonth();
+                //create full name of collection
+                var full_collection_name = collectionName + date_mode_string;
 
-                    // var old_logs = await db.collection('orders_history_log_2019_backup').find(where, {}).toArray()
-                    // var logs = old_logs.concat(new_logs)
+            } else {
+                var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
+            }
 
-                }else{
-
-                    var new_logs = await db.collection(full_collection_name).aggregate(pipeline).toArray();
-                    resolve(new_logs)
-
+            var pipeline = [{
+                    $match: where
+                },
+                {
+                    $sort: {
+                        'created_date': -1
+                    }
+                },
+                {
+                    '$limit': 100
                 }
+            ];
+
+            if (full_collection_name == 'orders_history_log') {
+
+                var new_logs = await db.collection(full_collection_name).aggregate(pipeline).toArray();
+                resolve(new_logs)
+
+                // var old_logs = await db.collection('orders_history_log_2019_backup').find(where, {}).toArray()
+                // var logs = old_logs.concat(new_logs)
+
+            } else {
+
+                var new_logs = await db.collection(full_collection_name).aggregate(pipeline).toArray();
+                resolve(new_logs)
+
+            }
 
         })
     })
@@ -2882,10 +3043,10 @@ router.post('/sellOrderManually', async (req, resp) => {
             console.log("trading_ip ", trading_ip)
 
 
-            var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now '+interfaceType;
+            var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now ' + interfaceType;
             // var logPromise = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
             var getBuyOrder = await listOrderById(buy_order_id, exchange);
-            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             var logPromise = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
 
@@ -2900,7 +3061,9 @@ router.post('/sellOrderManually', async (req, resp) => {
             update_1['modified_date'] = new Date();
             update_1['is_manual_sold'] = 'yes';
             var filter_1 = {};
-            filter_1['_id'] = { $in: [orderId, new ObjectID(orderId)] }
+            filter_1['_id'] = {
+                $in: [orderId, new ObjectID(orderId)]
+            }
 
             var collectionName_1 = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
 
@@ -2923,19 +3086,19 @@ router.post('/sellOrderManually', async (req, resp) => {
                 // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
                 var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
 
-                logPromise_1.then((resp) => { })
+                logPromise_1.then((resp) => {})
                 //send order for sell on specific ip
                 var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, 'barrier_percentile_trigger', 'sell_market_order', exchange);
                 console.log("SellOrderResolve ", SellOrderResolve)
 
-                SellOrderResolve.then((resp) => { })
+                SellOrderResolve.then((resp) => {})
             } else {
                 //if test order 
                 var log_msg = "Market Order Send For Sell On **:  " + parseFloat(currentMarketPrice).toFixed(8);
                 // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
                 var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
 
-                logPromise_1.then((resp) => { })
+                logPromise_1.then((resp) => {})
                 //call function for selling orders
                 sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange);
 
@@ -3029,7 +3192,7 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
 //function for selling test order 
 function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange) {
 
-    (async() => {
+    (async () => {
         var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
         var search = {};
         search['_id'] = new ObjectID(sell_order_id);
@@ -3059,7 +3222,7 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
             var log_msg = "Sell Market Order was <b>SUBMITTED</b>";
             // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_order_submitted', 'yes', exchange);
             var getBuyOrder = await listOrderById(buy_order_id, exchange);
-            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_order_submitted', 'yes', exchange, order_mode, order_created_date)
             logPromise_1.then((resp) => {})
@@ -3093,7 +3256,9 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
 
             var collectionName = 'buy_orders_' + exchange;
             var where = {};
-            where['sell_order_id'] = { $in: [new ObjectID(sell_order_id), sell_order_id] };
+            where['sell_order_id'] = {
+                $in: [new ObjectID(sell_order_id), sell_order_id]
+            };
             var updtPromise_1 = updateOne(where, upd_data, collectionName);
             updtPromise_1.then((callback) => {})
 
@@ -3139,81 +3304,81 @@ function find(collectionName, search) {
 } //End of findOne
 
 //post call from order listing to buy order 
-router.post('/buyOrderManually', async(req, resp) => {
+router.post('/buyOrderManually', async (req, resp) => {
 
-        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
-        var orderId = req.body.orderId;
-        var coin = req.body.coin;
-        var exchange = req.body.exchange;
-        //get buy order detail
-        var ordeResp = await listOrderById(orderId, exchange);
-        if (ordeResp.length > 0) {
-            var orderArr = ordeResp[0];
-            let admin_id = (typeof orderArr['admin_id'] == undefined) ? '' : orderArr['admin_id'];
-            let status = (typeof orderArr['status'] == undefined) ? '' : orderArr['status'];
-            let application_mode = (typeof orderArr['application_mode'] == undefined) ? '' : orderArr['application_mode'];
+    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+    var orderId = req.body.orderId;
+    var coin = req.body.coin;
+    var exchange = req.body.exchange;
+    //get buy order detail
+    var ordeResp = await listOrderById(orderId, exchange);
+    if (ordeResp.length > 0) {
+        var orderArr = ordeResp[0];
+        let admin_id = (typeof orderArr['admin_id'] == undefined) ? '' : orderArr['admin_id'];
+        let status = (typeof orderArr['status'] == undefined) ? '' : orderArr['status'];
+        let application_mode = (typeof orderArr['application_mode'] == undefined) ? '' : orderArr['application_mode'];
 
-            let buy_quantity = (typeof orderArr['quantity'] == undefined) ? '' : orderArr['quantity'];
-            let symbol = (typeof orderArr['symbol'] == undefined) ? '' : orderArr['symbol'];
+        let buy_quantity = (typeof orderArr['quantity'] == undefined) ? '' : orderArr['quantity'];
+        let symbol = (typeof orderArr['symbol'] == undefined) ? '' : orderArr['symbol'];
 
-            let buy_trigger_type = (typeof orderArr['trigger_type'] == undefined) ? '' : orderArr['trigger_type'];
-            //geting trading ip 
-            var trading_ip = await listUsrIp(admin_id);
+        let buy_trigger_type = (typeof orderArr['trigger_type'] == undefined) ? '' : orderArr['trigger_type'];
+        //geting trading ip 
+        var trading_ip = await listUsrIp(admin_id);
 
-            if (status == 'new') {
-                var update = {};
-                update['modified_date'] = new Date();
-                update['is_manual_buy'] = 'yes';
-                var filter = {};
-                filter['_id'] = new ObjectID(orderId);
-                let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                var updatePromise_1 = updateOne(filter, update, collectionName);
-                updatePromise_1.then((resolve) => {})
+        if (status == 'new') {
+            var update = {};
+            update['modified_date'] = new Date();
+            update['is_manual_buy'] = 'yes';
+            var filter = {};
+            filter['_id'] = new ObjectID(orderId);
+            let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            var updatePromise_1 = updateOne(filter, update, collectionName);
+            updatePromise_1.then((resolve) => {})
 
-                var currentMarketPriceArr = await listCurrentMarketPrice(symbol, exchange);
-                var currentMarketPrice = (currentMarketPriceArr.length == 0) ? 0 : currentMarketPriceArr[0]['price'];
-                currentMarketPrice = parseFloat(currentMarketPrice);
-
-
-                var log_msg = "Order Send for buy Manually On " + parseFloat(currentMarketPrice).toFixed(8)+" "+interfaceType;
-                // var logPromise = recordOrderLog(orderId, log_msg, 'submitted', 'yes', exchange);
-                var getBuyOrder = await listOrderById(orderId, exchange);
-                var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                var logPromise = create_orders_history_log(orderId, log_msg, 'sell_filled', 'yes', exchange, order_mode, order_created_date)
-                logPromise.then((callback) => {
-                   // console.log(callback)
-                })
-
-                //Send Notification
-                send_notification(getBuyOrder[0]['admin_id'], 'buy_alerts', 'medium', log_msg, orderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
-
-                //if order mode  is live then send order from here to specific ip
-                if (application_mode == 'live') {
-                    
-                    let buy_trigger_type = '';
-                    //order send to specif ip for buying
-                    var respPromise = orderReadyForBuy(orderId, buy_quantity, currentMarketPrice, symbol, admin_id, trading_ip, buy_trigger_type, 'buy_market_order', exchange);
-                    respPromise.then((callback) => {})
-                } else {
-                    //function for buy test ordres
-                    buyTestOrder(orderArr, currentMarketPrice, exchange);
-                }
-            } //End of if status is new
+            var currentMarketPriceArr = await listCurrentMarketPrice(symbol, exchange);
+            var currentMarketPrice = (currentMarketPriceArr.length == 0) ? 0 : currentMarketPriceArr[0]['price'];
+            currentMarketPrice = parseFloat(currentMarketPrice);
 
 
-            resp.status(200).send({
-                message: 'response comming'
-            });
+            var log_msg = "Order Send for buy Manually On " + parseFloat(currentMarketPrice).toFixed(8) + " " + interfaceType;
+            // var logPromise = recordOrderLog(orderId, log_msg, 'submitted', 'yes', exchange);
+            var getBuyOrder = await listOrderById(orderId, exchange);
+            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+            var logPromise = create_orders_history_log(orderId, log_msg, 'sell_filled', 'yes', exchange, order_mode, order_created_date)
+            logPromise.then((callback) => {
+                // console.log(callback)
+            })
 
-        } //End of Order length 
-    }) //End of buyOrderManually
+            //Send Notification
+            send_notification(getBuyOrder[0]['admin_id'], 'buy_alerts', 'medium', log_msg, orderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
+
+            //if order mode  is live then send order from here to specific ip
+            if (application_mode == 'live') {
+
+                let buy_trigger_type = '';
+                //order send to specif ip for buying
+                var respPromise = orderReadyForBuy(orderId, buy_quantity, currentMarketPrice, symbol, admin_id, trading_ip, buy_trigger_type, 'buy_market_order', exchange);
+                respPromise.then((callback) => {})
+            } else {
+                //function for buy test ordres
+                buyTestOrder(orderArr, currentMarketPrice, exchange);
+            }
+        } //End of if status is new
+
+
+        resp.status(200).send({
+            message: 'response comming'
+        });
+
+    } //End of Order length 
+}) //End of buyOrderManually
 
 
 
 //buy test order
 function buyTestOrder(orders, market_value, exchange) {
-    (async() => {
+    (async () => {
         if (orders['status'] == 'new') {
             var quantity = orders['quantity'];
             var sell_order_id = (typeof orders['sell_order_id'] == 'undefined') ? '' : orders['sell_order_id'];
@@ -3236,7 +3401,7 @@ function buyTestOrder(orders, market_value, exchange) {
             var log_msg = "Buy Market Order was <b>SUBMITTED</b>";
             // var logPromise = recordOrderLog(id, log_msg, 'submitted', 'yes', exchange);
             var getBuyOrder = await listOrderById(id, exchange);
-            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             var logPromise = create_orders_history_log(id, log_msg, 'sell_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise.then((callback) => {
@@ -3253,7 +3418,7 @@ function buyTestOrder(orders, market_value, exchange) {
             var log_msg = "Broker Fee <b>" + commission.toFixed(3) + "</b> Has been deducted from sell quantity ";
             // var logPromise_1 = recordOrderLog(id, log_msg, 'fee_deduction', 'yes', exchange);
             getBuyOrder = await listOrderById(id, exchange);
-            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             var logPromise_1 = create_orders_history_log(id, log_msg, 'fee_deduction', 'yes', exchange, order_mode, order_created_date)
             logPromise_1.then((callback) => {})
@@ -3262,7 +3427,7 @@ function buyTestOrder(orders, market_value, exchange) {
             var log_msg = "Order Quantity Updated from <b>(" + quantity + ")</b> To  <b>(" + sellQty + ')</b> Due to Deduction Binance Fee from buying Coin';
             // var logPromise_2 = recordOrderLog(id, log_msg, 'fee_deduction', 'yes', exchange);
             var getBuyOrder = await listOrderById(id, exchange);
-            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             var logPromise_2 = create_orders_history_log(id, log_msg, 'fee_deduction', 'yes', exchange, order_mode, order_created_date)
             logPromise_2.then((callback) => {})
@@ -3310,7 +3475,7 @@ function buyTestOrder(orders, market_value, exchange) {
             var log_msg = "Buy Market Order is <b>FILLED</b> at price " + parseFloat(market_value).toFixed(8);
             // var logPromise_3 = recordOrderLog(id, log_msg, 'market_filled', 'yes', exchange);
             var getBuyOrder = await listOrderById(id, exchange);
-            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             var logPromise_3 = create_orders_history_log(id, log_msg, 'market_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise_3.then((callback) => {})
@@ -3318,7 +3483,7 @@ function buyTestOrder(orders, market_value, exchange) {
             var log_msg = "Broker Fee <b>" + commission.toFixed(8) + " From " + commissionAsset + "</b> has token on this Trade";
             // var logPromise_3 = recordOrderLog(id, log_msg, 'market_filled', 'yes', exchange);
             var getBuyOrder = await listOrderById(id, exchange);
-            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             var logPromise_3 = create_orders_history_log(id, log_msg, 'market_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise_3.then((callback) => {})
@@ -3351,7 +3516,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
     var binance_order_id = (typeof orderArr['binance_order_id'] == 'undefined') ? '' : orderArr['binance_order_id'];
     var purchased_price = (typeof orderArr['market_value'] == 'undefined') ? '' : orderArr['market_value'];
 
-    (async() => {
+    (async () => {
         ////////////////////////////////////////////////////////////////////////
         //Double check or suto sell is yes
         if (auto_sell == 'yes') {
@@ -3432,7 +3597,9 @@ function createOrderFromAutoSell(orderArr, exchange) {
                 var where = {};
                 where['_id'] = new ObjectID(buy_order_id)
                 upd_data['modified_date'] = new Date();
-                var upsert = { 'upsert': true };
+                var upsert = {
+                    'upsert': true
+                };
                 //function for update buy_order in the case of create sell order
                 var updPromise = updateSingle(collectionName, where, upd_data, upsert);
                 updPromise.then((callback) => {})
@@ -3442,7 +3609,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
 
             // var logPromise = recordOrderLog(buy_order_id, log_msg, 'create_sell_order', 'yes', exchange);
             var getBuyOrder = await listOrderById(buy_order_id, exchange);
-            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             var logPromise = create_orders_history_log(buy_order_id, log_msg, 'market_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise.then((callback) => {})
@@ -3474,7 +3641,9 @@ function listTempSellOrder(buy_order_id, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
             let where = {};
-            where['buy_order_id'] = { $in: [buy_order_id, new ObjectID(buy_order_id)] };
+            where['buy_order_id'] = {
+                $in: [buy_order_id, new ObjectID(buy_order_id)]
+            };
 
             var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
             db.collection(collection).find(where).toArray((err, result) => {
@@ -3506,7 +3675,7 @@ function orderReadyForBuy(buy_order_id, buy_quantity, market_value, coin_symbol,
             insert_arr['modified_date'] = new Date();
             insert_arr['global'] = 'global';
             let collection = (exchange == 'binance') ? 'ready_orders_for_buy_ip_based' : 'ready_orders_for_buy_ip_based_' + exchange;
-         
+
 
             db.collection(collection).insertOne(insert_arr, (err, result) => {
                 if (err) {
@@ -3527,8 +3696,12 @@ function listSoldOrders(primaryID, exchange) {
             let searchCriteria = {};
             searchCriteria.status = 'FILLED';
             searchCriteria.is_sell_order = 'sold';
-            searchCriteria.is_order_copyed = { '$ne': 'yes' };
-            if (primaryID != '') { searchCriteria._id = primaryID; }
+            searchCriteria.is_order_copyed = {
+                '$ne': 'yes'
+            };
+            if (primaryID != '') {
+                searchCriteria._id = primaryID;
+            }
             let collection = 'buy_orders_' + exchange;
             db.collection(collection).find(searchCriteria).limit(500).toArray((err, result) => {
                 if (err) {
@@ -3545,7 +3718,7 @@ function listSoldOrders(primaryID, exchange) {
 function copySoldOrders(order_id, exchange) {
     conn.then((db) => {
 
-        (async() => {
+        (async () => {
             let soldOrdersArr = await listSoldOrders(order_id, exchange);
             if (typeof soldOrdersArr != 'undefined' && soldOrdersArr.length > 0) {
                 let collection = 'sold_buy_orders_' + exchange;
@@ -3608,7 +3781,7 @@ function updateSingle(collection, searchQuery, updateQuery, upsert) {
 } //End of update
 
 //post call frol listing order on chart 
-router.post('/listOrdersForChart', async(req, resp) => {
+router.post('/listOrdersForChart', async (req, resp) => {
     var admin_id = req.body.admin_id;
     var exchange = req.body.exchange;
     var application_mode = req.body.application_mode;
@@ -3827,424 +4000,588 @@ router.post('/listOrdersForChart', async(req, resp) => {
 //function for getting order to show on chart 
 function listOrdersForChart(admin_id, exchange, application_mode, coin) {
     return new Promise((resolve) => {
-            let filter = {};
-            filter['status'] = { '$in': ['submitted', 'FILLED', 'new', 'LTH'] }
-            filter['price'] = { $nin: [null, ""] };
-            filter['admin_id'] = admin_id;
-            filter['application_mode'] = application_mode;
-            filter['symbol'] = coin;
-            conn.then((db) => {
-                    let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                    db.collection(collection).find(filter).toArray((err, result) => {
-                            if (err) {
-                                resolve(err);
-                            } else {
-                                resolve(result);
-                            }
-                        }) //End of collection
-                }) //End of conn
-        }) //End of Promise
+        let filter = {};
+        filter['status'] = {
+            '$in': ['submitted', 'FILLED', 'new', 'LTH']
+        }
+        filter['price'] = {
+            $nin: [null, ""]
+        };
+        filter['admin_id'] = admin_id;
+        filter['application_mode'] = application_mode;
+        filter['symbol'] = coin;
+        conn.then((db) => {
+            let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            db.collection(collection).find(filter).toArray((err, result) => {
+                if (err) {
+                    resolve(err);
+                } else {
+                    resolve(result);
+                }
+            }) //End of collection
+        }) //End of conn
+    }) //End of Promise
 } //End of listOrdersForChart
 
 //get sell order detail by id 
 function listSellOrderById(ID, exchange) {
     return new Promise((resolve) => {
-            let filter = {};
-            filter['_id'] = new ObjectID(ID);
-            conn.then((db) => {
-                    let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-                    db.collection(collection).find(filter).toArray((err, result) => {
-                            if (err) {
-                                resolve(err);
-                            } else {
-                                resolve(result);
-                            }
-                        }) //End of collection
-                }) //End of conn
-        }) //End of Promise
+        let filter = {};
+        filter['_id'] = new ObjectID(ID);
+        conn.then((db) => {
+            let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+            db.collection(collection).find(filter).toArray((err, result) => {
+                if (err) {
+                    resolve(err);
+                } else {
+                    resolve(result);
+                }
+            }) //End of collection
+        }) //End of conn
+    }) //End of Promise
 } //End of listSellOrderById
 
 //get temp sell order detail in case of new buy orders
 function listselTempOrders(ID, exchange) {
     return new Promise((resolve) => {
-            let filter = {};
-            filter['buy_order_id'] = (ID == '' || ID == undefined || ID == null) ? ID : new ObjectID(ID);
-            conn.then((db) => {
-                    var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
-                    db.collection(collection).find(filter).toArray((err, result) => {
-                            if (err) {
-                                resolve(err);
-                            } else {
-                                resolve(result);
-                            }
-                        }) //End of collection
-                }) //End of conn
-        }) //End of Promise
+        let filter = {};
+        filter['buy_order_id'] = (ID == '' || ID == undefined || ID == null) ? ID : new ObjectID(ID);
+        conn.then((db) => {
+            var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
+            db.collection(collection).find(filter).toArray((err, result) => {
+                if (err) {
+                    resolve(err);
+                } else {
+                    resolve(result);
+                }
+            }) //End of collection
+        }) //End of conn
+    }) //End of Promise
 } //End of listselTempOrders
 
 
 //post call for updaing buy price from chart if order is not buyed
-router.post('/updateBuyPriceFromDragging', async(req, resp) => {
-        var exchange = req.body.exchange;
-        var orderId = req.body.orderId;
+router.post('/updateBuyPriceFromDragging', async (req, resp) => {
+    var exchange = req.body.exchange;
+    var orderId = req.body.orderId;
     var previous_buy_price = parseFloat(req.body.previous_buy_price);
     var updated_buy_price = parseFloat(req.body.updated_buy_price);
 
-        var buyOrderResp = await listOrderById(orderId, exchange);
-        var buyOrderArr = (typeof buyOrderResp[0] == 'undefined') ? [] : buyOrderResp[0];
+    var buyOrderResp = await listOrderById(orderId, exchange);
+    var buyOrderArr = (typeof buyOrderResp[0] == 'undefined') ? [] : buyOrderResp[0];
 
-        var sell_order_id = (typeof buyOrderArr['sell_order_id'] == 'undefined') ? '' : buyOrderArr['sell_order_id'];
+    var sell_order_id = (typeof buyOrderArr['sell_order_id'] == 'undefined') ? '' : buyOrderArr['sell_order_id'];
 
-        var status = (typeof buyOrderArr['status'] == 'undefined') ? '' : buyOrderArr['status'];
+    var status = (typeof buyOrderArr['status'] == 'undefined') ? '' : buyOrderArr['status'];
 
-        var trigger_type = (typeof buyOrderArr['trigger_type'] == 'undefined') ? '' : buyOrderArr['trigger_type'];
+    var trigger_type = (typeof buyOrderArr['trigger_type'] == 'undefined') ? '' : buyOrderArr['trigger_type'];
 
-        if (trigger_type == 'no') {
+    if (trigger_type == 'no') {
 
-            if (sell_order_id != '') {
-                var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
+        if (sell_order_id != '') {
+            var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
 
-                var sellOrderArr = (typeof sellOrderResp[0] == 'undefined') ? [] : sellOrderResp[0];
-                var sell_price = (typeof sellOrderArr.sell_price == 'undefined') ? 0 : sellOrderArr.sell_price;
+            var sellOrderArr = (typeof sellOrderResp[0] == 'undefined') ? [] : sellOrderResp[0];
+            var sell_price = (typeof sellOrderArr.sell_price == 'undefined') ? 0 : sellOrderArr.sell_price;
 
+            if (status == 'new') {
+                var buy_price = buyOrderArr.price;
+            } else {
+                var buy_price = (typeof buyOrderArr.market_value == 'undefined') ? buyOrderArr.price : buyOrderArr.market_value;
+            }
+
+            var current_data2222 = sell_price - buy_price;
+            var sell_percentage = (current_data2222 * 100 / buy_price);
+            sell_percentage = isNaN(sell_percentage) ? 0 : sell_percentage;
+
+
+            var new_sell_price = parseFloat(updated_buy_price) + parseFloat((updated_buy_price / 100) * sell_percentage);
+
+            var filter = {};
+            filter['_id'] = new ObjectID(sell_order_id);
+            var update_order = {};
+            update_order['sell_price'] = new_sell_price;
+            var collection_order = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+            var updatePromise = updateOne(filter, update_order, collection_order);
+            updatePromise.then((resolve) => {});
+
+        } else { //End of sell order id not empty
+
+            var tempOrderResp = await listselTempOrders(orderId, exchange);
+            if (tempOrderResp.length > 0) {
+                var tempOrderArr = (typeof tempOrderResp[0] == 'undefined') ? [] : tempOrderResp[0];
+                var profit_price = (typeof tempOrderArr.profit_price == 'undefined') ? 0 : tempOrderArr.profit_price;
+
+
+                var profit_percent = (typeof tempOrderArr.profit_percent == 'undefined') ? 0 : tempOrderArr.profit_percent;
+
+
+                var temp_order_id = tempOrderArr['_id'];
                 if (status == 'new') {
                     var buy_price = buyOrderArr.price;
                 } else {
                     var buy_price = (typeof buyOrderArr.market_value == 'undefined') ? buyOrderArr.price : buyOrderArr.market_value;
                 }
 
-                var current_data2222 = sell_price - buy_price;
-                var sell_percentage = (current_data2222 * 100 / buy_price);
-                sell_percentage = isNaN(sell_percentage) ? 0 : sell_percentage;
+
+                if (profit_percent == 0 || profit_percent == '') {
+                    var current_data2222 = profit_price - buy_price;
+                    var sell_percentage = (current_data2222 * 100 / buy_price);
+                    sell_percentage = isNaN(sell_percentage) ? 0 : sell_percentage;
+                } else {
+                    sell_percentage = profit_percent;
+                }
 
 
                 var new_sell_price = parseFloat(updated_buy_price) + parseFloat((updated_buy_price / 100) * sell_percentage);
 
+                /*  (: Update the sell price form here  BY Ali 7-12-2019 According to sir  :) */
                 var filter = {};
-                filter['_id'] = new ObjectID(sell_order_id);
+                filter['_id'] = new ObjectID(orderId);
                 var update_order = {};
-                update_order['sell_price'] = new_sell_price;
-                var collection_order = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-                var updatePromise = updateOne(filter, update_order, collection_order);
+                update_order['sell_price'] = parseFloat(new_sell_price);
+                update_order['exchange'] = exchange;
+                var collection_order = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                var updatePromiseBuy = updateOne(filter, update_order, collection_order);
+                updatePromiseBuy.then((resolve) => {});
+
+                /*  (: Update the sell price form here  BY Ali 7-12-2019 According to sir  :) */
+
+
+
+
+                var filter = {};
+                filter['_id'] = temp_order_id;
+                var update = {};
+                update['profit_price'] = new_sell_price;
+                var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
+                var updatePromise = updateOne(filter, update, collection);
                 updatePromise.then((resolve) => {});
-
-            } else { //End of sell order id not empty
-
-                var tempOrderResp = await listselTempOrders(orderId, exchange);
-                if (tempOrderResp.length > 0) {
-                    var tempOrderArr = (typeof tempOrderResp[0] == 'undefined') ? [] : tempOrderResp[0];
-                    var profit_price = (typeof tempOrderArr.profit_price == 'undefined') ? 0 : tempOrderArr.profit_price;
-
-
-                    var profit_percent = (typeof tempOrderArr.profit_percent == 'undefined') ? 0 : tempOrderArr.profit_percent;
-
-
-                    var temp_order_id = tempOrderArr['_id'];
-                    if (status == 'new') {
-                        var buy_price = buyOrderArr.price;
-                    } else {
-                        var buy_price = (typeof buyOrderArr.market_value == 'undefined') ? buyOrderArr.price : buyOrderArr.market_value;
-                    }
-
-
-                    if (profit_percent == 0 || profit_percent == '') {
-                        var current_data2222 = profit_price - buy_price;
-                        var sell_percentage = (current_data2222 * 100 / buy_price);
-                        sell_percentage = isNaN(sell_percentage) ? 0 : sell_percentage;
-                    } else {
-                        sell_percentage = profit_percent;
-                    }
-
-
-                    var new_sell_price = parseFloat(updated_buy_price) + parseFloat((updated_buy_price / 100) * sell_percentage);
-
-                /*  (: Update the sell price form here  BY Ali 7-12-2019 According to sir  :) */
-                    var filter = {};
-                    filter['_id'] = new ObjectID(orderId);
-                    var update_order = {};
-                    update_order['sell_price'] = parseFloat(new_sell_price);
-                    update_order['exchange'] = exchange;
-                    var collection_order = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                    var updatePromiseBuy = updateOne(filter, update_order, collection_order);
-                    updatePromiseBuy.then((resolve) => { });
-
-                /*  (: Update the sell price form here  BY Ali 7-12-2019 According to sir  :) */
-
-
-
-  
-                    var filter = {};
-                    filter['_id'] = temp_order_id;
-                    var update = {};
-                    update['profit_price'] = new_sell_price;
-                    var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
-                    var updatePromise = updateOne(filter, update, collection);
-                    updatePromise.then((resolve) => {});
-                } //End of temp order Arr
-            }
-
-        } //End of trigger type no
-
-
-
-
-        var log_msg = "Order buy price updated from(" + parseFloat(previous_buy_price).toFixed(8) + ") to " + parseFloat(updated_buy_price).toFixed(8) + "  From Chart";
-
-        // var logPromise = recordOrderLog(orderId, log_msg, 'buy_price_updated', 'yes', exchange);
-        var getBuyOrder = await listOrderById(orderId, exchange);
-        var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-        var logPromise = create_orders_history_log(orderId, log_msg, 'buy_price_updated', 'yes', exchange, order_mode, order_created_date)
-        logPromise.then((callback) => {});
-
-        var filter = {};
-        filter['_id'] = new ObjectID(orderId);
-        var update = {};
-        update['price'] = updated_buy_price;
-        update['modified_date'] = new Date();
-        var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        var updatePromise = await updateOne(filter, update, collectionName);
-
-        resp.status(200).send({
-            message: 'Order Buy Price Updated Successfully'
-        })
-
-    }) //End of updateBuyPriceFromDragging
-//post call for update profit and loss percentage for a specific order from chart
-router.post('/updateOrderfromdraging', async(req, resp) => {
-        var exchange = req.body.exchange;
-        var orderId = req.body.orderId;
-        var side = req.body.side;
-        var updated_price = req.body.updated_price;
-
-        console.log('1 == request')
-        console.log(req.body.exchange)
-
-        var side = req.body.side;
-        var nss = side.indexOf("profit_inBall");
-
-        //to check update profit or loss percentage
-        if (nss != -1) {
-            side = "profit_inBall";
+            } //End of temp order Arr
         }
 
-        var message = '';
-        //get buy order detail on the base of order id
-        var orderArr = await listOrderById(orderId, exchange);
-
-        if (orderArr.length > 0) {
-            for (let index in orderArr) {
-
-                console.log('2 == listOrderById')
-
-                var orderid = orderArr[index]['_id'];
-                var trigger_type = orderArr[index]['trigger_type'];
-                var buy_price = orderArr[index]['price'];
-                var previous_sell_price = (typeof orderArr[index]['sell_price'] == 'undefined') ? 0 : orderArr[index]['sell_price'];
-                var admin_id = (typeof orderArr[index]['admin_id'] == 'undefined') ? 0 : orderArr[index]['admin_id'];
-                var application_mode = (typeof orderArr[index]['application_mode'] == 'undefined') ? 0 : orderArr[index]['application_mode'];
-                var sell_order_id = (typeof orderArr[index]['sell_order_id'] == 'undefined') ? '' : orderArr[index]['sell_order_id'];
-                var statsus = (typeof orderArr[index]['statsus'] == 'undefined') ? '' : orderArr[index]['statsus'];
-                var auto_sell = (typeof orderArr[index]['auto_sell'] == 'undefined') ? '' : orderArr[index]['auto_sell'];
-
-                var purchased_price = (typeof orderArr[index]['purchased_price'] == 'undefined') ? '' : orderArr[index]['purchased_price'];
-                purchased_price = (purchased_price == '') ? buy_price : purchased_price;
-                var symbol = (typeof orderArr[index]['symbol'] == 'undefined') ? '' : orderArr[index]['symbol'];
-                var quantity = (typeof orderArr[index]['quantity'] == 'undefined') ? '' : orderArr[index]['quantity'];
-                var order_type = (typeof orderArr[index]['order_type'] == 'undefined') ? '' : orderArr[index]['order_type'];
-
-                var buy_order_binance_id = (typeof orderArr[index]['buy_order_binance_id'] == 'undefined') ? '' : orderArr[index]['buy_order_binance_id'];
+    } //End of trigger type no
 
 
-                //:::::: Auto Trigger Part :::::::::: 
-                //check order is auto order 
-                if (trigger_type != 'no') {
 
-                    console.log('3 == auto order')
 
-                    //In case of auto order if loss percentage is updated the change the value of initial order 
-                    let iniatial_trail_stop = (typeof orderArr[index]['iniatial_trail_stop'] == 'undefined') ? 0 : orderArr[index]['iniatial_trail_stop'];
+    var log_msg = "Order buy price updated from(" + parseFloat(previous_buy_price).toFixed(8) + ") to " + parseFloat(updated_buy_price).toFixed(8) + "  From Chart";
 
-                    let sell_profit_percent = (typeof orderArr[index]['sell_profit_percent'] == 'undefined') ? 0 : orderArr[index]['sell_profit_percent'];
+    // var logPromise = recordOrderLog(orderId, log_msg, 'buy_price_updated', 'yes', exchange);
+    var getBuyOrder = await listOrderById(orderId, exchange);
+    var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+    var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+    var logPromise = create_orders_history_log(orderId, log_msg, 'buy_price_updated', 'yes', exchange, order_mode, order_created_date)
+    logPromise.then((callback) => {});
+
+    var filter = {};
+    filter['_id'] = new ObjectID(orderId);
+    var update = {};
+    update['price'] = updated_buy_price;
+    update['modified_date'] = new Date();
+    var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    var updatePromise = await updateOne(filter, update, collectionName);
+
+    resp.status(200).send({
+        message: 'Order Buy Price Updated Successfully'
+    })
+
+}) //End of updateBuyPriceFromDragging
+//post call for update profit and loss percentage for a specific order from chart
+router.post('/updateOrderfromdraging', async (req, resp) => {
+    var exchange = req.body.exchange;
+    var orderId = req.body.orderId;
+    var side = req.body.side;
+    var updated_price = req.body.updated_price;
+
+    console.log('1 == request')
+    console.log(req.body.exchange)
+
+    var side = req.body.side;
+    var nss = side.indexOf("profit_inBall");
+
+    //to check update profit or loss percentage
+    if (nss != -1) {
+        side = "profit_inBall";
+    }
+
+    var message = '';
+    //get buy order detail on the base of order id
+    var orderArr = await listOrderById(orderId, exchange);
+
+    if (orderArr.length > 0) {
+        for (let index in orderArr) {
+
+            console.log('2 == listOrderById')
+
+            var orderid = orderArr[index]['_id'];
+            var trigger_type = orderArr[index]['trigger_type'];
+            var buy_price = orderArr[index]['price'];
+            var previous_sell_price = (typeof orderArr[index]['sell_price'] == 'undefined') ? 0 : orderArr[index]['sell_price'];
+            var admin_id = (typeof orderArr[index]['admin_id'] == 'undefined') ? 0 : orderArr[index]['admin_id'];
+            var application_mode = (typeof orderArr[index]['application_mode'] == 'undefined') ? 0 : orderArr[index]['application_mode'];
+            var sell_order_id = (typeof orderArr[index]['sell_order_id'] == 'undefined') ? '' : orderArr[index]['sell_order_id'];
+            var statsus = (typeof orderArr[index]['statsus'] == 'undefined') ? '' : orderArr[index]['statsus'];
+            var auto_sell = (typeof orderArr[index]['auto_sell'] == 'undefined') ? '' : orderArr[index]['auto_sell'];
+
+            var purchased_price = (typeof orderArr[index]['purchased_price'] == 'undefined') ? '' : orderArr[index]['purchased_price'];
+            purchased_price = (purchased_price == '') ? buy_price : purchased_price;
+            var symbol = (typeof orderArr[index]['symbol'] == 'undefined') ? '' : orderArr[index]['symbol'];
+            var quantity = (typeof orderArr[index]['quantity'] == 'undefined') ? '' : orderArr[index]['quantity'];
+            var order_type = (typeof orderArr[index]['order_type'] == 'undefined') ? '' : orderArr[index]['order_type'];
+
+            var buy_order_binance_id = (typeof orderArr[index]['buy_order_binance_id'] == 'undefined') ? '' : orderArr[index]['buy_order_binance_id'];
+
+
+            //:::::: Auto Trigger Part :::::::::: 
+            //check order is auto order 
+            if (trigger_type != 'no') {
+
+                console.log('3 == auto order')
+
+                //In case of auto order if loss percentage is updated the change the value of initial order 
+                let iniatial_trail_stop = (typeof orderArr[index]['iniatial_trail_stop'] == 'undefined') ? 0 : orderArr[index]['iniatial_trail_stop'];
+
+                let sell_profit_percent = (typeof orderArr[index]['sell_profit_percent'] == 'undefined') ? 0 : orderArr[index]['sell_profit_percent'];
+
+                var current_data2222 = updated_price - purchased_price;
+                var calculate_new_sell_percentage = (current_data2222 * 100 / purchased_price);
+
+
+
+
+                //:::::::::::::::: triggers :::::::::::::::::::
+
+                //check of  profit percentage is updated
+                if (side == 'profit_inBall') {
+
+                    console.log('4 == profit_inball')
+
+                    message = ' Auto Order Sell Price Changed';
+                    var filter = {};
+                    filter['_id'] = new ObjectID(orderId);
+                    var update = {};
+                    update['sell_price'] = updated_price;
+                    update['modified_date'] = new Date();
+                    update['sell_profit_percent'] = parseFloat(calculate_new_sell_percentage).toFixed(2);
+                    update['defined_sell_percentage'] = parseFloat(calculate_new_sell_percentage).toFixed(2);
+
+
+
+                    var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                    var updatePromise = updateOne(filter, update, collectionName);
+                    updatePromise.then((resolve) => {});
+
+
+                    sell_profit_percent = isNaN(sell_profit_percent) ? 0 : sell_profit_percent;
+                    calculate_new_sell_percentage = isNaN(calculate_new_sell_percentage) ? 0 : calculate_new_sell_percentage;
+
+                    var log_msg_1 = "Order Profit percentage Change From(" + parseFloat(sell_profit_percent).toFixed(2) + " % ) To (" + parseFloat(calculate_new_sell_percentage).toFixed(2) + " %)  From Chart";
+                    // var logPromise_1 = recordOrderLog(orderId, log_msg_1, 'order_profit_percentage_change', 'yes', exchange);
+                    var getBuyOrder = await listOrderById(orderId, exchange);
+                    var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                    var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                    var logPromise_1 = create_orders_history_log(orderId, log_msg_1, 'order_profit_percentage_change', 'yes', exchange, order_mode, order_created_date)
+                    logPromise_1.then((callback) => {})
+
+                } else { //End of side
+
+                    console.log('5 == else profit_inBall')
+
+                    message = "Auto Order stop Loss Changed";
+                    var filter = {};
+                    filter['_id'] = new ObjectID(orderId);
+                    var update = {};
+                    update['iniatial_trail_stop'] = parseFloat(updated_price);
+                    update['stop_loss'] = 'yes';
+                    update['loss_percentage'] = (isNaN(calculate_new_sell_percentage) ? '' : parseFloat(parseFloat(calculate_new_sell_percentage).toFixed(8)));
+                    update['modified_date'] = new Date();
+                    var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                    var updatePromise = updateOne(filter, update, collectionName);
+                    updatePromise.then((resolve) => {});
+
+                    iniatial_trail_stop = isNaN(iniatial_trail_stop) ? 0 : iniatial_trail_stop;
+                    updated_price = isNaN(updated_price) ? 0 : updated_price;
+
+                    var log_msg = "Order Stop Loss Updated From(" + parseFloat(iniatial_trail_stop).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
+                    // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
+                    getBuyOrder = await listOrderById(orderId, exchange);
+                    var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                    var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                    var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
+                    logPromise.then((callback) => {})
+                }
+                //:::::::::::::::: triggers :::::::::::::::::::
+            } else { //End of trigger type
+                //:::::::::::::::::Manual Trading :::::::::::::::::
+
+                console.log('6 == Manual order')
+
+                //check of  sell order id
+                if (sell_order_id != '') {
+
+                    console.log('7 == if sell_order_id')
+
+                    //get sell order by id
+                    var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
+                    var sellOrderArr = (typeof sellOrderResp[0] == 'undefined') ? [] : sellOrderResp[0];
+
+
+                    var sell_profit_percent = (typeof sellOrderArr.sell_profit_percent == 'undefined') ? '' : sellOrderArr.sell_profit_percent;
+                    var sell_price = (typeof sellOrderArr.sell_price == 'undefined') ? '' : sellOrderArr.sell_price;
+                    var stop_loss = (typeof sellOrderArr.stop_loss == 'undefined') ? '' : sellOrderArr.stop_loss;
+                    var loss_percentage = (typeof sellOrderArr.loss_percentage == 'undefined') ? '' : sellOrderArr.loss_percentage;
+
+                    var purchased_price = (typeof sellOrderArr.purchased_price == 'undefined') ? '' : sellOrderArr.purchased_price;
+
+                    var market_value = (typeof sellOrderArr.market_value == 'undefined') ? '' : sellOrderArr.market_value;
+
+                    purchased_price = (purchased_price == '') ? market_value : purchased_price;
 
                     var current_data2222 = updated_price - purchased_price;
                     var calculate_new_sell_percentage = (current_data2222 * 100 / purchased_price);
 
 
+                    //cehck if manual order and sell price is changes
 
-
-                    //:::::::::::::::: triggers :::::::::::::::::::
-
-                    //check of  profit percentage is updated
                     if (side == 'profit_inBall') {
 
-                        console.log('4 == profit_inball')
+                        console.log('8 == if profit_inBall')
 
-                        message = ' Auto Order Sell Price Changed';
+                        message = "Manual Order  Profit price Changed"
                         var filter = {};
-                        filter['_id'] = new ObjectID(orderId);
+                        filter['_id'] = new ObjectID(sell_order_id);
                         var update = {};
                         update['sell_price'] = updated_price;
                         update['modified_date'] = new Date();
-                        update['sell_profit_percent'] = parseFloat(calculate_new_sell_percentage).toFixed(2);
-                        update['defined_sell_percentage'] = parseFloat(calculate_new_sell_percentage).toFixed(2);
-
-
-
-                        var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                        update['sell_profit_percent'] = calculate_new_sell_percentage
+                        var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
                         var updatePromise = updateOne(filter, update, collectionName);
                         updatePromise.then((resolve) => {});
 
 
-                        sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
-                        calculate_new_sell_percentage = isNaN(calculate_new_sell_percentage)?0:calculate_new_sell_percentage;
-                        
-                        var log_msg_1 = "Order Profit percentage Change From(" + parseFloat(sell_profit_percent).toFixed(2) + " % ) To (" + parseFloat(calculate_new_sell_percentage).toFixed(2) + " %)  From Chart";
-                        // var logPromise_1 = recordOrderLog(orderId, log_msg_1, 'order_profit_percentage_change', 'yes', exchange);
+                        var update_buy_order = {};
+                        update_buy_order['modified_date'] = new Date();
+                        update_buy_order['auto_sell'] = 'yes';
+                        var filter_buy = {};
+                        filter_buy['_id'] = orderid;
+
+                        var collectionName_buy = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                        var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
+                        updateBuyPromise.then((resolve) => {});
+
+
+
+
+
+                        sell_price = isNaN(sell_price) ? 0 : sell_price;
+                        updated_price = isNaN(updated_price) ? 0 : updated_price;
+
+                        var log_msg = "Order sell price Updated from(" + parseFloat(sell_price).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
+                        // var logPromise = recordOrderLog(orderId, log_msg, 'create_sell_order', 'yes', exchange);
                         var getBuyOrder = await listOrderById(orderId, exchange);
-                        var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+                        var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
                         var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                        var logPromise_1 = create_orders_history_log(orderId, log_msg_1, 'order_profit_percentage_change', 'yes', exchange, order_mode, order_created_date)
+                        var logPromise = create_orders_history_log(orderId, log_msg, 'create_sell_order', 'yes', exchange, order_mode, order_created_date)
+                        logPromise.then((callback) => {})
+
+
+                        var log_msg_1 = "Order Profit percentage Change From(" + parseFloat(sell_profit_percent).toFixed(2) + ") To (" + parseFloat(calculate_new_sell_percentage).toFixed(2) + ")  From Chart";
+                        // var logPromise_1 = recordOrderLog(orderId, log_msg_1, 'order_profit_percentage_change', 'yes', exchange);
+                        getBuyOrder = await listOrderById(orderId, exchange);
+                        order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                        order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                        logPromise_1 = create_orders_history_log(orderId, log_msg, 'order_profit_percentage_change', 'yes', exchange, order_mode, order_created_date)
+                        logPromise_1.then((callback) => {})
+                    } else { //End of profitable side
+
+                        console.log('9 == else profit_inBall')
+
+                        message = "Manual Order  stop loss price Changed";
+                        var current_data2222 = purchased_price - updated_price;
+                        var stop_loss_percentage = (current_data2222 * 100 / updated_price);
+
+
+
+
+                        //if user not enter stop loss we by default consider stop loss 100 percent so that order never sell by stop loss and also avoid from generating any bug
+                        var loss_price = 0;
+                        loss_price = (parseFloat(purchased_price) * parseFloat(stop_loss_percentage)) / 100;
+                        loss_price = (purchased_price) - parseFloat(loss_price);
+
+
+                        var filter = {};
+                        filter['_id'] = new ObjectID(sell_order_id);
+                        var update = {};
+                        update['stop_loss'] = 'yes';
+                        update['iniatial_trail_stop'] = parseFloat(loss_price);
+                        update['loss_percentage'] = parseFloat(stop_loss_percentage).toFixed(2);
+                        update['modified_date'] = new Date();
+                        var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+                        var updatePromise = updateOne(filter, update, collectionName);
+                        updatePromise.then((resolve) => {});
+
+
+                        var update_buy_order = {};
+                        update_buy_order['modified_date'] = new Date();
+                        update_buy_order['auto_sell'] = 'yes';
+                        var filter_buy = {};
+                        filter_buy['_id'] = orderid;
+
+                        var collectionName_buy = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                        var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
+                        updateBuyPromise.then((resolve) => {});
+
+                        stop_loss = isNaN(stop_loss) ? 0 : stop_loss;
+                        updated_price = isNaN(updated_price) ? 0 : updated_price;
+
+                        var log_msg = "Order Stop Loss Updated From(" + parseFloat(stop_loss).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
+                        // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
+                        var getBuyOrder = await listOrderById(orderId, exchange);
+                        var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                        var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
+                        logPromise.then((callback) => {});
+
+                        loss_percentage = isNaN(loss_percentage) ? 0 : loss_percentage;
+                        stop_loss_percentage = isNaN(stop_loss_percentage) ? 0 : stop_loss_percentage;
+
+                        var log_msg_1 = "Order stop Loss percentage Change From(" + parseFloat(loss_percentage).toFixed(2) + ") To (" + parseFloat(stop_loss_percentage).toFixed(2) + ")  From Chart";
+                        // var logPromise_1 = recordOrderLog(orderId, log_msg_1, 'order_stop_loss_percentage_change', 'yes', exchange);
+                        getBuyOrder = await listOrderById(orderId, exchange);
+                        order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                        order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                        var logPromise_1 = create_orders_history_log(orderId, log_msg, 'order_stop_loss_percentage_change', 'yes', exchange, order_mode, order_created_date)
                         logPromise_1.then((callback) => {})
 
-                    } else { //End of side
+                    } //End of Stop Loss part
 
-                        console.log('5 == else profit_inBall')
 
-                        message = "Auto Order stop Loss Changed";
+
+
+
+
+                } else if (sell_order_id == '' && statsus == 'FILLED' && side == 'profit_inBall') {
+                    console.log('9 == else if sell_order_id')
+                    console.log('10 == set for sell')
+                    ///:::::::::set for sell ::::::::::::::::::::::::
+                    let tempArrResp = await listselTempOrders(orderId, exchange);
+                    if (tempArrResp.length > 0) {
+                        console.log('11 == temp sell exist')
+                        //::::::::::: if temp arr Exist ::::::::::::::::::
+                        var tempObj = tempArrResp[0];
+                        var stop_loss = (typeof tempObj['stop_loss'] == 'undefined') ? '' : tempObj['stop_loss'];
+                        var loss_percentage = (typeof tempObj['loss_percentage'] == 'undefined') ? '' : tempObj['loss_percentage'];
+                        var lth_functionality = (typeof tempObj['lth_functionality'] == 'undefined') ? '' : tempObj['lth_functionality'];
+                        var current_data2222 = updated_price - buy_price;
+                        var sell_profit_percent = (current_data2222 * 100 / buy_price);
+                        //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+                        //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+                        //if user not enter stop loss we by default consider stop loss 100 percent so that order never sell by stop loss and also avoid from generating any bug
+                        var loss_price = 0;
+                        loss_price = (parseFloat(purchased_price) * parseFloat(stop_loss_percentage)) / 100;
+                        loss_price = (purchased_price) - parseFloat(loss_price);
+
+
+                        var ins_data = {};
+                        ins_data['symbol'] = symbol,
+                            ins_data['purchased_price'] = purchased_price;
+                        ins_data['quantity'] = quantity,
+                            ins_data['profit_type'] = 'percentage';
+                        ins_data['order_type'] = order_type;
+                        ins_data['admin_id'] = admin_id;
+                        ins_data['buy_order_check'] = '',
+                            ins_data['buy_order_id'] = orderid,
+                            ins_data['buy_order_binance_id'] = buy_order_binance_id;
+                        ins_data['stop_loss'] = stop_loss;
+                        ins_data['loss_percentage'] = loss_percentage;
+                        ins_data['iniatial_trail_stop'] = parseFloat(loss_price);
+                        ins_data['application_mode'] = application_mode;
+                        ins_data['trigger_type'] = 'no';
+                        ins_data['sell_profit_percent'] = sell_profit_percent;
+                        ins_data['sell_price'] = updated_price;
+                        ins_data['trail_check'] = 'no';
+                        ins_data['trail_interval'] = 0;
+                        ins_data['buy_trail_percentage'] = '0';
+                        ins_data['buy_trail_price'] = '0';
+                        ins_data['status'] = 'new';
+                        ins_data['lth_functionality'] = lth_functionality;
+                        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+                        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+                        var sellOrderId = await setForSell(ins_data, exchange, orderId);
+                        var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                        var updArr = {};
+                        updArr['is_sell_order'] = 'yes';
+                        updArr['sell_order_id'] = sellOrderId;
+                        var where = {};
+                        where['_id'] = {
+                            '$in': [buyOrderId, new ObjectID(buyOrderId)]
+                        }
+                        var updPrmise = updateOne(where, updArr, collection);
+                        updPrmise.then((callback) => {})
+                        let log_msg = "Sell Order was Created";
+                        // var logPromise1 = recordOrderLog(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange);
+                        var getBuyOrder = await listOrderById(buyOrderId, exchange);
+                        var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                        var logPromise1 = create_orders_history_log(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange, order_mode, order_created_date)
+                        logPromise1.then((resolve) => {})
+                        //::::::::::: End of temp arr exist ::::::::::::::
+                    }
+                    //::::::::::::-:-:-: End of set for sell :-:-:-:-:-:
+                } else { //End of if sell order Exist 
+                    let tempArrResp = await listselTempOrders(orderId, exchange);
+
+                    console.log('12 == else sell_order_id')
+                    //:::::::::::::::::::
+                    if (tempArrResp.length == 0) {
+                        console.log('13 == tempArrResp')
+
                         var filter = {};
                         filter['_id'] = new ObjectID(orderId);
                         var update = {};
-                        update['iniatial_trail_stop'] = parseFloat(updated_price);
-                        update['stop_loss'] = 'yes';
-                        update['loss_percentage'] = (isNaN(calculate_new_sell_percentage) ? '' : parseFloat(parseFloat(calculate_new_sell_percentage).toFixed(8)));
+                        update['auto_sell'] = 'yes';
                         update['modified_date'] = new Date();
                         var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
                         var updatePromise = updateOne(filter, update, collectionName);
                         updatePromise.then((resolve) => {});
 
-                        iniatial_trail_stop = isNaN(iniatial_trail_stop)?0:iniatial_trail_stop;
-                        updated_price = isNaN(updated_price)?0:updated_price;
+                        var temp_arr = {};
 
-                        var log_msg = "Order Stop Loss Updated From(" + parseFloat(iniatial_trail_stop).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
-                        // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                         getBuyOrder = await listOrderById(orderId, exchange);
-                        var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                        var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
-                        logPromise.then((callback) => {})
-                    }
-                    //:::::::::::::::: triggers :::::::::::::::::::
-                } else { //End of trigger type
-                    //:::::::::::::::::Manual Trading :::::::::::::::::
-
-                    console.log('6 == Manual order')
-
-                    //check of  sell order id
-                    if (sell_order_id != '') {
-
-                        console.log('7 == if sell_order_id')
-
-                        //get sell order by id
-                        var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
-                        var sellOrderArr = (typeof sellOrderResp[0] == 'undefined') ? [] : sellOrderResp[0];
+                        var current_data2222 = updated_price - buy_price;
+                        var sell_profit_percent = (current_data2222 * 100 / buy_price);
 
 
-                        var sell_profit_percent = (typeof sellOrderArr.sell_profit_percent == 'undefined') ? '' : sellOrderArr.sell_profit_percent;
-                        var sell_price = (typeof sellOrderArr.sell_price == 'undefined') ? '' : sellOrderArr.sell_price;
-                        var stop_loss = (typeof sellOrderArr.stop_loss == 'undefined') ? '' : sellOrderArr.stop_loss;
-                        var loss_percentage = (typeof sellOrderArr.loss_percentage == 'undefined') ? '' : sellOrderArr.loss_percentage;
 
-                        var purchased_price = (typeof sellOrderArr.purchased_price == 'undefined') ? '' : sellOrderArr.purchased_price;
-
-                        var market_value = (typeof sellOrderArr.market_value == 'undefined') ? '' : sellOrderArr.market_value;
-
-                        purchased_price = (purchased_price == '') ? market_value : purchased_price;
-
-                        var current_data2222 = updated_price - purchased_price;
-                        var calculate_new_sell_percentage = (current_data2222 * 100 / purchased_price);
-
-
-                        //cehck if manual order and sell price is changes
 
                         if (side == 'profit_inBall') {
 
-                            console.log('8 == if profit_inBall')
+                            console.log('14 == profit in ball')
 
-                            message = "Manual Order  Profit price Changed"
-                            var filter = {};
-                            filter['_id'] = new ObjectID(sell_order_id);
-                            var update = {};
-                            update['sell_price'] = updated_price;
-                            update['modified_date'] = new Date();
-                            update['sell_profit_percent'] = calculate_new_sell_percentage
-                            var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-                            var updatePromise = updateOne(filter, update, collectionName);
-                            updatePromise.then((resolve) => {});
+                            message = "Manual Order profit price changed and order Set to Auto Sell";
+                            temp_arr['profit_percent'] = sell_profit_percent;
+                            temp_arr['profit_price'] = updated_price;
 
-
-                            var update_buy_order = {};
-                            update_buy_order['modified_date'] = new Date();
-                            update_buy_order['auto_sell'] = 'yes';
-                            var filter_buy = {};
-                            filter_buy['_id'] = orderid;
-
-                            var collectionName_buy = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                            var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
-                            updateBuyPromise.then((resolve) => {});
-
-
-
-
-
-                            sell_price = isNaN(sell_price)?0:sell_price;
-                            updated_price = isNaN(updated_price)?0:updated_price;
-
-                            var log_msg = "Order sell price Updated from(" + parseFloat(sell_price).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
-                            // var logPromise = recordOrderLog(orderId, log_msg, 'create_sell_order', 'yes', exchange);
+                            sell_profit_percent = isNaN(sell_profit_percent) ? 0 : sell_profit_percent;
+                            var log_msg = "Order profit percentage set to (" + parseFloat(sell_profit_percent).toFixed(2) + ") %";
+                            // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                             var getBuyOrder = await listOrderById(orderId, exchange);
-                            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+                            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
                             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                            var logPromise = create_orders_history_log(orderId, log_msg, 'create_sell_order', 'yes', exchange, order_mode, order_created_date)
+                            var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
+                            logPromise.then((callback) => {})
+
+                            updated_price = isNaN(updated_price) ? 0 : updated_price;
+                            var log_msg = "Order profit price set to (" + updated_price + ") %";
+                            // var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
+                            getBuyOrder = await listOrderById(orderId, exchange);
+                            order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                            order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                            var logPromise = create_orders_history_log(orderId, log_msg, 'order_profit', 'yes', exchange, order_mode, order_created_date)
                             logPromise.then((callback) => {})
 
 
-                            var log_msg_1 = "Order Profit percentage Change From(" + parseFloat(sell_profit_percent).toFixed(2) + ") To (" + parseFloat(calculate_new_sell_percentage).toFixed(2) + ")  From Chart";
-                            // var logPromise_1 = recordOrderLog(orderId, log_msg_1, 'order_profit_percentage_change', 'yes', exchange);
-                             getBuyOrder = await listOrderById(orderId, exchange);
-                            order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                            order_mode = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['application_mode'] : 'test')
-                            logPromise_1 = create_orders_history_log(orderId, log_msg, 'order_profit_percentage_change', 'yes', exchange, order_mode, order_created_date)
-                            logPromise_1.then((callback) => {})
-                        } else { //End of profitable side
-
-                            console.log('9 == else profit_inBall')
-
-                            message = "Manual Order  stop loss price Changed";
-                            var current_data2222 = purchased_price - updated_price;
-                            var stop_loss_percentage = (current_data2222 * 100 / updated_price);
-
-                            
-                            
-                           
-                            //if user not enter stop loss we by default consider stop loss 100 percent so that order never sell by stop loss and also avoid from generating any bug
-                            var loss_price   = 0;
-                                loss_price = (parseFloat(purchased_price)* parseFloat(stop_loss_percentage))/100;
-                                loss_price = (purchased_price) - parseFloat(loss_price);
-                            
-
-                            var filter = {};
-                            filter['_id'] = new ObjectID(sell_order_id);
-                            var update = {};
-                            update['stop_loss'] = 'yes';
-                            update['iniatial_trail_stop'] = parseFloat(loss_price);
-                            update['loss_percentage'] = parseFloat(stop_loss_percentage).toFixed(2);
-                            update['modified_date'] = new Date();
-                            var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-                            var updatePromise = updateOne(filter, update, collectionName);
-                            updatePromise.then((resolve) => {});
-
-
                             var update_buy_order = {};
                             update_buy_order['modified_date'] = new Date();
                             update_buy_order['auto_sell'] = 'yes';
@@ -4255,215 +4592,142 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                             var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
                             updateBuyPromise.then((resolve) => {});
 
-                            stop_loss = isNaN(stop_loss)?0:stop_loss;
-                            updated_price = isNaN(updated_price)?0:updated_price;
 
-                            var log_msg = "Order Stop Loss Updated From(" + parseFloat(stop_loss).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
+                        } else {
+
+                            console.log('15 == else profit_inBall')
+
+                            message = "Manual Order stoploss price changed and order Set to Auto Sell"
+                            var current_data2222 = buy_price - updated_price;
+                            var loss_percentage = (current_data2222 * 100 / updated_price);
+
+                            temp_arr['stop_loss'] = 'yes',
+                                temp_arr['loss_percentage'] = loss_percentage;
+
+                            loss_percentage = isNaN(loss_percentage) ? 0 : loss_percentage;
+                            var log_msg = "Order stop loss percentage set to (" + parseFloat(loss_percentage).toFixed(2) + ") % From Chart";
                             // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                             var getBuyOrder = await listOrderById(orderId, exchange);
-                            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+                            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
                             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
                             var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
-                            logPromise.then((callback) => {});
+                            logPromise.then((callback) => {})
 
-                            loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
-                            stop_loss_percentage = isNaN(stop_loss_percentage)?0:stop_loss_percentage;
-
-                            var log_msg_1 = "Order stop Loss percentage Change From(" + parseFloat(loss_percentage).toFixed(2) + ") To (" + parseFloat(stop_loss_percentage).toFixed(2) + ")  From Chart";
-                            // var logPromise_1 = recordOrderLog(orderId, log_msg_1, 'order_stop_loss_percentage_change', 'yes', exchange);
+                            updated_price = isNaN(updated_price) ? 0 : updated_price;
+                            var log_msg = "Order stop loss  set to (" + updated_price + ") % From Chart";
+                            // var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
                             getBuyOrder = await listOrderById(orderId, exchange);
-                            order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                            order_mode = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['application_mode'] : 'test')
-                            var logPromise_1 = create_orders_history_log(orderId, log_msg, 'order_stop_loss_percentage_change', 'yes', exchange, order_mode, order_created_date)
-                            logPromise_1.then((callback) => {})
-
-                        } //End of Stop Loss part
-
-
-
-
-
-
-                    } else if (sell_order_id == '' && statsus == 'FILLED' && side == 'profit_inBall') {
-                        console.log('9 == else if sell_order_id')
-                        console.log('10 == set for sell')
-                        ///:::::::::set for sell ::::::::::::::::::::::::
-                        let tempArrResp = await listselTempOrders(orderId, exchange);
-                        if (tempArrResp.length > 0) {
-                            console.log('11 == temp sell exist')
-                            //::::::::::: if temp arr Exist ::::::::::::::::::
-                            var tempObj = tempArrResp[0];
-                            var stop_loss = (typeof tempObj['stop_loss'] == 'undefined') ? '' : tempObj['stop_loss'];
-                            var loss_percentage = (typeof tempObj['loss_percentage'] == 'undefined') ? '' : tempObj['loss_percentage'];
-                            var lth_functionality = (typeof tempObj['lth_functionality'] == 'undefined') ? '' : tempObj['lth_functionality'];
-                            var current_data2222 = updated_price - buy_price;
-                            var sell_profit_percent = (current_data2222 * 100 / buy_price);
-                            //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-                            //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-                              //if user not enter stop loss we by default consider stop loss 100 percent so that order never sell by stop loss and also avoid from generating any bug
-                              var loss_price   = 0;
-                              loss_price = (parseFloat(purchased_price)* parseFloat(stop_loss_percentage))/100;
-                              loss_price = (purchased_price) - parseFloat(loss_price);
-
-
-                            var ins_data = {};
-                            ins_data['symbol'] = symbol,
-                                ins_data['purchased_price'] = purchased_price;
-                            ins_data['quantity'] = quantity,
-                                ins_data['profit_type'] = 'percentage';
-                            ins_data['order_type'] = order_type;
-                            ins_data['admin_id'] = admin_id;
-                            ins_data['buy_order_check'] = '',
-                                ins_data['buy_order_id'] = orderid,
-                                ins_data['buy_order_binance_id'] = buy_order_binance_id;
-                            ins_data['stop_loss'] = stop_loss;
-                            ins_data['loss_percentage'] = loss_percentage;
-                            ins_data['iniatial_trail_stop'] = parseFloat(loss_price);
-                            ins_data['application_mode'] = application_mode;
-                            ins_data['trigger_type'] = 'no';
-                            ins_data['sell_profit_percent'] = sell_profit_percent;
-                            ins_data['sell_price'] = updated_price;
-                            ins_data['trail_check'] = 'no';
-                            ins_data['trail_interval'] = 0;
-                            ins_data['buy_trail_percentage'] = '0';
-                            ins_data['buy_trail_price'] = '0';
-                            ins_data['status'] = 'new';
-                            ins_data['lth_functionality'] = lth_functionality;
-                            //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-                            //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-                            var sellOrderId = await setForSell(ins_data, exchange, orderId);
-                            var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                            var updArr = {};
-                            updArr['is_sell_order'] = 'yes';
-                            updArr['sell_order_id'] = sellOrderId;
-                            var where = {};
-                            where['_id'] = { '$in': [buyOrderId, new ObjectID(buyOrderId)] }
-                            var updPrmise = updateOne(where, updArr, collection);
-                            updPrmise.then((callback) => {})
-                            let log_msg = "Sell Order was Created";
-                            // var logPromise1 = recordOrderLog(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange);
-                            var getBuyOrder = await listOrderById(buyOrderId, exchange);
-                            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                            var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                            var logPromise1 = create_orders_history_log(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange, order_mode, order_created_date)
-                            logPromise1.then((resolve) => {})
-                                //::::::::::: End of temp arr exist ::::::::::::::
+                            order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                            order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                            var logPromise = create_orders_history_log(orderId, log_msg, 'order_profit', 'yes', exchange, order_mode, order_created_date)
+                            logPromise.then((callback) => {})
                         }
-                        //::::::::::::-:-:-: End of set for sell :-:-:-:-:-:
-                    } else { //End of if sell order Exist 
-                        let tempArrResp = await listselTempOrders(orderId, exchange);
 
-                        console.log('12 == else sell_order_id')
-                        //:::::::::::::::::::
-                        if (tempArrResp.length == 0) {
-                            console.log('13 == tempArrResp')
+                        temp_arr['buy_order_id'] = new ObjectID(orderId);;
+                        temp_arr['profit_type'] = 'percentage';
+                        temp_arr['order_type'] = 'market_order';
+                        temp_arr['trail_check'] = 'no';
+                        temp_arr['trail_interval'] = 0;
+                        temp_arr['sell_trail_percentage'] = 0;
+
+                        temp_arr['admin_id'] = admin_id;
+                        temp_arr['lth_functionality'] = '';
+                        temp_arr['application_mode'] = application_mode;
+                        temp_arr['created_date'] = new Date();
+                        temp_arr['modified_date'] = new Date();
+
+                        var log_msg = "Order Change Fron Normal to Auto Sell From Chart";
+                        // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
+                        var getBuyOrder = await listOrderById(orderId, exchange);
+                        var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                        var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
+                        logPromise.then((callback) => {})
+
+
+                        var update_buy_order = {};
+                        update_buy_order['modified_date'] = new Date();
+                        update_buy_order['auto_sell'] = 'yes';
+                        var filter_buy = {};
+                        filter_buy['_id'] = orderid;
+
+                        var collectionName_buy = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                        var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
+                        updateBuyPromise.then((resolve) => {});
+
+
+                        var log_msg = "Order Change Fron Normal to Auto Sell From Chart";
+                        // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
+                        getBuyOrder = await listOrderById(orderId, exchange);
+                        order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                        order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                        var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
+                        logPromise.then((callback) => {})
+
+
+                        var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
+                        conn.then((db) => {
+                            db.collection(collection).insertOne(temp_arr, (error, result) => {
+                                if (error) {
+                                    console.log(error)
+                                } else {
+
+                                }
+                            })
+                        })
+
+                    } else { //End of auto sell is no
+                        //:::::::::::::::: update temp order arr
+
+                        var current_data2222 = updated_price - buy_price;
+                        var sell_profit_percent = (current_data2222 * 100 / buy_price);
+
+
+                        var update = {};
+                        update['modified_date'] = new Date();
+                        var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                        var filter = {};
+                        filter['_id'] = new ObjectID(orderId);
+
+                        var updatePromise = updateOne(filter, update, collectionName);
+                        updatePromise.then((resolve) => {});
+
+
+                        var upd_temp = {};
+                        if (side == 'profit_inBall') {
+
+                            console.log('16 == profit in ball temp sell order')
+
+                            upd_temp['profit_percent'] = sell_profit_percent;
+                            upd_temp['profit_price'] = updated_price;
+
 
                             var filter = {};
-                            filter['_id'] = new ObjectID(orderId);
-                            var update = {};
-                            update['auto_sell'] = 'yes';
-                            update['modified_date'] = new Date();
-                            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                            var updatePromise = updateOne(filter, update, collectionName);
+                            filter['buy_order_id'] = new ObjectID(orderId);
+                            var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
+                            var updatePromise = updateOne(filter, upd_temp, collection);
+
                             updatePromise.then((resolve) => {});
 
-                            var temp_arr = {};
 
-                            var current_data2222 = updated_price - buy_price;
-                            var sell_profit_percent = (current_data2222 * 100 / buy_price);
-
-
-
-
-                            if (side == 'profit_inBall') {
-
-                                console.log('14 == profit in ball')
-
-                                message = "Manual Order profit price changed and order Set to Auto Sell";
-                                temp_arr['profit_percent'] = sell_profit_percent;
-                                temp_arr['profit_price'] = updated_price;
-
-                                sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
-                                var log_msg = "Order profit percentage set to (" + parseFloat(sell_profit_percent).toFixed(2) + ") %";
-                                // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                                var getBuyOrder = await listOrderById(orderId, exchange);
-                                var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                                var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                                var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
-                                logPromise.then((callback) => {})
-
-                                updated_price = isNaN(updated_price)?0:updated_price;
-                                var log_msg = "Order profit price set to (" + updated_price + ") %";
-                                // var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
-                                getBuyOrder = await listOrderById(orderId, exchange);
-                                order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                                order_mode = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['application_mode'] : 'test')
-                                var logPromise = create_orders_history_log(orderId, log_msg, 'order_profit', 'yes', exchange, order_mode, order_created_date)
-                                logPromise.then((callback) => {})
-
-
-                                var update_buy_order = {};
-                                update_buy_order['modified_date'] = new Date();
-                                update_buy_order['auto_sell'] = 'yes';
-                                var filter_buy = {};
-                                filter_buy['_id'] = orderid;
-
-                                var collectionName_buy = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                                var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
-                                updateBuyPromise.then((resolve) => {});
-
-
-                            } else {
-
-                                console.log('15 == else profit_inBall')
-
-                                message = "Manual Order stoploss price changed and order Set to Auto Sell"
-                                var current_data2222 = buy_price - updated_price;
-                                var loss_percentage = (current_data2222 * 100 / updated_price);
-
-                                temp_arr['stop_loss'] = 'yes',
-                                    temp_arr['loss_percentage'] = loss_percentage;
-
-                                    loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
-                                var log_msg = "Order stop loss percentage set to (" + parseFloat(loss_percentage).toFixed(2) + ") % From Chart";
-                                // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                                var getBuyOrder = await listOrderById(orderId, exchange);
-                                var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                                var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                                var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
-                                logPromise.then((callback) => {})
-
-                                updated_price = isNaN(updated_price)?0:updated_price;
-                                var log_msg = "Order stop loss  set to (" + updated_price + ") % From Chart";
-                                // var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
-                                getBuyOrder = await listOrderById(orderId, exchange);
-                                order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                                order_mode = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['application_mode'] : 'test')
-                                var logPromise = create_orders_history_log(orderId, log_msg, 'order_profit', 'yes', exchange, order_mode, order_created_date)
-                                logPromise.then((callback) => {})
-                            }
-
-                            temp_arr['buy_order_id'] = new ObjectID(orderId);;
-                            temp_arr['profit_type'] = 'percentage';
-                            temp_arr['order_type'] = 'market_order';
-                            temp_arr['trail_check'] = 'no';
-                            temp_arr['trail_interval'] = 0;
-                            temp_arr['sell_trail_percentage'] = 0;
-
-                            temp_arr['admin_id'] = admin_id;
-                            temp_arr['lth_functionality'] = '';
-                            temp_arr['application_mode'] = application_mode;
-                            temp_arr['created_date'] = new Date();
-                            temp_arr['modified_date'] = new Date();
-
-                            var log_msg = "Order Change Fron Normal to Auto Sell From Chart";
+                            sell_profit_percent = isNaN(sell_profit_percent) ? 0 : sell_profit_percent;
+                            var log_msg = "Order profit percentage set to (" + parseFloat(sell_profit_percent).toFixed(2) + ") % From Chart";
                             // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
                             var getBuyOrder = await listOrderById(orderId, exchange);
-                            var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+                            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
                             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
                             var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
                             logPromise.then((callback) => {})
+
+                            updated_price = isNaN(updated_price) ? 0 : updated_price;
+                            var log_msg = "Order profit price set to (" + updated_price + ") % From Chart";
+                            // var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
+                            getBuyOrder = await listOrderById(orderId, exchange);
+                            order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                            order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                            var logPromise = create_orders_history_log(orderId, log_msg, 'order_profit', 'yes', exchange, order_mode, order_created_date)
+                            logPromise.then((callback) => {})
+
 
 
                             var update_buy_order = {};
@@ -4476,155 +4740,70 @@ router.post('/updateOrderfromdraging', async(req, resp) => {
                             var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
                             updateBuyPromise.then((resolve) => {});
 
+                        } else {
 
-                            var log_msg = "Order Change Fron Normal to Auto Sell From Chart";
-                            // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                            getBuyOrder = await listOrderById(orderId, exchange);
-                            order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                            order_mode = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['application_mode'] : 'test')
-                            var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
-                            logPromise.then((callback) => {})
+                            console.log('17 == profit in ball temp sell order')
 
-
-                            var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
-                            conn.then((db) => {
-                                db.collection(collection).insertOne(temp_arr, (error, result) => {
-                                    if (error) {
-                                        console.log(error)
-                                    } else {
-
-                                    }
-                                })
-                            })
-
-                        } else { //End of auto sell is no
-                            //:::::::::::::::: update temp order arr
-
-                            var current_data2222 = updated_price - buy_price;
-                            var sell_profit_percent = (current_data2222 * 100 / buy_price);
-
-
-                            var update = {};
-                            update['modified_date'] = new Date();
-                            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                            var filter = {};
-                            filter['_id'] = new ObjectID(orderId);
-
-                            var updatePromise = updateOne(filter, update, collectionName);
-                            updatePromise.then((resolve) => {});
-
+                            message = "Manual Order stoploss price changed and order Set to Auto Sell"
+                            var current_data2222 = buy_price - updated_price;
+                            var loss_percentage = (current_data2222 * 100 / updated_price);
 
                             var upd_temp = {};
-                            if (side == 'profit_inBall') {
-
-                                console.log('16 == profit in ball temp sell order')
-
-                                upd_temp['profit_percent'] = sell_profit_percent;
-                                upd_temp['profit_price'] = updated_price;
+                            upd_temp['stop_loss'] = 'yes';
+                            upd_temp['loss_percentage'] = loss_percentage;
 
 
-                                var filter = {};
-                                filter['buy_order_id'] = new ObjectID(orderId);
-                                var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
-                                var updatePromise = updateOne(filter, upd_temp, collection);
+                            var filter = {};
+                            filter['buy_order_id'] = new ObjectID(orderId);
+                            var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
+                            var updatePromise = updateOne(filter, upd_temp, collection);
+                            updatePromise.then((resolve) => {});
+                            loss_percentage = isNaN(loss_percentage) ? 0 : loss_percentage;
+                            var log_msg = "Order stop loss percentage set to (" + parseFloat(loss_percentage).toFixed(2) + ") % From Chart";
+                            // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
+                            var getBuyOrder = await listOrderById(orderId, exchange);
+                            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                            var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                            var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
+                            logPromise.then((callback) => {})
 
-                                updatePromise.then((resolve) => {});
+                            updated_price = isNaN(updated_price) ? 0 : updated_price;
+                            var log_msg = "Order stop loss  set to (" + updated_price + ") % From Chart";
+                            // var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
+                            getBuyOrder = await listOrderById(orderId, exchange);
+                            order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                            order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                            var logPromise = create_orders_history_log(orderId, log_msg, 'order_profit', 'yes', exchange, order_mode, order_created_date)
+                            logPromise.then((callback) => {})
 
+                            var update_buy_order = {};
+                            update_buy_order['modified_date'] = new Date();
+                            update_buy_order['auto_sell'] = 'yes';
+                            var filter_buy = {};
+                            filter_buy['_id'] = orderid;
 
-                                sell_profit_percent = isNaN(sell_profit_percent)?0:sell_profit_percent;
-                                var log_msg = "Order profit percentage set to (" + parseFloat(sell_profit_percent).toFixed(2) + ") % From Chart";
-                                // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                                var getBuyOrder = await listOrderById(orderId, exchange);
-                                var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                                var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                                var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
-                                logPromise.then((callback) => {})
-
-                                updated_price = isNaN(updated_price)?0:updated_price;
-                                var log_msg = "Order profit price set to (" + updated_price + ") % From Chart";
-                                // var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
-                                getBuyOrder = await listOrderById(orderId, exchange);
-                                order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                                order_mode = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['application_mode'] : 'test')
-                                var logPromise = create_orders_history_log(orderId, log_msg, 'order_profit', 'yes', exchange, order_mode, order_created_date)
-                                logPromise.then((callback) => {})
-
-
-
-                                var update_buy_order = {};
-                                update_buy_order['modified_date'] = new Date();
-                                update_buy_order['auto_sell'] = 'yes';
-                                var filter_buy = {};
-                                filter_buy['_id'] = orderid;
-
-                                var collectionName_buy = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                                var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
-                                updateBuyPromise.then((resolve) => {});
-
-                            } else {
-
-                                console.log('17 == profit in ball temp sell order')
-
-                                message = "Manual Order stoploss price changed and order Set to Auto Sell"
-                                var current_data2222 = buy_price - updated_price;
-                                var loss_percentage = (current_data2222 * 100 / updated_price);
-
-                                var upd_temp = {};
-                                upd_temp['stop_loss'] = 'yes';
-                                upd_temp['loss_percentage'] = loss_percentage;
-
-
-                                var filter = {};
-                                filter['buy_order_id'] = new ObjectID(orderId);
-                                var collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
-                                var updatePromise = updateOne(filter, upd_temp, collection);
-                                updatePromise.then((resolve) => {});
-                                loss_percentage = isNaN(loss_percentage)?0:loss_percentage;
-                                var log_msg = "Order stop loss percentage set to (" + parseFloat(loss_percentage).toFixed(2) + ") % From Chart";
-                                // var logPromise = recordOrderLog(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange);
-                                var getBuyOrder = await listOrderById(orderId, exchange);
-                                var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                                var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-                                var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
-                                logPromise.then((callback) => {})
-
-                                updated_price = isNaN(updated_price)?0:updated_price;
-                                var log_msg = "Order stop loss  set to (" + updated_price + ") % From Chart";
-                                // var logPromise = recordOrderLog(orderId, log_msg, 'order_profit', 'yes', exchange);
-                                getBuyOrder = await listOrderById(orderId, exchange);
-                                order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-                                order_mode = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['application_mode'] : 'test')
-                                var logPromise = create_orders_history_log(orderId, log_msg, 'order_profit', 'yes', exchange, order_mode, order_created_date)
-                                logPromise.then((callback) => {})
-
-                                var update_buy_order = {};
-                                update_buy_order['modified_date'] = new Date();
-                                update_buy_order['auto_sell'] = 'yes';
-                                var filter_buy = {};
-                                filter_buy['_id'] = orderid;
-
-                                var collectionName_buy = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                                var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
-                                updateBuyPromise.then((resolve) => {});
-                            }
-
-                            //:::::::::::::::: End of temp Orser Arr
+                            var collectionName_buy = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                            var updateBuyPromise = updateOne(filter_buy, update_buy_order, collectionName_buy);
+                            updateBuyPromise.then((resolve) => {});
                         }
-                        //::::::::::::::
-                    } //End of sell order not exist
 
-                    //:::::::::::::::::End Of Manual Trading :::::::::::::::::
-                }
-            } //End of foreach
-        } //End of order array is not empty
+                        //:::::::::::::::: End of temp Orser Arr
+                    }
+                    //::::::::::::::
+                } //End of sell order not exist
 
-
-        resp.status(200).send({
-            message: message
-        })
+                //:::::::::::::::::End Of Manual Trading :::::::::::::::::
+            }
+        } //End of foreach
+    } //End of order array is not empty
 
 
-    }) //End of updateOrderfromdraging
+    resp.status(200).send({
+        message: message
+    })
+
+
+}) //End of updateOrderfromdraging
 
 
 //post call for updaing buy price from chart if order is not buyed
@@ -4683,7 +4862,7 @@ router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
                 //both fields are being used for the similar purpose with alternating insersition so we prioritise by sell_profit_percent
                 s_sell_profit_percent = (s_sell_profit_percent != 0 ? s_sell_profit_percent : s_defined_sell_percentage)
                 sell_profit_percent = (s_sell_profit_percent != 0 ? s_sell_profit_percent : sell_profit_percent)
-                
+
                 let s_loss_percentage = sellArr['loss_percentage']
                 s_loss_percentage = parseFloat(parseFloat(s_loss_percentage).toFixed(8));
                 s_loss_percentage = (!isNaN(s_loss_percentage) ? s_loss_percentage : 0)
@@ -4705,30 +4884,13 @@ router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
             } else {
 
                 //sell price / loss price calculation
-                let sell_price = updated_buy_price + parseFloat((sell_profit_percent * updated_buy_price) /100)
-                let loss_price = updated_buy_price - parseFloat((loss_percentage * updated_buy_price) /100)
+                let sell_price = updated_buy_price + parseFloat((sell_profit_percent * updated_buy_price) / 100)
+                let loss_price = updated_buy_price - parseFloat((loss_percentage * updated_buy_price) / 100)
 
-                    if (sellOrderExist) {
-
-                        var filter = {};
-                        filter['_id'] = sellArr['_id'];
-                        var update = {};
-
-                        update['price'] = updated_buy_price;
-                        if (!isNaN(sell_price)){
-                            update['sell_price'] = sell_price;
-                        }
-                        if (!isNaN(loss_price)){
-                            update['iniatial_trail_stop'] = parseFloat(loss_price);
-                        }
-                        update['modified_date'] = new Date();
-
-                        var updatePromise = updateOne(filter, update, sell_collection);
-                        updatePromise.then((resolve) => { });
-                    }
+                if (sellOrderExist) {
 
                     var filter = {};
-                    filter['_id'] = new ObjectID(orderId);
+                    filter['_id'] = sellArr['_id'];
                     var update = {};
 
                     update['price'] = updated_buy_price;
@@ -4740,25 +4902,42 @@ router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
                     }
                     update['modified_date'] = new Date();
 
-                    var updatePromise = updateOne(filter, update, buy_collection);
-                    updatePromise.then((resolve) => { });
+                    var updatePromise = updateOne(filter, update, sell_collection);
+                    updatePromise.then((resolve) => {});
+                }
+
+                var filter = {};
+                filter['_id'] = new ObjectID(orderId);
+                var update = {};
+
+                update['price'] = updated_buy_price;
+                if (!isNaN(sell_price)) {
+                    update['sell_price'] = sell_price;
+                }
+                if (!isNaN(loss_price)) {
+                    update['iniatial_trail_stop'] = parseFloat(loss_price);
+                }
+                update['modified_date'] = new Date();
+
+                var updatePromise = updateOne(filter, update, buy_collection);
+                updatePromise.then((resolve) => {});
             }
 
         } //End of foreach
-        
+
 
         //SAVE_LOG:
         var log_msg = "Order buy price updated from(" + parseFloat(previous_buy_price).toFixed(8) + ") to " + parseFloat(updated_buy_price).toFixed(8) + "  From Chart";
         var order_created_date = order['created_date']
         var order_mode = order['application_mode']
         var logPromise = create_orders_history_log(orderId, log_msg, 'buy_price_updated', 'yes', exchange, order_mode, order_created_date)
-        logPromise.then((callback) => { });
+        logPromise.then((callback) => {});
 
         resp.status(200).send({
             message: 'Order Buy Price Updated Successfully'
         })
 
-    } else {//End of order array is not empty
+    } else { //End of order array is not empty
 
         resp.status(200).send({
             message: 'An error occured'
@@ -4831,7 +5010,7 @@ router.post('/updateLthProfitChart', async (req, resp) => {
                 update['modified_date'] = new Date();
 
                 var updatePromise = updateOne(filter, update, sell_collection);
-                updatePromise.then((resolve) => { });
+                updatePromise.then((resolve) => {});
             }
 
             var filter = {};
@@ -4839,7 +5018,7 @@ router.post('/updateLthProfitChart', async (req, resp) => {
             var update = {};
 
             update['lth_functionality'] = (!isNaN(lth_profit) ? lth_functionality : '')
-            update['lth_profit'] = (!isNaN(lth_profit) ? lth_profit :'')
+            update['lth_profit'] = (!isNaN(lth_profit) ? lth_profit : '')
 
             if (order['status'] == 'LTH' && !isNaN(price) && !isNaN(lth_profit)) {
                 update['sell_price'] = price + parseFloat((lth_profit * price) / 100);
@@ -4848,15 +5027,15 @@ router.post('/updateLthProfitChart', async (req, resp) => {
             update['modified_date'] = new Date();
 
             var updatePromise = updateOne(filter, update, buy_collection);
-            updatePromise.then((resolve) => { });
+            updatePromise.then((resolve) => {});
 
             //SAVE_LOG:
             var log_msg = "Order LTH profit updated from(" + order['lth_profit'] + ") to " + lth_profit + "  From Chart";
             var order_created_date = order['created_date']
             var order_mode = order['application_mode']
             var logPromise = create_orders_history_log(orderId, log_msg, 'lth_profit_updated', 'yes', exchange, order_mode, order_created_date)
-            logPromise.then((callback) => { });
-            
+            logPromise.then((callback) => {});
+
 
         } //End of foreach
 
@@ -4864,7 +5043,7 @@ router.post('/updateLthProfitChart', async (req, resp) => {
             message: 'Order LTH profit Updated Successfully'
         })
 
-    } else {//End of order array is not empty
+    } else { //End of order array is not empty
 
         resp.status(200).send({
             message: 'An error occured'
@@ -4908,25 +5087,25 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
             var purchased_price = order['purchased_price'];
             purchased_price = parseFloat(parseFloat(purchased_price).toFixed(8));
             purchased_price = (!isNaN(purchased_price) ? purchased_price : 0)
-            
+
             //we if order is new purchased_price is 0 so use buy_price instead 
             var price = (purchased_price != 0 ? purchased_price : buy_price)
 
             var previous_sell_price = order['sell_price']
             previous_sell_price = parseFloat(parseFloat(previous_sell_price).toFixed(8));
             previous_sell_price = (!isNaN(previous_sell_price) ? previous_sell_price : 0)
-            
+
             var previous_profit_price = order['profit_price']
             previous_profit_price = parseFloat(parseFloat(previous_profit_price).toFixed(8));
             previous_profit_price = (!isNaN(previous_profit_price) ? previous_profit_price : 0)
 
             //Some where profit_price field was being updated instead of sell_price so here we set a priority 
             previous_sell_price = (previous_sell_price != 0 ? previous_sell_price : previous_profit_price)
-            
+
             var sell_profit_percent = order['sell_profit_percent']
             sell_profit_percent = parseFloat(parseFloat(sell_profit_percent).toFixed(8));
             sell_profit_percent = (!isNaN(sell_profit_percent) ? sell_profit_percent : 0)
-            
+
             var defined_sell_percentage = order['defined_sell_percentage']
             defined_sell_percentage = parseFloat(parseFloat(defined_sell_percentage).toFixed(8));
             defined_sell_percentage = (!isNaN(defined_sell_percentage) ? defined_sell_percentage : 0)
@@ -4937,12 +5116,12 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
             let iniatial_trail_stop = order['iniatial_trail_stop']
             iniatial_trail_stop = parseFloat(parseFloat(iniatial_trail_stop).toFixed(8));
             iniatial_trail_stop = (!isNaN(iniatial_trail_stop) ? iniatial_trail_stop : 0)
-            
-            if (order['trigger_type'] != 'no'){
+
+            if (order['trigger_type'] != 'no') {
                 var loss_percentage = order['custom_stop_loss_percentage']
                 loss_percentage = parseFloat(parseFloat(loss_percentage).toFixed(8));
                 loss_percentage = (!isNaN(loss_percentage) ? loss_percentage : 0)
-            }else{
+            } else {
                 var loss_percentage = order['loss_percentage']
                 loss_percentage = parseFloat(parseFloat(loss_percentage).toFixed(8));
                 loss_percentage = (!isNaN(loss_percentage) ? loss_percentage : 0)
@@ -4955,9 +5134,9 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
             //try to find sell order for this buy order
             var sellArr = await get_sell_order(orderId, exchange);
 
-            
+
             if (sellArr.length > 0) {
-                
+
                 sellArr = sellArr[0];
                 sell_collection = sellArr['collection'];
                 sellArr = sellArr['sellArr'];
@@ -4967,7 +5146,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                 var s_purchased_price = sellArr['purchased_price'];
                 s_purchased_price = parseFloat(parseFloat(s_purchased_price).toFixed(8));
                 s_purchased_price = (!isNaN(s_purchased_price) ? s_purchased_price : 0)
-                
+
                 //market_value
                 var s_market_value = sellArr['market_value'];
                 s_market_value = parseFloat(parseFloat(s_market_value).toFixed(8));
@@ -5005,9 +5184,9 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                 let s_iniatial_trail_stop = sellArr['iniatial_trail_stop']
                 s_iniatial_trail_stop = parseFloat(parseFloat(s_iniatial_trail_stop).toFixed(8));
                 s_iniatial_trail_stop = (!isNaN(s_iniatial_trail_stop) ? s_iniatial_trail_stop : 0)
-                
+
                 iniatial_trail_stop = (s_iniatial_trail_stop != 0 ? s_iniatial_trail_stop : iniatial_trail_stop)
-                
+
                 if (order['trigger_type'] != 'no') {
                     var s_loss_percentage = sellArr['loss_percentage']
                     s_loss_percentage = parseFloat(parseFloat(s_loss_percentage).toFixed(8));
@@ -5017,7 +5196,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                     s_loss_percentage = parseFloat(parseFloat(s_loss_percentage).toFixed(8));
                     s_loss_percentage = (!isNaN(s_loss_percentage) ? s_loss_percentage : 0)
                 }
-                
+
                 loss_percentage = (s_loss_percentage != 0 ? s_loss_percentage : loss_percentage)
 
             }
@@ -5029,12 +5208,12 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
             var order_created_date = order['created_date'];
 
             //price can not be zero return error
-            if (price == 0 || (typeof trigger_type == 'undefined')){
+            if (price == 0 || (typeof trigger_type == 'undefined')) {
                 resp.status(200).send({
                     status: false,
                     message: 'An error occured'
                 })
-            }else {
+            } else {
 
                 //price calculation 
                 var diff_price = updated_price - price;
@@ -5047,15 +5226,15 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
 
                 if (trigger_type != 'no') { //Auto Order
 
-                    if (side == 'profit_inBall') {//profit percentage is updated
+                    if (side == 'profit_inBall') { //profit percentage is updated
 
-                        if (sellOrderExist){
+                        if (sellOrderExist) {
 
                             var filter = {};
                             filter['_id'] = sellArr['_id'];
                             var update = {};
 
-                            if (order['status'] == 'LTH'){
+                            if (order['status'] == 'LTH') {
                                 update['lth_profit'] = new_percentage;
                             }
 
@@ -5067,14 +5246,14 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             update['modified_date'] = new Date();
 
                             var updatePromise = updateOne(filter, update, sell_collection);
-                            updatePromise.then((resolve) => { });
+                            updatePromise.then((resolve) => {});
 
                         }
 
                         var filter = {};
                         filter['_id'] = new ObjectID(orderId);
                         var update = {};
-                        
+
                         if (order['status'] == 'LTH') {
                             update['lth_profit'] = new_percentage;
                         }
@@ -5087,7 +5266,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
 
                         // var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
                         var updatePromise = updateOne(filter, update, buy_collection);
-                        updatePromise.then((resolve) => { });
+                        updatePromise.then((resolve) => {});
 
 
                         message = ' Auto Order Sell Price Changed'
@@ -5095,12 +5274,12 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         //SAVE_LOG:
                         var log_msg = " Auto Order Sell Price Changed From(" + parseFloat(previous_sell_price).toFixed(2) + "  ) To (" + parseFloat(updated_price).toFixed(2) + ")  From Chart";
                         var logPromise = create_orders_history_log(orderId, log_msg, 'sell_price_changed', 'yes', exchange, order_mode, order_created_date)
-                        logPromise.then((callback) => { })
-                        
+                        logPromise.then((callback) => {})
+
                         //SAVE_LOG:
                         var log_msg = "Order Profit percentage Change From(" + parseFloat(sell_profit_percent).toFixed(2) + " % ) To (" + parseFloat(new_percentage).toFixed(2) + " %)  From Chart";
                         var logPromise = create_orders_history_log(orderId, log_msg, 'order_profit_percentage_change', 'yes', exchange, order_mode, order_created_date)
-                        logPromise.then((callback) => { })
+                        logPromise.then((callback) => {})
 
                     } else { //loss_inBall
 
@@ -5123,7 +5302,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             update['modified_date'] = new Date();
 
                             var updatePromise = updateOne(filter, update, sell_collection);
-                            updatePromise.then((resolve) => { });
+                            updatePromise.then((resolve) => {});
 
                         }
 
@@ -5145,14 +5324,14 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
 
                         // var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
                         var updatePromise = updateOne(filter, update, buy_collection);
-                        updatePromise.then((resolve) => { });
-                        
+                        updatePromise.then((resolve) => {});
+
                         message = "Auto Order stop Loss Changed";
-                    
+
                         //SAVE_LOG:
                         var log_msg = "Order Stop Loss Updated From(" + parseFloat(iniatial_trail_stop).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart"
                         var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
-                        logPromise.then((callback) => { })
+                        logPromise.then((callback) => {})
 
                     }
                 } else { //Manual Order
@@ -5175,14 +5354,14 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             update['auto_sell'] = 'yes'
                             update['modified_date'] = new Date();
                             var updatePromise = updateOne(filter, update, sell_collection);
-                            updatePromise.then((resolve) => { });
+                            updatePromise.then((resolve) => {});
 
                         }
 
                         var filter = {};
                         filter['_id'] = new ObjectID(orderId);
                         var update = {};
-                        
+
                         if (order['status'] == 'LTH') {
                             update['lth_profit'] = new_percentage;
                         }
@@ -5193,19 +5372,19 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         update['auto_sell'] = 'yes'
                         update['modified_date'] = new Date();
                         var updatePromise = updateOne(filter, update, buy_collection);
-                        updatePromise.then((resolve) => { });
-                        
+                        updatePromise.then((resolve) => {});
+
                         message = "Manual Order  Profit price Changed"
 
                         //SAVE_LOG:
                         var log_msg = "Order sell price Updated from(" + parseFloat(previous_sell_price).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
                         var logPromise = create_orders_history_log(orderId, log_msg, 'create_sell_order', 'yes', exchange, order_mode, order_created_date)
-                        logPromise.then((callback) => { })
+                        logPromise.then((callback) => {})
 
                         //SAVE_LOG:
                         var log_msg = "Order Profit percentage Change From(" + parseFloat(sell_profit_percent).toFixed(2) + ") To (" + parseFloat(new_percentage).toFixed(2) + ")  From Chart";
                         var logPromise = create_orders_history_log(orderId, log_msg, 'order_profit_percentage_change', 'yes', exchange, order_mode, order_created_date)
-                        logPromise.then((callback) => { })
+                        logPromise.then((callback) => {})
 
                     } else { //loss_inBall
 
@@ -5227,7 +5406,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
 
                             update['modified_date'] = new Date();
                             var updatePromise = updateOne(filter, update, sell_collection);
-                            updatePromise.then((resolve) => { });
+                            updatePromise.then((resolve) => {});
 
                         }
 
@@ -5247,22 +5426,22 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
 
                         update['modified_date'] = new Date();
                         var updatePromise = updateOne(filter, update, buy_collection);
-                        updatePromise.then((resolve) => { });
+                        updatePromise.then((resolve) => {});
 
                         message = "Manual Order  stop loss price Changed";
 
                         //SAVE_LOG:
                         var log_msg = "Order Stop Loss Updated From(" + parseFloat(iniatial_trail_stop).toFixed(8) + ") to " + parseFloat(updated_price).toFixed(8) + "  From Chart";
                         var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_change', 'yes', exchange, order_mode, order_created_date)
-                        logPromise.then((callback) => { })
+                        logPromise.then((callback) => {})
 
                         //SAVE_LOG:
                         var log_msg = "Order stop Loss percentage Change From(" + parseFloat(loss_percentage).toFixed(2) + ") To (" + parseFloat(new_percentage).toFixed(2) + ")  From Chart";
                         var logPromise = create_orders_history_log(orderId, log_msg, 'order_stop_loss_percentage_change', 'yes', exchange, order_mode, order_created_date)
-                        logPromise.then((callback) => { })
+                        logPromise.then((callback) => {})
 
                     } //End of Stop Loss part
-                }//end if/else Auto/manual order
+                } //end if/else Auto/manual order
             }
 
             // //compare new-old
@@ -5283,8 +5462,8 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
             message: message
         })
 
-    } else {//End of order array is not empty
-        
+    } else { //End of order array is not empty
+
         resp.status(200).send({
             message: 'An error occured'
         })
@@ -5296,345 +5475,354 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
 
 function listSellOrderByBuyOrderId(ID, exchange) {
     return new Promise((resolve) => {
-            let filter = {};
-            filter['_id'] = { '$in': [ID, new ObjectID(ID)] };
-            conn.then((db) => {
-                    let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-                    db.collection(collection).find(filter).toArray((err, result) => {
-                            if (err) {
-                                resolve(err);
-                            } else {
-                                resolve(result);
-                            }
-                        }) //End of collection
-                }) //End of conn
-        }) //End of Promise
+        let filter = {};
+        filter['_id'] = {
+            '$in': [ID, new ObjectID(ID)]
+        };
+        conn.then((db) => {
+            let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+            db.collection(collection).find(filter).toArray((err, result) => {
+                if (err) {
+                    resolve(err);
+                } else {
+                    resolve(result);
+                }
+            }) //End of collection
+        }) //End of conn
+    }) //End of Promise
 } //End of listSellOrderByBuyOrderId
 
 
 
 //post call for Edit manual by order
-router.post('/lisEditManualOrderById', async(req, resp) => {
-        let orderId = req.body.orderId;
-        let exchange = req.body.exchange;
-        var buyOrderResp = await listOrderById(orderId, exchange);
-        var buyOrderArr = buyOrderResp[0];
-        var post_data = req.body
-        var  timezone = (typeof post_data.timezone == 'undefined' || post_data.timezone == '')?'America/Danmarkshavn':post_data.timezone;
+router.post('/lisEditManualOrderById', async (req, resp) => {
+    let orderId = req.body.orderId;
+    let exchange = req.body.exchange;
+    var buyOrderResp = await listOrderById(orderId, exchange);
+    var buyOrderArr = buyOrderResp[0];
+    var post_data = req.body
+    var timezone = (typeof post_data.timezone == 'undefined' || post_data.timezone == '') ? 'America/Danmarkshavn' : post_data.timezone;
 
-        var auto_sell = (typeof buyOrderArr['auto_sell'] == 'undefined') ? 'no' : buyOrderArr['auto_sell'];
+    var auto_sell = (typeof buyOrderArr['auto_sell'] == 'undefined') ? 'no' : buyOrderArr['auto_sell'];
 
     var sell_order_id = (typeof buyOrderArr['sell_order_id'] == 'undefined' || buyOrderArr['sell_order_id'] == null) ? '' : buyOrderArr['sell_order_id'];
 
-        var order_created_date = (typeof buyOrderArr['created_date'] == 'undefined') ? '' : buyOrderArr['created_date'];
-        var order_mode = (typeof buyOrderArr['order_mode'] == 'undefined') ? buyOrderArr['application_mode']: buyOrderArr['order_mode'];
+    var order_created_date = (typeof buyOrderArr['created_date'] == 'undefined') ? '' : buyOrderArr['created_date'];
+    var order_mode = (typeof buyOrderArr['order_mode'] == 'undefined') ? buyOrderArr['application_mode'] : buyOrderArr['order_mode'];
 
 
-        
-            //Get order log against order
-            var ordrLogPromise = await listOrderLog(orderId, exchange,order_mode,order_created_date);
 
-        let html = '';
-        let ordeLog = ordrLogPromise;
-        var index = 1;
+    //Get order log against order
+    var ordrLogPromise = await listOrderLog(orderId, exchange, order_mode, order_created_date);
 
-            var index = 1;
-            for (let row in ordeLog) {
-                var timeZoneTime = ordeLog[row].created_date;
-                try {
-                    timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {timeZone: timezone});
-                    timeZoneTime = new Date(timeZoneTime);
-                }
-                catch (e) {
-                    console.log(e);
-                }
-                var date = timeZoneTime.toLocaleString()+' '+timezone;
-                //Remove indicator log message
-                if (ordeLog[row].type != 'indicator_log_message') {
-                    html += '<tr>';
-                    html += '<th scope="row" class="text-danger">' + index + '</th>';
-                    html += '<td>' + ordeLog[row].log_msg + '</td>';
-                    html += '<td>' + date + '</td>'
-                    html += '</tr>';
-                    index++;
-                }
-            }
+    let html = '';
+    let ordeLog = ordrLogPromise;
+    var index = 1;
 
-        var sellArr = [];
-        var tempSellArr = [];
-        // if (auto_sell == 'yes' && (typeof buyOrderArr['is_sell_order'] != 'undefined' && buyOrderArr['is_sell_order'] != 'sold')) {
-        if (auto_sell == 'yes') {
-            //if sell order Exist the get value from sell order 
-            if (sell_order_id != '') {
-                var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
-                var sellArr = sellOrderResp[0];
-            } else {
-                //get temp sell order value of sell order not exist
-                var tempOrderResp = await listTempSellOrder(orderId, exchange);
-                var tempSellArr = tempOrderResp[0];
-            }
+    var index = 1;
+    for (let row in ordeLog) {
+        var timeZoneTime = ordeLog[row].created_date;
+        try {
+            timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {
+                timeZone: timezone
+            });
+            timeZoneTime = new Date(timeZoneTime);
+        } catch (e) {
+            console.log(e);
         }
+        var date = timeZoneTime.toLocaleString() + ' ' + timezone;
+        //Remove indicator log message
+        if (ordeLog[row].type != 'indicator_log_message') {
+            html += '<tr>';
+            html += '<th scope="row" class="text-danger">' + index + '</th>';
+            html += '<td>' + ordeLog[row].log_msg + '</td>';
+            html += '<td>' + date + '</td>'
+            html += '</tr>';
+            index++;
+        }
+    }
 
-        var respArr = {};
-        respArr['logHtml'] = html;
-        respArr['buyOrderArr'] = buyOrderArr;
-        respArr['sellArr'] = sellArr;
-        respArr['tempSellArr'] = tempSellArr;
+    var sellArr = [];
+    var tempSellArr = [];
+    // if (auto_sell == 'yes' && (typeof buyOrderArr['is_sell_order'] != 'undefined' && buyOrderArr['is_sell_order'] != 'sold')) {
+    if (auto_sell == 'yes') {
+        //if sell order Exist the get value from sell order 
+        if (sell_order_id != '') {
+            var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
+            var sellArr = sellOrderResp[0];
+        } else {
+            //get temp sell order value of sell order not exist
+            var tempOrderResp = await listTempSellOrder(orderId, exchange);
+            var tempSellArr = tempOrderResp[0];
+        }
+    }
 
-        resp.status(200).send({
-            message: respArr
-        });
+    var respArr = {};
+    respArr['logHtml'] = html;
+    respArr['buyOrderArr'] = buyOrderArr;
+    respArr['sellArr'] = sellArr;
+    respArr['tempSellArr'] = tempSellArr;
 
-    }) //End of lisEditManualOrderById
+    resp.status(200).send({
+        message: respArr
+    });
+
+}) //End of lisEditManualOrderById
 
 
 
 //post call for updating manual orders
 router.post('/updateManualOrder', async (req, resp) => {
 
-        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
 
-        let buyOrderId = req.body.buyOrderId;
-        let exchange = req.body.exchange;
-        let sellOrderId = req.body.sellOrderId;
-        let tempSellOrderId = req.body.tempSellOrderId;
-
-
-        let buyorderArr = req.body.buyorderArr;
-        let sellOrderArr = req.body.sellOrderArr;
-        let tempOrderArr = req.body.tempOrderArr;
-
-        let show_hide_log = 'yes';
-        let type = 'order_update';
-        let log_msg = "Order has been updated "+interfaceType;
-        // var logPromise = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange);
-        getBuyOrder = await listOrderById(buyOrderId, exchange);
-        order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
-        order_mode = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['application_mode'] : 'test')
-        var logPromise = create_orders_history_log(buyOrderId, log_msg, 'order_update', 'yes', exchange, order_mode, order_created_date)
-        logPromise.then((resolve) => {})
-
-        //Send Notification
-        send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', log_msg, buyOrderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
-
-        var orders_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-        var buy_order_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        var temp_sell_order_collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
+    let buyOrderId = req.body.buyOrderId;
+    let exchange = req.body.exchange;
+    let sellOrderId = req.body.sellOrderId;
+    let tempSellOrderId = req.body.tempSellOrderId;
 
 
-        var where = {};
-        where['_id'] = new ObjectID(buyOrderId)
+    let buyorderArr = req.body.buyorderArr;
+    let sellOrderArr = req.body.sellOrderArr;
+    let tempOrderArr = req.body.tempOrderArr;
 
-        if (sellOrderId != '') {
-            //set profit percentage if sell price is fixed
-            if (buyorderArr['profit_type'] == 'fixed_price') {
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price']) 
-                let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
-                buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-                buyorderArr['profit_percent'] = buyorderArr['sell_profit_percent']
-            }
-        
-            //set sell profit percentage 
-            if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
-                let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
-                buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-            }
+    let show_hide_log = 'yes';
+    let type = 'order_update';
+    let log_msg = "Order has been updated " + interfaceType;
+    // var logPromise = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange);
+    getBuyOrder = await listOrderById(buyOrderId, exchange);
+    order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+    order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+    var logPromise = create_orders_history_log(buyOrderId, log_msg, 'order_update', 'yes', exchange, order_mode, order_created_date)
+    logPromise.then((resolve) => {})
 
-            //set stop loss 
-            if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
-                buyorderArr['stop_loss'] = 'yes'
-                buyorderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+    //Send Notification
+    send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', log_msg, buyOrderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
-                buyorderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+    var orders_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+    var buy_order_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    var temp_sell_order_collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
 
-            } else {
-                buyorderArr['stop_loss'] = 'no'
-                buyorderArr['loss_percentage'] = ''
-            }
 
-            //set lth profit 
-            if (typeof buyorderArr['lth_functionality'] != 'undefined' && buyorderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(buyorderArr['lth_profit']))) {
-                buyorderArr['lth_functionality'] = 'yes'
-                buyorderArr['lth_profit'] = parseFloat(parseFloat(buyorderArr['lth_profit']).toFixed(1))
-            } else {
-                buyorderArr['lth_functionality'] = 'no'
-                buyorderArr['lth_profit'] = ''
-            }
+    var where = {};
+    where['_id'] = new ObjectID(buyOrderId)
 
-            if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != ''){
-                buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
-            }
-
-        }else{
-            //set profit percentage if sell price is fixed
-            if (buyorderArr['profit_type'] == 'fixed_price') {
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
-                buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-                buyorderArr['profit_percent'] = tempOrderArr['sell_profit_percent']
-                buyorderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
-                buyorderArr['profit_price'] = buyorderArr['sell_price']
-            }
-
-            //set sell profit percentage 
-            if (buyorderArr['profit_type'] == 'percentage' && typeof tempOrderArr['sell_profit_percent'] != 'undefined') {
-                let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['sell_profit_percent']).toFixed(1))
-                buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-            }
-
-            //set stop loss 
-            if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
-                buyorderArr['stop_loss'] = 'yes'
-                buyorderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
-
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
-                buyorderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
-
-            } else {
-                buyorderArr['stop_loss'] = 'no'
-                buyorderArr['loss_percentage'] = ''
-            }
-
-            //set lth profit 
-            if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
-                buyorderArr['lth_functionality'] = 'yes'
-                buyorderArr['lth_profit'] = parseFloat(parseFloat(tempOrderArr['lth_profit']).toFixed(1))
-            } else {
-                buyorderArr['lth_functionality'] = 'no'
-                buyorderArr['lth_profit'] = ''
-            }
-
-            if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
-                buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
-            }
-
+    if (sellOrderId != '') {
+        //set profit percentage if sell price is fixed
+        if (buyorderArr['profit_type'] == 'fixed_price') {
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+            let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+            buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+            buyorderArr['profit_percent'] = buyorderArr['sell_profit_percent']
         }
 
-        buyorderArr['modified_date'] = new Date();
-        var upsert = { 'upsert': true };
-        var updPromise = updateSingle(buy_order_collection, where, buyorderArr, upsert);
-        updPromise.then((callback) => {});
-
-
-        if (sellOrderId != '') {
-            var where_1 = {};
-            where_1['_id'] = new ObjectID(sellOrderId)
-
-            //set profit percentage if sell price is fixed
-            if (buyorderArr['profit_type'] == 'fixed_price') {
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
-                sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-                sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
-                sellOrderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
-            }
-
-            //set sell profit percentage 
-            if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
-                let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
-                sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-            }
-
-            //set stop loss 
-            if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
-                sellOrderArr['stop_loss'] = 'yes'
-                sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
-
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                let loss_price = (parseFloat(purchased_price) * parseFloat(sellOrderArr['loss_percentage'])) / 100;
-                sellOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
-
-            } else {
-                sellOrderArr['stop_loss'] = 'no'
-                sellOrderArr['loss_percentage'] = ''
-            }
-
-            //set lth profit 
-            if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
-                sellOrderArr['lth_functionality'] = 'yes'
-                sellOrderArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
-            } else {
-                sellOrderArr['lth_functionality'] = 'no'
-                sellOrderArr['lth_profit'] = ''
-            }
-
-            if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
-                sellOrderArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
-            }
-
-            sellOrderArr['modified_date'] = new Date();
-            var upsert = { 'upsert': true };
-            var updPromise_1 = updateSingle(orders_collection, where_1, sellOrderArr, upsert);
-            updPromise_1.then((callback) => {});
+        //set sell profit percentage 
+        if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+            let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
+            buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
         }
 
+        //set stop loss 
+        if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
+            buyorderArr['stop_loss'] = 'yes'
+            buyorderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
 
-        if (tempSellOrderId != '') {
-            var where_2 = {};
-            where_2['_id'] = new ObjectID(tempSellOrderId)
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+            let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
+            buyorderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
 
-            //set profit percentage if sell price is fixed
-            if (buyorderArr['profit_type'] == 'fixed_price') {
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
-                tempOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-                tempOrderArr['profit_percent'] = tempOrderArr['sell_profit_percent']
-                tempOrderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
-                tempOrderArr['profit_price'] = tempOrderArr['sell_price']
-            }
-
-            //set sell profit percentage 
-            if (buyorderArr['profit_type'] == 'percentage' && typeof tempOrderArr['sell_profit_percent'] != 'undefined') {
-                let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['sell_profit_percent']).toFixed(1))
-                tempOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-            }
-
-            //set stop loss 
-            if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
-                tempOrderArr['stop_loss'] = 'yes'
-                tempOrderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
-
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                let loss_price = (parseFloat(purchased_price) * parseFloat(tempOrderArr['loss_percentage'])) / 100;
-                tempOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
-
-            } else {
-                tempOrderArr['stop_loss'] = 'no'
-                tempOrderArr['loss_percentage'] = ''
-            }
-
-            //set lth profit 
-            if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
-                tempOrderArr['lth_functionality'] = 'yes'
-                tempOrderArr['lth_profit'] = parseFloat(parseFloat(tempOrderArr['lth_profit']).toFixed(1))
-            } else {
-                tempOrderArr['lth_functionality'] = 'no'
-                tempOrderArr['lth_profit'] = ''
-            }
-
-            if (typeof tempOrderArr['trail_interval'] != 'undefined' && tempOrderArr['trail_interval'] != '') {
-                tempOrderArr['trail_interval'] = parseFloat(tempOrderArr['trail_interval'])
-            }
-
-            tempOrderArr['modified_date'] = new Date();
-            var upsert = { 'upsert': true };
-            var updPromise_2 = updateSingle(temp_sell_order_collection, where_2, tempOrderArr, upsert);
-            updPromise_2.then((callback) => {})
+        } else {
+            buyorderArr['stop_loss'] = 'no'
+            buyorderArr['loss_percentage'] = ''
         }
 
+        //set lth profit 
+        if (typeof buyorderArr['lth_functionality'] != 'undefined' && buyorderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(buyorderArr['lth_profit']))) {
+            buyorderArr['lth_functionality'] = 'yes'
+            buyorderArr['lth_profit'] = parseFloat(parseFloat(buyorderArr['lth_profit']).toFixed(1))
+        } else {
+            buyorderArr['lth_functionality'] = 'no'
+            buyorderArr['lth_profit'] = ''
+        }
+
+        if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
+            buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
+        }
+
+    } else {
+        //set profit percentage if sell price is fixed
+        if (buyorderArr['profit_type'] == 'fixed_price') {
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+            let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+            buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+            buyorderArr['profit_percent'] = tempOrderArr['sell_profit_percent']
+            buyorderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
+            buyorderArr['profit_price'] = buyorderArr['sell_price']
+        }
+
+        //set sell profit percentage 
+        if (buyorderArr['profit_type'] == 'percentage' && typeof tempOrderArr['sell_profit_percent'] != 'undefined') {
+            let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['sell_profit_percent']).toFixed(1))
+            buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+        }
+
+        //set stop loss 
+        if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
+            buyorderArr['stop_loss'] = 'yes'
+            buyorderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
+
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+            let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
+            buyorderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
+        } else {
+            buyorderArr['stop_loss'] = 'no'
+            buyorderArr['loss_percentage'] = ''
+        }
+
+        //set lth profit 
+        if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
+            buyorderArr['lth_functionality'] = 'yes'
+            buyorderArr['lth_profit'] = parseFloat(parseFloat(tempOrderArr['lth_profit']).toFixed(1))
+        } else {
+            buyorderArr['lth_functionality'] = 'no'
+            buyorderArr['lth_profit'] = ''
+        }
+
+        if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
+            buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
+        }
+
+    }
+
+    buyorderArr['modified_date'] = new Date();
+    var upsert = {
+        'upsert': true
+    };
+    var updPromise = updateSingle(buy_order_collection, where, buyorderArr, upsert);
+    updPromise.then((callback) => {});
 
 
-        resp.status(200).send({
-            message: 'order updated'
-        });
+    if (sellOrderId != '') {
+        var where_1 = {};
+        where_1['_id'] = new ObjectID(sellOrderId)
 
-    }) //End of updateManualOrder
+        //set profit percentage if sell price is fixed
+        if (buyorderArr['profit_type'] == 'fixed_price') {
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+            let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+            sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+            sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
+            sellOrderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
+        }
+
+        //set sell profit percentage 
+        if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+            let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
+            sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+        }
+
+        //set stop loss 
+        if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
+            sellOrderArr['stop_loss'] = 'yes'
+            sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+            let loss_price = (parseFloat(purchased_price) * parseFloat(sellOrderArr['loss_percentage'])) / 100;
+            sellOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
+        } else {
+            sellOrderArr['stop_loss'] = 'no'
+            sellOrderArr['loss_percentage'] = ''
+        }
+
+        //set lth profit 
+        if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
+            sellOrderArr['lth_functionality'] = 'yes'
+            sellOrderArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
+        } else {
+            sellOrderArr['lth_functionality'] = 'no'
+            sellOrderArr['lth_profit'] = ''
+        }
+
+        if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
+            sellOrderArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
+        }
+
+        sellOrderArr['modified_date'] = new Date();
+        var upsert = {
+            'upsert': true
+        };
+        var updPromise_1 = updateSingle(orders_collection, where_1, sellOrderArr, upsert);
+        updPromise_1.then((callback) => {});
+    }
+
+
+    if (tempSellOrderId != '') {
+        var where_2 = {};
+        where_2['_id'] = new ObjectID(tempSellOrderId)
+
+        //set profit percentage if sell price is fixed
+        if (buyorderArr['profit_type'] == 'fixed_price') {
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+            let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+            tempOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+            tempOrderArr['profit_percent'] = tempOrderArr['sell_profit_percent']
+            tempOrderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
+            tempOrderArr['profit_price'] = tempOrderArr['sell_price']
+        }
+
+        //set sell profit percentage 
+        if (buyorderArr['profit_type'] == 'percentage' && typeof tempOrderArr['sell_profit_percent'] != 'undefined') {
+            let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['sell_profit_percent']).toFixed(1))
+            tempOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+        }
+
+        //set stop loss 
+        if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
+            tempOrderArr['stop_loss'] = 'yes'
+            tempOrderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
+
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+            let loss_price = (parseFloat(purchased_price) * parseFloat(tempOrderArr['loss_percentage'])) / 100;
+            tempOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
+        } else {
+            tempOrderArr['stop_loss'] = 'no'
+            tempOrderArr['loss_percentage'] = ''
+        }
+
+        //set lth profit 
+        if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
+            tempOrderArr['lth_functionality'] = 'yes'
+            tempOrderArr['lth_profit'] = parseFloat(parseFloat(tempOrderArr['lth_profit']).toFixed(1))
+        } else {
+            tempOrderArr['lth_functionality'] = 'no'
+            tempOrderArr['lth_profit'] = ''
+        }
+
+        if (typeof tempOrderArr['trail_interval'] != 'undefined' && tempOrderArr['trail_interval'] != '') {
+            tempOrderArr['trail_interval'] = parseFloat(tempOrderArr['trail_interval'])
+        }
+
+        tempOrderArr['modified_date'] = new Date();
+        var upsert = {
+            'upsert': true
+        };
+        var updPromise_2 = updateSingle(temp_sell_order_collection, where_2, tempOrderArr, upsert);
+        updPromise_2.then((callback) => {})
+    }
+
+
+
+    resp.status(200).send({
+        message: 'order updated'
+    });
+
+}) //End of updateManualOrder
 
 //post call for set manual order  
-router.post('/setForSell', async(req, resp) => {
+router.post('/setForSell', async (req, resp) => {
     let sellOrderArr = req.body.sellOrderArr;
     var buy_order_id = (typeof sellOrderArr['buy_order_id'] == 'undefined') ? '' : sellOrderArr['buy_order_id'];
 
@@ -5727,7 +5915,9 @@ router.post('/setForSell', async(req, resp) => {
     }
 
     var where = {};
-    where['_id'] = { '$in': [buyOrderId, new ObjectID(buyOrderId)] }
+    where['_id'] = {
+        '$in': [buyOrderId, new ObjectID(buyOrderId)]
+    }
     updArr['modified_date'] = new Date();
     var updPrmise = updateOne(where, updArr, collection);
     updPrmise.then((callback) => {})
@@ -5735,7 +5925,7 @@ router.post('/setForSell', async(req, resp) => {
     let log_msg = "Sell Order was Created";
     // var logPromise1 = recordOrderLog(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange);
     var getBuyOrder = await listOrderById(buyOrderId, exchange);
-    var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+    var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
     var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
     var logPromise1 = create_orders_history_log(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange, order_mode, order_created_date)
 
@@ -5754,10 +5944,14 @@ function setForSell(sellOrderArr, exchange, buy_order_id) {
         conn.then((db) => {
             var collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
             var where = {};
-            where['buy_order_id'] = { '$in': [buy_order_id, new ObjectID(buy_order_id)] };
+            where['buy_order_id'] = {
+                '$in': [buy_order_id, new ObjectID(buy_order_id)]
+            };
             var set = {};
             set['$set'] = sellOrderArr;
-            var upsert = { 'upsert': true };
+            var upsert = {
+                'upsert': true
+            };
             db.collection(collection).updateOne(where, set, upsert, (error, result) => {
                 if (error) {
                     console.log(error)
@@ -5802,14 +5996,17 @@ function setForSell(sellOrderArr, exchange, buy_order_id) {
 //         });
 //     }) //End of manageCoins
 
-router.post('/get_orders_post', function(req, res, next) {
+router.post('/get_orders_post', function (req, res, next) {
     conn.then(db => {
 
 
         var post_data = req.body;
         let post_data_key_array = Object.keys(post_data);
         if (post_data_key_array.length == 0) {
-            res.send({ "success": "false", "message": "No data posted in a post request" })
+            res.send({
+                "success": "false",
+                "message": "No data posted in a post request"
+            })
         } else {
 
             let old_status = post_data['status'];
@@ -5841,105 +6038,125 @@ router.post('/get_orders_post', function(req, res, next) {
             }
 
             count_of_orders_promise.then(async count_of_orders_promise_resolved => {
-                    //var total_pages = count_of_orders_promise_resolved;
+                //var total_pages = count_of_orders_promise_resolved;
 
 
-                    if (status == "open" || status == "sold") {
-                        if (status == "open") {
-                            search_array['status'] = "FILLED";
-                            search_array['is_sell_order'] = "yes";
-                        } else if (status == "sold") {
-                            search_array['status'] = "FILLED";
-                            search_array['is_sell_order'] = 'sold';
-                        }
-                    } else if (status == "parent") {
-                        search_array['parent_status'] = 'parent';
-                        search_array['status'] = 'new';
-
-                    } else if (status == "lth") {
-                        search_array['status'] = 'lth';
-                    } else if (status == 'new') {
-                        search_array['status'] = 'new';
-                        search_array['parent_status'] = { $ne: 'parent' };
-                    } else if (status == 'all') {
-                        search_array['status'] = { $in: ['error', 'canceled', 'submitted'] };
-                        search_array['price'] = { $ne: '' };
-                    } else {
-                        search_array['status'] = status;
+                if (status == "open" || status == "sold") {
+                    if (status == "open") {
+                        search_array['status'] = "FILLED";
+                        search_array['is_sell_order'] = "yes";
+                    } else if (status == "sold") {
+                        search_array['status'] = "FILLED";
+                        search_array['is_sell_order'] = 'sold';
                     }
+                } else if (status == "parent") {
+                    search_array['parent_status'] = 'parent';
+                    search_array['status'] = 'new';
 
-                    search_array["application_mode"] = application_mode;
-                    search_array['admin_id'] = admin_id;
-                    if (Object.keys(filter_array).length > 0) {
-                        if (filter_array['filter_coin'] != "") {
-                            symbol = filter_array['filter_coin'];
-                            search_array['symbol'] = { $in: coin_array };
+                } else if (status == "lth") {
+                    search_array['status'] = 'lth';
+                } else if (status == 'new') {
+                    search_array['status'] = 'new';
+                    search_array['parent_status'] = {
+                        $ne: 'parent'
+                    };
+                } else if (status == 'all') {
+                    search_array['status'] = {
+                        $in: ['error', 'canceled', 'submitted']
+                    };
+                    search_array['price'] = {
+                        $ne: ''
+                    };
+                } else {
+                    search_array['status'] = status;
+                }
 
-                        }
-                        if (filter_array['filter_type'] != "") {
-                            order_type = filter_array['filter_type'];
-                            search_array['order_type'] = order_type;
-                        }
-                        if (filter_array['filter_level'] != "") {
-                            order_level = filter_array['filter_level'];
-                            search_array['order_level'] = order_level;
-                        }
-                        if (filter_array['filter_trigger'] != "") {
-                            filter_trigger = filter_array['filter_trigger'];
-                            search_array['trigger_type'] = filter_trigger;
-                        }
-                        if (filter_array['start_date'] != "" && filter_array['end_date'] != "") {
-                            start_date = new Date(filter_array['start_date']);
-                            end_date = new Date(filter_array['end_date']);
-                            order_type = filter_array['filter_type'];
-                            search_array['created_date'] = { $gte: start_date, $lte: end_date };
-                        }
+                search_array["application_mode"] = application_mode;
+                search_array['admin_id'] = admin_id;
+                if (Object.keys(filter_array).length > 0) {
+                    if (filter_array['filter_coin'] != "") {
+                        symbol = filter_array['filter_coin'];
+                        search_array['symbol'] = {
+                            $in: coin_array
+                        };
+
                     }
-
-
-                    let final_orders_query_resolved = await db.collection('buy_orders').find(search_array).limit(perPage_limit).skip((perPage_limit * page) - perPage_limit).toArray();
-
-                    let order_count = await db.collection('buy_orders').count(search_array);
-                    let total_pages = Math.round(order_count / perPage_limit);
-
-
-
-                    if (final_orders_query_resolved.length > 0) {
-
-
-                        let array_response = [];
-                        let btc_price = await get_btc_price();
-                        final_orders_query_resolved.forEach(async final_orders_element => {
-
-
-                            let pulled_quantity = final_orders_element['quantity'];
-
-                            let pulled_coin_symbol = final_orders_element['symbol'];
-                            // let market_price_array = await db.collection('market_prices').find({ "coin": pulled_coin_symbol }).sort({ "created_date": -1 }).limit(1).toArray();
-
-                            let market_price = get_market_price(pulled_coin_symbol); //market_price_array[0]['price'];
-
-
-                            let amount_in_usd = pulled_quantity * market_price * btc_price;
-
-
-                            final_orders_element['amount_in_usd'] = amount_in_usd;
-
-
-
-                            array_response.push(final_orders_element);
-                            //console.log(array_response, "===> array_response inside scope")
-                        })
-
-
-
-                        res.send({ "success": "true", "data": final_orders_query_resolved, "data_length": final_orders_query_resolved.length, "total_pages": total_pages, "message": "Orders fetched successfully" });
-                    } else {
-                        res.send({ "success": "false", "message": "No data found" });
+                    if (filter_array['filter_type'] != "") {
+                        order_type = filter_array['filter_type'];
+                        search_array['order_type'] = order_type;
                     }
+                    if (filter_array['filter_level'] != "") {
+                        order_level = filter_array['filter_level'];
+                        search_array['order_level'] = order_level;
+                    }
+                    if (filter_array['filter_trigger'] != "") {
+                        filter_trigger = filter_array['filter_trigger'];
+                        search_array['trigger_type'] = filter_trigger;
+                    }
+                    if (filter_array['start_date'] != "" && filter_array['end_date'] != "") {
+                        start_date = new Date(filter_array['start_date']);
+                        end_date = new Date(filter_array['end_date']);
+                        order_type = filter_array['filter_type'];
+                        search_array['created_date'] = {
+                            $gte: start_date,
+                            $lte: end_date
+                        };
+                    }
+                }
 
 
-                }) // async function
+                let final_orders_query_resolved = await db.collection('buy_orders').find(search_array).limit(perPage_limit).skip((perPage_limit * page) - perPage_limit).toArray();
+
+                let order_count = await db.collection('buy_orders').count(search_array);
+                let total_pages = Math.round(order_count / perPage_limit);
+
+
+
+                if (final_orders_query_resolved.length > 0) {
+
+
+                    let array_response = [];
+                    let btc_price = await get_btc_price();
+                    final_orders_query_resolved.forEach(async final_orders_element => {
+
+
+                        let pulled_quantity = final_orders_element['quantity'];
+
+                        let pulled_coin_symbol = final_orders_element['symbol'];
+                        // let market_price_array = await db.collection('market_prices').find({ "coin": pulled_coin_symbol }).sort({ "created_date": -1 }).limit(1).toArray();
+
+                        let market_price = get_market_price(pulled_coin_symbol); //market_price_array[0]['price'];
+
+
+                        let amount_in_usd = pulled_quantity * market_price * btc_price;
+
+
+                        final_orders_element['amount_in_usd'] = amount_in_usd;
+
+
+
+                        array_response.push(final_orders_element);
+                        //console.log(array_response, "===> array_response inside scope")
+                    })
+
+
+
+                    res.send({
+                        "success": "true",
+                        "data": final_orders_query_resolved,
+                        "data_length": final_orders_query_resolved.length,
+                        "total_pages": total_pages,
+                        "message": "Orders fetched successfully"
+                    });
+                } else {
+                    res.send({
+                        "success": "false",
+                        "message": "No data found"
+                    });
+                }
+
+
+            }) // async function
         }
 
     })
@@ -5972,7 +6189,9 @@ async function get_market_price(coin) {
             let symbol = commissionAsset + globalPair;
             let searchCriteria = {};
             searchCriteria['coin'] = coin;
-            db.collection('market_prices').find(searchCriteria).sort({ 'created_date': -1 }).limit(1).toArray((err, result) => {
+            db.collection('market_prices').find(searchCriteria).sort({
+                'created_date': -1
+            }).limit(1).toArray((err, result) => {
                 if (err) reject(err);
                 if (typeof result !== 'undefined' && typeof result[0] !== 'undefined') {
                     resolve(result[0]['price'])
@@ -5987,17 +6206,23 @@ async function get_market_price(coin) {
 
 
 //post call for getting user info for manage user component
-router.post('/get_user_info', function(req, res, next) {
+router.post('/get_user_info', function (req, res, next) {
     var post_data = req.body;
     let post_data_key_array = Object.keys(post_data);
     if (post_data_key_array.length == 0) {
-        res.status(400).send({ "success": "false", "status": 400, "message": "Bad request. No data posted in a post request" })
+        res.status(400).send({
+            "success": "false",
+            "status": 400,
+            "message": "Bad request. No data posted in a post request"
+        })
     } else {
         if ('user_id' in post_data) {
             let user_id = post_data['user_id'];
             conn.then(db => {
-                let search_arr = { "_id": ObjectID(user_id) };
-                db.collection("users").findOne(search_arr, function(err, data) {
+                let search_arr = {
+                    "_id": ObjectID(user_id)
+                };
+                db.collection("users").findOne(search_arr, function (err, data) {
                     if (err) throw err;
                     if (data != undefined || data != null) {
                         if (Object.keys(data).length > 0) {
@@ -6016,33 +6241,49 @@ router.post('/get_user_info', function(req, res, next) {
                             })
                         }
                     } else {
-                        res.status(404).send({ "success": "false", "status": 404, "message": "Try a different user_id" })
+                        res.status(404).send({
+                            "success": "false",
+                            "status": 404,
+                            "message": "Try a different user_id"
+                        })
                     }
                 })
             })
         } else {
-            res.status(400).send({ "success": "false", "status": 400, "message": "user_id was required to completed this request..." })
+            res.status(400).send({
+                "success": "false",
+                "status": 400,
+                "message": "user_id was required to completed this request..."
+            })
         }
 
     }
 })
 //post call for edit user info
-router.post('/update_user_info', function(req, res, next) {
+router.post('/update_user_info', function (req, res, next) {
     var post_data = req.body;
     let post_data_key_array = Object.keys(post_data);
     if (post_data_key_array.length == 0) {
-        res.status(400).send({ "success": "false", "status": 400, "message": "Bad request. No data posted in a post request" })
+        res.status(400).send({
+            "success": "false",
+            "status": 400,
+            "message": "Bad request. No data posted in a post request"
+        })
     } else {
         if ('user_id' in post_data) {
             let user_id = post_data['user_id'];
             conn.then(db => {
-                let search_arr = { "_id": ObjectID(user_id) };
-                db.collection("users").findOne(search_arr, function(err, data) {
+                let search_arr = {
+                    "_id": ObjectID(user_id)
+                };
+                db.collection("users").findOne(search_arr, function (err, data) {
                     if (err) throw err;
                     if (Object.keys(data).length > 0) {
                         let update_arr = new Object(post_data);
                         delete update_arr.user_id;
-                        db.collection("users").updateOne(search_arr, { $set: update_arr }, function(err1, obj) {
+                        db.collection("users").updateOne(search_arr, {
+                            $set: update_arr
+                        }, function (err1, obj) {
                             if (err1) throw err1;
                             if (obj.result.nModified > 0) {
                                 res.status(200).send({
@@ -6074,7 +6315,11 @@ router.post('/update_user_info', function(req, res, next) {
                 })
             })
         } else {
-            res.status(400).send({ "success": "false", "status": 400, "message": "user_id was required to completed this request..." })
+            res.status(400).send({
+                "success": "false",
+                "status": 400,
+                "message": "user_id was required to completed this request..."
+            })
         }
     }
 })
@@ -6090,8 +6335,8 @@ router.post('/createManualOrderGlobally', (req, resp) => {
     conn.then((db) => {
         let orderArr = req.body.orderArr;
 
-        let orderId     = orderArr['orderId'];
-        var price         = orderArr['price'];
+        let orderId = orderArr['orderId'];
+        var price = orderArr['price'];
         let exchange = orderArr['exchange'];
 
         var setOrderArr = {}
@@ -6117,27 +6362,39 @@ router.post('/createManualOrderGlobally', (req, resp) => {
 
         // Validate some of the fields i-e Quantity, Price, Symbol, Admin ID , exchange
         if (!setOrderArr['price']) { // if price is  empty
-            resp.status(400).json({ message: 'Price cannot be empty !' });
+            resp.status(400).json({
+                message: 'Price cannot be empty !'
+            });
             return;
         }
         if (!setOrderArr['quantity']) { // if quantity is  empty
-            resp.status(400).json({ message: 'Quantity cannot be empty !' });
+            resp.status(400).json({
+                message: 'Quantity cannot be empty !'
+            });
             return;
         }
         if (!setOrderArr['symbol']) { // if symbol is  empty
-            resp.status(400).json({ message: 'Symbol not found' });
+            resp.status(400).json({
+                message: 'Symbol not found'
+            });
             return;
         }
         if (!setOrderArr['admin_id']) { // if quantity is  empty
-            resp.status(400).json({ message: 'User cannot be empty !' });
+            resp.status(400).json({
+                message: 'User cannot be empty !'
+            });
             return;
         }
         if (!setOrderArr['application_mode']) { // if quantity is  empty
-            resp.status(400).json({ message: 'Select Apllication mode' });
+            resp.status(400).json({
+                message: 'Select Apllication mode'
+            });
             return;
         }
         if (!setOrderArr['exchange']) { // if quantity is  empty
-            resp.status(400).json({ message: 'Exchange name cannot be empty' });
+            resp.status(400).json({
+                message: 'Exchange name cannot be empty'
+            });
             return;
         }
 
@@ -6162,10 +6419,10 @@ router.post('/createManualOrderGlobally', (req, resp) => {
                 let type = 'Order_created';
                 // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
                 var getBuyOrder = await listOrderById(buyOrderId, exchange);
-                var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+                var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
                 var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
                 var promiseLog = create_orders_history_log(buyOrderId, log_msg, 'Order_created', 'yes', exchange, order_mode, order_created_date)
-                promiseLog.then((callback) => { })
+                promiseLog.then((callback) => {})
                 //if auto sell is yes then create sell order
                 if (req.body.orderArr.auto_sell == 'yes') {
                     let tempOrder = req.body.tempOrderArr;
@@ -6185,63 +6442,68 @@ router.post('/createManualOrderGlobally', (req, resp) => {
                                 message: 'Order successfully created with auto sell'
                             });
                         }
-                    })// END of  db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
+                    }) // END of  db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
                 } else {
                     resp.status(200).send({
                         message: 'Order created with **'
                     });
-                }// END of  if (req.body.orderArr.auto_sell == 'yes') {
+                } // END of  if (req.body.orderArr.auto_sell == 'yes') {
             }
         }) // END of   db.collection(collectionName).insertOne(setOrderArr, (err, result) =>{
-    })// END  of  conn.then((db)=>{
-})// END of  router.post('/createManualOrderGlobally',(req,resp)=>{
+    }) // END  of  conn.then((db)=>{
+}) // END of  router.post('/createManualOrderGlobally',(req,resp)=>{
 
 
 
 //post call for adding user coins from global coins
-router.post('/addUserCoins', function(req, res, next) {
-        var post_data = req.body;
-        let post_data_key_array = Object.keys(post_data);
-        if (post_data_key_array.length == 0) {
-            res.send({ "success": "false", "message": "No data posted in a post request" })
-        } else {
-            conn.then(db => {
-                if ("admin_id" in post_data && "coin_ids" in post_data) {
-                    let admin_id = post_data['admin_id'];
-                    let coin_ids = post_data['coin_ids'];
-                    let promise_arr = [];
-                    coin_id.forEach(async coin_idd => {
-                        promise_arr.push(get_coins_by_ids(coin_idd))
+router.post('/addUserCoins', function (req, res, next) {
+    var post_data = req.body;
+    let post_data_key_array = Object.keys(post_data);
+    if (post_data_key_array.length == 0) {
+        res.send({
+            "success": "false",
+            "message": "No data posted in a post request"
+        })
+    } else {
+        conn.then(db => {
+            if ("admin_id" in post_data && "coin_ids" in post_data) {
+                let admin_id = post_data['admin_id'];
+                let coin_ids = post_data['coin_ids'];
+                let promise_arr = [];
+                coin_id.forEach(async coin_idd => {
+                    promise_arr.push(get_coins_by_ids(coin_idd))
+                })
+
+                Promise.all(promise_arr).then(promise_res => {
+                    promise_res.forEach(coin_arr => {
+                        console.log(coin_arr);
                     })
+                })
 
-                    Promise.all(promise_arr).then(promise_res => {
-                        promise_res.forEach(coin_arr => {
-                            console.log(coin_arr);
-                        })
+                res.send(coins_arr)
+
+
+            }
+
+            async function get_coins_by_ids(coin_id) {
+                return new Promise(async function (resolve, reject) {
+                    db.collection("coins").find({
+                        "_id": ObjectID("coin_id")
+                    }).toArray((err, data) => {
+                        if (err) throw err;
+                        resolve(data[0]['symbol']);
                     })
-
-                    res.send(coins_arr)
-
-
-                }
-
-                async function get_coins_by_ids(coin_id) {
-                    return new Promise(async function(resolve, reject) {
-                        db.collection("coins").find({ "_id": ObjectID("coin_id") }).toArray((err, data) => {
-                            if (err) throw err;
-                            resolve(data[0]['symbol']);
-                        })
-                    })
-                }
-            })
-        }
-    }) //End of addUserCoins
+                })
+            }
+        })
+    }
+}) //End of addUserCoins
 
 //:::::::::::::::::::::::::::::::::::::::::: /
 
 
 //post call to all user coins
-router.post('/addUserCoin', async function(req, res, next) {
+router.post('/addUserCoin', async function (req, res, next) {
 
     conn.then(async (db) => {
 
@@ -6257,34 +6519,38 @@ router.post('/addUserCoin', async function(req, res, next) {
 
             let coins_collection = (exchange == 'binance' ? 'coins' : 'coins_' + exchange)
             //Delete all user coins
-            db.collection(coins_collection).deleteMany({ "user_id": user_id });
+            db.collection(coins_collection).deleteMany({
+                "user_id": user_id
+            });
 
             //insert user coins
-            if (symbols.length > 0){
+            if (symbols.length > 0) {
                 let where = {
-                    'user_id' : 'global',
-                    'symbol' : {'$in': symbols},
+                    'user_id': 'global',
+                    'symbol': {
+                        '$in': symbols
+                    },
                 }
-                if (coins_collection == 'coins'){
+                if (coins_collection == 'coins') {
                     where['exchange_type'] = 'binance'
                 }
-                
+
                 let data1 = await db.collection(coins_collection).find(where).toArray();
                 let add_coins = [];
-                if (data1.length > 0){
-                    await Promise.all(data1.map(coin=> {
+                if (data1.length > 0) {
+                    await Promise.all(data1.map(coin => {
                         let obj = {
                             "user_id": user_id,
                             "symbol": coin['symbol'],
                             "coin_name": coin['coin_name'],
                             "coin_logo": coin['coin_logo'],
                         }
-                        if (exchange == 'binance'){
-                            obj["exchange_type"] = exchange 
+                        if (exchange == 'binance') {
+                            obj["exchange_type"] = exchange
                         }
                         add_coins.push(obj)
                     }))
-                    if (add_coins.length > 0){
+                    if (add_coins.length > 0) {
                         let ins = await db.collection(coins_collection).insertMany(add_coins);
                     }
                 }
@@ -6299,7 +6565,7 @@ router.post('/addUserCoin', async function(req, res, next) {
 
 
 
-Date.prototype.addHours = function(h) {
+Date.prototype.addHours = function (h) {
     this.setHours(this.getHours() + h);
     return this;
 }
@@ -6311,9 +6577,13 @@ Date.prototype.addHours = function(h) {
 
 //function for getting last price for manage coins
 async function getLastPrice(coin) {
-    return new Promise(async function(resolve, reject) {
+    return new Promise(async function (resolve, reject) {
         conn.then(async db => {
-            db.collection("market_prices").find({ "coin": coin }).sort({ "_id": -1 }).limit(1).toArray(async function(err, data) {
+            db.collection("market_prices").find({
+                "coin": coin
+            }).sort({
+                "_id": -1
+            }).limit(1).toArray(async function (err, data) {
                 if (err) throw err;
                 if (data.length > 0) {
                     let last_value = parseFloat(data[0].price);
@@ -6329,9 +6599,11 @@ async function getLastPrice(coin) {
 } // End of getLastPrice
 //get 24 hour price change for manage coins component
 async function get24HrPriceChange(coin) {
-    return new Promise(async function(resolve, reject) {
+    return new Promise(async function (resolve, reject) {
         conn.then(async db => {
-            db.collection("coin_price_change").findOne({ "symbol": coin }, async function(err, data) {
+            db.collection("coin_price_change").findOne({
+                "symbol": coin
+            }, async function (err, data) {
                 if (err) throw err;
                 if (data != undefined || data != null) {
                     if (Object.keys(data).length > 0) {
@@ -6356,7 +6628,7 @@ function mergeContentManageCoins(data) {
     var arrylen = data.length;
     var temlen = 0;
 
-    (async() => {
+    (async () => {
         for (let index in data) {
             let data_element = {};
             data_element['last_price'] = await getLastPrice(data[index]['symbol']);
@@ -6376,7 +6648,7 @@ function mergeContentManageCoins(data) {
 
 
 function listBamCurrentMarketPrice(coin) {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
         conn.then((db) => {
             let where = {};
             where['coin'] = coin;
@@ -6398,14 +6670,16 @@ function listBamCurrentMarketPrice(coin) {
 
 //function for listing user bam coins from 
 function listBamUserCoins(admin_id) {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
         request.post({
             url: 'http://54.156.174.16:3001/api/listUserCoinsAPI',
             json: {
                 "admin_id": admin_id,
             },
-            headers: { 'content-type': 'application/json' }
-        }, function(error, response, body) {
+            headers: {
+                'content-type': 'application/json'
+            }
+        }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
                 if (body == undefined) {
                     resolve([])
@@ -6419,40 +6693,49 @@ function listBamUserCoins(admin_id) {
 
 //save bam credentials from setting component
 router.post('/saveBamCredentials', (req, resp) => {
-        var user_id = req.body.user_id;
-        var api_key = req.body.api_key;
-        var api_secret = req.body.api_secret;
+    var user_id = req.body.user_id;
+    var api_key = req.body.api_key;
+    var api_secret = req.body.api_secret;
 
-        conn.then((db) => {
-            let insertArr = {};
-            insertArr['user_id'] = user_id;
-            insertArr['api_key'] = api_key;
-            insertArr['api_secret'] = api_secret;
-            let set = {};
-            set['$set'] = insertArr;
-            let where = {};
-            where['user_id'] = user_id; { upsert: true }
-            let upsert = { upsert: true };
-            db.collection('bam_credentials').updateOne(where, set, upsert, (err, result) => {
-                if (err) {
-                    console.log(err);
-                } else {
-                    let validation = validate_bam_credentials(api_key, api_secret, user_id)
-                    resp.status(200).send({ "success": "true", "message": "Credentials Updated Successfully" })
-                }
-            })
+    conn.then((db) => {
+        let insertArr = {};
+        insertArr['user_id'] = user_id;
+        insertArr['api_key'] = api_key;
+        insertArr['api_secret'] = api_secret;
+        let set = {};
+        set['$set'] = insertArr;
+        let where = {};
+        where['user_id'] = user_id; {
+            upsert: true
+        }
+        let upsert = {
+            upsert: true
+        };
+        db.collection('bam_credentials').updateOne(where, set, upsert, (err, result) => {
+            if (err) {
+                console.log(err);
+            } else {
+                let validation = validate_bam_credentials(api_key, api_secret, user_id)
+                resp.status(200).send({
+                    "success": "true",
+                    "message": "Credentials Updated Successfully"
+                })
+            }
         })
+    })
 
 
-    }) //End of saveBamCredentials
+}) //End of saveBamCredentials
 
 
-router.post('/getBamCredentials', async(req, resp) => {
-        var user_id = req.body.user_id;
-        var bamCredentials = await getBamCredentials(user_id);
-        resp.status(200).send({ response: bamCredentials })
+router.post('/getBamCredentials', async (req, resp) => {
+    var user_id = req.body.user_id;
+    var bamCredentials = await getBamCredentials(user_id);
+    resp.status(200).send({
+        response: bamCredentials
+    })
 
-    }) //End of getBamCredentials
+}) //End of getBamCredentials
 
 function getBamCredentials(user_id) {
     return new Promise((resolve, reject) => {
@@ -6471,7 +6754,7 @@ function getBamCredentials(user_id) {
 } //End of getBamCredentials
 
 //post call for calculating average profit for order listing
-router.post('/calculate_average_profit', async(req, resp) => {
+router.post('/calculate_average_profit', async (req, resp) => {
     var soldOrderArr = await calculateAverageOrdersProfit(req.body.postData);
     var total_profit = 0;
     var total_quantity = 0;
@@ -6493,7 +6776,7 @@ router.post('/calculate_average_profit', async(req, resp) => {
         var quantity = (typeof soldOrderArr[index]['quantity'] == 'undefined') ? 0 : soldOrderArr[index]['quantity'];
         quantity = (isNaN(parseFloat(quantity)) ? 0 : quantity);
 
-        if (req.body.postData.application_mode == 'test' && (isNaN(current_order_price) || isNaN(market_sold_price))){
+        if (req.body.postData.application_mode == 'test' && (isNaN(current_order_price) || isNaN(market_sold_price))) {
             continue
         }
 
@@ -6503,33 +6786,33 @@ router.post('/calculate_average_profit', async(req, resp) => {
         total_quantity += total_btc;
 
         profit_percentage_sum = parseFloat(profit_percentage_sum) + parseFloat(percentage)
-        total_trades +=1
+        total_trades += 1
 
     }
 
-    let avg_per_trade =  profit_percentage_sum / total_trades 
+    let avg_per_trade = profit_percentage_sum / total_trades
 
     var avg_profit = total_profit / total_quantity;
     var responseReslt = {};
     responseReslt['avg_profit'] = avg_profit;
     resp.status(200).send({
         message: avg_profit,
-        avg_per_trade:avg_per_trade 
+        avg_per_trade: avg_per_trade
     });
 })
 
 //post call for validating bam credentials
-router.post('/validate_bam_credentials', async(req, resp) => {
-        let APIKEY = req.body.APIKEY;
-        let APISECRET = req.body.APISECRET;
-        var credentials = await validate_bam_credentials(APIKEY, APISECRET);
-        resp.status(200).send({
-            message: credentials
-        });
+router.post('/validate_bam_credentials', async (req, resp) => {
+    let APIKEY = req.body.APIKEY;
+    let APISECRET = req.body.APISECRET;
+    var credentials = await validate_bam_credentials(APIKEY, APISECRET);
+    resp.status(200).send({
+        message: credentials
+    });
 }) //End of validate_bam_credentials
 
 
-function validate_bam_credentials(APIKEY, APISECRET, user_id='') {
+function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
     return new Promise((resolve, reject) => {
         binance = require('node-binance-api')().options({
             APIKEY: APIKEY,
@@ -6540,22 +6823,44 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id='') {
             if (error) {
 
                 //invalid Credentials
-                let where = {'api_key': APIKEY,'api_secret': APISECRET}
-                if (user_id != '') { where['user_id'] = user_id}
-                let set = {'$set': {'status': 'credentials_error'}}
-                conn.then(async (db) => {  await db.collection('bam_credentials').updateOne(where, set) })
-                
+                let where = {
+                    'api_key': APIKEY,
+                    'api_secret': APISECRET
+                }
+                if (user_id != '') {
+                    where['user_id'] = user_id
+                }
+                let set = {
+                    '$set': {
+                        'status': 'credentials_error'
+                    }
+                }
+                conn.then(async (db) => {
+                    await db.collection('bam_credentials').updateOne(where, set)
+                })
+
                 let message = {};
                 message['status'] = 'error';
                 message['message'] = error.body;
                 resolve(message);
             } else {
-                
+
                 //valid Credentials
-                let where = {'api_key': APIKEY, 'api_secret': APISECRET }
-                if (user_id != '') { where['user_id'] = user_id}
-                let set = { '$set': { 'status': 'active' } }
-                conn.then(async (db) => { await db.collection('bam_credentials').updateOne(where, set) })
+                let where = {
+                    'api_key': APIKEY,
+                    'api_secret': APISECRET
+                }
+                if (user_id != '') {
+                    where['user_id'] = user_id
+                }
+                let set = {
+                    '$set': {
+                        'status': 'active'
+                    }
+                }
+                conn.then(async (db) => {
+                    await db.collection('bam_credentials').updateOne(where, set)
+                })
 
                 let message = {};
                 message['status'] = 'success';
@@ -6567,61 +6872,65 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id='') {
 } //End of validate_bam_credentials
 
 //check error in sell for buy orders
-router.post('/get_error_in_sell', async(req, resp) => {
+router.post('/get_error_in_sell', async (req, resp) => {
 
-        let order_id = req.body.order_id;
-        let exchange = req.body.exchange;
-        conn.then((db) => {
+    let order_id = req.body.order_id;
+    let exchange = req.body.exchange;
+    conn.then((db) => {
 
-            let where = {};
-            where['buy_order_id'] = { $in: [order_id, new ObjectID(order_id)] }
-            where['status'] = { $in: ['error', 'LTH_ERROR', 'FILLED_ERROR', 'submitted_ERROR']}
-            let update = {};
-            update['status'] = 'new'
+        let where = {};
+        where['buy_order_id'] = {
+            $in: [order_id, new ObjectID(order_id)]
+        }
+        where['status'] = {
+            $in: ['error', 'LTH_ERROR', 'FILLED_ERROR', 'submitted_ERROR']
+        }
+        let update = {};
+        update['status'] = 'new'
 
-            let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-            let set = {};
-            set['$set'] = update;
-            db.collection(collection).updateOne(where, set, async (err, result) => {
-                if (err) {
-                    console.log(err)
+        let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+        let set = {};
+        set['$set'] = update;
+        db.collection(collection).updateOne(where, set, async (err, result) => {
+            if (err) {
+                console.log(err)
+                resp.status(200).send({
+                    status: false,
+                    message: 'Something went wrong'
+                });
+            } else {
+
+                if (result['nModified'] > 0) {
+
+                    // //create remove error log
+                    // var log_msg = 'Order was updated And Removed Error ***';
+                    // var getBuyOrder = await listOrderById(order_id, exchange);
+
+                    // if (getBuyOrder.length > 0){
+                    //     var order_created_date = getBuyOrder[0]['created_date']
+                    //     var order_mode = getBuyOrder[0]['application_mode']
+                    //     var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, order_mode, order_created_date)
+                    //     promiseLog.then((callback) => { });
+                    // }
+
+                    resp.status(200).send({
+                        status: true,
+                        message: 'Error removed successfully',
+                        result
+                    });
+
+                } else {
                     resp.status(200).send({
                         status: false,
                         message: 'Something went wrong'
                     });
-                } else {
-                    
-                    if (result['nModified'] > 0){
-
-                        // //create remove error log
-                        // var log_msg = 'Order was updated And Removed Error ***';
-                        // var getBuyOrder = await listOrderById(order_id, exchange);
-                        
-                        // if (getBuyOrder.length > 0){
-                        //     var order_created_date = getBuyOrder[0]['created_date']
-                        //     var order_mode = getBuyOrder[0]['application_mode']
-                        //     var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, order_mode, order_created_date)
-                        //     promiseLog.then((callback) => { });
-                        // }
-
-                        resp.status(200).send({
-                            status: true,
-                            message: 'Error removed successfully',
-                            result
-                        });
-
-                    }else{
-                        resp.status(200).send({
-                            status: false,
-                            message: 'Something went wrong'
-                        });
-                    }
-
                 }
-            })
-        })
 
-    }) //End of get_error_in_sell
+            }
+        })
+    })
+
+}) //End of get_error_in_sell
 
 //remove error from orders
 router.post('/remove_error', async (req, resp) => {
@@ -6629,14 +6938,16 @@ router.post('/remove_error', async (req, resp) => {
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     let order_id = req.body.order_id;
     let exchange = req.body.exchange;
-    conn.then( async (db) => {
+    conn.then(async (db) => {
 
         //get buy order
-        let buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange; 
+        let buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         let sell_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
 
         let where = {
-            '_id': { $in: [order_id, new ObjectID(order_id)] }
+            '_id': {
+                $in: [order_id, new ObjectID(order_id)]
+            }
         }
         let buy_order = await db.collection(buy_collection).find(where).limit(1).toArray();
         if (buy_order.length > 0) {
@@ -6647,31 +6958,31 @@ router.post('/remove_error', async (req, resp) => {
             var error_type = '';
 
             var update_buy_status = '';
-            
-            if (buy_status == 'error'){
+
+            if (buy_status == 'error') {
                 update_buy_status = 'new'
                 error_type = buy_status
-            } else if (buy_status == 'FILLED_ERROR' || buy_status == 'submitted_ERROR' || buy_status == 'LTH_ERROR' || buy_status == 'new_ERROR'){
+            } else if (buy_status == 'FILLED_ERROR' || buy_status == 'submitted_ERROR' || buy_status == 'LTH_ERROR' || buy_status == 'new_ERROR') {
                 let statusArr = buy_status.split('_');
                 update_buy_status = statusArr[0];
                 error_type = statusArr.join(' ');
             }
 
-            if (update_buy_status != ''){
+            if (update_buy_status != '') {
                 //remove error from buy_order
                 let where = {
                     '_id': new ObjectID(order_id)
                 }
                 let update = {
-                    '$set' : {
+                    '$set': {
                         'status': update_buy_status,
                         'modified_date': new Date()
                     }
                 }
                 let updated = await db.collection(buy_collection).updateOne(where, update)
-    
+
                 //remove error from sell_order
-                if (typeof buy_order['sell_order_id'] != 'undefined'){
+                if (typeof buy_order['sell_order_id'] != 'undefined') {
                     let where2 = {
                         '_id': new ObjectID(String(buy_order['sell_order_id']))
                     }
@@ -6683,26 +6994,26 @@ router.post('/remove_error', async (req, resp) => {
                     }
                     let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
                 }
-                
+
                 //create remove error log
-                var log_msg = 'Order was updated And Removed ' + error_type + ' '+interfaceType+' ***';
+                var log_msg = 'Order was updated And Removed ' + error_type + ' ' + interfaceType + ' ***';
                 var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, buy_order['application_mode'], buy_order['created_date'])
-                promiseLog.then((callback) => { });
-    
+                promiseLog.then((callback) => {});
+
                 //Send Notification
                 send_notification(buy_order['admin_id'], 'news_alerts', 'medium', log_msg, order_id, exchange, buy_order['symbol'], buy_order['application_mode'], '')
-                
+
                 resp.status(200).send({
                     status: true,
                     message: 'Error removed successfully',
                 });
-            }else{
+            } else {
                 resp.status(200).send({
                     status: false,
                     message: 'Something went wrong'
                 });
             }
-        }else{
+        } else {
             resp.status(200).send({
                 status: false,
                 message: 'Something went wrong'
@@ -6783,10 +7094,10 @@ router.post('/removeOrderManually', async (req, resp) => {
     var log_msg = 'Order was updated And Moved From Error To Open ***';
     // var promiseLog = recordOrderLog(order_id, log_msg, type, show_hide_log, exchange)
     var getBuyOrder = await listOrderById(order_id, exchange);
-    var order_created_date = ((getBuyOrder.length > 0 ) ? getBuyOrder[0]['created_date'] : new Date())
+    var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
     var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
     var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, order_mode, order_created_date)
-    promiseLog.then((callback) => { });
+    promiseLog.then((callback) => {});
 
 
 
@@ -6801,19 +7112,25 @@ router.post('/removeOrderManually', async (req, resp) => {
 
     var where_2 = {};
     where_2['_id'] = new ObjectID(order_id)
-    var upsert = { 'upsert': true };
+    var upsert = {
+        'upsert': true
+    };
     var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
     var upd = {};
     upd['modified_date'] = new Date();
     upd['status'] = beforeStatus;
     var updPromise_2 = updateSingle(collectionName, where_2, upd, upsert);
-    updPromise_2.then((callback) => { });
+    updPromise_2.then((callback) => {});
 
 
 
     var where_3 = {};
-    where_3['buy_order_id'] = { $in: [new ObjectId(order_id), order_id] }
-    var upsert_2 = { 'upsert': true };
+    where_3['buy_order_id'] = {
+        $in: [new ObjectId(order_id), order_id]
+    }
+    var upsert_2 = {
+        'upsert': true
+    };
     var collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
     var upd_2 = {};
     upd_2['status'] = 'new';
@@ -6824,15 +7141,15 @@ router.post('/removeOrderManually', async (req, resp) => {
 }) //End of removeOrderManually
 
 //validate user password for updting exchange credentials
-router.post('/validate_user_password', async(req, resp) => {
-        var password = req.body.user_password;
-        let md5Pass = md5(password);
-        var user_id = req.body.user_id;
-        var is_valid = await validate_user_password(user_id, md5Pass);
-        resp.status(200).send({
-            message: is_valid
-        });
-    }) //End of validate_user_password
+router.post('/validate_user_password', async (req, resp) => {
+    var password = req.body.user_password;
+    let md5Pass = md5(password);
+    var user_id = req.body.user_id;
+    var is_valid = await validate_user_password(user_id, md5Pass);
+    resp.status(200).send({
+        message: is_valid
+    });
+}) //End of validate_user_password
 
 //validate user password for chaning api credentials
 function validate_user_password(user_id, md5Pass) {
@@ -6857,27 +7174,27 @@ function validate_user_password(user_id, md5Pass) {
 } //End of validate_user_password
 
 
-router.get('/delete_log', async(req, resp) => {
-        var limit = 100;
-        // for (var skip = 0; skip <100000; skip += 100) {
-        // 	let log_arr = await list_logs(limit,skip);
-        // 	var resp_obj = {};
-        // 	for(let index in log_arr){
-        // 		var order_id = log_arr[index]['order_id'];
-        // 		var is_order_exist = await is_buy_order_exist(order_id);
-        // 		if(!is_order_exist){
-        // 			var del_arr = await delete_log(order_id);
-        // 			console.log(del_arr)
-        // 			//resp_obj[order_id] = del_arr; 
-        // 		}
-        // 	}
+router.get('/delete_log', async (req, resp) => {
+    var limit = 100;
+    // for (var skip = 0; skip <100000; skip += 100) {
+    // 	let log_arr = await list_logs(limit,skip);
+    // 	var resp_obj = {};
+    // 	for(let index in log_arr){
+    // 		var order_id = log_arr[index]['order_id'];
+    // 		var is_order_exist = await is_buy_order_exist(order_id);
+    // 		if(!is_order_exist){
+    // 			var del_arr = await delete_log(order_id);
+    // 			console.log(del_arr)
+    // 			//resp_obj[order_id] = del_arr; 
+    // 		}
+    // 	}
 
-        // }
+    // }
 
-        resp.status(200).send({
-            message: limit
-        });
-    }) //End of delete_log
+    resp.status(200).send({
+        message: limit
+    });
+}) //End of delete_log
 
 
 function is_buy_order_exist(order_id) {
@@ -6938,15 +7255,15 @@ function delete_log(order_id) {
 
 
 //post call for creating index for a key in a collections
-router.post('/create_index', async(req, resp) => {
-        var collection = req.body.collection;
-        var index_obj = req.body.index_obj;
-        var createIndexResp = await create_index(collection, index_obj);
+router.post('/create_index', async (req, resp) => {
+    var collection = req.body.collection;
+    var index_obj = req.body.index_obj;
+    var createIndexResp = await create_index(collection, index_obj);
 
-        resp.status(200).send({
-            message: createIndexResp
-        });
-    }) //End of create_index
+    resp.status(200).send({
+        message: createIndexResp
+    });
+}) //End of create_index
 
 //function for creating index on the value of key
 function create_index(collection, index_obj) {
@@ -6964,13 +7281,13 @@ function create_index(collection, index_obj) {
 } //End of create_index
 
 //get index of a collections
-router.post('/get_index', async(req, resp) => {
-        var collection = req.body.collection;
-        var indexArr = await get_index(collection);
-        resp.status(200).send({
-            message: indexArr
-        });
-    }) //End of get_index
+router.post('/get_index', async (req, resp) => {
+    var collection = req.body.collection;
+    var indexArr = await get_index(collection);
+    resp.status(200).send({
+        message: indexArr
+    });
+}) //End of get_index
 //get index of a collection
 function get_index(collection) {
     return new Promise((resolve) => {
@@ -6986,7 +7303,7 @@ function get_index(collection) {
     })
 } //End of get_index
 
-router.post('/testing', async(req, resp) => {
+router.post('/testing', async (req, resp) => {
     var respArr = await delete_log_msg(req.body.from_dt, req.body.end_dt, );
     resp.status(200).send({
         message: respArr
@@ -6999,7 +7316,10 @@ function delete_log_msg(from_dt, end_dt) {
             let start_date = new Date(from_dt);
             let end_date = new Date(end_dt);
             let where = {};
-            where['created_date'] = { '$gte': start_date, '$lte': end_date }
+            where['created_date'] = {
+                '$gte': start_date,
+                '$lte': end_date
+            }
             where['show_error_log'] = 'no';
 
 
@@ -7015,7 +7335,7 @@ function delete_log_msg(from_dt, end_dt) {
     })
 }
 
-router.post('/testing_count', async(req, resp) => {
+router.post('/testing_count', async (req, resp) => {
     var respArr = await count_log_msg(req.body.from_dt, req.body.end_dt, );
     resp.status(200).send({
         message: respArr
@@ -7030,7 +7350,10 @@ function count_log_msg(from_dt, end_dt) {
             let start_date = new Date(from_dt);
             let end_date = new Date(end_dt);
             let where = {};
-            where['created_date'] = { '$gte': start_date, '$lte': end_date }
+            where['created_date'] = {
+                '$gte': start_date,
+                '$lte': end_date
+            }
             where['show_error_log'] = 'no';
             db.collection('orders_history_log').count(where, (err, result) => {
                 if (err) {
@@ -7044,12 +7367,14 @@ function count_log_msg(from_dt, end_dt) {
 }
 
 
-function listUserBalancebyCoin(admin_id,symbol,exchange) {
+function listUserBalancebyCoin(admin_id, symbol, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
             let where = {};
-                where['user_id'] = { $in: [new ObjectID(admin_id), admin_id] };
-                where['coin_symbol'] = symbol;
+            where['user_id'] = {
+                $in: [new ObjectID(admin_id), admin_id]
+            };
+            where['coin_symbol'] = symbol;
             let collection = (exchange == 'binance') ? 'user_wallet' : 'user_wallet_' + exchange;
             db.collection(collection).find(where).toArray((err, result) => {
                 if (err) {
@@ -7063,38 +7388,38 @@ function listUserBalancebyCoin(admin_id,symbol,exchange) {
 } //End of listUserBalancebyCoin
 
 //function if bnb balance is enough 
-router.post('/is_bnb_balance_enough', async(req, resp) => {
+router.post('/is_bnb_balance_enough', async (req, resp) => {
     var admin_id = req.body.admin_id;
     var symbol = req.body.symbol;
     var exchange = req.body.exchange;
     //function for getting user balance 
-    var user_balance_arr = await listUserBalancebyCoin(admin_id,symbol,exchange);
+    var user_balance_arr = await listUserBalancebyCoin(admin_id, symbol, exchange);
 
     let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
-        //get market price for global coin
-    var price_arr  = await listCurrentMarketPrice(globalCoin, exchange);
-    var current_usd_price = 0 ;
-    if(price_arr.length >0){
+    //get market price for global coin
+    var price_arr = await listCurrentMarketPrice(globalCoin, exchange);
+    var current_usd_price = 0;
+    if (price_arr.length > 0) {
         price_arr = price_arr[0];
-        current_usd_price  = (typeof price_arr['price'] == 'undefined')?0:price_arr['price'];
+        current_usd_price = (typeof price_arr['price'] == 'undefined') ? 0 : price_arr['price'];
     }
     var user_bnb_balance = 0;
-    if(user_balance_arr.length >0){
+    if (user_balance_arr.length > 0) {
         user_balance_arr = user_balance_arr[0];
-        user_bnb_balance  = (typeof user_balance_arr['coin_balance'] == 'undefined')?0:user_balance_arr['coin_balance'];
+        user_bnb_balance = (typeof user_balance_arr['coin_balance'] == 'undefined') ? 0 : user_balance_arr['coin_balance'];
     }
 
-    var current_pr_arr  = await listCurrentMarketPrice('BNBBTC', exchange);
+    var current_pr_arr = await listCurrentMarketPrice('BNBBTC', exchange);
 
 
     var market_price = 0;
-    if(current_pr_arr.length >0){
+    if (current_pr_arr.length > 0) {
         current_pr_arr = current_pr_arr[0];
-        market_price  = (typeof current_pr_arr['price'] == 'undefined')?0:current_pr_arr['price'];
+        market_price = (typeof current_pr_arr['price'] == 'undefined') ? 0 : current_pr_arr['price'];
     }
 
 
-    let btn_in_usd = (user_bnb_balance*market_price) *current_usd_price;
+    let btn_in_usd = (user_bnb_balance * market_price) * current_usd_price;
     resp.status(200).send({
         message: btn_in_usd
     });
@@ -7103,26 +7428,26 @@ router.post('/is_bnb_balance_enough', async(req, resp) => {
 
 
 function create_orders_history_log(order_id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date) {
-return new Promise((resolve, reject) => {
-    conn.then((db) => {
+    return new Promise((resolve, reject) => {
+        conn.then((db) => {
 
-        var created_date = new Date(order_created_date);
-        var current_date = new Date('2019-12-27T11:04:21.912Z');
-        if (created_date > current_date) {
-                    
+            var created_date = new Date(order_created_date);
+            var current_date = new Date('2019-12-27T11:04:21.912Z');
+            if (created_date > current_date) {
+
                 var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
                 var d = new Date(order_created_date);
                 //create collection name on the base of date and mode
-                var date_mode_string = '_'+order_mode+'_'+d.getFullYear()+'_'+d.getMonth();
+                var date_mode_string = '_' + order_mode + '_' + d.getFullYear() + '_' + d.getMonth();
                 //create full name of collection
-                var full_collection_name = collectionName+date_mode_string;
-            }else{
+                var full_collection_name = collectionName + date_mode_string;
+            } else {
                 var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
             }
 
-            (async ()=>{
+            (async () => {
                 //we check of collection is already created or not
-                var collection_count  = await is_collection_already_exist(full_collection_name);
+                var collection_count = await is_collection_already_exist(full_collection_name);
 
                 let insertArr = {};
                 insertArr['order_id'] = new ObjectID(order_id);
@@ -7132,33 +7457,38 @@ return new Promise((resolve, reject) => {
                 insertArr['created_date'] = new Date();
 
                 db.collection(full_collection_name).insertOne(insertArr, (err, success) => {
-                        if (err) {
-                            reject(err)
+                    if (err) {
+                        reject(err)
+                    } else {
+                        if (collection_count == 0) {
+
+                            var date_index = {
+                                'created_date': -1
+                            };
+                            var dateIndexPromise = create_index(full_collection_name, date_index);
+                            dateIndexPromise.then((resolve) => {});
+
+                            var order_index = {
+                                'order_id': 1
+                            };
+                            var orderIndexPromise = create_index(full_collection_name, order_index);
+                            orderIndexPromise.then((resolve) => {});
+                            resolve(true);
                         } else {
-                            if(collection_count == 0){
-
-                            var date_index = {'created_date':-1};
-                            var dateIndexPromise =  create_index(full_collection_name, date_index);
-                                dateIndexPromise.then((resolve)=>{});
-
-                                var order_index = {'order_id':1};
-                                var orderIndexPromise =  create_index(full_collection_name, order_index);
-                                orderIndexPromise.then((resolve)=>{});
-                                resolve(true);
-                            }else{
-                                resolve(success.result)
-                            }
-
+                            resolve(success.result)
                         }
+
+                    }
                 })
 
             })();
         })
     })
 }
+
 function is_collection_already_exist(collName) {
-    return new Promise((resolve)=>{
-        conn.then((db)=>{
+    return new Promise((resolve) => {
+        conn.then((db) => {
             let where = {};
             db.collection(collName).countDocuments(where, (err, result) => {
                 if (err) {
@@ -7170,6 +7500,7 @@ function is_collection_already_exist(collName) {
         })
     })
 }
+
 function create_index(collection, index_obj) {
     return new Promise((resole) => {
         conn.then((db) => {
@@ -7184,7 +7515,7 @@ function create_index(collection, index_obj) {
     })
 }
 
-function get_buy_order(order_id, exchange){
+function get_buy_order(order_id, exchange) {
     return new Promise((resolve, reject) => {
         let filter = {};
         filter['_id'] = new ObjectID(order_id);
@@ -7194,9 +7525,9 @@ function get_buy_order(order_id, exchange){
                 if (err) {
                     resolve(err);
                 } else {
-                    if(result.length > 0){
+                    if (result.length > 0) {
                         resolve(result[0]);
-                    }else{
+                    } else {
                         resolve(false);
                     }
                 }
@@ -7205,11 +7536,13 @@ function get_buy_order(order_id, exchange){
     }) //End of Promise
 }
 
-async function get_sell_order(order_id, exchange){
+async function get_sell_order(order_id, exchange) {
     return new Promise(async (resolve, reject) => {
         let where = {};
-        where['buy_order_id'] = { $in: [order_id, new ObjectID(order_id)] };
-        conn.then(async  (db) => {
+        where['buy_order_id'] = {
+            $in: [order_id, new ObjectID(order_id)]
+        };
+        conn.then(async (db) => {
 
             //try to find sell_order in orders
             var collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
@@ -7289,11 +7622,13 @@ router.post('/get_user_wallet', async (req, resp) => {
 
 })
 
-function get_user_wallet(admin_id, exchange){
+function get_user_wallet(admin_id, exchange) {
     return new Promise((resolve) => {
         conn.then(async (db) => {
             let where = {};
-            where['user_id'] = { $in: [new ObjectID(admin_id), admin_id] };
+            where['user_id'] = {
+                $in: [new ObjectID(admin_id), admin_id]
+            };
             let collection = (exchange == 'binance') ? 'user_wallet' : 'user_wallet_' + exchange;
             let walletCoins = await db.collection(collection).find(where).toArray();
 
@@ -7312,7 +7647,9 @@ function get_user_wallet(admin_id, exchange){
                 })
             }
 
-            where['coin_symbol'] = { $in: symbols }
+            where['coin_symbol'] = {
+                $in: symbols
+            }
             let wallet2 = await db.collection(collection).find(where).toArray();
             resolve(wallet2);
         })
@@ -7327,24 +7664,24 @@ router.post('/pause_sold_order', (req, res) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
 
-        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == ''){
+        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == '') {
             res.send({
                 'status': false,
                 'message': 'order_id and exchange are required'
             });
-        }else{
+        } else {
             let filter = {
                 '_id': new ObjectID(order_id),
                 'is_sell_order': 'sold'
             }
-            
-            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange)
+
+            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
 
             let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
-            
+
             if (data1.length > 0) {
                 obj = data1[0];
-    
+
                 let set = {};
                 set['$set'] = {
                     'is_sell_order': 'pause'
@@ -7352,17 +7689,17 @@ router.post('/pause_sold_order', (req, res) => {
                 let where = {
                     '_id': obj._id
                 }
-    
+
                 let update = db.collection(sold_collection).updateOne(where, set);
-    
-                let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
+
+                let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_' + exchange)
                 let ins = await db.collection(pause_collection).insertOne(obj);
-                
+
                 res.send({
                     'status': true,
                     'message': 'Order paused successfully'
                 });
-            }else{
+            } else {
                 res.send({
                     'status': false,
                     'message': 'Something went wrong'
@@ -7381,23 +7718,23 @@ router.post('/pause_lth_order', (req, res) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
 
-        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == ''){
+        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == '') {
             res.send({
                 'status': false,
                 'message': 'order_id and exchange are required'
             });
-        }else{
+        } else {
             let filter = {
                 '_id': new ObjectID(order_id)
             }
-            
-            let collection = (exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange)
+
+            let collection = (exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange)
 
             let data1 = await db.collection(collection).find(filter).limit(1).toArray();
-            
+
             if (data1.length > 0) {
                 obj = data1[0];
-    
+
                 let set = {};
                 set['$set'] = {
                     'status': 'lth_pause'
@@ -7405,22 +7742,24 @@ router.post('/pause_lth_order', (req, res) => {
                 let where = {
                     '_id': obj._id
                 }
-    
+
                 let update = db.collection(collection).updateOne(where, set);
 
                 //Update Status in sell Orders also
                 let sell_order_collection = (exchange == 'binance' ? 'orders' : 'orders_' + exchange)
-                if (typeof obj.sell_order_id != 'undefined'){
-                    update = db.collection(sell_order_collection).updateOne({ '_id': new ObjectID(String(obj.sell_order_id))}, set);
+                if (typeof obj.sell_order_id != 'undefined') {
+                    update = db.collection(sell_order_collection).updateOne({
+                        '_id': new ObjectID(String(obj.sell_order_id))
+                    }, set);
                 }
                 // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
                 // let ins = await db.collection(pause_collection).insertOne(obj);
-                
+
                 res.send({
                     'status': true,
                     'message': 'Order paused successfully'
                 });
-            }else{
+            } else {
                 res.send({
                     'status': false,
                     'message': 'Something went wrong'
@@ -7469,24 +7808,24 @@ router.post('/resume_order', (req, res) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
 
-        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == ''){
+        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == '') {
             res.send({
                 'status': false,
                 'message': 'order_id and exchange are required'
             });
-        }else{
+        } else {
             let filter = {
                 '_id': new ObjectID(order_id),
                 'is_sell_order': 'pause'
             }
-            
-            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange)
+
+            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
 
             let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
-            
+
             if (data1.length > 0) {
                 obj = data1[0];
-    
+
                 let set = {};
                 set['$set'] = {
                     'is_sell_order': 'resume_pause'
@@ -7494,17 +7833,17 @@ router.post('/resume_order', (req, res) => {
                 let where = {
                     '_id': obj._id
                 }
-    
+
                 let update = db.collection(sold_collection).updateOne(where, set);
-    
+
                 // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
                 // let ins = await db.collection(pause_collection).insertOne(obj);
-                
+
                 res.send({
                     'status': true,
                     'message': 'Order resumed successfully'
                 });
-            }else{
+            } else {
                 res.send({
                     'status': false,
                     'message': 'Something went wrong'
@@ -7520,13 +7859,13 @@ router.post('/latest_user_activity', (req, res) => {
     conn.then(async (db) => {
         const user_id = req.body.user_id
 
-        if (typeof user_id == 'undefined' || user_id == ''){
+        if (typeof user_id == 'undefined' || user_id == '') {
             res.send({
                 'status': false,
                 'message': 'user_id is required'
             });
-        }else{
-            
+        } else {
+
             let exchanges = ['binance', 'bam']
 
             let latest_orders = {};
@@ -7534,18 +7873,29 @@ router.post('/latest_user_activity', (req, res) => {
             await Promise.all(exchanges.map(async (exchange) => {
 
                 let buy_order_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                let buy_order = await db.collection(buy_order_collection).aggregate([
-                    { $match: { 'admin_id': user_id } },
-                    { $sort: { 'created_date': -1 } },
-                    { $limit: 1 }
+                let buy_order = await db.collection(buy_order_collection).aggregate([{
+                        $match: {
+                            'admin_id': user_id
+                        }
+                    },
+                    {
+                        $sort: {
+                            'created_date': -1
+                        }
+                    },
+                    {
+                        $limit: 1
+                    }
                 ]).toArray();
 
                 latest_orders[exchange] = buy_order[0]
             }));
 
-            let user = await db.collection('users').aggregate([
-                { $match: { '_id': new ObjectID(user_id) } }
-            ]).toArray();
+            let user = await db.collection('users').aggregate([{
+                $match: {
+                    '_id': new ObjectID(user_id)
+                }
+            }]).toArray();
 
             let last_login = (user.length > 0 && typeof user[0].last_login_datetime != 'undefined' ? user[0].last_login_datetime : '');
 
@@ -7559,7 +7909,7 @@ router.post('/latest_user_activity', (req, res) => {
 })
 //End latest_user_activity
 
-async function send_notification(admin_id, type, priority, message, order_id = '', exchange = '', symbol = '', application_mode = '', interface = ''){
+async function send_notification(admin_id, type, priority, message, order_id = '', exchange = '', symbol = '', application_mode = '', interface = '') {
 
     /*
     // Notifications can only be of the following types and priorities
@@ -7578,36 +7928,36 @@ async function send_notification(admin_id, type, priority, message, order_id = '
     ]
     */
 
-    if (admin_id == '5c0912b7fc9aadaac61dd072'){
+    if (admin_id == '5c0912b7fc9aadaac61dd072') {
         // if(application_mode == 'live'){
-            var options = {
-                method: 'POST',
-                url: 'https://app.digiebot.com/admin/Api_services/send_notification',
-                headers: {
-                    'cache-control': 'no-cache',
-                    'Connection': 'keep-alive',
-                    'Accept-Encoding': 'gzip, deflate',
-                    'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-                    'Cache-Control': 'no-cache',
-                    'Accept': '*/*',
-                    'User-Agent': 'PostmanRuntime/7.20.1',
-                    'Content-Type': 'application/json'
-                },
-                json: {
-                    'admin_id': admin_id,
-                    'type': type,
-                    'priority': priority,
-                    'message': message,
-                    'order_id': order_id,
-                    'exchange': exchange,
-                    'symbol': symbol,
-                    'interface': interface
-                }
-            };
-            request(options, function (error, response, body) { });
+        var options = {
+            method: 'POST',
+            url: 'https://app.digiebot.com/admin/Api_services/send_notification',
+            headers: {
+                'cache-control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Accept-Encoding': 'gzip, deflate',
+                'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                'Cache-Control': 'no-cache',
+                'Accept': '*/*',
+                'User-Agent': 'PostmanRuntime/7.20.1',
+                'Content-Type': 'application/json'
+            },
+            json: {
+                'admin_id': admin_id,
+                'type': type,
+                'priority': priority,
+                'message': message,
+                'order_id': order_id,
+                'exchange': exchange,
+                'symbol': symbol,
+                'interface': interface
+            }
+        };
+        request(options, function (error, response, body) {});
         // }
     }
     return true;
-} 
+}
 
 module.exports = router;
