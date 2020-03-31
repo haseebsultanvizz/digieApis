@@ -7928,35 +7928,35 @@ async function send_notification(admin_id, type, priority, message, order_id = '
     ]
     */
 
-    if (admin_id == '5c0912b7fc9aadaac61dd072') {
-        // if(application_mode == 'live'){
-        var options = {
-            method: 'POST',
-            url: 'https://app.digiebot.com/admin/Api_services/send_notification',
-            headers: {
-                'cache-control': 'no-cache',
-                'Connection': 'keep-alive',
-                'Accept-Encoding': 'gzip, deflate',
-                'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-                'Cache-Control': 'no-cache',
-                'Accept': '*/*',
-                'User-Agent': 'PostmanRuntime/7.20.1',
-                'Content-Type': 'application/json'
-            },
-            json: {
-                'admin_id': admin_id,
-                'type': type,
-                'priority': priority,
-                'message': message,
-                'order_id': order_id,
-                'exchange': exchange,
-                'symbol': symbol,
-                'interface': interface
-            }
-        };
-        request(options, function (error, response, body) {});
-        // }
-    }
+    // if (admin_id == '5c0912b7fc9aadaac61dd072') {
+        if(application_mode == 'live'){
+            var options = {
+                method: 'POST',
+                url: 'https://app.digiebot.com/admin/Api_services/send_notification',
+                headers: {
+                    'cache-control': 'no-cache',
+                    'Connection': 'keep-alive',
+                    'Accept-Encoding': 'gzip, deflate',
+                    'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                    'Cache-Control': 'no-cache',
+                    'Accept': '*/*',
+                    'User-Agent': 'PostmanRuntime/7.20.1',
+                    'Content-Type': 'application/json'
+                },
+                json: {
+                    'admin_id': admin_id,
+                    'type': type,
+                    'priority': priority,
+                    'message': message,
+                    'order_id': order_id,
+                    'exchange': exchange,
+                    'symbol': symbol,
+                    'interface': interface
+                }
+            };
+            request(options, function (error, response, body) {});
+        }
+    // }
     return true;
 }
 
