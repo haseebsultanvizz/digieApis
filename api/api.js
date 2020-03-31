@@ -7960,4 +7960,53 @@ async function send_notification(admin_id, type, priority, message, order_id = '
     return true;
 }
 
+router.post('/update_user_balance', (req, res)=>{
+
+    let user_id = req.body.user_id
+
+    //Update Binance Balance
+    var options = {
+        method: 'GET',
+        url: 'https://app.digiebot.com/admin/Updatebalance/update_user_vallet/' + user_id,
+        headers: {
+            'cache-control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Accept-Encoding': 'gzip, deflate',
+            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control': 'no-cache',
+            'Accept': '*/*',
+            'User-Agent': 'PostmanRuntime/7.20.1',
+            'Content-Type': 'application/json'
+        },
+        json: {}
+    };
+    request(options, function (error, response, body) { });
+
+    //Update Bam Balance
+    var options = {
+        method: 'POST',
+        url: 'http://34.205.124.51:2607/apiEndPoint/updateBalance',
+        headers: {
+            'cache-control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Accept-Encoding': 'gzip, deflate',
+            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control': 'no-cache',
+            'Accept': '*/*',
+            'User-Agent': 'PostmanRuntime/7.20.1',
+            'Content-Type': 'application/json'
+        },
+        json: {
+            'user_id': user_id,
+        }
+    };
+    request(options, function (error, response, body) { });
+
+    res.send({
+        'status': true,
+        'message': 'balance updated'
+    });
+
+})
+
 module.exports = router;
