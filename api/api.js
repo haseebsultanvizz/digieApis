@@ -7999,7 +7999,7 @@ router.post('/update_user_balance', (req, res)=>{
             'Content-Type': 'application/json'
         },
         json: {
-            'user_id': user_id,
+            'user_id': user_id
         }
     };
     request(options, function (error, response, body) { });
@@ -8009,6 +8009,95 @@ router.post('/update_user_balance', (req, res)=>{
         'message': 'balance updated'
     });
 
+})
+
+router.post('/getNotifications', (req, res) => {
+    conn.then(async (db) => {
+
+        let admin_id = req.body.user_id
+        let skip = req.body.skip
+        let limit = req.body.limit
+        let load_more = req.body.load_more
+        let sort = {'_id': -1}
+
+        if (typeof admin_id == 'undefined' || admin_id == '') {
+            res.send({
+                'status': false,
+                'message': 'user_id is required'
+            });
+        } else {
+
+            var where = {
+                'admin_id': admin_id,
+            }
+
+            if (typeof load_more != 'undefined' && load_more != '' && load_more == 'yes'){
+                let MS_PER_MINUTE = 60000;
+                let durationInMinutes = 15; 
+                let end_date = new Date();
+                let start_date = new Date(new Date() - durationInMinutes * MS_PER_MINUTE);
+                where['created_date'] = {
+                    '$gte': start_date,
+                    '$lte': end_date
+                }
+                skip = 0
+                limit = 20
+            }
+
+            let notifications = await db.collection('notifications').find(where).sort(sort).skip(skip).limit(limit).toArray();
+
+            if (notifications.length > 0) {
+                res.send({
+                    'status': true,
+                    'notifications': notifications,
+                    'message': 'Notifications found successfully'
+                });
+            } else {
+                res.send({
+                    'status': false,
+                    'notifications': [],
+                    'message': 'Notifications not found.'
+                });
+            }
+        }
+
+    })
+})
+
+router.post('/readNotifications', (req, res) => {
+    conn.then(async (db) => {
+        let notification_ids = req.body.notification_ids
+        let admin_id = req.body.user_id
+
+        if (typeof admin_id == 'undefined' || admin_id == '') {
+            res.send({
+                'status': false,
+                'message': 'user_id is required'
+            });
+        } else {
+            if (typeof notification_ids != 'undefined' && notification_ids.length > 0){
+
+                let ids = [];
+                await Promise.all(notification_ids.map(id=>{ids.push(new ObjectID(id))}));
+                console.log(ids);
+
+                let set = {};
+                set['$set'] = {
+                    'status': '1'
+                };
+                let where = {
+                    '_id': {'$in': ids}
+                }
+                let update = db.collection('notifications').updateMany(where, set);
+            }
+        }
+
+        res.send({
+            'status': true,
+            'message': 'read success'
+        });
+
+    })
 })
 
 module.exports = router;
