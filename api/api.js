@@ -331,8 +331,9 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.leftmenu = userArr['leftmenu'];
                             respObj.user_role = userArr['user_role'];
                             respObj.special_role = userArr['special_role'];
-                            respObj.google_auth = userArr['google_auth'];
+                            // respObj.google_auth = userArr['google_auth'];
                             respObj.trigger_enable = userArr['trigger_enable'];
+                            respObj.is_global_user = 'yes';
                             resp.send(respObj);
 
                         } else {
@@ -404,6 +405,7 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.special_role = userArr['special_role'];
                                 respObj.google_auth = userArr['google_auth'];
                                 respObj.trigger_enable = userArr['trigger_enable'];
+                                respObj.is_global_user = 'no';
 
                                 //Update last login time
                                 db.collection('users').updateOne({
@@ -414,7 +416,7 @@ router.post('/authenticate', async function (req, resp, next) {
                                     }
                                 });
 
-                                send_notification(respObj.id, 'security_alerts', 'high', 'Your account is just logged In ', '', '', '', 'web')
+                                // send_notification(respObj.id, 'security_alerts', 'high', 'Your account is just logged In ', '', '', '', 'web')
 
                                 resp.send(respObj);
                             }
