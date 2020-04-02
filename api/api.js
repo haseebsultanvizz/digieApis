@@ -8031,7 +8031,7 @@ router.post('/getNotifications', (req, res) => {
                 'admin_id': admin_id,
             }
 
-            if (typeof load_more != 'undefined' && load_more != '' && load_more == 'yes'){
+            if (typeof load_more == 'undefined' || load_more == '' || load_more != 'yes'){
                 let MS_PER_MINUTE = 60000;
                 let durationInMinutes = 15; 
                 let end_date = new Date();
