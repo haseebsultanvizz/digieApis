@@ -7930,8 +7930,8 @@ async function send_notification(admin_id, type, priority, message, order_id = '
     ]
     */
 
-    if (admin_id == '5c0912b7fc9aadaac61dd072') {
-        // if(application_mode == 'live'){
+    // if (admin_id == '5c0912b7fc9aadaac61dd072') {
+        if(application_mode == 'live'){
             var options = {
                 method: 'POST',
                 url: 'https://app.digiebot.com/admin/Api_services/send_notification',
@@ -7957,8 +7957,8 @@ async function send_notification(admin_id, type, priority, message, order_id = '
                 }
             };
             request(options, function (error, response, body) {});
-        // }
-    }
+        }
+    // }
     return true;
 }
 
