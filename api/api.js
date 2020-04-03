@@ -8100,4 +8100,43 @@ router.post('/readNotifications', (req, res) => {
     })
 })
 
+router.post('/getSubscription', async (req, res) => {
+
+    let user_id = req.body.user_id
+    if (typeof user_id != 'undefined' && user_id != ''){
+        var options = {
+            method: 'POST',
+            url: 'https://users.digiebot.com/cronjob/GetUserSubscriptionDetails/',
+            headers: {
+                'cache-control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Accept-Encoding': 'gzip, deflate',
+                'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                'Cache-Control': 'no-cache',
+                'Accept': '*/*',
+                'User-Agent': 'PostmanRuntime/7.20.1',
+                'Content-Type': 'application/json'
+            },
+            json: {
+                'user_id': user_id,
+            }
+        };
+        request(options, function (error, response, body) {
+            if (error){
+                res.send({
+                    'status': false,
+                    'message': 'some thing went wrong'
+                });
+            }else{
+                res.send(body);    
+            }
+        })
+    }else{
+        res.status(400).send({
+            'status': false,
+            'message': 'user_id is required'
+        });
+    }
+})
+
 module.exports = router;
