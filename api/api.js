@@ -6560,6 +6560,7 @@ router.post('/update_user_info', function (req, res, next) {
                                     "message": "User info against user_id " + user_id + " was already updated. Try different values."
                                 })
                             }
+                            let updateWallet = update_user_balance(user_id)
                         })
                     } else {
                         res.status(404).send({
@@ -7123,6 +7124,8 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
                 conn.then(async (db) => {
                     await db.collection('bam_credentials').updateOne(where, set)
                 })
+
+                let updateWallet = update_user_balance(user_id)
 
                 let message = {};
                 message['status'] = 'success';
@@ -8225,7 +8228,18 @@ async function send_notification(admin_id, type, priority, message, order_id = '
 router.post('/update_user_balance', (req, res)=>{
 
     let user_id = req.body.user_id
+    if(typeof user_id != 'undefined' && user_id != ''){
+        let updateWallet = update_user_balance(user_id)
+    }
 
+    res.send({
+        'status': true,
+        'message': 'balance updated'
+    });
+
+})
+
+async function update_user_balance(user_id) {
     //Update Binance Balance
     var options = {
         method: 'GET',
@@ -8264,12 +8278,8 @@ router.post('/update_user_balance', (req, res)=>{
     };
     request(options, function (error, response, body) { });
 
-    res.send({
-        'status': true,
-        'message': 'balance updated'
-    });
-
-})
+    return true
+}
 
 router.post('/getNotifications', (req, res) => {
     conn.then(async (db) => {
