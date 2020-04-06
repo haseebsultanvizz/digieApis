@@ -3516,7 +3516,7 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
             upd_data['modified_date'] = new Date();
 
 
-            var collectionName = 'buy_orders_' + exchange;
+            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             var where = {};
             where['sell_order_id'] = {
                 $in: [new ObjectID(sell_order_id), sell_order_id]
@@ -3525,7 +3525,7 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
             updtPromise_1.then((callback) => {})
 
 
-            var collectionName = 'orders_' + exchange;
+            var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
             var where = {};
             var updOrder = {};
             updOrder['status'] = 'FILLED';
@@ -3964,7 +3964,7 @@ function listSoldOrders(primaryID, exchange) {
             if (primaryID != '') {
                 searchCriteria._id = primaryID;
             }
-            let collection = 'buy_orders_' + exchange;
+            let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             db.collection(collection).find(searchCriteria).limit(500).toArray((err, result) => {
                 if (err) {
                     resolve(err)
@@ -3983,7 +3983,7 @@ function copySoldOrders(order_id, exchange) {
         (async () => {
             let soldOrdersArr = await listSoldOrders(order_id, exchange);
             if (typeof soldOrdersArr != 'undefined' && soldOrdersArr.length > 0) {
-                let collection = 'sold_buy_orders_' + exchange;
+                let collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
                 for (let index in soldOrdersArr) {
                     let _id = soldOrdersArr[index]['_id'];
                     let searchQuery = {};
