@@ -8,6 +8,7 @@ var app = express();
 
 var auth = require('basic-auth')
 var compare = require('tsscmp')
+var googleAuthenticator = require('authenticator');
 
 //********************************************************* */
 //TODO: verify old password
@@ -484,6 +485,265 @@ router.post('/resetPassword', async function (req, resp) {
 
     })
 }) //End of resetPassword
+
+
+/****************** Google Authentication //Umer Abbas [5-4-20] *******************/
+//generateGoogleAuthSecret
+router.post('/generateGoogleAuthSecret', async function (req, res) {
+
+    var options = {
+        method: 'POST',
+        url: 'https://app.digiebot.com/admin/Api_calls/get_google_auth_secret',
+        headers: {
+            'cache-control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Accept-Encoding': 'gzip, deflate',
+            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control': 'no-cache',
+            'Accept': '*/*',
+            'User-Agent': 'PostmanRuntime/7.20.1',
+            'Content-Type': 'application/json'
+        },
+        json: {}
+    };
+    request(options, function (error, response, body) {
+        if (error) {
+            res.send({
+                'status': false,
+                'message': 'Something went wrong.'
+            });
+        } else {
+            if (body.status) {
+                res.send({
+                    status: true,
+                    data: { 'secret': body.data.secret },
+                    message: 'Secret generated successfully.'
+                });
+            } else {
+                res.send({
+                    status: false,
+                    message: 'Something went wrong.'
+                });
+            }
+        }
+    })
+
+
+    // resp.status(200).send({
+    //     status: true,
+    //     data: { 'secret': googleAuthenticator.generateKey() },
+    //     message: 'Secret generated successfully.'
+    // });
+}) //End generateGoogleAuthSecret
+
+//addGoogleAuth
+router.post('/addGoogleAuth', async function (req, resp) {
+    let admin_id = req.body.admin_id
+    let secret = req.body.secret
+    let saved = await setGoogleAuthSecret(admin_id, secret);
+    let user = await get_item_by_id('users', admin_id)
+    if (saved) {
+        let qr_code_uri = googleAuthenticator.generateTotpUri(secret, user['email_address'], "trading.digiebot.com", 'SHA1', 6, 60)
+        // let qr_code_uri = await urlencode(qr_code_uri);
+        resp.status(200).send({
+            status: true,
+            qr_code_uri: qr_code_uri,
+            message: 'Google Auth Enabled.'
+        });
+    } else {
+        resp.status(200).send({
+            status: false,
+            message: 'Something went wrong.'
+        });
+    }
+}) //End addGoogleAuth
+
+//enableGoogleAuth
+router.post('/enableGoogleAuth', async function (req, resp) {
+    let admin_id = req.body.admin_id
+    let token = req.body.token
+    // let verified = await verifyGoogleAuthToken(admin_id, token);
+
+    var options = {
+        method: 'POST',
+        url: 'https://app.digiebot.com/admin/Api_calls/very_google_auth_code',
+        headers: {
+            'cache-control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Accept-Encoding': 'gzip, deflate',
+            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control': 'no-cache',
+            'Accept': '*/*',
+            'User-Agent': 'PostmanRuntime/7.20.1',
+            'Content-Type': 'application/json'
+        },
+        json: {
+            'user_id': admin_id,
+            'code': token
+        }
+    };
+    request(options, async function (error, response, body) {
+        if (error) {
+            resp.send({
+                'status': false,
+                'message': 'Something went wrong.'
+            });
+        } else {
+            if (body.status) {
+                let secret = await getGoogleAuthSecret(admin_id)
+                let enable = setGoogleAuthSecret(admin_id, secret, true)
+                resp.status(200).send({
+                    status: true,
+                    message: 'Google Auth Enabled.'
+                });
+            } else {
+                resp.status(200).send({
+                    status: false,
+                    message: 'Google Auth Failed.'
+                });
+            }
+        }
+    })
+
+
+    // if (verified) {
+    //     let secret = await getGoogleAuthSecret(admin_id)
+    //     let enable = setGoogleAuthSecret(admin_id, secret, true)
+    //     resp.status(200).send({
+    //         status: true,
+    //         message: 'Google Auth Enabled.'
+    //     });
+    // } else {
+    //     resp.status(200).send({
+    //         status: false,
+    //         message: 'Google Auth Failed.'
+    //     });
+    // }
+}) //End enableGoogleAuth
+
+//disableGoogleAuth
+router.post('/disableGoogleAuth', async function (req, resp) {
+    let admin_id = req.body.admin_id
+    let verified = await setGoogleAuthSecret(admin_id, '', false)
+
+    let jsonResponse = {}
+    if (verified) {
+        jsonResponse['status'] = true,
+            jsonResponse['message'] = 'Google Auth Enabled.'
+    } else {
+        jsonResponse['status'] = false,
+            jsonResponse['message'] = 'Google Auth Failed.'
+    }
+    resp.status(200).send(jsonResponse)
+}) //End disableGoogleAuth
+
+//getGoogleAuthToken
+router.post('/getGoogleAuthToken', async function (req, resp) {
+    let admin_id = req.body.admin_id
+    let token = await generateGoogleAuthToken(admin_id);
+    if (typeof token != 'undefined' && token != '') {
+        resp.status(200).send({
+            status: true,
+            data: { 'token': token },
+            message: 'Token generated successfully.'
+        });
+    } else {
+        resp.status(200).send({
+            status: false,
+            message: 'Something went wrong.'
+        });
+    }
+}) //End getGoogleAuthToken
+
+//verifyGoogleAuthToken
+router.post('/verifyGoogleAuthToken', async function (req, resp) {
+    let admin_id = req.body.admin_id
+    let google_auth_token = req.body.google_auth_token
+    let verfied = await verifyGoogleAuthToken(admin_id, google_auth_token);
+    if (verfied) {
+        resp.status(200).send({
+            status: true,
+            message: 'Token verfied successfully.'
+        });
+    } else {
+        resp.status(200).send({
+            status: false,
+            message: 'Token failed.'
+        });
+    }
+}) //End getGoogleAuthToken
+
+//verifyGoogleAuthToken
+async function verifyGoogleAuthToken(admin_id, token) {
+    let googel_auth_secret = await getGoogleAuthSecret(admin_id);
+    let status = await googleAuthenticator.verifyToken(googel_auth_secret, token);
+    if (status != null) {
+        return true;
+    } else {
+        return false;
+    }
+}//End verifyGoogleAuthToken
+
+//generateGoogleAuthToken
+async function generateGoogleAuthToken(admin_id) {
+    let googel_auth_secret = await getGoogleAuthSecret(admin_id);
+    if (typeof googel_auth_secret != 'undefined' && googel_auth_secret != '') {
+        let token = await googleAuthenticator.generateToken(googel_auth_secret);
+        return token;
+    } else {
+        return '';
+    }
+}//End generateGoogleAuthToken
+
+//getGoogleAuthSecret
+async function getGoogleAuthSecret(admin_id) {
+    return new Promise((resolve) => {
+        let where = {
+            "_id": new ObjectID(admin_id)
+        };
+        conn.then((db) => {
+            db.collection("users").find(where).toArray((err, result) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    if (result.length > 0) {
+                        let code = (typeof result[0]['google_auth_code'] != 'undefined' ? result[0]['google_auth_code'] : '');
+                        resolve(code)
+                    } else {
+                        resolve('')
+                    }
+                }
+            })
+        })
+    })
+}//End getGoogleAuthSecret
+
+//setGoogleAuthSecret
+async function setGoogleAuthSecret(admin_id, secret, enable = false) {
+    return new Promise((resolve) => {
+        let where = {
+            "_id": new ObjectID(admin_id)
+        };
+        let set = {
+            '$set': {
+                'google_auth': ((typeof secret != 'undefined' && secret != '' && enable) ? 'yes' : 'no'),
+                'google_auth_code': ((typeof secret != 'undefined' && secret != '') ? secret : '')
+            }
+        }
+        conn.then((db) => {
+            db.collection("users").updateOne(where, set, async (err, result) => {
+                if (err) {
+                    console.log(err)
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
+            })
+        })
+    })
+}//End setGoogleAuthSecret
+
+/****************** End Google Authentication *******************/
 
 //Function call for dashboard data 
 router.post('/listDashboardData', async (req, resp) => {
@@ -8138,5 +8398,25 @@ router.post('/getSubscription', async (req, res) => {
         });
     }
 })
+
+
+//helper function to get a sigle document by id
+async function get_item_by_id(collection, _id) {
+    return new Promise((resolve) => {
+        let where = {
+            "_id": new ObjectID(_id)
+        };
+        conn.then((db) => {
+            db.collection("users").find(where).toArray((err, result) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    resolve(result[0]);
+                }
+            })
+        })
+    })
+}//End get_item_by_id
+
 
 module.exports = router;
