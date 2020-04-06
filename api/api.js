@@ -1251,7 +1251,13 @@ router.post('/createManualOrder', (req, resp) => {
             orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
         }
 
-        //set stop loss 
+        //set iniatial_trail_stop
+        if (typeof tempOrder['iniatial_trail_stop'] != 'undefined' && tempOrder['iniatial_trail_stop'] == 'yes' && !isNaN(parseFloat(tempOrder['iniatial_trail_stop']))) {
+            orders['iniatial_trail_stop'] = tempOrder['iniatial_trail_stop']
+        } else {
+            orders['iniatial_trail_stop'] = ''
+        }
+         
         if (typeof tempOrder['stop_loss'] != 'undefined' && tempOrder['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrder['loss_percentage']))) {
             orders['stop_loss'] = 'yes'
             orders['loss_percentage'] = parseFloat(parseFloat(tempOrder['loss_percentage']).toFixed(1))
@@ -1353,6 +1359,13 @@ router.post('/createManualOrder', (req, resp) => {
                     } else {
                         tempOrder['lth_functionality'] = 'no'
                         tempOrder['lth_profit'] = ''
+                    }
+
+                    //set iniatial_trail_stop
+                    if (typeof tempOrder['iniatial_trail_stop'] != 'undefined' && tempOrder['iniatial_trail_stop'] == 'yes' && !isNaN(parseFloat(tempOrder['iniatial_trail_stop']))) {
+                        tempOrder['iniatial_trail_stop'] = tempOrder['iniatial_trail_stop']
+                    } else {
+                        tempOrder['iniatial_trail_stop'] = ''
                     }
 
                     tempOrder['created_date'] = new Date();
