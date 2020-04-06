@@ -1252,7 +1252,7 @@ router.post('/createManualOrder', (req, resp) => {
         }
 
         //set iniatial_trail_stop
-        if (typeof tempOrder['iniatial_trail_stop'] != 'undefined' && tempOrder['iniatial_trail_stop'] == 'yes' && !isNaN(parseFloat(tempOrder['iniatial_trail_stop']))) {
+        if (typeof tempOrder['iniatial_trail_stop'] != 'undefined' && !isNaN(parseFloat(tempOrder['iniatial_trail_stop']))) {
             orders['iniatial_trail_stop'] = tempOrder['iniatial_trail_stop']
         } else {
             orders['iniatial_trail_stop'] = ''
@@ -1362,7 +1362,7 @@ router.post('/createManualOrder', (req, resp) => {
                     }
 
                     //set iniatial_trail_stop
-                    if (typeof tempOrder['iniatial_trail_stop'] != 'undefined' && tempOrder['iniatial_trail_stop'] == 'yes' && !isNaN(parseFloat(tempOrder['iniatial_trail_stop']))) {
+                    if (typeof tempOrder['iniatial_trail_stop'] != 'undefined' && !isNaN(parseFloat(tempOrder['iniatial_trail_stop']))) {
                         tempOrder['iniatial_trail_stop'] = tempOrder['iniatial_trail_stop']
                     } else {
                         tempOrder['iniatial_trail_stop'] = ''
