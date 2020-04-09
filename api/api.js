@@ -8146,46 +8146,85 @@ router.post('/latest_user_activity', (req, res) => {
 
             let exchanges = ['binance', 'bam']
 
-            let latest_orders = {};
+            let binancePromise = latest_user_activity(user_id, 'binance')
+            let bamPromise = latest_user_activity(user_id, 'bam')
+            
+            let myPrmises = await Promise.all([binancePromise, bamPromise]);
 
-            await Promise.all(exchanges.map(async (exchange) => {
-
-                let buy_order_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-                let buy_order = await db.collection(buy_order_collection).aggregate([{
-                        $match: {
-                            'admin_id': user_id
-                        }
-                    },
-                    {
-                        $sort: {
-                            'created_date': -1
-                        }
-                    },
-                    {
-                        $limit: 1
-                    }
-                ]).toArray();
-
-                latest_orders[exchange] = buy_order[0]
-            }));
-
+            let latest_activity = { ...myPrmises[0], ...myPrmises[1] }
+            
             let user = await db.collection('users').aggregate([{
                 $match: {
                     '_id': new ObjectID(user_id)
                 }
             }]).toArray();
-
-            let last_login = (user.length > 0 && typeof user[0].last_login_datetime != 'undefined' ? user[0].last_login_datetime : '');
+            
+            let last_login = (user.length > 0 && user[0].last_login_datetime != 'undefined' ? user[0].last_login_datetime : '');
 
             res.send({
                 'last_login': last_login,
-                'latest_orders': latest_orders,
+                'latest_orders': latest_activity,
             })
         }
 
     })
 })
 //End latest_user_activity
+
+async function latest_user_activity(user_id, exchange){
+    return new Promise(async (resolve) => {
+        conn.then(async (db) => {
+            let buy_order_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            let buy_order = db.collection(buy_order_collection).aggregate([{
+                $match: {
+                    'admin_id': user_id
+                }
+            },
+            {
+                $sort: {
+                    'created_date': -1
+                }
+            },
+            {
+                $limit: 1
+            }
+            ]).toArray();
+    
+            var filter = {
+                'admin_id': user_id,
+                'application_mode': 'live',
+                'status': 'FILLED'
+            }
+            var buy_order_count_promise = countCollection(buy_order_collection, filter);
+    
+            var filter = {
+                'admin_id': user_id,
+                'application_mode': 'live',
+                'parent_status': 'parent',
+                'status': {
+                    '$in': ['new', 'takingOrder']
+                }
+            }
+            var buy_parent_order_count_promise = countCollection(buy_order_collection, filter);
+    
+            let btc_balance_arr = listUserBalancebyCoin(user_id, 'BTC', exchange)
+            let usdt_balance_arr = listUserBalancebyCoin(user_id, 'USDT', exchange)
+    
+            let myPrmises = await Promise.all([buy_order, buy_order_count_promise, buy_parent_order_count_promise, btc_balance_arr, usdt_balance_arr]);
+    
+            let obj = {}
+            // let latesOrder = myPrmises[0]
+            obj[exchange] = myPrmises[0][0]
+            obj[exchange + '_buy_order_count'] = myPrmises[1]
+            obj[exchange + '_parent_order_count'] = myPrmises[2]
+            obj[exchange + '_BTC'] = Number(myPrmises[3][0]['coin_balance'])
+            obj[exchange + '_USDT'] = Number(myPrmises[4][0]['coin_balance'])
+            
+            resolve(obj)
+
+        })
+    })            
+}
 
 async function send_notification(admin_id, type, priority, message, order_id = '', exchange = '', symbol = '', application_mode = '', interface = '') {
 
@@ -8427,7 +8466,7 @@ router.post('/getSubscription', async (req, res) => {
 async function get_item_by_id(collection, _id) {
     return new Promise((resolve) => {
         let where = {
-            "_id": new ObjectID(_id)
+            "_id": new ObjectID(String(_id))
         };
         conn.then((db) => {
             db.collection("users").find(where).toArray((err, result) => {
