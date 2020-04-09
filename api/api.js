@@ -8448,8 +8448,29 @@ router.post('/getPrice', async (req, res) => {
     let symbol = req.body.symbol
     let exchange = req.body.exchange
     if (typeof symbol != 'undefined' && symbol != '' && typeof exchange != 'undefined' && exchange != ''){
-        let response = await getPrice(symbol, exchange)
-        res.send(response);
+
+        if(exchange == 'binance'){
+            let reqObj  = {
+                url: 'https://api.binance.com/api/v1/ticker/price?symbol=' + symbol
+            }
+            var myReq = new MyRequest(reqObj);
+            myReq.getResponse(function (body) {
+                res.send(body);
+            });
+        } else if (exchange == 'bam'){
+            let reqObj  = {
+                url: 'https://api.binance.us/api/v1/ticker/price?symbol=' + symbol
+            }
+            var myReq = new MyRequest(reqObj);
+            myReq.getResponse(function (body) {
+                res.send(body);
+            });
+        }else {
+            res.send({
+                status: false,
+                message: 'exchange not available'
+            });
+        }
     }else{
         res.send({
             status:false,
@@ -8464,7 +8485,7 @@ async function getPrice(symbol, exchange) {
     if (exchange == 'binance') {
         var options = {
             method: 'GET',
-            url: 'https://api.binance.co/api/v1/ticker/price?symbol=' + symbol,
+            url: 'https://api.binance.com/api/v1/ticker/price?symbol=' + symbol,
             headers: {}
         };
         request(options, function (error, response) {
@@ -8481,14 +8502,14 @@ async function getPrice(symbol, exchange) {
                     message: 'Data found successfully'
                 }
             }
-        });
+        })
     } else if (exchange == 'bam') {
         var options = {
             method: 'GET',
             url: 'https://api.binance.us/api/v1/ticker/price?symbol=' + symbol,
             headers: {}
         };
-        request(options, function (error, response) {
+        request(options, function (error, response, body) {
             if (error) {
                 return {
                     status: false,
@@ -8498,7 +8519,7 @@ async function getPrice(symbol, exchange) {
             } else {
                 return {
                     status: true,
-                    data: response.body,
+                    data: body,
                     message: 'Data found successfully'
                 }
             }
@@ -8511,5 +8532,36 @@ async function getPrice(symbol, exchange) {
     }
     
 }
+
+//custom request
+var MyRequest = function (obj) {
+
+    this.reqSettingObj = {
+        url:obj.url
+    }
+    if (typeof obj.method != 'undefined'){
+        this.reqSettingObj['method'] = obj.method
+    }
+    if (typeof obj.headers != 'undefined'){
+        this.reqSettingObj['headers'] = obj.headers
+    }
+    if (typeof obj.json != 'undefined'){
+        this.reqSettingObj['json'] = obj.json
+    }
+};
+MyRequest.prototype.getResponse = function (callback) {
+    request(this.reqSettingObj, function (error, response, body) {
+        if (error || response.statusCode != 200) {
+            console.log('Could not fetch the URL', error);
+        } else {
+            if (typeof body == 'string') {
+                callback(JSON.parse(body))
+            }else{
+                callback(body)
+            }
+        }
+    });
+};
+//End custom request
 
 module.exports = router;
