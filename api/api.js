@@ -8442,4 +8442,74 @@ async function get_item_by_id(collection, _id) {
 }//End get_item_by_id
 
 
+//getPrice
+router.post('/getPrice', async (req, res) => {
+
+    let symbol = req.body.symbol
+    let exchange = req.body.exchange
+    if (typeof symbol != 'undefined' && symbol != '' && typeof exchange != 'undefined' && exchange != ''){
+        let response = await getPrice(symbol, exchange)
+        res.send(response);
+    }else{
+        res.send({
+            status:false,
+            message:'symbol and exchange is required.'
+        });
+    }
+
+})//end getPrice
+
+async function getPrice(symbol, exchange) {
+
+    if (exchange == 'binance') {
+        var options = {
+            method: 'GET',
+            url: 'https://api.binance.co/api/v1/ticker/price?symbol=' + symbol,
+            headers: {}
+        };
+        request(options, function (error, response) {
+            if (error) {
+                return {
+                    status: false,
+                    error: error,
+                    message: 'Something went wrong'
+                }
+            } else {
+                return {
+                    status: true,
+                    data: response.body,
+                    message: 'Data found successfully'
+                }
+            }
+        });
+    } else if (exchange == 'bam') {
+        var options = {
+            method: 'GET',
+            url: 'https://api.binance.us/api/v1/ticker/price?symbol=' + symbol,
+            headers: {}
+        };
+        request(options, function (error, response) {
+            if (error) {
+                return {
+                    status: false,
+                    error: error,
+                    message: 'Something went wrong'
+                }
+            } else {
+                return {
+                    status: true,
+                    data: response.body,
+                    message: 'Data found successfully'
+                }
+            }
+        });
+    }else{
+        return {
+            status:false,
+            message: 'Something went wrong'
+        }
+    }
+    
+}
+
 module.exports = router;
