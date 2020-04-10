@@ -8160,7 +8160,8 @@ router.post('/latest_user_activity', (req, res) => {
             }]).toArray();
             
             let last_login = (user.length > 0 && user[0].last_login_datetime != 'undefined' ? user[0].last_login_datetime : '');
-
+            last_login = typeof last_login != 'undefined' ? last_login : ''
+            
             res.send({
                 'last_login': last_login,
                 'latest_orders': latest_activity,
@@ -8211,14 +8212,17 @@ async function latest_user_activity(user_id, exchange){
             let usdt_balance_arr = listUserBalancebyCoin(user_id, 'USDT', exchange)
     
             let myPrmises = await Promise.all([buy_order, buy_order_count_promise, buy_parent_order_count_promise, btc_balance_arr, usdt_balance_arr]);
-    
+            
+            // console.log(buy_order)
+            // console.log(myPrmises[0].length > 0)
+
             let obj = {}
-            // let latesOrder = myPrmises[0]
-            obj[exchange] = myPrmises[0][0]
+            obj[exchange] = myPrmises[0].length > 0 ? myPrmises[0][0] : {}
             obj[exchange + '_buy_order_count'] = myPrmises[1]
             obj[exchange + '_parent_order_count'] = myPrmises[2]
-            obj[exchange + '_BTC'] = Number(myPrmises[3][0]['coin_balance'])
-            obj[exchange + '_USDT'] = Number(myPrmises[4][0]['coin_balance'])
+            
+            obj[exchange + '_BTC'] = myPrmises[3].length > 0 ? Number(myPrmises[3][0]['coin_balance']) : 0
+            obj[exchange + '_USDT'] = myPrmises[4].length > 0 ? Number(myPrmises[4][0]['coin_balance']) : 0
             
             resolve(obj)
 
@@ -8544,5 +8548,104 @@ router.post('/getPrice', async (req, res) => {
     }
 
 })//end getPrice
+
+router.post('/buyCoin', (req, res) => {
+    conn.then(async (db) => {
+        let exchange = req.body.exchange
+        let application_mode = req.body.application_mode
+        let admin_id = req.body.admin_id
+        let symbol = req.body.symbol
+        let quantity = req.body.quantity
+        let buy_currency = req.body.buy_currency
+        let buy_now = req.body.buy_now
+        let status = 'new_coin_buy'
+        let auto_buy = req.body.auto_buy
+        let trigger_buy_usdt_worth = req.body.trigger_buy_usdt_worth
+        let auto_buy_usdt_worth = req.body.auto_buy_usdt_worth
+
+        if (typeof exchange == 'undefined' || exchange == '' || typeof application_mode == 'undefined' || application_mode == '' || typeof admin_id == 'undefined' || admin_id == '' || typeof symbol == 'undefined' || symbol == '' || typeof quantity == 'undefined' || quantity == '' || typeof buy_currency == 'undefined' || buy_currency == '' || typeof buy_now == 'undefined' || buy_now == '') {
+            res.send({
+                'status': false,
+                'message': 'exchange, application_mode, admin_id, symbol, quantity, buy_currency, buy_now are required fields.'
+            });
+        } else {
+
+            let collectionName = exchange == 'binance' ? 'auto_buy': 'auto_buy_'+exchange
+            
+            let buyArr = {
+                'application_mode' : application_mode,
+                'admin_id' : admin_id,
+                'symbol' : symbol,
+                'quantity' : quantity,
+                'buy_currency' : buy_currency,
+                'buy_now' : buy_now,
+                'status' : status,
+                'auto_buy' : auto_buy,
+                'trigger_buy_usdt_worth' : trigger_buy_usdt_worth,
+                'auto_buy_usdt_worth' : auto_buy_usdt_worth
+            }
+
+            let action_complete = false
+
+            if (buyArr['buy_now'] == 'yes'){
+                //TODO:Send buy now request
+
+                action_complete = true
+            }
+
+            if (typeof buyArr['auto_buy'] != 'undefined' && buyArr['auto_buy'] == 'yes') {
+
+                //TODO: if already exit update the entry otherwise create new entry
+                var where = {
+                    'admin_id': admin_id,
+                    'symbol': symbol,
+                    'application_mode': application_mode,
+                }
+                var set = {};
+                set['$set'] = buyArr
+                var upsert = {
+                    upsert: true
+                }
+                //Update sell order collection
+                db.collection(collectionName).updateOne(where, set, upsert, async (err, result) => {
+
+                })
+
+                action_complete = true
+            }
+
+            let filter = {
+                '_id': new ObjectID(order_id),
+                'is_sell_order': 'pause'
+            }
+
+            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
+
+            let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
+
+            // let ins = await db.collection(pause_collection).insertOne(obj);
+            
+        }
+
+    })
+})
+//End buyCoin
+
+//autoBuyNow
+async function autoBuyNow(buyArr, exchange) {
+    return new Promise((resolve) => {
+        conn.then((db) => {
+            let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+            db.collection(collectionName).insertOne(buyArr, async (err, result) => {
+                if (err) {
+                    console.log(err)
+                    resolve(false)
+                } else {
+                    resolve(true)
+                }
+            })
+        })
+    })
+}//End autoBuyNow
 
 module.exports = router;
