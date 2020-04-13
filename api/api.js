@@ -1194,10 +1194,13 @@ router.post('/listAutoOrderDetail', async (req, resp) => {
 router.post('/listmarketPriceMinNotation', async (req, resp) => {
     //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
     // var marketMinNotationPromise = marketMinNotation(req.body.coin);
-    var marketMinNotationPromise = marketMinNotation_with_step_size(req.body.coin);
-    let exchange = req.body.exchange;
+    
     let coin = req.body.coin;
+    let exchange = req.body.exchange;
+
+    var marketMinNotationPromise = marketMinNotation_with_step_size(coin, exchange);
     var currentMarketPricePromise = listCurrentMarketPrice(coin, exchange);
+    
     var promisesResult = await Promise.all([marketMinNotationPromise, currentMarketPricePromise]);
     var responseReslt = {};
     responseReslt['marketMinNotation'] = promisesResult[0].min_notation;
@@ -1751,12 +1754,14 @@ function marketMinNotation(symbol) {
 } //End of marketMinNotation
 
 //function which have all prerequisite for buying or selling any order, returns step size with min notation 
-function marketMinNotation_with_step_size(symbol) {
+function marketMinNotation_with_step_size(symbol, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
+
+            let collectionName = exchange == 'binance' || exchange == 'bam' ? 'market_min_notation' : 'market_min_notation_'+exchange;
             let where = {};
             where.symbol = symbol;
-            db.collection('market_min_notation').find(where).toArray((err, result) => {
+            db.collection(collectionName).find(where).toArray((err, result) => {
                 if (err) {
                     resolve(err);
                 } else {
