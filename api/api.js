@@ -8484,7 +8484,6 @@ async function get_item_by_id(collection, _id) {
     })
 }//End get_item_by_id
 
-
 //getPrice
 router.post('/getPrice', async (req, res) => {
 
@@ -8551,88 +8550,116 @@ router.post('/getPrice', async (req, res) => {
 
 router.post('/buyCoin', (req, res) => {
     conn.then(async (db) => {
-        let exchange = req.body.exchange
-        let application_mode = req.body.application_mode
-        let admin_id = req.body.admin_id
-        let symbol = req.body.symbol
-        let quantity = req.body.quantity
-        let buy_currency = req.body.buy_currency
-        let buy_now = req.body.buy_now
-        let status = 'new_coin_buy'
-        let auto_buy = req.body.auto_buy
-        let trigger_buy_usdt_worth = req.body.trigger_buy_usdt_worth
-        let auto_buy_usdt_worth = req.body.auto_buy_usdt_worth
+        let data = req.body.data
+        let exchange = data.exchange
+        let application_mode = data.application_mode
+        let admin_id = data.admin_id
+        let symbol = data.symbol
+        let quantity = data.quantity
+        let buy_currency = data.buy_currency
+        let buy_now = data.buy_now
+        let auto_buy = data.auto_buy
+        let trigger_buy_usdt_worth = data.trigger_buy_usdt_worth
+        let auto_buy_usdt_worth = data.auto_buy_usdt_worth
 
-        if (typeof exchange == 'undefined' || exchange == '' || typeof application_mode == 'undefined' || application_mode == '' || typeof admin_id == 'undefined' || admin_id == '' || typeof symbol == 'undefined' || symbol == '' || typeof quantity == 'undefined' || quantity == '' || typeof buy_currency == 'undefined' || buy_currency == '' || typeof buy_now == 'undefined' || buy_now == '') {
+        let created_date = new Date()
+        let updated_date = new Date()
+
+        if (typeof exchange == 'undefined' || exchange == '' 
+        || typeof application_mode == 'undefined' || application_mode == '' 
+        || typeof admin_id == 'undefined' || admin_id == '' 
+        || typeof symbol == 'undefined' || symbol == '' 
+        || typeof buy_currency == 'undefined' || buy_currency == '' 
+        || typeof buy_now == 'undefined' || buy_now == ''
+        || typeof auto_buy == 'undefined' || auto_buy == '') {
             res.send({
                 'status': false,
-                'message': 'exchange, application_mode, admin_id, symbol, quantity, buy_currency, buy_now are required fields.'
+                'message': 'exchange, application_mode, admin_id, symbol, buy_currency, buy_now, auto_buy are required fields.'
             });
         } else {
 
-            let collectionName = exchange == 'binance' ? 'auto_buy': 'auto_buy_'+exchange
-            
-            let buyArr = {
-                'application_mode' : application_mode,
-                'admin_id' : admin_id,
-                'symbol' : symbol,
-                'quantity' : quantity,
-                'buy_currency' : buy_currency,
-                'buy_now' : buy_now,
-                'status' : status,
-                'auto_buy' : auto_buy,
-                'trigger_buy_usdt_worth' : trigger_buy_usdt_worth,
-                'auto_buy_usdt_worth' : auto_buy_usdt_worth
-            }
-
-            let action_complete = false
-
-            if (buyArr['buy_now'] == 'yes'){
-                //TODO:Send buy now request
-
-                action_complete = true
-            }
-
-            if (typeof buyArr['auto_buy'] != 'undefined' && buyArr['auto_buy'] == 'yes') {
-
-                //TODO: if already exit update the entry otherwise create new entry
-                var where = {
+            //Check if AutoBuy enbled
+            if (auto_buy == 'yes'){
+                //Set the coin auto buy and hit cronjob now for this user
+                let buyArr = {
+                    'application_mode': application_mode,
                     'admin_id': admin_id,
                     'symbol': symbol,
-                    'application_mode': application_mode,
+                    'buy_currency': buy_currency,
+                    // 'quantity': quantity,
+                    // 'buy_now': buy_now,
+                    // 'status': status,
+                    'auto_buy': auto_buy,
+                    'trigger_buy_usdt_worth': trigger_buy_usdt_worth,
+                    'auto_buy_usdt_worth': auto_buy_usdt_worth,
+                    'created_date': created_date,
+                    'updated_date': updated_date,
                 }
-                var set = {};
-                set['$set'] = buyArr
-                var upsert = {
-                    upsert: true
+
+                //Update or Insert CoinAutoBuy settings 
+                if (await coinAutoBuy(buyArr, exchange)){
+                    hit_auto_buy_cron(admin_id)
+                    res.send({
+                        'status': true,
+                        'message': 'Auto Buy settings saved successfully.'
+                    });
+                }else{
+                    res.send({
+                        'status': false,
+                        'message': 'Something went wrong while saving Auto Buy settings.'
+                    });
                 }
-                //Update sell order collection
-                db.collection(collectionName).updateOne(where, set, upsert, async (err, result) => {
 
-                })
+            }else{
 
-                action_complete = true
+                //Check if BuyNow enabled
+                if (buy_now == 'yes') {
+                    //Send buy now call fro this quantity for this user
+
+                    if (typeof quantity == 'undefined' || quantity == ''){
+                        res.send({
+                            'status': false,
+                            'message': 'Quantity is required.'
+                        });
+                    }else{
+                        let buyArr = {
+                            'application_mode': application_mode,
+                            'admin_id': admin_id,
+                            'symbol': symbol,
+                            'buy_currency': buy_currency,
+                            'quantity': quantity,
+                            'buy_now': buy_now,
+                            'status': 'new_bnb_autoBuy',
+                            'created_date': created_date,
+                        }
+                        //TODO: send for buyNow
+                        if(await coinBuyNow(buyArr, exchange)){
+                            res.send({
+                                'status': true,
+                                'message': 'Buy now request sent successfully.'
+                            });
+                        }else{
+                            res.send({
+                                'status': false,
+                                'message': 'Something went wrong while sending Buy now request.'
+                            });
+                        }
+                    }
+
+                }else{
+                    res.send({
+                        'status': false,
+                        'message': 'Something went wrong please recheck request data.'
+                    });
+                }
             }
-
-            let filter = {
-                '_id': new ObjectID(order_id),
-                'is_sell_order': 'pause'
-            }
-
-            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
-
-            let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
-
-            // let ins = await db.collection(pause_collection).insertOne(obj);
-            
         }
 
     })
-})
-//End buyCoin
+})//End buyCoin
 
-//autoBuyNow
-async function autoBuyNow(buyArr, exchange) {
+//coinBuyNow
+async function coinBuyNow(buyArr, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
             let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
@@ -8646,6 +8673,74 @@ async function autoBuyNow(buyArr, exchange) {
             })
         })
     })
-}//End autoBuyNow
+}//End coinBuyNow
+
+//coinAutoBuy
+async function coinAutoBuy(buyArr, exchange) {
+    return new Promise((resolve) => {
+        conn.then((db) => {
+            var where = {
+                'admin_id': buyArr.admin_id,
+                'symbol': buyArr.symbol,
+                'application_mode': buyArr.application_mode,
+            }
+            let collectionName = exchange == 'binance' ? 'auto_buy' : 'auto_buy_'+exchange
+            db.collection(collectionName).find(where).toArray(async (err, data) => {
+                if (err) {
+                    resolve(false)
+                } else {
+                    //TODO: if already exit update the entry otherwise create new entry
+                    if (data.length > 0) {
+                        delete buyArr['created_date']
+                        var set = {};
+                        set['$set'] = buyArr
+
+                        //Update AutoBuy setting  
+                        db.collection(collectionName).updateOne(where, set, async (err, result) => {
+                            if (err) {
+                                console.log(err)
+                                resolve(false)
+                            } else {
+                                resolve(true)
+                            }
+                        })
+                    }else{
+                        //Insert AutoBuy setting
+                        db.collection(collectionName).insertOne(buyArr, async (err, result) => {
+                            if (err) {
+                                console.log(err)
+                                resolve(false)
+                            } else {
+                                resolve(true)
+                            }
+                        })
+                    }
+                }
+            })
+        })
+    })
+}//End coinAutoBuy
+
+//hit_auto_buy_cron
+async function hit_auto_buy_cron(user_id) {
+    var options = {
+        method: 'GET',
+        url: 'https://app.digiebot.com/admin/api_calls/auto_buy_bnb/' + user_id,
+        headers: {
+            'cache-control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Accept-Encoding': 'gzip, deflate',
+            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control': 'no-cache',
+            'Accept': '*/*',
+            'User-Agent': 'PostmanRuntime/7.20.1',
+            'Content-Type': 'application/json'
+        },
+        json: {}
+    };
+    request(options, function (error, response, body) { });
+
+    return true
+}//end hit_auto_buy_cron(user_id)
 
 module.exports = router;
