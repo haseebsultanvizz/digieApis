@@ -8762,6 +8762,8 @@ async function hit_auto_buy_cron(user_id) {
     return true
 }//end hit_auto_buy_cron(user_id)
 
+
+/* CRON SCRIPT for update_qty_from_usd_worth */
 router.post('/update_qty_from_usd_worth', (req, res) => {
     let user_id = req.body.user_id
     let exchange = req.body.exchange
@@ -8782,37 +8784,49 @@ router.post('/update_qty_from_usd_worth', (req, res) => {
             if (err) {
                 console.log(err)
             } else {
-                // let user_ids = [];
-                // let usernames = [];
-                // await Promise.all(result.map(user => { user_ids.push({ 'user_id': String(user._id), 'username': user.username}); }))
 
-                result.forEach(async user => {
-                    let curr_user_id = String(user._id)
-                    console.log('==================================   ', user.username)
+                // console.log('total users: ', result.length)
+
+                let user_ids = [];
+                await Promise.all(result.map(user => { user_ids.push(String(user._id)); }))
+
+                if (user_ids.length > 0){
 
                     if (typeof exchange != 'undefined' && exchange != '' && typeof symbol != 'undefined' && symbol != '') {
-                        
+    
                         // for only this exchange and this symbol only
-                        await update_qty_from_usd_worth(curr_user_id, exchange, symbol)
-
-                    } else if (typeof exchange != 'undefined' && exchange != ''){
-
+                        await update_qty_from_usd_worth(user_ids, exchange, symbol)
+                        
+                        // console.log('for only this exchange and this symbol only')
+    
+                    } else if (typeof exchange != 'undefined' && exchange != '') {
+    
                         // for only this exchange but all it's symbols
-                        await update_qty_from_usd_worth(curr_user_id, exchange)
-
-                    } else if (typeof symbol != 'undefined' && symbol != ''){
-        
+                        await update_qty_from_usd_worth(user_ids, exchange)
+                        
+                        // console.log('for only this exchange but all its symbol')
+                        
+                    } else if (typeof symbol != 'undefined' && symbol != '') {
+    
                         // for all exchange but only this symbol
-                        await update_qty_from_usd_worth(curr_user_id, 'binance', symbol)
-                        await update_qty_from_usd_worth(curr_user_id, 'bam', symbol)
-
-                    }else{
-
+                        await update_qty_from_usd_worth(user_ids, 'binance', symbol)
+                        await update_qty_from_usd_worth(user_ids, 'bam', symbol)
+    
+                        // console.log('for all exchange but only this symbol')
+                        
+                    } else {
+    
                         // for all exchange and all coins
-                        await update_qty_from_usd_worth(curr_user_id, 'binance')
-                        await update_qty_from_usd_worth(curr_user_id, 'bam')
+                        await update_qty_from_usd_worth(user_ids, 'binance')
+                        await update_qty_from_usd_worth(user_ids, 'bam')
+    
+                        // console.log('for all exchange and all coins')
+                        
                     }
-                });
+
+                }
+
+                console.log('****************** Script End update_qty_from_usd_worth ********************')
 
             }
         })
@@ -8825,18 +8839,23 @@ router.post('/update_qty_from_usd_worth', (req, res) => {
 })//End update_qty_from_usd_worth
 
 //update_qty_from_usd_worth
-async function update_qty_from_usd_worth(user_id, exchange, symbol='') {
+async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
 
-    console.log('update_qty_from_usd_worth')
+    // console.log('update_qty_from_usd_worth')
 
     return new Promise(async (resolve) => {
         conn.then(async (db) => {
+            
+            //modified_date 5 days before
+            let orders_modified_date = new Date(new Date().setDate(new Date().getDate() - 5))
             var where = {
-                'admin_id': user_id,
-                'application_mode': 'test',
+                'admin_id': {'$in': user_ids},
+                'application_mode': 'live',
                 'parent_status': 'parent',
+                'pause_status': 'play',
                 'status': {'$in': ['new', 'takingOrder']},
                 'usd_worth': {'$exists': true},
+                'modified_date': { '$lte': orders_modified_date }
             }
             if (typeof symbol != 'undefined' && symbol != ''){
                 where['symbol'] = symbol
@@ -8855,13 +8874,16 @@ async function update_qty_from_usd_worth(user_id, exchange, symbol='') {
                         'orders': { '$push': '$$ROOT' } 
                     }
                 },
+                {
+                    '$limit': 5
+                }
             ], { allowDiskUse: true }).toArray()
 
             let parentArrLen = parent_orders.length
             for (var i = 0; i < parentArrLen; i++) {
                 let item = parent_orders[i]
                 
-                console.log(item['_id']['symbol'], ' total orders : ', item.orders.length)
+                // console.log(collectionName, item['_id']['symbol'], ' total orders : ', item.orders.length)
                 // console.log(item.orders)
 
                 let promise1 = listmarketPriceMinNotation('BTCUSDT', exchange)
@@ -8870,10 +8892,6 @@ async function update_qty_from_usd_worth(user_id, exchange, symbol='') {
                 let myPromises = await Promise.all([promise1, promise2])
                 let BTCUSDT_Data = myPromises[0]
                 let symbol_Data = myPromises[1]
-
-                // console.log(item['_id']['symbol'])
-                // console.log(BTCUSDT_Data)
-                // console.log(symbol_Data)
 
                 let BTCUSDTPRICE = BTCUSDT_Data['currentmarketPrice'][0]['price']
                 let currentMarketPrice = symbol_Data['currentmarketPrice'][0]['price']
@@ -8909,34 +8927,84 @@ async function update_qty_from_usd_worth(user_id, exchange, symbol='') {
                 for (var j = 0; j < ordersArrLen; j++) {
                     let order = item['orders'][j]
 
+                    // TODO: set vars to create log
+                    let show_hide_log = 'yes';
+                    let type = 'usd_worth_qty_update';
+                    let order_mode = order['application_mode'];
+                    let order_created_date = order['created_date'];
+
                     //TODO: update individual order
                     usdWorthQty = order['usd_worth'] * oneUsdWorthQty
                     quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
-                    if (quantity < minReqQty) {
-                        //do nothing
-                        console.log('minQty error :  ', quantity, 'new calculated', ' < ', minReqQty, '(min required)', '   old Qty ===== ', order['quantity'])
-                    } else {
-                        //update quantity
-                        updateFields = {
-                            'quantity': quantity,
-                            'modified_date': new Date()
-                        }
-                        let where22 = { '_id': order['_id'] }
-                        console.log('old Qty ===== ', order['quantity'])
-                        console.log('updatedQty ===== ', quantity)
-                        console.log('order_id ', order['_id'])
-                        // let updatePromise = updateOne(where22, updateFields, collectionName)
 
-                        let show_hide_log = 'yes';
-                        let type = 'usd_worth_qty_update';
-                        let order_mode = order['application_mode'];
-                        let order_created_date = order['created_date'];
-                        let log_msg = 'Quantity was updated by usd worth with the change in market price from script'
-                        //Save LOG
-                        // let promiseLog = create_orders_history_log(order['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-                        // promiseLog.then((callback) => { })
+                    //only move forward if quantity is not same
+                    if (quantity != order['quantity']){
+
+                        //TODO: check conditions for quantity update
+                        //Condition 1: quantity drop / raise is more or equal to 5% 
+
+                        let qtyDiff = quantity - order['quantity']
+                        qtyDiff = Math.abs(qtyDiff)
+                        let qtyDiffPercentage = (qtyDiff * 100 / order['quantity']);
+                        qtyDiffPercentage = Math.abs(qtyDiffPercentage)
+                        qtyDiffPercentage = parseFloat(parseFloat(qtyDiffPercentage).toFixed(0))
                         
+                        if (qtyDiffPercentage >= 5){
+
+                            // console.log('qtyDiffPercentage  ', qtyDiffPercentage)
+
+                            if (quantity < minReqQty) {
+
+                                //Condition 2: if trade updated quantity is less than 115% of the minReqQty then pause this order and save log 
+                                //calculate 115% of minReqQty
+                                let mrqPercentage = 115
+                                let mrqPercentageValue = 0
+                                mrqPercentageValue = (mrqPercentage * minReqQty) / 100
+                                let mrqCheckQty = minReqQty - Math.abs(minReqQty - mrqPercentageValue)
+                                mrqCheckQty = parseFloat(mrqCheckQty.toFixed(toFixedNum))
+                                
+                                if (quantity <= mrqCheckQty){
+                                    // console.log(quantity , '//////////////////////' , mrqCheckQty)
+
+                                    // console.log('minQty error :  ', quantity, 'new calculated', ' < ', minReqQty, '(min required)', '   old Qty ===== ', order['quantity'])
+
+                                    //Pause parent
+                                    updateFields = {
+                                        'pause_status': 'pause',
+                                        'modified_date': new Date()
+                                    }
+                                    let where22 = { '_id': order['_id'] }
+                                    let updatePromise = updateOne(where22, updateFields, collectionName)
+
+                                    let log_msg = 'Parent paused becuase min quantity is more required.'
+                                    //Save LOG
+                                    let promiseLog = create_orders_history_log(order['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                                    promiseLog.then((callback) => { })
+                                }
+        
+                            } else {
+                                //update quantity
+                                updateFields = {
+                                    'quantity': quantity,
+                                    'modified_date': new Date()
+                                }
+                                let where22 = { '_id': order['_id'] }
+                                let updatePromise = updateOne(where22, updateFields, collectionName)
+                                // console.log('old Qty ===== ', order['quantity'])
+                                // console.log('updatedQty ===== ', quantity)
+                                // console.log('order_id ', order['_id'], order['symbol'], collectionName, '    ||    old Qty ===== ', order['quantity'], '   ||   updatedQty ===== ', quantity, ' || USD WORTH :', order['usd_worth'])
+                                
+                                let log_msg = 'Quantity was updated from (' + order['quantity']+') to ('+quantity+') by usd worth calculation with the change in market price from script'
+                                //Save LOG
+                                let promiseLog = create_orders_history_log(order['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                                promiseLog.then((callback) => { })
+                            }
+
+                        }
+
+
                     }
+
                 }
             }
 
@@ -8945,5 +9013,6 @@ async function update_qty_from_usd_worth(user_id, exchange, symbol='') {
         })
     })
 }//end update_qty_from_usd_worth(user_id)
+/* END CRON SCRIPT for update_qty_from_usd_worth */
 
 module.exports = router;
