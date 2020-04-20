@@ -7022,6 +7022,41 @@ router.post('/saveBamCredentials', (req, resp) => {
 
 }) //End of saveBamCredentials
 
+//save kraken credentials from setting component
+router.post('/saveKrakenCredentials', (req, resp) => {
+    var user_id = req.body.user_id;
+    var api_key = req.body.api_key;
+    var api_secret = req.body.api_secret;
+
+    conn.then((db) => {
+        let insertArr = {};
+        insertArr['user_id'] = user_id;
+        insertArr['api_key'] = api_key;
+        insertArr['api_secret'] = api_secret;
+        let set = {};
+        set['$set'] = insertArr;
+        let where = {};
+        where['user_id'] = user_id; {
+            upsert: true
+        }
+        let upsert = {
+            upsert: true
+        };
+        db.collection('kraken_credentials').updateOne(where, set, upsert, (err, result) => {
+            if (err) {
+                console.log(err);
+            } else {
+                let validation = validate_kraken_credentials(api_key, api_secret, user_id)
+                resp.status(200).send({
+                    "success": "true",
+                    "message": "Credentials Updated Successfully"
+                })
+            }
+        })
+    })
+
+
+}) //End of saveKrakenCredentials
 
 router.post('/getBamCredentials', async (req, resp) => {
     var user_id = req.body.user_id;
@@ -7047,6 +7082,31 @@ function getBamCredentials(user_id) {
         })
     })
 } //End of getBamCredentials
+
+router.post('/getKrakenCredentials', async (req, resp) => {
+    var user_id = req.body.user_id;
+    var krakenCredentials = await getKrakenCredentials(user_id);
+    resp.status(200).send({
+        response: krakenCredentials
+    })
+
+}) //End of getKrakenCredentials
+
+function getKrakenCredentials(user_id) {
+    return new Promise((resolve, reject) => {
+        conn.then((db) => {
+            let where = {};
+            where['user_id'] = user_id;
+            db.collection('kraken_credentials').find(where).toArray((err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            })
+        })
+    })
+} //End of getKrakenCredentials
 
 //post call for calculating average profit for order listing
 router.post('/calculate_average_profit', async (req, resp) => {
@@ -7167,6 +7227,76 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
         });
     })
 } //End of validate_bam_credentials
+
+//post call for validating kraken credentials
+router.post('/validate_kraken_credentials', async (req, resp) => {
+    let APIKEY = req.body.APIKEY;
+    let APISECRET = req.body.APISECRET;
+    var credentials = await validate_kraken_credentials(APIKEY, APISECRET);
+    resp.status(200).send({
+        message: credentials
+    });
+}) //End of validate_kraken_credentials
+
+function validate_kraken_credentials(APIKEY, APISECRET, user_id = '') {
+    return new Promise((resolve, reject) => {
+
+        const KrakenClient = require('kraken-api');
+        const kraken = new KrakenClient(APIKEY, APISECRET);
+
+        kraken.api('Balance', function (error, balances) {
+            if (error) {
+                //invalid Credentials
+                let where = {
+                    'api_key': APIKEY,
+                    'api_secret': APISECRET
+                }
+                if (user_id != '') {
+                    where['user_id'] = user_id
+                }
+                let set = {
+                    '$set': {
+                        'status': 'credentials_error'
+                    }
+                }
+                conn.then(async (db) => {
+                    await db.collection('kraken_credentials').updateOne(where, set)
+                })
+
+                let message = {};
+                message['status'] = 'error';
+                message['message'] = error.body;
+                resolve(message);
+            } else {
+
+                //valid Credentials
+                let where = {
+                    'api_key': APIKEY,
+                    'api_secret': APISECRET
+                }
+                if (user_id != '') {
+                    where['user_id'] = user_id
+                }
+                let set = {
+                    '$set': {
+                        'status': 'active'
+                    }
+                }
+                conn.then(async (db) => {
+                    await db.collection('kraken_credentials').updateOne(where, set)
+                })
+
+                // let updateWallet = update_user_balance(user_id)
+
+                let message = {};
+                message['status'] = 'success';
+                message['message'] = balances;
+                resolve(message);
+            }
+        })
+        
+    })
+} //End of validate_kraken_credentials
 
 //check error in sell for buy orders
 router.post('/get_error_in_sell', async (req, resp) => {
@@ -8826,7 +8956,7 @@ router.post('/update_qty_from_usd_worth', (req, res) => {
 
                 }
 
-                console.log('****************** Script End update_qty_from_usd_worth ********************')
+                // console.log('****************** Script End update_qty_from_usd_worth ********************')
 
             }
         })
