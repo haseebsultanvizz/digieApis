@@ -833,14 +833,13 @@ router.post('/listManualOrderComponent', async (req, resp) => {
 //Api post call for getting user coins directly
 router.post('/listUserCoinsApi', async (req, resp) => {
 
-    console.log('line 835 ')
+   
     var urserCoinsArr = await listUserCoins(req.body.admin_id)
-    console.log('urserCoinsArr ', urserCoinsArr)
+ 
     resp.status(200).send({
         message: urserCoinsArr
     });
 }) //End of listUserCoinsApi
-
 //function for getting user coins
 async function listUserCoins(userId) {
     return new Promise((resolve) => {
@@ -926,6 +925,7 @@ router.post('/listCurrentmarketPrice', async (req, resp) => {
     console.log('line number 923')
     let exchange = req.body.exchange;
     var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
+    console.log('urserCoinsArr', urserCoinsArr)
     resp.status(200).send({
         message: urserCoinsArr
     });
