@@ -2218,9 +2218,12 @@ router.post('/listOrderListing', async (req, resp) => {
     }
 
     var avg_profit = 0; //total_profit / total_quantity;
-    //function for listing orders 
-    var orderListing = await listOrderListing(req.body.postData);
+    //function for listing orders
+     
+    // var orderListing = await listOrderListing(req.body.postData);
     var customOrderListing = [];
+
+    
     for (let index in orderListing) {
         //get market price on the base of exchange 
         if (exchange == 'bam') {
