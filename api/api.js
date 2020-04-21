@@ -922,16 +922,11 @@ async function getUserCoins(userId, exchange) {
 //Depricated //Umer Abbas [25-11-19] => please use the API calls provided by waqar (Bam)[http://35.171.172.15:3001/api/listCurrentmarketPrice],params['coin', 'exchange'], (Binance)[http://35.171.172.15:3000/api/listCurrentmarketPrice], params['coin', 'exchange']
 router.post('/listCurrentmarketPrice', async (req, resp) => {
 
-    resp.status(200).send({
-        message: []
-    });
-    // console.log('line number 923')
     let exchange = req.body.exchange;
-    // var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
-    // console.log('urserCoinsArr', urserCoinsArr)
-    // resp.status(200).send({
-    //     message: urserCoinsArr
-    // });
+    var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
+    resp.status(200).send({
+        message: urserCoinsArr
+    });
 }) //End of listCurrentmarketPrice
 
 //function for getting current market price 
