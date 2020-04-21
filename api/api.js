@@ -929,9 +929,9 @@ router.post('/listCurrentmarketPrice', async (req, resp) => {
     let exchange = req.body.exchange;
     // var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
     // console.log('urserCoinsArr', urserCoinsArr)
-    resp.status(200).send({
-        message: urserCoinsArr
-    });
+    // resp.status(200).send({
+    //     message: urserCoinsArr
+    // });
 }) //End of listCurrentmarketPrice
 
 //function for getting current market price 
