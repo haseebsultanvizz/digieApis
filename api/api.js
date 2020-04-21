@@ -844,7 +844,7 @@ async function listUserCoins(userId) {
         let where = {};
         where.user_id = userId;
         where.symbol = {
-            '$nin': ['', null, 'BTC', 'BNBBTC']
+            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC']
         };
         conn.then(async (db) => {
             db.collection('coins').find(where).toArray(async (err, data) => {
@@ -900,7 +900,7 @@ async function getUserCoins(userId, exchange) {
         let where = {};
         where.user_id = userId;
         where.symbol = {
-            '$nin': ['', null, 'BTC', 'BNBBTC']
+            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC']
         };
         conn.then(async (db) => {
 
@@ -2802,6 +2802,9 @@ function getGlobalCoins(exchange) {
             let coins_collection = ''
             if (exchange == 'binance') {
                 coins_collection = 'coins'
+                filter['symbol'] = {
+                    '$nin': ['NCASHBTC']
+                }
             } else {
                 coins_collection = 'coins_' + exchange
                 delete filter['exchange_type']
@@ -7294,7 +7297,7 @@ function validate_kraken_credentials(APIKEY, APISECRET, user_id = '') {
                 resolve(message);
             }
         })
-        
+
     })
 } //End of validate_kraken_credentials
 
