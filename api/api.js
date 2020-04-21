@@ -263,16 +263,15 @@ async function blockLoginAttempt(username, action) {
 router.post('/authenticate', async function (req, resp, next) {
     conn.then(async (db) => {
         var credentials = auth(req)
-        console.log('credentials::: ',credentials);
-
-        console.log('body::: ',req.body);
+       
+        
         if (!credentials || !check(credentials.name, credentials.pass)) {
             resp.status(403).send({
                 "message": "You are not Authorized"
             })
         } else {
             let username = req.body.username;
-            let pass = req.body.password;
+            let pass     = req.body.password;
             //Convert password to md5
             let md5Pass = md5(pass);
             let where = {};
