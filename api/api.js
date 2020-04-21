@@ -2219,8 +2219,8 @@ router.post('/listOrderListing', async (req, resp) => {
 
     var avg_profit = 0; //total_profit / total_quantity;
     //function for listing orders
-     
-    // var orderListing = await listOrderListing(req.body.postData);
+
+    var orderListing = await listOrderListing(req.body.postData);
     var customOrderListing = [];
 
     
