@@ -263,14 +263,15 @@ async function blockLoginAttempt(username, action) {
 router.post('/authenticate', async function (req, resp, next) {
     conn.then(async (db) => {
         var credentials = auth(req)
-        console.log(credentials);
+       
+        
         if (!credentials || !check(credentials.name, credentials.pass)) {
             resp.status(403).send({
                 "message": "You are not Authorized"
             })
         } else {
             let username = req.body.username;
-            let pass = req.body.password;
+            let pass     = req.body.password;
             //Convert password to md5
             let md5Pass = md5(pass);
             let where = {};
@@ -8459,14 +8460,14 @@ async function update_user_balance(user_id) {
         method: 'GET',
         url: 'https://app.digiebot.com/admin/Updatebalance/update_user_vallet/' + user_id,
         headers: {
-            'cache-control': 'no-cache',
-            'Connection': 'keep-alive',
+            'cache-control'  : 'no-cache',
+            'Connection'     : 'keep-alive',
             'Accept-Encoding': 'gzip, deflate',
-            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-            'Cache-Control': 'no-cache',
-            'Accept': '*/*',
-            'User-Agent': 'PostmanRuntime/7.20.1',
-            'Content-Type': 'application/json'
+            'Postman-Token'  : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control'  : 'no-cache',
+            'Accept'         : '*/*',
+            'User-Agent'     : 'PostmanRuntime/7.20.1',
+            'Content-Type'   : 'application/json'
         },
         json: {}
     };
@@ -8477,14 +8478,14 @@ async function update_user_balance(user_id) {
         method: 'POST',
         url: 'http://34.205.124.51:2607/apiEndPoint/updateBalance',
         headers: {
-            'cache-control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Accept-Encoding': 'gzip, deflate',
-            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-            'Cache-Control': 'no-cache',
-            'Accept': '*/*',
-            'User-Agent': 'PostmanRuntime/7.20.1',
-            'Content-Type': 'application/json'
+            'cache-control'   : 'no-cache',
+            'Connection'      : 'keep-alive',
+            'Accept-Encoding' : 'gzip, deflate',
+            'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control'   : 'no-cache',
+            'Accept'          : '*/*',
+            'User-Agent'      : 'PostmanRuntime/7.20.1',
+            'Content-Type'    : 'application/json'
         },
         json: {
             'user_id': user_id
