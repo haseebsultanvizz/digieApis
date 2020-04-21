@@ -834,19 +834,21 @@ router.post('/listManualOrderComponent', async (req, resp) => {
 
 //Api post call for getting user coins directly
 router.post('/listUserCoinsApi', async (req, resp) => {
+
+   
     var urserCoinsArr = await listUserCoins(req.body.admin_id)
+ 
     resp.status(200).send({
         message: urserCoinsArr
     });
 }) //End of listUserCoinsApi
-
 //function for getting user coins
 async function listUserCoins(userId) {
     return new Promise((resolve) => {
         let where = {};
         where.user_id = userId;
         where.symbol = {
-            '$nin': ['', null, 'BTC', 'BNBBTC']
+            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC']
         };
         conn.then(async (db) => {
             db.collection('coins').find(where).toArray(async (err, data) => {
@@ -902,7 +904,7 @@ async function getUserCoins(userId, exchange) {
         let where = {};
         where.user_id = userId;
         where.symbol = {
-            '$nin': ['', null, 'BTC', 'BNBBTC']
+            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC']
         };
         conn.then(async (db) => {
 
@@ -921,11 +923,17 @@ async function getUserCoins(userId, exchange) {
 
 //Depricated //Umer Abbas [25-11-19] => please use the API calls provided by waqar (Bam)[http://35.171.172.15:3001/api/listCurrentmarketPrice],params['coin', 'exchange'], (Binance)[http://35.171.172.15:3000/api/listCurrentmarketPrice], params['coin', 'exchange']
 router.post('/listCurrentmarketPrice', async (req, resp) => {
-    let exchange = req.body.exchange;
-    var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
+
     resp.status(200).send({
-        message: urserCoinsArr
+        message: []
     });
+    // console.log('line number 923')
+    let exchange = req.body.exchange;
+    // var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
+    // console.log('urserCoinsArr', urserCoinsArr)
+    // resp.status(200).send({
+    //     message: urserCoinsArr
+    // });
 }) //End of listCurrentmarketPrice
 
 //function for getting current market price 
@@ -1212,6 +1220,20 @@ router.post('/listmarketPriceMinNotation', async (req, resp) => {
         message: responseReslt
     });
 }) //End of listmarketPriceMinNotation
+
+async function listmarketPriceMinNotation(coin, exchange){
+    //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
+    // var marketMinNotationPromise = marketMinNotation(req.body.coin);
+    var marketMinNotationPromise = marketMinNotation_with_step_size(coin, exchange);
+    var currentMarketPricePromise = listCurrentMarketPrice(coin, exchange);
+    
+    var promisesResult = await Promise.all([marketMinNotationPromise, currentMarketPricePromise]);
+    var responseReslt = {};
+    responseReslt['marketMinNotation'] = promisesResult[0].min_notation;
+    responseReslt['marketMinNotationStepSize'] = promisesResult[0].step_size;
+    responseReslt['currentmarketPrice'] = promisesResult[1];
+    return responseReslt
+} //End of listmarketPriceMinNotation
 
 //post call for creating manual order  
 router.post('/createManualOrder', (req, resp) => {
@@ -2206,9 +2228,12 @@ router.post('/listOrderListing', async (req, resp) => {
     }
 
     var avg_profit = 0; //total_profit / total_quantity;
-    //function for listing orders 
+    //function for listing orders
+
     var orderListing = await listOrderListing(req.body.postData);
     var customOrderListing = [];
+
+    
     for (let index in orderListing) {
         //get market price on the base of exchange 
         if (exchange == 'bam') {
@@ -2790,6 +2815,9 @@ function getGlobalCoins(exchange) {
             let coins_collection = ''
             if (exchange == 'binance') {
                 coins_collection = 'coins'
+                filter['symbol'] = {
+                    '$nin': ['NCASHBTC']
+                }
             } else {
                 coins_collection = 'coins_' + exchange
                 delete filter['exchange_type']
@@ -7010,6 +7038,41 @@ router.post('/saveBamCredentials', (req, resp) => {
 
 }) //End of saveBamCredentials
 
+//save kraken credentials from setting component
+router.post('/saveKrakenCredentials', (req, resp) => {
+    var user_id = req.body.user_id;
+    var api_key = req.body.api_key;
+    var api_secret = req.body.api_secret;
+
+    conn.then((db) => {
+        let insertArr = {};
+        insertArr['user_id'] = user_id;
+        insertArr['api_key'] = api_key;
+        insertArr['api_secret'] = api_secret;
+        let set = {};
+        set['$set'] = insertArr;
+        let where = {};
+        where['user_id'] = user_id; {
+            upsert: true
+        }
+        let upsert = {
+            upsert: true
+        };
+        db.collection('kraken_credentials').updateOne(where, set, upsert, (err, result) => {
+            if (err) {
+                console.log(err);
+            } else {
+                let validation = validate_kraken_credentials(api_key, api_secret, user_id)
+                resp.status(200).send({
+                    "success": "true",
+                    "message": "Credentials Updated Successfully"
+                })
+            }
+        })
+    })
+
+
+}) //End of saveKrakenCredentials
 
 router.post('/getBamCredentials', async (req, resp) => {
     var user_id = req.body.user_id;
@@ -7035,6 +7098,31 @@ function getBamCredentials(user_id) {
         })
     })
 } //End of getBamCredentials
+
+router.post('/getKrakenCredentials', async (req, resp) => {
+    var user_id = req.body.user_id;
+    var krakenCredentials = await getKrakenCredentials(user_id);
+    resp.status(200).send({
+        response: krakenCredentials
+    })
+
+}) //End of getKrakenCredentials
+
+function getKrakenCredentials(user_id) {
+    return new Promise((resolve, reject) => {
+        conn.then((db) => {
+            let where = {};
+            where['user_id'] = user_id;
+            db.collection('kraken_credentials').find(where).toArray((err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            })
+        })
+    })
+} //End of getKrakenCredentials
 
 //post call for calculating average profit for order listing
 router.post('/calculate_average_profit', async (req, resp) => {
@@ -7155,6 +7243,76 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
         });
     })
 } //End of validate_bam_credentials
+
+//post call for validating kraken credentials
+router.post('/validate_kraken_credentials', async (req, resp) => {
+    let APIKEY = req.body.APIKEY;
+    let APISECRET = req.body.APISECRET;
+    var credentials = await validate_kraken_credentials(APIKEY, APISECRET);
+    resp.status(200).send({
+        message: credentials
+    });
+}) //End of validate_kraken_credentials
+
+function validate_kraken_credentials(APIKEY, APISECRET, user_id = '') {
+    return new Promise((resolve, reject) => {
+
+        const KrakenClient = require('kraken-api');
+        const kraken = new KrakenClient(APIKEY, APISECRET);
+
+        kraken.api('Balance', function (error, balances) {
+            if (error) {
+                //invalid Credentials
+                let where = {
+                    'api_key': APIKEY,
+                    'api_secret': APISECRET
+                }
+                if (user_id != '') {
+                    where['user_id'] = user_id
+                }
+                let set = {
+                    '$set': {
+                        'status': 'credentials_error'
+                    }
+                }
+                conn.then(async (db) => {
+                    await db.collection('kraken_credentials').updateOne(where, set)
+                })
+
+                let message = {};
+                message['status'] = 'error';
+                message['message'] = error.body;
+                resolve(message);
+            } else {
+
+                //valid Credentials
+                let where = {
+                    'api_key': APIKEY,
+                    'api_secret': APISECRET
+                }
+                if (user_id != '') {
+                    where['user_id'] = user_id
+                }
+                let set = {
+                    '$set': {
+                        'status': 'active'
+                    }
+                }
+                conn.then(async (db) => {
+                    await db.collection('kraken_credentials').updateOne(where, set)
+                })
+
+                // let updateWallet = update_user_balance(user_id)
+
+                let message = {};
+                message['status'] = 'success';
+                message['message'] = balances;
+                resolve(message);
+            }
+        })
+
+    })
+} //End of validate_kraken_credentials
 
 //check error in sell for buy orders
 router.post('/get_error_in_sell', async (req, resp) => {
@@ -7735,7 +7893,7 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
                 var collection_count = await is_collection_already_exist(full_collection_name);
 
                 let insertArr = {};
-                insertArr['order_id'] = new ObjectID(order_id);
+                insertArr['order_id'] = new ObjectID(String(order_id));
                 insertArr['log_msg'] = log_msg;
                 insertArr['type'] = type;
                 insertArr['show_error_log'] = show_hide_log;
@@ -7917,7 +8075,7 @@ function get_user_wallet(admin_id, exchange) {
             let collection = (exchange == 'binance') ? 'user_wallet' : 'user_wallet_' + exchange;
             let walletCoins = await db.collection(collection).find(where).toArray();
 
-            let symbols = [];
+            let symbols = ['BNB'];
             if (walletCoins.length > 0) {
                 walletCoins.forEach(function (item) {
                     let arr1 = item['coin_symbol'].split('BTC')
@@ -8749,5 +8907,258 @@ async function hit_auto_buy_cron(user_id) {
 
     return true
 }//end hit_auto_buy_cron(user_id)
+
+
+/* CRON SCRIPT for update_qty_from_usd_worth */
+router.post('/update_qty_from_usd_worth', (req, res) => {
+    let user_id = req.body.user_id
+    let exchange = req.body.exchange
+    let symbol = req.body.symbol
+
+    let where_user = { 
+        'application_mode': { 
+            '$in': ['live', 'both', 'BOTH', 'LIVE'] 
+        } 
+    }
+
+    if (typeof user_id != 'undefined' && user_id != ''){
+        where_user['_id'] = new ObjectID(String(user_id))
+    }
+    
+    conn.then((db) => {
+        db.collection('users').find(where_user).project({ '_id': 1, 'username':1 }).toArray(async (err, result) => {
+            if (err) {
+                console.log(err)
+            } else {
+
+                // console.log('total users: ', result.length)
+
+                let user_ids = [];
+                await Promise.all(result.map(user => { user_ids.push(String(user._id)); }))
+
+                if (user_ids.length > 0){
+
+                    if (typeof exchange != 'undefined' && exchange != '' && typeof symbol != 'undefined' && symbol != '') {
+    
+                        // for only this exchange and this symbol only
+                        await update_qty_from_usd_worth(user_ids, exchange, symbol)
+                        
+                        // console.log('for only this exchange and this symbol only')
+    
+                    } else if (typeof exchange != 'undefined' && exchange != '') {
+    
+                        // for only this exchange but all it's symbols
+                        await update_qty_from_usd_worth(user_ids, exchange)
+                        
+                        // console.log('for only this exchange but all its symbol')
+                        
+                    } else if (typeof symbol != 'undefined' && symbol != '') {
+    
+                        // for all exchange but only this symbol
+                        await update_qty_from_usd_worth(user_ids, 'binance', symbol)
+                        await update_qty_from_usd_worth(user_ids, 'bam', symbol)
+    
+                        // console.log('for all exchange but only this symbol')
+                        
+                    } else {
+    
+                        // for all exchange and all coins
+                        await update_qty_from_usd_worth(user_ids, 'binance')
+                        await update_qty_from_usd_worth(user_ids, 'bam')
+    
+                        // console.log('for all exchange and all coins')
+                        
+                    }
+
+                }
+
+                // console.log('****************** Script End update_qty_from_usd_worth ********************')
+
+            }
+        })
+    })
+
+    res.send({
+        'status': true,
+        'message': 'Qty updated successfully.'
+    });
+})//End update_qty_from_usd_worth
+
+//update_qty_from_usd_worth
+async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
+
+    // console.log('update_qty_from_usd_worth')
+
+    return new Promise(async (resolve) => {
+        conn.then(async (db) => {
+            
+            //modified_date 5 days before
+            let orders_modified_date = new Date(new Date().setDate(new Date().getDate() - 5))
+            var where = {
+                'admin_id': {'$in': user_ids},
+                'application_mode': 'live',
+                'parent_status': 'parent',
+                'pause_status': 'play',
+                'status': {'$in': ['new', 'takingOrder']},
+                'usd_worth': {'$exists': true},
+                'modified_date': { '$lte': orders_modified_date }
+            }
+            if (typeof symbol != 'undefined' && symbol != ''){
+                where['symbol'] = symbol
+            }
+            const collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+
+            let parent_orders = await db.collection(collectionName).aggregate([
+                {
+                    $match: where
+                },
+                {
+                    $group: {
+                        '_id': { 
+                            'symbol': '$symbol', 
+                        },
+                        'orders': { '$push': '$$ROOT' } 
+                    }
+                },
+                {
+                    '$limit': 5
+                }
+            ], { allowDiskUse: true }).toArray()
+
+            let parentArrLen = parent_orders.length
+            for (var i = 0; i < parentArrLen; i++) {
+                let item = parent_orders[i]
+                
+                // console.log(collectionName, item['_id']['symbol'], ' total orders : ', item.orders.length)
+                // console.log(item.orders)
+
+                let promise1 = listmarketPriceMinNotation('BTCUSDT', exchange)
+                let promise2 = listmarketPriceMinNotation(item['_id']['symbol'], exchange)
+
+                let myPromises = await Promise.all([promise1, promise2])
+                let BTCUSDT_Data = myPromises[0]
+                let symbol_Data = myPromises[1]
+
+                let BTCUSDTPRICE = BTCUSDT_Data['currentmarketPrice'][0]['price']
+                let currentMarketPrice = symbol_Data['currentmarketPrice'][0]['price']
+                let marketMinNotation = symbol_Data.marketMinNotation
+                let marketMinNotationStepSize = symbol_Data.marketMinNotationStepSize
+                let toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+
+                //find min required quantity
+                var extra_qty_percentage = 30;
+                var extra_qty_val = 0;
+                extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
+                var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
+                var minReqQty = (calculatedMinNotation / currentMarketPrice);
+                minReqQty += marketMinNotationStepSize
+                minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
+
+                //TODO: find one usd worth of quantity
+                let selectedCoin = item['_id']['symbol'];
+                let splitArr = selectedCoin.split('USDT');
+                let oneUsdWorthQty = 0;
+                var usdWorthQty = 0
+                var quantity = 0
+
+                if (splitArr[1] == '') {
+                    oneUsdWorthQty = 1 / currentMarketPrice
+                    // console.log('USD COIN', oneUsdWorthQty);
+                } else {
+                    oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
+                    // console.log('BTC COIN', oneUsdWorthQty);
+                }
+                
+                let ordersArrLen = item.orders.length
+                for (var j = 0; j < ordersArrLen; j++) {
+                    let order = item['orders'][j]
+
+                    // TODO: set vars to create log
+                    let show_hide_log = 'yes';
+                    let type = 'usd_worth_qty_update';
+                    let order_mode = order['application_mode'];
+                    let order_created_date = order['created_date'];
+
+                    //TODO: update individual order
+                    usdWorthQty = order['usd_worth'] * oneUsdWorthQty
+                    quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
+
+                    //only move forward if quantity is not same
+                    if (quantity != order['quantity']){
+
+                        //TODO: check conditions for quantity update
+                        //Condition 1: quantity drop / raise is more or equal to 5% 
+
+                        let qtyDiff = quantity - order['quantity']
+                        qtyDiff = Math.abs(qtyDiff)
+                        let qtyDiffPercentage = (qtyDiff * 100 / order['quantity']);
+                        qtyDiffPercentage = Math.abs(qtyDiffPercentage)
+                        qtyDiffPercentage = parseFloat(parseFloat(qtyDiffPercentage).toFixed(0))
+                        
+                        if (qtyDiffPercentage >= 5){
+
+                            // console.log('qtyDiffPercentage  ', qtyDiffPercentage)
+
+                            if (quantity < minReqQty) {
+
+                                //Condition 2: if trade updated quantity is less than 115% of the minReqQty then pause this order and save log 
+                                //calculate 115% of minReqQty
+                                let mrqPercentage = 115
+                                let mrqPercentageValue = 0
+                                mrqPercentageValue = (mrqPercentage * minReqQty) / 100
+                                let mrqCheckQty = minReqQty - Math.abs(minReqQty - mrqPercentageValue)
+                                mrqCheckQty = parseFloat(mrqCheckQty.toFixed(toFixedNum))
+                                
+                                if (quantity <= mrqCheckQty){
+                                    // console.log(quantity , '//////////////////////' , mrqCheckQty)
+
+                                    // console.log('minQty error :  ', quantity, 'new calculated', ' < ', minReqQty, '(min required)', '   old Qty ===== ', order['quantity'])
+
+                                    //Pause parent
+                                    updateFields = {
+                                        'pause_status': 'pause',
+                                        'modified_date': new Date()
+                                    }
+                                    let where22 = { '_id': order['_id'] }
+                                    let updatePromise = updateOne(where22, updateFields, collectionName)
+
+                                    let log_msg = 'Parent paused becuase min quantity is more required.'
+                                    //Save LOG
+                                    let promiseLog = create_orders_history_log(order['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                                    promiseLog.then((callback) => { })
+                                }
+        
+                            } else {
+                                //update quantity
+                                updateFields = {
+                                    'quantity': quantity,
+                                    'modified_date': new Date()
+                                }
+                                let where22 = { '_id': order['_id'] }
+                                let updatePromise = updateOne(where22, updateFields, collectionName)
+                                // console.log('old Qty ===== ', order['quantity'])
+                                // console.log('updatedQty ===== ', quantity)
+                                // console.log('order_id ', order['_id'], order['symbol'], collectionName, '    ||    old Qty ===== ', order['quantity'], '   ||   updatedQty ===== ', quantity, ' || USD WORTH :', order['usd_worth'])
+                                
+                                let log_msg = 'Quantity was updated from (' + order['quantity']+') to ('+quantity+') by usd worth calculation with the change in market price from script'
+                                //Save LOG
+                                let promiseLog = create_orders_history_log(order['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                                promiseLog.then((callback) => { })
+                            }
+
+                        }
+
+
+                    }
+
+                }
+            }
+
+            // console.log(parent_orders[0]['orders'][0])
+            resolve(true)
+        })
+    })
+}//end update_qty_from_usd_worth(user_id)
+/* END CRON SCRIPT for update_qty_from_usd_worth */
 
 module.exports = router;
