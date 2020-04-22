@@ -923,16 +923,11 @@ async function getUserCoins(userId, exchange) {
 //Depricated //Umer Abbas [25-11-19] => please use the API calls provided by waqar (Bam)[http://35.171.172.15:3001/api/listCurrentmarketPrice],params['coin', 'exchange'], (Binance)[http://35.171.172.15:3000/api/listCurrentmarketPrice], params['coin', 'exchange']
 router.post('/listCurrentmarketPrice', async (req, resp) => {
 
-    resp.status(200).send({
-        message: []
-    });
-    // console.log('line number 923')
     let exchange = req.body.exchange;
-    // var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
-    // console.log('urserCoinsArr', urserCoinsArr)
-    // resp.status(200).send({
-    //     message: urserCoinsArr
-    // });
+    var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
+    resp.status(200).send({
+        message: urserCoinsArr
+    });
 }) //End of listCurrentmarketPrice
 
 //function for getting current market price 
@@ -5899,7 +5894,7 @@ router.post('/updateManualOrder', async (req, resp) => {
 
     let buyOrderId = req.body.buyOrderId;
     let exchange = req.body.exchange;
-    let sellOrderId = req.body.sellOrderId;
+    var sellOrderId = req.body.sellOrderId;
     let tempSellOrderId = req.body.tempSellOrderId;
 
 
@@ -6132,9 +6127,121 @@ router.post('/updateManualOrder', async (req, resp) => {
         };
         var updPromise_2 = updateSingle(temp_sell_order_collection, where_2, tempOrderArr, upsert);
         updPromise_2.then((callback) => {})
+    }else{
+
+        //when order was created with out auto sell and after buy it does not create sell array from edit page so set it from here
+        let sellOrderArr = tempOrderArr;
+        var buy_order_id = buyOrderId;
+
+        if (buy_order_id != '') {
+            sellOrderArr['buy_order_id'] = new ObjectID(buy_order_id);
+        }
+
+        //set profit percentage if sell price is fixed
+        if (sellOrderArr['profit_type'] == 'fixed_price') {
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+            let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
+            sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+            sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
+            sellOrderArr['sell_price'] = !isNaN(parseFloat(sellOrderArr['sell_price'])) ? parseFloat(sellOrderArr['sell_price']) : ''
+        }
+
+        //set sell profit percentage 
+        if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+            let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
+            sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+        }
+
+        //set stop loss 
+        if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
+            sellOrderArr['stop_loss'] = 'yes'
+            sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+            let loss_price = (parseFloat(purchased_price) * parseFloat(sellOrderArr['loss_percentage'])) / 100;
+            sellOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
+        } else {
+            sellOrderArr['stop_loss'] = 'no'
+            sellOrderArr['loss_percentage'] = ''
+        }
+
+        //set lth profit 
+        if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
+            sellOrderArr['lth_functionality'] = 'yes'
+            sellOrderArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
+        } else {
+            sellOrderArr['lth_functionality'] = 'no'
+            sellOrderArr['lth_profit'] = ''
+        }
+
+        if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
+            sellOrderArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
+        }
+
+        //function to set manual order for sell
+        var sellOrderId = await setForSell(sellOrderArr, exchange, buy_order_id);
+
+        var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        var updArr = {};
+        updArr['is_sell_order'] = 'yes';
+        updArr['sell_order_id'] = sellOrderId;
+        updArr['auto_sell'] = 'yes';
+        // updArr['quantity'] = parseFloat(sellOrderArr['quantity']);
+
+        //set profit percentage if sell price is fixed
+        if (sellOrderArr['profit_type'] == 'fixed_price') {
+            let purchased_price = !isNaN(parseFloat(sellOrderArr['purchased_price'])) ? parseFloat(sellOrderArr['purchased_price']) : ''
+            let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
+            updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+            updArr['profit_percent'] = updArr['sell_profit_percent']
+        }
+
+        //set sell profit percentage 
+        if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+            let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
+            updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+        }
+
+        //set stop loss 
+        if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
+            updArr['stop_loss'] = 'yes'
+            updArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+        } else {
+            updArr['stop_loss'] = 'no'
+            updArr['loss_percentage'] = ''
+        }
+
+        //set lth profit 
+        if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
+            updArr['lth_functionality'] = 'yes'
+            updArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
+        } else {
+            updArr['lth_functionality'] = 'no'
+            updArr['lth_profit'] = ''
+        }
+
+        if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
+            updArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
+        }
+
+        var where = {};
+        where['_id'] = {
+            '$in': [buyOrderId, new ObjectID(buyOrderId)]
+        }
+        updArr['modified_date'] = new Date();
+        var updPrmise = updateOne(where, updArr, collection);
+        updPrmise.then((callback) => { })
+
+        let log_msg = "Sell Order was Created " + interfaceType;
+        // var logPromise1 = recordOrderLog(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange);
+        var getBuyOrder = await listOrderById(buyOrderId, exchange);
+        var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+        var logPromise1 = create_orders_history_log(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange, order_mode, order_created_date)
+
+        logPromise1.then((resolve) => { })
     }
-
-
 
     resp.status(200).send({
         message: 'order updated'
@@ -6255,7 +6362,7 @@ router.post('/setForSell', async (req, resp) => {
 
 
     resp.status(200).send({
-        message: 'Order Set For ell'
+        message: 'Order Set For sell'
     });
 })
 
@@ -8091,12 +8198,26 @@ function get_user_wallet(admin_id, exchange) {
                 walletCoins.forEach(function (item) {
                     let arr1 = item['coin_symbol'].split('BTC')
                     let arr2 = item['coin_symbol'].split('USDT')
+                    let temp_symbol = '';
                     if ((arr1[0] == '' && arr1[1] == '') || (arr2[0] == '' && arr2[1] == '')) {
-                        symbols.push(item['coin_symbol'])
+                        // symbols.push(item['coin_symbol'])
+                        // console.log(' 1 ', item['coin_symbol'])
+                        temp_symbol = item['coin_symbol']
                     } else if (arr1[1] == '') {
-                        symbols.push(arr1[0])
+                        // symbols.push(arr1[0])
+                        // console.log(' 2 ', arr1[0])
+                        temp_symbol = arr1[0]
                     } else if (arr2[1] == '') {
-                        symbols.push(arr2[0])
+                        // symbols.push(arr2[0])
+                        // console.log(' 3 ', arr2[0])
+                        temp_symbol = arr2[0]
+                    }else{
+                        // console.log(' 4 ', item['coin_symbol'])
+                        temp_symbol = item['coin_symbol']
+                    }
+
+                    if (temp_symbol != '' && !symbols.includes(temp_symbol)){
+                        symbols.push(temp_symbol)
                     }
                 })
             }
