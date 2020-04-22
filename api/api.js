@@ -8074,12 +8074,26 @@ function get_user_wallet(admin_id, exchange) {
                 walletCoins.forEach(function (item) {
                     let arr1 = item['coin_symbol'].split('BTC')
                     let arr2 = item['coin_symbol'].split('USDT')
+                    let temp_symbol = '';
                     if ((arr1[0] == '' && arr1[1] == '') || (arr2[0] == '' && arr2[1] == '')) {
-                        symbols.push(item['coin_symbol'])
+                        // symbols.push(item['coin_symbol'])
+                        // console.log(' 1 ', item['coin_symbol'])
+                        temp_symbol = item['coin_symbol']
                     } else if (arr1[1] == '') {
-                        symbols.push(arr1[0])
+                        // symbols.push(arr1[0])
+                        // console.log(' 2 ', arr1[0])
+                        temp_symbol = arr1[0]
                     } else if (arr2[1] == '') {
-                        symbols.push(arr2[0])
+                        // symbols.push(arr2[0])
+                        // console.log(' 3 ', arr2[0])
+                        temp_symbol = arr2[0]
+                    }else{
+                        // console.log(' 4 ', item['coin_symbol'])
+                        temp_symbol = item['coin_symbol']
+                    }
+
+                    if (temp_symbol != '' && !symbols.includes(temp_symbol)){
+                        symbols.push(temp_symbol)
                     }
                 })
             }
