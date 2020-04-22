@@ -3599,8 +3599,8 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
                 where['status'] = 'takingOrder';
                 var updBuyPromise = updateOne(where, updBuyOrder, collection_name);
                 updBuyPromise.then((resolve) => {});
-                var log_msg = "Parent status update from child in progress TO new";
-                var logPromise_2 = create_orders_history_log(id, log_msg, 'fee_deduction', 'yes', exchange, order_mode, order_created_date)
+                var log_msg = "Parent status updated from child in progress TO new ";
+                var logPromise_2 = create_orders_history_log(buy_order_id, log_msg, 'fee_deduction', 'yes', exchange, order_mode, order_created_date)
                 logPromise_2.then((callback) => {})
             }// END of if (buyParentOrderId != '' && buyParentOrderId != 'undefined')
             copySoldOrders(buy_order_id, exchange);
