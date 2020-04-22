@@ -4029,6 +4029,7 @@ function copySoldOrders(order_id, exchange) {
                 for (let index in soldOrdersArr) {
                     let _id = soldOrdersArr[index]['_id'];
                     var buyParentOrderId = soldOrdersArr[index]['buy_parent_id'];
+                    console.log('Console Console Console Console Console');
                     // Update parent order to NEW to take new order .
                     if (buyParentOrderId != '' && buyParentOrderId != 'undefined') {
                         var where = {};  
@@ -4040,6 +4041,9 @@ function copySoldOrders(order_id, exchange) {
                         where['status'] = 'takingOrder';
                         var updBuyPromise = binanceLab.update(where, updBuyOrder, collection_name);
                         updBuyPromise.then((resolve) => {});
+                        var log_msg = "Parent status update from child in progress TO new";
+                        var logPromise_2 = create_orders_history_log(id, log_msg, 'fee_deduction', 'yes', exchange, order_mode, order_created_date)
+                        logPromise_2.then((callback) => {})
                     }// END of if (buyParentOrderId != '' && buyParentOrderId != 'undefined')
                     let searchQuery = {};
                     searchQuery._id = _id;
