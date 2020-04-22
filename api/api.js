@@ -4035,11 +4035,12 @@ function copySoldOrders(order_id, exchange) {
                         var updBuyOrder = {}
                         let collection_name = (exchange == 'binance') ? 'buy_orders' : 'buy_orders' + exchange;
                         updBuyOrder.status = 'new';
+                        updBuyOrder.modified_date = new Date();
                         where['_id'] = new ObjectId(buyParentOrderId);
                         where['status'] = 'takingOrder';
                         var updBuyPromise = binanceLab.update(where, updBuyOrder, collection_name);
                         updBuyPromise.then((resolve) => {});
-                    }// END of   if (buyParentOrderId != '' && buyParentOrderId != 'undefined')
+                    }// END of if (buyParentOrderId != '' && buyParentOrderId != 'undefined')
                     let searchQuery = {};
                     searchQuery._id = _id;
                     let updateQuery = {};
