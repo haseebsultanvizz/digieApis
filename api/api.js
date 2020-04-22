@@ -3513,7 +3513,7 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
             var orderArr = orderResp[0];
 
             var quantity = (typeof orderArr['quantity'] == 'undefined') ? 0 : orderArr['quantity'];
-            var symbol = (typeof orderArr['symbol'] == 'undefined') ? '' : orderArr['symbol'];
+            var symbol   = (typeof orderArr['symbol'] == 'undefined') ? '' : orderArr['symbol'];
 
             var update = {};
             update['market_value'] = currentMarketPrice;
@@ -3538,12 +3538,12 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
 
 
             //%%%%%%%%%%% Market Filled Process %%%%%%%%%%%%%%%%%%
+            var commissionAsset = 'BTC';
             var commission_value = parseFloat(quantity) * (0.001);
             var commission = commission_value * currentMarketPrice;
-            var commissionAsset = 'BTC';
+          
 
             let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
-
             var USDCURRENTVALUE = await listCurrentMarketPrice(globalCoin, exchange);
 
             var btcPriceArr = (typeof USDCURRENTVALUE[0] == 'undefined') ? [] : USDCURRENTVALUE[0];
@@ -4033,6 +4033,18 @@ function copySoldOrders(order_id, exchange) {
                 let collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
                 for (let index in soldOrdersArr) {
                     let _id = soldOrdersArr[index]['_id'];
+                    var buyParentOrderId = soldOrdersArr[index]['buy_parent_id'];
+                    // Update parent order to NEW to take new order .
+                    if (buyParentOrderId != '' && buyParentOrderId != 'undefined') {
+                        var where = {};  
+                        var updBuyOrder = {}
+                        let collection_name = (exchange == 'binance') ? 'buy_orders' : 'buy_orders' + exchange;
+                        updBuyOrder.status = 'new';
+                        where['_id'] = new ObjectId(buyParentOrderId);
+                        where['status'] = 'takingOrder';
+                        var updBuyPromise = binanceLab.update(where, updBuyOrder, collection_name);
+                        updBuyPromise.then((resolve) => {});
+                    }// END of   if (buyParentOrderId != '' && buyParentOrderId != 'undefined')
                     let searchQuery = {};
                     searchQuery._id = _id;
                     let updateQuery = {};
