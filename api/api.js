@@ -3333,6 +3333,7 @@ router.post('/sellOrderManually', async (req, resp) => {
         let buyOrderArr = ordeResp[0];
         let sell_order_id = (typeof buyOrderArr['sell_order_id'] == undefined) ? '' : buyOrderArr['sell_order_id'];
         let buyOrderStatus = (typeof buyOrderArr['status'] == undefined) ? '' : buyOrderArr['status'];
+        var buyParentOrderId = (typeof buyOrderArr['buy_parent_id'] == undefined) ? '' : buyOrderArr['buy_parent_id'];
 
         console.log("sell_order_id ", sell_order_id)
         if (sell_order_id != '') {
@@ -3404,7 +3405,7 @@ router.post('/sellOrderManually', async (req, resp) => {
 
                 logPromise_1.then((resp) => {})
                 //call function for selling orders
-                sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange);
+                sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange,buyParentOrderId);
 
             }
         } //End of if sell order id not empty	
@@ -3494,7 +3495,7 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
     })
 } //End of readySellOrderbyIp
 //function for selling test order 
-function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange) {
+function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange,buyParentOrderId) {
 
     (async () => {
         var collectionName = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
@@ -3587,11 +3588,21 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
             var logPromise_3 = create_orders_history_log(buy_order_id, log_msg, 'sell_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise_3.then((callback) => {})
 
-
-            var log_msg = "YES YES";
-            // var logPromise_3 = recordOrderLog(buy_order_id, log_msg, 'sell_filled', 'yes', exchange);
-            var logPromise_3 = create_orders_history_log(buy_order_id, log_msg, 'sell_filled', 'yes', exchange, order_mode, order_created_date)
-            logPromise_3.then((callback) => {})
+            // Update parent order to NEW to take new order .
+            if (buyParentOrderId != '' && buyParentOrderId != 'undefined') {
+                var where = {};  
+                var updBuyOrder = {}
+                let collection_name = (exchange == 'binance') ? 'buy_orders' : 'buy_orders' + exchange;
+                updBuyOrder.status = 'new';
+                updBuyOrder.modified_date = new Date();
+                where['_id'] = new ObjectId(buyParentOrderId);
+                where['status'] = 'takingOrder';
+                var updBuyPromise = binanceLab.update(where, updBuyOrder, collection_name);
+                updBuyPromise.then((resolve) => {});
+                var log_msg = "Parent status update from child in progress TO new";
+                var logPromise_2 = create_orders_history_log(id, log_msg, 'fee_deduction', 'yes', exchange, order_mode, order_created_date)
+                logPromise_2.then((callback) => {})
+            }// END of if (buyParentOrderId != '' && buyParentOrderId != 'undefined')
             copySoldOrders(buy_order_id, exchange);
 
         }
@@ -4033,27 +4044,6 @@ function copySoldOrders(order_id, exchange) {
                 let collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
                 for (let index in soldOrdersArr) {
                     let _id = soldOrdersArr[index]['_id'];
-
-                    var log_msg = "Yes in copy sold orders buyParentOrderId " + buyParentOrderId;
-                    var logPromise_2 = create_orders_history_log(_id, log_msg, 'fee_deduction', 'yes', exchange, 'test', order_created_date)
-                    logPromise_2.then((callback) => {})
-                    var buyParentOrderId = soldOrdersArr[index]['buy_parent_id'];
-                    console.log('Console Console Console Console Console');
-                    // Update parent order to NEW to take new order .
-                    if (buyParentOrderId != '' && buyParentOrderId != 'undefined') {
-                        var where = {};  
-                        var updBuyOrder = {}
-                        let collection_name = (exchange == 'binance') ? 'buy_orders' : 'buy_orders' + exchange;
-                        updBuyOrder.status = 'new';
-                        updBuyOrder.modified_date = new Date();
-                        where['_id'] = new ObjectId(buyParentOrderId);
-                        where['status'] = 'takingOrder';
-                        var updBuyPromise = binanceLab.update(where, updBuyOrder, collection_name);
-                        updBuyPromise.then((resolve) => {});
-                        var log_msg = "Parent status update from child in progress TO new";
-                        var logPromise_2 = create_orders_history_log(id, log_msg, 'fee_deduction', 'yes', exchange, order_mode, order_created_date)
-                        logPromise_2.then((callback) => {})
-                    }// END of if (buyParentOrderId != '' && buyParentOrderId != 'undefined')
                     let searchQuery = {};
                     searchQuery._id = _id;
                     let updateQuery = {};
