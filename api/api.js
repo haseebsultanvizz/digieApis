@@ -3595,9 +3595,12 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
                 let collection_name = (exchange == 'binance') ? 'buy_orders' : 'buy_orders' + exchange;
                 updBuyOrder.status = 'new';
                 updBuyOrder.modified_date = new Date();
-                where['_id'] = new ObjectID(buyParentOrderId);
+                where['_id'] = new ObjectId(buyParentOrderId);
                 where['status'] = 'takingOrder';
-                var updBuyPromise = binanceLab.update(where, updBuyOrder, collection_name);
+
+                var filter = {};
+                filter['_id'] = new ObjectID(orderId);
+                var updBuyPromise = updateOne(where, updBuyOrder, collection_name);
                 updBuyPromise.then((resolve) => {});
                 var log_msg = "Parent status update from child in progress TO new";
                 var logPromise_2 = create_orders_history_log(id, log_msg, 'fee_deduction', 'yes', exchange, order_mode, order_created_date)
