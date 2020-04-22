@@ -3587,6 +3587,11 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
             var logPromise_3 = create_orders_history_log(buy_order_id, log_msg, 'sell_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise_3.then((callback) => {})
 
+
+            var log_msg = "YES YES";
+            // var logPromise_3 = recordOrderLog(buy_order_id, log_msg, 'sell_filled', 'yes', exchange);
+            var logPromise_3 = create_orders_history_log(buy_order_id, log_msg, 'sell_filled', 'yes', exchange, order_mode, order_created_date)
+            logPromise_3.then((callback) => {})
             copySoldOrders(buy_order_id, exchange);
 
         }
