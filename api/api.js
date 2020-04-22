@@ -4034,8 +4034,8 @@ function copySoldOrders(order_id, exchange) {
                 for (let index in soldOrdersArr) {
                     let _id = soldOrdersArr[index]['_id'];
 
-                    var log_msg = "Yes in copy sold orders _id " + _id;
-                    var logPromise_2 = create_orders_history_log(_id, log_msg, 'fee_deduction', 'yes', exchange, order_mode, order_created_date)
+                    var log_msg = "Yes in copy sold orders buyParentOrderId " + buyParentOrderId;
+                    var logPromise_2 = create_orders_history_log(_id, log_msg, 'fee_deduction', 'yes', exchange, 'test', order_created_date)
                     logPromise_2.then((callback) => {})
                     var buyParentOrderId = soldOrdersArr[index]['buy_parent_id'];
                     console.log('Console Console Console Console Console');
