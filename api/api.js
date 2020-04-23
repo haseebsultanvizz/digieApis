@@ -6969,6 +6969,7 @@ router.post('/addUserCoin', async function (req, res, next) {
                     }))
                     if (add_coins.length > 0) {
                         let ins = await db.collection(coins_collection).insertMany(add_coins);
+                        let updateBalance = update_user_balance(user_id)
                     }
                 }
             }
