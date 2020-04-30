@@ -8850,6 +8850,227 @@ router.post('/getPrice', async (req, res) => {
 
 })//end getPrice
 
+
+//listCurrentUserExchanges
+router.post('/listCurrentUserExchanges', async (req, res) => {
+
+    let user_id = req.body.user_id
+    
+    if (typeof user_id != 'undefined' && user_id != '') {
+
+        conn.then(async (db) => {
+
+            let exchangesArr = ['binance', 'bam']
+            let settingsArr = {}
+            exchangesArr.map(exchange =>{
+                let collectionName = exchange == 'binance' ? 'users' : exchange +'_credentials'
+                if(exchange == 'binance'){
+                    var where = {
+                        '_id': new ObjectID(user_id)
+                    }
+                    settingsArr[exchange] = db.collection(collectionName).find(where).project().toArray();
+                }else{
+                    var where = {
+                        'user_id': user_id
+                    }
+                    settingsArr[exchange] = db.collection(collectionName).find(where).project().toArray();
+                }
+            })
+            let myPromises = await Promise.all([settingsArr.binance, settingsArr.bam])
+
+            if (myPromises[0].length == 0 && myPromises[1].length == 0){
+                res.send({
+                    status: false,
+                    data: {},
+                    message: 'Something went wrong'
+                });
+            }else{
+
+                let available_exchanges = []
+                
+                let binance = myPromises[0][0]
+                binance = typeof binance.api_key != 'undefined' && binance.api_key != '' && typeof binance.api_secret != 'undefined' && binance.api_secret != '' ? true : false 
+                
+                let bam = myPromises[1][0]
+                bam = typeof bam.api_key != 'undefined' && bam.api_key != '' && typeof bam.api_secret != 'undefined' && bam.api_secret != '' ? true : false
+
+                if (binance){
+                    available_exchanges.push('binance')
+                }
+                if (bam){
+                    available_exchanges.push('bam')
+                }
+
+                if (available_exchanges.length > 0 ){
+                    res.send({
+                        status: true,
+                        data: available_exchanges,
+                        message: 'Exchanges found successfully.'
+                    });
+                }else{
+                    res.send({
+                        status: false,
+                        data: available_exchanges,
+                        message: 'Exchanges not found please add API Key/Secret.'
+                    });
+                }
+            }
+            
+        })
+    } else {
+        res.send({
+            status: false,
+            message: 'user_id is required.'
+        });
+    }
+})//end listCurrentUserExchanges
+
+//getAutoTradeSettings
+router.post('/getAutoTradeSettings', async (req, res) => {
+
+    let user_id = req.body.user_id
+    
+    if (typeof user_id != 'undefined' && user_id != '') {
+
+        conn.then(async (db) => {
+
+            let exchangesArr = ['binance', 'bam']
+            let settingsArr = {}
+            exchangesArr.map(exchange =>{
+                let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+                var where = {
+                    'user_id': user_id
+                }
+                settingsArr[exchange] = db.collection(collectionName).find(where).toArray();
+            })
+            let myPromises = await Promise.all([settingsArr.binance, settingsArr.bam])
+
+            if (myPromises[0].length == 0 && myPromises[1].length == 0){
+                res.send({
+                    status: true,
+                    data: {},
+                    message: 'Auto trade settings are not set.'
+                });
+            }else{
+                res.send({
+                    status: true,
+                    data: {
+                        'binance': myPromises[0],
+                        'bam': myPromises[1],
+                    },
+                    message: 'Settings found successfully.'
+                });
+            }
+            
+        })
+    } else {
+        res.send({
+            status: false,
+            message: 'user_id is required.'
+        });
+    }
+})//end getAutoTradeSettings
+
+//saveAutoTradeSettings
+router.post('/saveAutoTradeSettings', async (req, res) => {
+
+    let user_id = req.body.user_id
+    let exchange = req.body.exchange
+    let dataArr = req.body.data
+    // let exchangesArr = ['binance', 'bam', 'kraken']
+
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '') {
+
+        conn.then(async (db) => {
+            let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+            var where = {
+                'user_id': user_id
+            }
+            let userSettings = await db.collection(collectionName).find(where).toArray(); 
+            //update settings I already exist for this user
+            if (userSettings.length > 0){
+                
+                let set = {};
+                set['$set'] = dataArr
+                let settings = db.collection(collectionName).updateOne(where, set);
+
+                res.send({
+                    status: true,
+                    message: 'Auto trade settings updated successfully'
+                })
+
+            }else{
+                
+                //Insert auto trade settings
+                let data = dataArr
+                data['user_id'] = user_id
+
+                let settings = db.collection(collectionName).insertOne(data);
+
+                res.send({
+                    status: true,
+                    message: 'Auto trade settings saved successfully'
+                })
+
+            }
+
+            // if (exchange == 'binance') {
+            // } else if (exchange == 'bam') {
+            // // } else if (exchange == 'kraken') {
+            // } else {
+            //     res.send({
+            //         status: false,
+            //         message: 'Exchange not available'
+            //     })
+            // }
+        })
+    } else {
+        res.send({
+            status: false,
+            message: 'user_id and exchange is required.'
+        });
+    }
+
+})//end saveAutoTradeSettings
+
+//getBtcUsdtBalance
+router.post('/getBtcUsdtBalance', async (req, res) => {
+
+    let user_id = req.body.user_id
+    let exchange = req.body.exchange
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '') {
+
+        conn.then(async (db) => {
+            let collectionName = exchange == 'binance' ? 'user_wallet' : 'user_wallet_' + exchange
+            var where = {
+                'user_id': user_id,
+                'coin_symbol': {$in:['BTC', 'USDT', 'BNB']}
+            }
+            let balanceArr = await db.collection(collectionName).find(where).toArray();
+            if (balanceArr.length > 0) {
+                res.send({
+                    status: true,
+                    data: balanceArr,
+                    message: 'Data found successfully'
+                })
+            } else {
+                res.send({
+                    status: false,
+                    data: [],
+                    message: 'Data not found'
+                })
+            }
+        })
+    } else {
+        res.send({
+            status: false,
+            message: 'user_id and exchange is required.'
+        });
+    }
+
+})//end getBtcUsdtBalance
+
+
 router.post('/buyCoin', (req, res) => {
     conn.then(async (db) => {
         let data = req.body.data
@@ -9044,7 +9265,6 @@ async function hit_auto_buy_cron(user_id) {
 
     return true
 }//end hit_auto_buy_cron(user_id)
-
 
 /* CRON SCRIPT for update_qty_from_usd_worth */
 router.post('/update_qty_from_usd_worth', (req, res) => {
