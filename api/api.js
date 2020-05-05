@@ -847,7 +847,7 @@ async function listUserCoins(userId) {
         let where = {};
         where.user_id = userId;
         where.symbol = {
-            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC']
+            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC']
         };
         conn.then(async (db) => {
             db.collection('coins').find(where).toArray(async (err, data) => {
@@ -903,7 +903,7 @@ async function getUserCoins(userId, exchange) {
         let where = {};
         where.user_id = userId;
         where.symbol = {
-            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC']
+            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC']
         };
         conn.then(async (db) => {
 
@@ -2810,7 +2810,7 @@ function getGlobalCoins(exchange) {
             if (exchange == 'binance') {
                 coins_collection = 'coins'
                 filter['symbol'] = {
-                    '$nin': ['NCASHBTC']
+                    '$nin': ['NCASHBTC', 'POEBTC']
                 }
             } else {
                 coins_collection = 'coins_' + exchange
