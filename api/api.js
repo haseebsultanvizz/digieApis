@@ -8989,7 +8989,7 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
             let userSettings = await db.collection(collectionName).find(where).toArray(); 
             //update settings I already exist for this user
             if (userSettings.length > 0){
-                
+                delete dataArr._id
                 let set = {};
                 set['$set'] = dataArr
                 let settings = db.collection(collectionName).updateOne(where, set);
