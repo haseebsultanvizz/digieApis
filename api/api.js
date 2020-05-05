@@ -8786,6 +8786,8 @@ async function get_item_by_id(collection, _id) {
     })
 }//End get_item_by_id
 
+
+// ***************** Auto Trading Module APIs **************** //
 //getPrice
 router.post('/getPrice', async (req, res) => {
 
@@ -8860,7 +8862,7 @@ router.post('/listCurrentUserExchanges', async (req, res) => {
 
         conn.then(async (db) => {
 
-            let exchangesArr = ['binance', 'bam']
+            let exchangesArr = ['binance', 'bam', 'kraken']
             let settingsArr = {}
             exchangesArr.map(exchange =>{
                 let collectionName = exchange == 'binance' ? 'users' : exchange +'_credentials'
@@ -8876,7 +8878,7 @@ router.post('/listCurrentUserExchanges', async (req, res) => {
                     settingsArr[exchange] = db.collection(collectionName).find(where).project().toArray();
                 }
             })
-            let myPromises = await Promise.all([settingsArr.binance, settingsArr.bam])
+            let myPromises = await Promise.all([settingsArr.binance, settingsArr.bam, settingsArr.kraken])
 
             if (myPromises[0].length == 0 && myPromises[1].length == 0){
                 res.send({
@@ -8893,12 +8895,18 @@ router.post('/listCurrentUserExchanges', async (req, res) => {
                 
                 let bam = myPromises[1][0]
                 bam = typeof bam.api_key != 'undefined' && bam.api_key != '' && typeof bam.api_secret != 'undefined' && bam.api_secret != '' ? true : false
+                
+                let kraken = myPromises[2][0]
+                kraken = typeof kraken.api_key != 'undefined' && kraken.api_key != '' && typeof kraken.api_secret != 'undefined' && kraken.api_secret != '' ? true : false
 
                 if (binance){
                     available_exchanges.push('binance')
                 }
                 if (bam){
                     available_exchanges.push('bam')
+                }
+                if (kraken){
+                    available_exchanges.push('kraken')
                 }
 
                 if (available_exchanges.length > 0 ){
@@ -8979,6 +8987,12 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
     let dataArr = req.body.data
     // let exchangesArr = ['binance', 'bam', 'kraken']
 
+    let autoTradeData = {
+        'user_id': user_id,
+        'exchange': exchange,
+        'settings': dataArr 
+    }
+
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '') {
 
         conn.then(async (db) => {
@@ -8994,6 +9008,8 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 set['$set'] = dataArr
                 let settings = db.collection(collectionName).updateOne(where, set);
 
+                await createAutoTradeParents(autoTradeData)
+
                 res.send({
                     status: true,
                     message: 'Auto trade settings updated successfully'
@@ -9006,6 +9022,8 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 data['user_id'] = user_id
 
                 let settings = db.collection(collectionName).insertOne(data);
+
+                await createAutoTradeParents(autoTradeData)
 
                 res.send({
                     status: true,
@@ -9069,6 +9087,32 @@ router.post('/getBtcUsdtBalance', async (req, res) => {
     }
 
 })//end getBtcUsdtBalance
+
+async function createAutoTradeParents(settings){
+    return new Promise((resolve) => {
+        resolve(true)
+        // conn.then((db) => {
+        //     let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+
+        //     // find if auto trade settings parent exist previously
+            
+
+            
+        //     //create new auto trade parent
+
+        //     db.collection(collectionName).insertOne(buyArr, async (err, result) => {
+        //         if (err) {
+        //             console.log(err)
+        //             resolve(false)
+        //         } else {
+        //             resolve(true)
+        //         }
+        //     })
+        // })
+    })
+}
+
+// ***************** End Auto Trading Module APIs **************** //
 
 
 router.post('/buyCoin', (req, res) => {
