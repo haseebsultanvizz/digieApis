@@ -8937,12 +8937,13 @@ router.post('/listCurrentUserExchanges', async (req, res) => {
 router.post('/getAutoTradeSettings', async (req, res) => {
 
     let user_id = req.body.user_id
+    let application_mode = req.body.application_mode
     
-    if (typeof user_id != 'undefined' && user_id != '') {
+    if (typeof user_id != 'undefined' && user_id != '' && typeof application_mode != 'undefined' && application_mode != '') {
 
         conn.then(async (db) => {
 
-            let exchangesArr = ['binance', 'bam']
+            let exchangesArr = ['binance', 'bam', 'kraken']
             let settingsArr = {}
             exchangesArr.map(exchange =>{
                 let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
@@ -8951,9 +8952,9 @@ router.post('/getAutoTradeSettings', async (req, res) => {
                 }
                 settingsArr[exchange] = db.collection(collectionName).find(where).toArray();
             })
-            let myPromises = await Promise.all([settingsArr.binance, settingsArr.bam])
+            let myPromises = await Promise.all([settingsArr.binance, settingsArr.bam, settingsArr.kraken])
 
-            if (myPromises[0].length == 0 && myPromises[1].length == 0){
+            if (myPromises[0].length == 0 && myPromises[1].length == 0 && myPromises[2].length == 0){
                 res.send({
                     status: true,
                     data: {},
@@ -8965,6 +8966,7 @@ router.post('/getAutoTradeSettings', async (req, res) => {
                     data: {
                         'binance': myPromises[0],
                         'bam': myPromises[1],
+                        'kraken': myPromises[2],
                     },
                     message: 'Settings found successfully.'
                 });
@@ -8974,7 +8976,7 @@ router.post('/getAutoTradeSettings', async (req, res) => {
     } else {
         res.send({
             status: false,
-            message: 'user_id is required.'
+            message: 'user_id and application_mode is required.'
         });
     }
 })//end getAutoTradeSettings
@@ -8985,20 +8987,23 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
     let user_id = req.body.user_id
     let exchange = req.body.exchange
     let dataArr = req.body.data
+    let application_mode = req.body.application_mode
     // let exchangesArr = ['binance', 'bam', 'kraken']
 
     let autoTradeData = {
         'user_id': user_id,
         'exchange': exchange,
-        'settings': dataArr 
+        'settings': dataArr,
+        'application_mode': application_mode 
     }
 
-    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '') {
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != '') {
 
         conn.then(async (db) => {
             let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
             var where = {
-                'user_id': user_id
+                'user_id': user_id,
+                'application_mode': application_mode,
             }
             let userSettings = await db.collection(collectionName).find(where).toArray(); 
             //update settings I already exist for this user
@@ -9020,6 +9025,7 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 //Insert auto trade settings
                 let data = dataArr
                 data['user_id'] = user_id
+                data['application_mode'] = application_mode
 
                 let settings = db.collection(collectionName).insertOne(data);
 
@@ -9097,7 +9103,7 @@ async function createAutoTradeParents(settings){
         //     // find if auto trade settings parent exist previously
             
 
-            
+
         //     //create new auto trade parent
 
         //     db.collection(collectionName).insertOne(buyArr, async (err, result) => {
