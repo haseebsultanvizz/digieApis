@@ -1795,6 +1795,81 @@ function marketMinNotation_with_step_size(symbol, exchange) {
     })
 } //End of marketMinNotation_with_step_size
 
+//function which have all prerequisite for buying or selling any order, returns step size with min notation 
+function marketMinNotation_with_step_size_arr(symbol, exchange) {
+    return new Promise((resolve) => {
+        conn.then((db) => {
+
+            let collectionName = exchange == 'binance' || exchange == 'bam' ? 'market_min_notation' : 'market_min_notation_' + exchange;
+            let where = {};
+            where.symbol = symbol;
+            db.collection(collectionName).find(where).toArray((err, result) => {
+                if (err) {
+                    resolve(err);
+                } else {
+
+                    let arr = []
+                    if (result.length > 0) {
+
+                        result.map(item=>{
+                            var obj = {}
+                            obj['symbol'] = item.symbol
+                            obj['min_notation'] = item.min_notation
+                            obj['step_size'] = item.stepSize
+                            arr.push(obj) 
+                        })
+                    }
+                    resolve(arr)
+                }
+            })
+        })
+    })
+} //End of marketMinNotation_with_step_size
+
+//function for getting current market price 
+function listCurrentMarketPriceArr(coin, exchange) {
+    //get market price on the base of exchange 
+    if (exchange == 'bam') {
+        return new Promise(function (resolve, reject) {
+            conn.then((db) => {
+                let where = {};
+                where['coin'] = coin;
+                db.collection('market_prices_node_bam').find(where).toArray((err, result) => {
+                    if (err) {
+                        resolve(err);
+                    } else {
+                        if (result.length > 0) {
+                            resolve(result);
+                        } else {
+                            resolve(000);
+                        }
+                    }
+                })
+            })
+        })
+    } else {
+        //****************************8 */
+        return new Promise((resolve) => {
+            let where = {};
+            where.coin = coin;
+            conn.then((db) => {
+                let collectionName = (exchange == 'binance') ? 'market_prices' : 'market_prices_' + exchange;
+                db.collection(collectionName).find(where).sort({
+                    "created_date": -1
+                }).toArray((err, result) => {
+                    if (err) {
+                        resolve(err)
+                    } else {
+                        resolve(result)
+                    }
+                })
+            })
+        })
+        //************************** */
+    }
+
+} //End of listCurrentMarketPriceArr
+
 //function for getting order list from order-list angular  component 
 router.post('/listOrderListing', async (req, resp) => {
 
@@ -2643,7 +2718,7 @@ async function listOrderListing(postDAta, dbConnection) {
     }
 
     if (postDAta.status == 'sold') {
-        filter['status'] = 'FILLED'
+        // filter['status'] = 'FILLED'
         filter['is_sell_order'] = 'sold';
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
@@ -8264,7 +8339,8 @@ router.post('/pause_sold_order', (req, res) => {
 
                 let set = {};
                 set['$set'] = {
-                    'is_sell_order': 'pause'
+                    'is_sell_order': 'pause',
+                    'modified_date': new Date()
                 };
                 let where = {
                     '_id': obj._id
@@ -8317,7 +8393,8 @@ router.post('/pause_lth_order', (req, res) => {
 
                 let set = {};
                 set['$set'] = {
-                    'status': 'lth_pause'
+                    'status': 'lth_pause',
+                    'modified_date': new Date()
                 };
                 let where = {
                     '_id': obj._id
@@ -9094,9 +9171,219 @@ router.post('/getBtcUsdtBalance', async (req, res) => {
 
 })//end getBtcUsdtBalance
 
+
+router.get('/mytest', async(req, res)=>{
+    let coinData = await listmarketPriceMinNotationCoinArr('XRPBTC', 'binance')
+    res.send({ 'status': true, 'data': coinData})
+})
+
+async function listmarketPriceMinNotationCoinArr(coin, exchange) {
+    //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
+    // var marketMinNotationPromise = marketMinNotation(req.body.coin);
+
+    return new Promise(async (resolve) => {
+
+        var marketMinNotationPromise = marketMinNotation_with_step_size_arr(coin, exchange);
+        var currentMarketPricePromise = listCurrentMarketPriceArr(coin, exchange);
+    
+        var promisesResult = await Promise.all([marketMinNotationPromise, currentMarketPricePromise]);
+        if (promisesResult[0].length > 0 && promisesResult[1].length > 0){
+            let coinObjArr = {}
+            promisesResult[1].map(item=>{
+                coinObjArr[item.coin] = {}
+                coinObjArr[item.coin]['currentmarketPrice'] = item.price
+                let notationObj =  promisesResult[0].find(item2=>{return item2.symbol == item.coin ? true : false })
+        
+                coinObjArr[item.coin]['marketMinNotation'] = notationObj.min_notation
+                coinObjArr[item.coin]['marketMinNotationStepSize'] = notationObj.step_size
+            })
+            resolve(coinObjArr)
+        }else{
+            resolve(false)
+        }
+    })
+} //End of listmarketPriceMinNotationCoinArr
+
 async function createAutoTradeParents(settings){
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
         resolve(true)
+
+   /*      settings  { user_id: '5c0912b7fc9aadaac61dd072',
+        exchange: 'binance',
+        settings:
+        { curr_step: 'step_4',
+            step_1: { exchange: 'binance' },
+            step_2: { coins: [Array] },
+            step_3: { bots: [Array] },
+            step_4:
+            { availableBTC: 0.002563,
+                availableUSDT: 91,
+                availableBNB: 3.741181,
+                btcInvestPercentage: 10,
+                usdtInvestPercentage: 90,
+                tradeableUSDT: 900,
+                tradeableBTC: 0.011084,
+                actualTradeableUSDT: 91,
+                actualTradeableBTC: 0.002563,
+                dailTradeAbleBalancePercentage: 20,
+                dailyTradeableBTC: 0.000513,
+                dailyTradeableUSDT: 18.2,
+                noOfDailyBTCTrades: 1,
+                noOfDailyUSDTTrades: 5,
+                cancel_previous_parents: 'yes',
+                update_trade_worth: 'yes',
+                enable_money_managment: 'yes',
+                auto_buy_bnb: 'yes' },
+            user_id: '5c0912b7fc9aadaac61dd072',
+            application_mode: 'test',
+            _id: 5eb25fd869c675277be22363 },
+        application_mode: 'test' } */
+
+        // console.log('settings ', settings);
+        // process.exit(0)
+
+        let user_id = settings.user_id
+        let application_mode = settings.application_mode
+        let exchange = settings.settings.step_1.exchange
+        let coins = settings.settings.step_2.coins
+        let bots = settings.settings.step_3.bots
+        let step4 = settings.settings.step_4
+
+        // let btcPerTrade = step4.dailyTradeableBTC / step4.noOfDailyBTCTrades
+        // let usdtPerTrade = step4.dailyTradeableUSDT / step4.noOfDailyUSDTTrades
+        
+        let btcPerTrade = step4.dailyTradeableBTC
+        let usdtPerTrade = step4.dailyTradeableUSDT
+        
+        let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+
+        whereCoins = { '$in': coins}
+        if(!coins.includes('BTCUSDT')){
+            whereCoins['$in'].push('BTCUSDT') 
+        }
+        let coinData = await listmarketPriceMinNotationCoinArr(whereCoins, exchange)
+
+        let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+
+        let parentTradesArr = [] 
+
+        coins.map(coin=>{
+            
+            let currentMarketPrice = coinData[coin]['currentmarketPrice']
+            let marketMinNotation = coinData[coin]['marketMinNotation']
+            let marketMinNotationStepSize = coinData[coin]['marketMinNotationStepSize']
+            var toFixedNum = 6
+            
+            if(exchange == 'kraken'){
+                toFixedNum = 6
+            }else{
+                toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+            }
+
+            //find min required quantity
+            var extra_qty_percentage = 30;
+            var extra_qty_val = 0;
+            extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
+            var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
+            var minReqQty = (calculatedMinNotation / currentMarketPrice);
+            minReqQty += marketMinNotationStepSize
+            minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
+
+            //TODO: find one usd worth of quantity
+            let selectedCoin = coin;
+            let splitArr = selectedCoin.split('USDT');
+            let oneUsdWorthQty = 0;
+            var usdWorthQty = 0
+            var quantity = 0
+            var usd_worth = 0
+
+            if (splitArr[1] == '') {
+
+                //usdtPerTrade
+                usd_worth = usdtPerTrade
+                
+                oneUsdWorthQty = 1 / currentMarketPrice
+                // console.log('USD COIN', oneUsdWorthQty);
+            } else {
+                
+                //btcPerTrade
+                usd_worth = btcPerTrade * currentMarketPrice * BTCUSDTPRICE
+                
+                oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
+                // console.log('BTC COIN', oneUsdWorthQty);
+            }
+
+            usd_worth = parseFloat(usd_worth.toFixed(2))
+
+            usdWorthQty = usd_worth * oneUsdWorthQty
+            quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
+
+            console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth)
+
+            if (quantity < minReqQty) {
+                continue
+            } else {
+
+                let parentObj = {
+                    'auto_trade_generator': 'yes',
+                    'admin_id': user_id,
+                    'order_mode': application_mode,
+                    'application_mode': application_mode,
+                    'market_value': '',
+                    'price': '',
+                    'quantity': quantity,
+                    'symbol': coin,
+                    'order_type': 'market_order',
+                    'status': 'new',
+                    'trigger_type': 'barrier_percentile_trigger',
+                    'pause_status': 'play',
+                    'usd_worth': usd_worth,
+                    'parent_status': 'parent',
+                    'exchange': exchange,
+                    'defined_sell_percentage': 3.3,
+                    'sell_profit_percent': 3.3,
+                    'order_level': '',
+                    'current_market_price': currentMarketPrice,
+                    'stop_loss_rule': 'custom_stop_loss',
+                    'custom_stop_loss_percentage': 16.5,
+                    'activate_stop_loss_profit_percentage': 100,
+                    'lth_functionality': 'yes',
+                    'lth_profit': 25,
+                    'stop_loss': 'yes',
+                    'loss_percentage': 16.5,
+                    'un_limit_child_orders': 'no',
+                    'created_date': new Date(),
+                    'modified_date': new Date(),
+                }
+
+                parentTradesArr.push(parentObj)
+            }
+            
+            bots.map(bot=>{
+                
+                //Insert New Parent 
+                
+                // let log_msg = 'Parent created by auto trade generator.'
+                // //Save LOG
+                // let promiseLog = create_orders_history_log(order['_id'], log_msg, type, show_hide_log, exchange, application_mode, order_created_date)
+                // promiseLog.then((callback) => { })
+                
+            })
+        })
+        
+        console.log('parentTradesArr created', parentTradesArr)
+
+        process.exit(0)
+
+
+
+
+
+
+
+
+
+
         // conn.then((db) => {
         //     let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
 
@@ -9117,6 +9404,50 @@ async function createAutoTradeParents(settings){
         // })
     })
 }
+
+async function calculateNumberOfTradesPerDay(dailyTradeable, totalTradeAbleInUSD){
+
+    let minQtyUsd = 15
+
+    let packageArr = [
+        {
+            'limit': 1000,
+            'arr': [5, 3, 1],
+        },
+        {
+            'limit': 2500,
+            'arr': [9, 7, 5, 3, 1],
+        },
+        {
+            'limit': 5000,
+            'arr': [11, 9, 7, 5, 3, 1],
+        },
+    ]
+
+    let pkg = packageArr.find(item => { return item.limit == totalTradeAbleInUSD ? true : false })
+    let tArr = []
+    tArr = pkg['arr']
+    let count = tArr.length
+
+    let perTradeUsd = 0
+
+    let dailyTradeObj = {}
+
+    for (let i = 0; i < count; i++) {
+        perTradeUsd = dailyTradeable / tArr[i]
+        perTradeUsd = parseFloat(perTradeUsd.toFixed(2))
+        if (perTradeUsd < minQtyUsd) {
+            continue
+        } else {
+            dailyTradeObj['numberOfTrades'] = tArr[i]
+            dailyTradeObj['perTradeUsd'] = perTradeUsd
+            break
+        }
+    }
+
+    return dailyTradeObj
+}
+
 
 // ***************** End Auto Trading Module APIs **************** //
 
