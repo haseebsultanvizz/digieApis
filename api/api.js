@@ -8348,8 +8348,16 @@ router.post('/pause_sold_order', (req, res) => {
 
                 let update = db.collection(sold_collection).updateOne(where, set);
 
-                let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_' + exchange)
-                let ins = await db.collection(pause_collection).insertOne(obj);
+                // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_' + exchange)
+                // let ins = await db.collection(pause_collection).insertOne(obj);
+
+                let show_hide_log = 'yes';
+                let type = 'pause_sold_order';
+                let order_mode = obj.application_mode;
+                let log_msg = 'Sold order paused manually.'
+                var order_created_date = obj.created_date
+                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                promiseLog.then((callback) => { })
 
                 res.send({
                     'status': true,
@@ -8411,6 +8419,14 @@ router.post('/pause_lth_order', (req, res) => {
                 }
                 // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
                 // let ins = await db.collection(pause_collection).insertOne(obj);
+
+                let show_hide_log = 'yes';
+                let type = 'pause_lth_order';
+                let order_mode = obj.application_mode;
+                let log_msg = 'LTH Order paused manually.'
+                var order_created_date = obj.created_date
+                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                promiseLog.then((callback) => { })
 
                 res.send({
                     'status': true,
@@ -8485,7 +8501,8 @@ router.post('/resume_order', (req, res) => {
 
                 let set = {};
                 set['$set'] = {
-                    'is_sell_order': 'resume_pause'
+                    'is_sell_order': 'resume_pause',
+                    'modified_date': new Date()
                 };
                 let where = {
                     '_id': obj._id
@@ -8495,6 +8512,14 @@ router.post('/resume_order', (req, res) => {
 
                 // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
                 // let ins = await db.collection(pause_collection).insertOne(obj);
+
+                let show_hide_log = 'yes';
+                let type = 'resume_order';
+                let order_mode = obj.application_mode;
+                let log_msg = 'Order resumed manually.'
+                var order_created_date = obj.created_date
+                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                promiseLog.then((callback) => { })
 
                 res.send({
                     'status': true,
@@ -9321,7 +9346,7 @@ async function createAutoTradeParents(settings){
             console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth)
 
             if (quantity < minReqQty) {
-                continue
+                
             } else {
 
                 let parentObj = {
