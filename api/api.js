@@ -8508,23 +8508,31 @@ router.post('/resume_order', (req, res) => {
                     '_id': obj._id
                 }
 
-                let update = db.collection(sold_collection).updateOne(where, set);
 
-                // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
-                // let ins = await db.collection(pause_collection).insertOne(obj);
-
-                let show_hide_log = 'yes';
-                let type = 'resume_order';
-                let order_mode = obj.application_mode;
-                let log_msg = 'Order resumed manually.'
-                var order_created_date = obj.created_date
-                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-                promiseLog.then((callback) => { })
-
-                res.send({
-                    'status': true,
-                    'message': 'Order resumed successfully'
-                });
+                if (await isMinQtyValid(obj.symbol, obj.quantity, exchange)){
+                    // let update = db.collection(sold_collection).updateOne(where, set);
+    
+                    // // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
+                    // // let ins = await db.collection(pause_collection).insertOne(obj);
+    
+                    // let show_hide_log = 'yes';
+                    // let type = 'resume_order';
+                    // let order_mode = obj.application_mode;
+                    // let log_msg = 'Order resumed manually.'
+                    // var order_created_date = obj.created_date
+                    // var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                    // promiseLog.then((callback) => { })
+    
+                    res.send({
+                        'status': true,
+                        'message': 'Order resumed successfully'
+                    });
+                }else{
+                    res.send({
+                        'status': false,
+                        'message': 'Order can not be resumed min quantity is not valid.'
+                    });
+                }
             } else {
                 res.send({
                     'status': false,
@@ -9290,18 +9298,40 @@ async function createAutoTradeParents(settings){
 
         let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
 
+
+        let numBtcTradesWithUsdWorth = await calculateNumberOfTradesPerDay(step4.dailyTradeableBTC, step4.totalTradeAbleInUSD)
+        console.log('btc', numBtcTradesWithUsdWorth)
+        let btcNumTrades = typeof numBtcTradesWithUsdWorth['numberOfTrades'] != 'undefined' ? numBtcTradesWithUsdWorth['numberOfTrades'] : 0
+        let btcQty = typeof numBtcTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numBtcTradesWithUsdWorth['perTradeUsd'] : 0
+        if (btcQty != 0) {
+            btcQty = (1 / BTCUSDTPRICE) * btcQty
+            btcPerTrade = btcQty 
+        }
+        
+        let numUsdtTradesWithUsdWorth = await calculateNumberOfTradesPerDay(step4.dailyTradeableUSDT, step4.totalTradeAbleInUSD)
+        console.log('usdt',numUsdtTradesWithUsdWorth)
+        let usdtNumTrades = typeof numUsdtTradesWithUsdWorth['numberOfTrades'] != 'undefined' ? numUsdtTradesWithUsdWorth['numberOfTrades'] : 0
+        let usdtQty = typeof numUsdtTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numUsdtTradesWithUsdWorth['perTradeUsd'] : 0
+        if (btcQty != 0) {
+            usdtPerTrade = usdtQty 
+        }
+
         let parentTradesArr = [] 
 
-        coins.map(coin=>{
-            
+        let coninsCount = coins.length
+        
+        for(let i=0; i<coninsCount; i++){
+
+            let coin = coins[i]
+
             let currentMarketPrice = coinData[coin]['currentmarketPrice']
             let marketMinNotation = coinData[coin]['marketMinNotation']
             let marketMinNotationStepSize = coinData[coin]['marketMinNotationStepSize']
             var toFixedNum = 6
-            
-            if(exchange == 'kraken'){
+
+            if (exchange == 'kraken') {
                 toFixedNum = 6
-            }else{
+            } else {
                 toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
             }
 
@@ -9322,18 +9352,35 @@ async function createAutoTradeParents(settings){
             var quantity = 0
             var usd_worth = 0
 
+            var numT = 0
+
             if (splitArr[1] == '') {
+
+                numT = usdtNumTrades
+
+                if (usdtNumTrades == 0) {
+                    console.log('USDT', numT)
+                    continue
+                }
 
                 //usdtPerTrade
                 usd_worth = usdtPerTrade
-                
+
                 oneUsdWorthQty = 1 / currentMarketPrice
                 // console.log('USD COIN', oneUsdWorthQty);
             } else {
-                
+
+                numT = btcNumTrades
+
+                if(btcNumTrades == 0){
+
+                    console.log('BTC', numT)
+                    continue
+                }
+
                 //btcPerTrade
                 usd_worth = btcPerTrade * currentMarketPrice * BTCUSDTPRICE
-                
+
                 oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
                 // console.log('BTC COIN', oneUsdWorthQty);
             }
@@ -9346,7 +9393,7 @@ async function createAutoTradeParents(settings){
             console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth)
 
             if (quantity < minReqQty) {
-                
+                //Do nothing
             } else {
 
                 let parentObj = {
@@ -9379,22 +9426,123 @@ async function createAutoTradeParents(settings){
                     'un_limit_child_orders': 'no',
                     'created_date': new Date(),
                     'modified_date': new Date(),
+                }                
+
+                for (let j = 0; j < numT; j++){
+
+                    let level = bots[Math.floor(Math.random() * bots.length)]
+                    parentObj['order_level'] = level
+
+                    parentTradesArr.push(parentObj)
                 }
 
-                parentTradesArr.push(parentObj)
             }
+
+        }
+
+        // coins.map(coin=>{
             
-            bots.map(bot=>{
+        //     let currentMarketPrice = coinData[coin]['currentmarketPrice']
+        //     let marketMinNotation = coinData[coin]['marketMinNotation']
+        //     let marketMinNotationStepSize = coinData[coin]['marketMinNotationStepSize']
+        //     var toFixedNum = 6
+            
+        //     if(exchange == 'kraken'){
+        //         toFixedNum = 6
+        //     }else{
+        //         toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+        //     }
+
+        //     //find min required quantity
+        //     var extra_qty_percentage = 30;
+        //     var extra_qty_val = 0;
+        //     extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
+        //     var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
+        //     var minReqQty = (calculatedMinNotation / currentMarketPrice);
+        //     minReqQty += marketMinNotationStepSize
+        //     minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
+
+        //     //TODO: find one usd worth of quantity
+        //     let selectedCoin = coin;
+        //     let splitArr = selectedCoin.split('USDT');
+        //     let oneUsdWorthQty = 0;
+        //     var usdWorthQty = 0
+        //     var quantity = 0
+        //     var usd_worth = 0
+
+        //     if (splitArr[1] == '') {
+
+        //         //usdtPerTrade
+        //         usd_worth = usdtPerTrade
                 
-                //Insert New Parent 
+        //         oneUsdWorthQty = 1 / currentMarketPrice
+        //         // console.log('USD COIN', oneUsdWorthQty);
+        //     } else {
                 
-                // let log_msg = 'Parent created by auto trade generator.'
-                // //Save LOG
-                // let promiseLog = create_orders_history_log(order['_id'], log_msg, type, show_hide_log, exchange, application_mode, order_created_date)
-                // promiseLog.then((callback) => { })
+        //         //btcPerTrade
+        //         usd_worth = btcPerTrade * currentMarketPrice * BTCUSDTPRICE
                 
-            })
-        })
+        //         oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
+        //         // console.log('BTC COIN', oneUsdWorthQty);
+        //     }
+
+        //     usd_worth = parseFloat(usd_worth.toFixed(2))
+
+        //     usdWorthQty = usd_worth * oneUsdWorthQty
+        //     quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
+
+        //     console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth)
+
+        //     if (quantity < minReqQty) {
+                
+        //     } else {
+
+        //         let parentObj = {
+        //             'auto_trade_generator': 'yes',
+        //             'admin_id': user_id,
+        //             'order_mode': application_mode,
+        //             'application_mode': application_mode,
+        //             'market_value': '',
+        //             'price': '',
+        //             'quantity': quantity,
+        //             'symbol': coin,
+        //             'order_type': 'market_order',
+        //             'status': 'new',
+        //             'trigger_type': 'barrier_percentile_trigger',
+        //             'pause_status': 'play',
+        //             'usd_worth': usd_worth,
+        //             'parent_status': 'parent',
+        //             'exchange': exchange,
+        //             'defined_sell_percentage': 3.3,
+        //             'sell_profit_percent': 3.3,
+        //             'order_level': '',
+        //             'current_market_price': currentMarketPrice,
+        //             'stop_loss_rule': 'custom_stop_loss',
+        //             'custom_stop_loss_percentage': 16.5,
+        //             'activate_stop_loss_profit_percentage': 100,
+        //             'lth_functionality': 'yes',
+        //             'lth_profit': 25,
+        //             'stop_loss': 'yes',
+        //             'loss_percentage': 16.5,
+        //             'un_limit_child_orders': 'no',
+        //             'created_date': new Date(),
+        //             'modified_date': new Date(),
+        //         }
+
+        //         parentTradesArr.push(parentObj)
+        //     }
+            
+        //     bots.map(bot=>{
+                
+        //         //Insert New Parent 
+                
+        //         // let log_msg = 'Parent created by auto trade generator.'
+        //         // //Save LOG
+        //         // let promiseLog = create_orders_history_log(order['_id'], log_msg, type, show_hide_log, exchange, application_mode, order_created_date)
+        //         // promiseLog.then((callback) => { })
+                
+        //     })
+        // })
         
         console.log('parentTradesArr created', parentTradesArr)
 
@@ -9923,5 +10071,77 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
     })
 }//end update_qty_from_usd_worth(user_id)
 /* END CRON SCRIPT for update_qty_from_usd_worth */
+
+async function isMinQtyValid(symbol, qty, exchange){
+
+    let where ={
+        '$in': [symbol, 'BTCUSDT']
+    }
+    let coinData = await listmarketPriceMinNotationCoinArr(where, exchange)
+    let currentMarketPrice = coinData[symbol]['currentmarketPrice']
+    let marketMinNotation = coinData[symbol]['marketMinNotation']
+    let marketMinNotationStepSize = coinData[symbol]['marketMinNotationStepSize']
+    let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+    
+    let selectedCoin = symbol;
+    let splitArr = selectedCoin.split('USDT');
+    var extra_qty_percentage = 30;
+    var extra_qty_val = 0;
+    var toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+
+    if (exchange == 'kraken') {
+        toFixedNum = 6
+    }
+
+    if (splitArr[1] == '') {
+        extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
+        var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
+
+        var minReqQty = (calculatedMinNotation / currentMarketPrice);
+        minReqQty += marketMinNotationStepSize
+
+        if (exchange == 'kraken') {
+            minReqQty = calculatedMinNotation
+            minReqQty += marketMinNotationStepSize
+        }
+
+        let qtyInUsdt = qty * currentMarketPrice;
+        qtyInUsdt = qtyInUsdt.toFixed(2);
+
+        console.log(qty , ' < ', minReqQty)
+        if (qty < parseFloat(minReqQty.toFixed(toFixedNum))) {
+            minQty = minReqQty.toFixed(toFixedNum);
+            return false
+        }else{
+            return true
+        }
+    } else {
+        let calculateBtc = qty * currentMarketPrice;
+        let calculateUsd = calculateBtc * BTCUSDTPRICE;
+        qtyInUsdt = calculateUsd.toFixed(2);
+        usd_worth = parseFloat(qtyInUsdt);
+
+        extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
+        var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
+
+        var minReqQty = (calculatedMinNotation / currentMarketPrice);
+
+        minReqQty += marketMinNotationStepSize
+
+        if (exchange == 'kraken') {
+            minReqQty = calculatedMinNotation
+            minReqQty += marketMinNotationStepSize
+        }
+
+        console.log(qty, ' < ', minReqQty)
+        if (qty < parseFloat(minReqQty.toFixed(toFixedNum))) {
+            // minQty = (minReqQty).toFixed(toFixedNum);
+            return false
+        }else{
+            return  true
+        }
+    }
+    return false
+}
 
 module.exports = router;
