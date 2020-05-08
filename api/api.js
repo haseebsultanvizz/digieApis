@@ -9298,7 +9298,6 @@ async function createAutoTradeParents(settings){
 
         let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
 
-
         let numBtcTradesWithUsdWorth = await calculateNumberOfTradesPerDay(step4.dailyTradeableBTC, step4.totalTradeAbleInUSD)
         console.log('btc', numBtcTradesWithUsdWorth)
         let btcNumTrades = typeof numBtcTradesWithUsdWorth['numberOfTrades'] != 'undefined' ? numBtcTradesWithUsdWorth['numberOfTrades'] : 0
