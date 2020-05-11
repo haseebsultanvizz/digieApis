@@ -8510,18 +8510,19 @@ router.post('/resume_order', (req, res) => {
 
 
                 if (await isMinQtyValid(obj.symbol, obj.quantity, exchange)){
-                    // let update = db.collection(sold_collection).updateOne(where, set);
+
+                    let update = db.collection(sold_collection).updateOne(where, set);
     
                     // // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
                     // // let ins = await db.collection(pause_collection).insertOne(obj);
     
-                    // let show_hide_log = 'yes';
-                    // let type = 'resume_order';
-                    // let order_mode = obj.application_mode;
-                    // let log_msg = 'Order resumed manually.'
-                    // var order_created_date = obj.created_date
-                    // var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-                    // promiseLog.then((callback) => { })
+                    let show_hide_log = 'yes';
+                    let type = 'resume_order';
+                    let order_mode = obj.application_mode;
+                    let log_msg = 'Order resumed manually.'
+                    var order_created_date = obj.created_date
+                    var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                    promiseLog.then((callback) => { })
     
                     res.send({
                         'status': true,
@@ -8544,6 +8545,72 @@ router.post('/resume_order', (req, res) => {
     })
 })
 //End resume_order
+
+router.post('/resume_order_minQty', (req, res) => {
+    conn.then(async (db) => {
+        let exchange = req.body.exchange
+        let order_id = req.body.order_id
+        let updateData = req.body.data
+
+        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == '') {
+            res.send({
+                'status': false,
+                'message': 'order_id and exchange are required'
+            });
+        } else {
+            let filter = {
+                '_id': new ObjectID(order_id),
+                'is_sell_order': 'pause'
+            }
+
+            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
+
+            let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
+
+            if (data1.length > 0) {
+                obj = data1[0];
+
+                updateData['is_sell_order'] = 'resume_pause'
+                updateData['modified_date'] = new Date()
+                let set = {};
+                set['$set'] = updateData
+                
+                // set['$set'] = {
+                //     'is_sell_order': 'resume_pause',
+                //     'modified_date': new Date()
+                // };
+                let where = {
+                    '_id': obj._id
+                }
+
+                let update = db.collection(sold_collection).updateOne(where, set);
+
+                // // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
+                // // let ins = await db.collection(pause_collection).insertOne(obj);
+
+                let show_hide_log = 'yes';
+                let type = 'resume_order';
+                let order_mode = obj.application_mode;
+                let log_msg = 'Order resumed manually.'
+                var order_created_date = obj.created_date
+                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                promiseLog.then((callback) => { })
+
+                res.send({
+                    'status': true,
+                    'message': 'Order resumed successfully'
+                });
+            } else {
+                res.send({
+                    'status': false,
+                    'message': 'Something went wrong'
+                });
+            }
+        }
+
+    })
+})
+//End resume_order_minQty
 
 router.post('/latest_user_activity', (req, res) => {
     conn.then(async (db) => {
@@ -9239,7 +9306,7 @@ async function listmarketPriceMinNotationCoinArr(coin, exchange) {
 
 async function createAutoTradeParents(settings){
     return new Promise(async (resolve) => {
-        resolve(true)
+        // resolve(true)
 
    /*      settings  { user_id: '5c0912b7fc9aadaac61dd072',
         exchange: 'binance',
@@ -9288,6 +9355,11 @@ async function createAutoTradeParents(settings){
         let btcPerTrade = step4.dailyTradeableBTC
         let usdtPerTrade = step4.dailyTradeableUSDT
         
+        let profit_percentage = step4.profit_percentage
+        let stop_loss = step4.stop_loss
+        let loss_percentage = step4.loss_percentage
+        let lth_profit = step4.lth_profit
+        
         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
 
         whereCoins = { '$in': coins}
@@ -9299,7 +9371,7 @@ async function createAutoTradeParents(settings){
         let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
 
         let numBtcTradesWithUsdWorth = await calculateNumberOfTradesPerDay(step4.dailyTradeableBTC, step4.totalTradeAbleInUSD)
-        console.log('btc', numBtcTradesWithUsdWorth)
+        // console.log('btc', numBtcTradesWithUsdWorth)
         let btcNumTrades = typeof numBtcTradesWithUsdWorth['numberOfTrades'] != 'undefined' ? numBtcTradesWithUsdWorth['numberOfTrades'] : 0
         let btcQty = typeof numBtcTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numBtcTradesWithUsdWorth['perTradeUsd'] : 0
         if (btcQty != 0) {
@@ -9308,7 +9380,7 @@ async function createAutoTradeParents(settings){
         }
         
         let numUsdtTradesWithUsdWorth = await calculateNumberOfTradesPerDay(step4.dailyTradeableUSDT, step4.totalTradeAbleInUSD)
-        console.log('usdt',numUsdtTradesWithUsdWorth)
+        // console.log('usdt',numUsdtTradesWithUsdWorth)
         let usdtNumTrades = typeof numUsdtTradesWithUsdWorth['numberOfTrades'] != 'undefined' ? numUsdtTradesWithUsdWorth['numberOfTrades'] : 0
         let usdtQty = typeof numUsdtTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numUsdtTradesWithUsdWorth['perTradeUsd'] : 0
         if (btcQty != 0) {
@@ -9373,7 +9445,7 @@ async function createAutoTradeParents(settings){
 
                 if(btcNumTrades == 0){
 
-                    console.log('BTC', numT)
+                    // console.log('BTC', numT)
                     continue
                 }
 
@@ -9389,7 +9461,7 @@ async function createAutoTradeParents(settings){
             usdWorthQty = usd_worth * oneUsdWorthQty
             quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
 
-            console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth)
+            // console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth)
 
             if (quantity < minReqQty) {
                 //Do nothing
@@ -9411,169 +9483,52 @@ async function createAutoTradeParents(settings){
                     'usd_worth': usd_worth,
                     'parent_status': 'parent',
                     'exchange': exchange,
-                    'defined_sell_percentage': 3.3,
-                    'sell_profit_percent': 3.3,
-                    'order_level': '',
+                    'defined_sell_percentage': profit_percentage,
+                    'sell_profit_percent': profit_percentage,
                     'current_market_price': currentMarketPrice,
                     'stop_loss_rule': 'custom_stop_loss',
-                    'custom_stop_loss_percentage': 16.5,
+                    'custom_stop_loss_percentage': loss_percentage,
+                    'loss_percentage': loss_percentage,
                     'activate_stop_loss_profit_percentage': 100,
                     'lth_functionality': 'yes',
-                    'lth_profit': 25,
-                    'stop_loss': 'yes',
-                    'loss_percentage': 16.5,
+                    'lth_profit': lth_profit,
+                    'stop_loss': stop_loss,
                     'un_limit_child_orders': 'no',
                     'created_date': new Date(),
                     'modified_date': new Date(),
                 }                
 
-                for (let j = 0; j < numT; j++){
+                let botCount = bots.length
+                for (let j = 0; j < botCount; j++){
+                    let newObj = parentObj
+                    newObj['order_level'] = bots[j]
 
-                    let level = bots[Math.floor(Math.random() * bots.length)]
-                    parentObj['order_level'] = level
 
-                    parentTradesArr.push(parentObj)
+                    conn.then((db) => {
+                        let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+                        
+                        // db.collection(collectionName).createIndex({ '_id': 1 })
+                        db.collection(collectionName).insertOne(newObj, async (err, result) => {
+                            if (err) {
+                                // console.log(err)
+                                // resolve(false)
+                            } else {
+                                // console.log('parentTradesArr created', newObj)
+                                // resolve(true)
+                            }
+                        })
+
+                    })
+
+                    // parentTradesArr.push(newObj)
                 }
 
             }
 
         }
-
-        // coins.map(coin=>{
-            
-        //     let currentMarketPrice = coinData[coin]['currentmarketPrice']
-        //     let marketMinNotation = coinData[coin]['marketMinNotation']
-        //     let marketMinNotationStepSize = coinData[coin]['marketMinNotationStepSize']
-        //     var toFixedNum = 6
-            
-        //     if(exchange == 'kraken'){
-        //         toFixedNum = 6
-        //     }else{
-        //         toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
-        //     }
-
-        //     //find min required quantity
-        //     var extra_qty_percentage = 30;
-        //     var extra_qty_val = 0;
-        //     extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
-        //     var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
-        //     var minReqQty = (calculatedMinNotation / currentMarketPrice);
-        //     minReqQty += marketMinNotationStepSize
-        //     minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
-
-        //     //TODO: find one usd worth of quantity
-        //     let selectedCoin = coin;
-        //     let splitArr = selectedCoin.split('USDT');
-        //     let oneUsdWorthQty = 0;
-        //     var usdWorthQty = 0
-        //     var quantity = 0
-        //     var usd_worth = 0
-
-        //     if (splitArr[1] == '') {
-
-        //         //usdtPerTrade
-        //         usd_worth = usdtPerTrade
-                
-        //         oneUsdWorthQty = 1 / currentMarketPrice
-        //         // console.log('USD COIN', oneUsdWorthQty);
-        //     } else {
-                
-        //         //btcPerTrade
-        //         usd_worth = btcPerTrade * currentMarketPrice * BTCUSDTPRICE
-                
-        //         oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
-        //         // console.log('BTC COIN', oneUsdWorthQty);
-        //     }
-
-        //     usd_worth = parseFloat(usd_worth.toFixed(2))
-
-        //     usdWorthQty = usd_worth * oneUsdWorthQty
-        //     quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
-
-        //     console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth)
-
-        //     if (quantity < minReqQty) {
-                
-        //     } else {
-
-        //         let parentObj = {
-        //             'auto_trade_generator': 'yes',
-        //             'admin_id': user_id,
-        //             'order_mode': application_mode,
-        //             'application_mode': application_mode,
-        //             'market_value': '',
-        //             'price': '',
-        //             'quantity': quantity,
-        //             'symbol': coin,
-        //             'order_type': 'market_order',
-        //             'status': 'new',
-        //             'trigger_type': 'barrier_percentile_trigger',
-        //             'pause_status': 'play',
-        //             'usd_worth': usd_worth,
-        //             'parent_status': 'parent',
-        //             'exchange': exchange,
-        //             'defined_sell_percentage': 3.3,
-        //             'sell_profit_percent': 3.3,
-        //             'order_level': '',
-        //             'current_market_price': currentMarketPrice,
-        //             'stop_loss_rule': 'custom_stop_loss',
-        //             'custom_stop_loss_percentage': 16.5,
-        //             'activate_stop_loss_profit_percentage': 100,
-        //             'lth_functionality': 'yes',
-        //             'lth_profit': 25,
-        //             'stop_loss': 'yes',
-        //             'loss_percentage': 16.5,
-        //             'un_limit_child_orders': 'no',
-        //             'created_date': new Date(),
-        //             'modified_date': new Date(),
-        //         }
-
-        //         parentTradesArr.push(parentObj)
-        //     }
-            
-        //     bots.map(bot=>{
-                
-        //         //Insert New Parent 
-                
-        //         // let log_msg = 'Parent created by auto trade generator.'
-        //         // //Save LOG
-        //         // let promiseLog = create_orders_history_log(order['_id'], log_msg, type, show_hide_log, exchange, application_mode, order_created_date)
-        //         // promiseLog.then((callback) => { })
-                
-        //     })
-        // })
         
-        console.log('parentTradesArr created', parentTradesArr)
-
-        process.exit(0)
-
-
-
-
-
-
-
-
-
-
-        // conn.then((db) => {
-        //     let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-
-        //     // find if auto trade settings parent exist previously
-            
-
-
-        //     //create new auto trade parent
-
-        //     db.collection(collectionName).insertOne(buyArr, async (err, result) => {
-        //         if (err) {
-        //             console.log(err)
-        //             resolve(false)
-        //         } else {
-        //             resolve(true)
-        //         }
-        //     })
-        // })
+        resolve(true)
+        
     })
 }
 
@@ -9619,6 +9574,130 @@ async function calculateNumberOfTradesPerDay(dailyTradeable, totalTradeAbleInUSD
 
     return dailyTradeObj
 }
+
+
+//getLTHBalance
+router.post('/getLTHBalance', async (req, res) => {
+
+    let user_id = req.body.user_id
+    let exchange = req.body.exchange
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '') {
+        let data = await getLTHBalance(user_id, exchange)
+        // console.log(data)
+        res.send({
+            status: true,
+            data: data,
+            message: 'Data found successfully.'
+        });
+    } else {
+        res.send({
+            status: false,
+            message: 'user_id and exchange is required.'
+        });
+    }
+
+})//end getLTHBalance
+
+async function getLTHBalance(user_id, exchange) {
+    return new Promise(async (resolve)=>{
+        conn.then(async (db) => {
+            let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+            var where = {
+                'admin_id': user_id,
+                'application_mode': 'live',
+                'status': {'$in': ['LTH', 'LTH_ERROR']},
+                'is_sell_order': 'yes',
+            }
+            let lthOrders = await db.collection(collectionName).find(where).toArray();
+            if (lthOrders.length > 0) {
+
+                let totalLth = lthOrders.length
+
+                let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
+                let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+                
+                let LthBtc = 0;
+                let LthUsdWorth = 0;
+                
+                let onlyBtc = 0;
+                let onlyUsdt = 0;
+
+                for (let i = 0; i < totalLth; i++){
+
+                    let order = lthOrders[i]
+
+                    let selectedCoin = order['symbol'];
+                    let quantity = order['quantity'];
+                    let purchased_price = order['purchased_price'];
+                    let currUsd = 0
+                    let currBtc = 0
+
+                    if (typeof order['buy_fraction_filled_order_arr'] != 'undefined'){
+                        quantity = 0
+                        order['buy_fraction_filled_order_arr'].map(item=>{
+                            quantity += item['filledQty']
+                            purchased_price = item['filledPrice']
+                        })
+                    }
+
+                    let splitArr = selectedCoin.split('USDT');
+                    if (splitArr[1] == '') {
+                        let qtyInUsdt = quantity * purchased_price
+                        currUsd = parseFloat(qtyInUsdt.toFixed(2))
+                        currBtc = quantity * purchased_price * (1 / BTCUSDTPRICE)
+                        onlyUsdt += currUsd
+                    } else {
+                        let calculateBtc = quantity * purchased_price
+                        currBtc = calculateBtc
+                        let calculateUsd = calculateBtc * BTCUSDTPRICE
+                        currUsd = parseFloat(calculateUsd.toFixed(2))
+                        onlyBtc += currBtc
+                    }
+
+                    LthBtc += currBtc
+                    LthUsdWorth += currUsd
+
+                }
+
+                LthBtc = parseFloat(LthBtc.toFixed(6))
+                LthUsdWorth = parseFloat(LthUsdWorth.toFixed(2))
+
+                onlyBtc = parseFloat(onlyBtc.toFixed(6))
+                onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
+
+                let resObj = {
+                    'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0 ,
+                    'onlyUsdt': !isNaN(onlyUsdt) ? onlyUsdt : 0 ,
+                    'LthBtcWorth': !isNaN(LthBtc) ? LthBtc : 0 ,
+                    'LthUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
+                }
+                resolve(resObj)
+            } else {
+                resolve({})
+            }
+        })
+    })
+}
+//getOrderById
+router.post('/getOrderById', async (req, res) => {
+
+    let order_id = req.body.order_id
+    let exchange = req.body.exchange
+    if (typeof order_id != 'undefined' && order_id != '' && typeof exchange != 'undefined' && exchange != '') {
+        var order = await listOrderById(order_id, exchange);
+        res.send({
+            status: order.length > 0 ? true : false,
+            data: order[0],
+            message: 'Order found successfully.'
+        });
+    } else {
+        res.send({
+            status: false,
+            message: 'order_id and exchange is required.'
+        });
+    }
+
+})//end getOrderById
 
 
 // ***************** End Auto Trading Module APIs **************** //
