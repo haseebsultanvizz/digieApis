@@ -8572,6 +8572,8 @@ router.post('/resume_order_minQty', (req, res) => {
 
                 updateData['is_sell_order'] = 'resume_pause'
                 updateData['modified_date'] = new Date()
+                updateData['resume_date'] = typeof updateData['resume_date'] != 'undefined' && updateData['resume_date'] != '' ? new Date(updateData['resume_date']) : new Date(new Date().setDate(new Date().getDate() + 1))
+
                 let set = {};
                 set['$set'] = updateData
                 
@@ -9496,6 +9498,8 @@ async function createAutoTradeParents(settings){
                     'un_limit_child_orders': 'no',
                     'created_date': new Date(),
                     'modified_date': new Date(),
+                    'is_sell_order': 'no',
+                    'sell_price': '',
                 }                
 
                 let botCount = bots.length
