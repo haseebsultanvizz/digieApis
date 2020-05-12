@@ -2181,7 +2181,8 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_9['admin_id'] = admin_id;
     filter_9['application_mode'] = application_mode;
     filter_9['is_sell_order'] = {
-        '$in': ['pause', 'resume_pause', 'resume_complete']
+        '$in': ['pause', 'resume_pause']
+        // '$in': ['pause', 'resume_pause', 'resume_complete']
     };
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
@@ -2225,6 +2226,9 @@ router.post('/listOrderListing', async (req, resp) => {
         for (let [key, value] of Object.entries(search)) {
             filter_all[key] = value;
         }
+        filter_all['is_sell_order'] = {
+            '$ne': 'resume_complete'
+        };
     }
     let soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     let all1Promise = countCollection(soldOrdercollection, filter_all);
@@ -2726,7 +2730,8 @@ async function listOrderListing(postDAta, dbConnection) {
     if (postDAta.status == 'lth_pause') {
         filter['status'] = 'FILLED'
         filter['is_sell_order'] = {
-            '$in': ['pause', 'resume_pause', 'resume_complete']
+            '$in': ['pause', 'resume_pause']
+            // '$in': ['pause', 'resume_pause', 'resume_complete']
         };
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
@@ -2766,6 +2771,11 @@ async function listOrderListing(postDAta, dbConnection) {
 
     //if status is all the get from both buy_orders and sold_buy_orders 
     if (postDAta.status == 'all') {
+
+        filter['is_sell_order'] = {
+            '$ne': 'resume_complete'
+        };
+
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter, pagination, limit, skip);
