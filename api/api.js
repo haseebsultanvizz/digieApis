@@ -10339,4 +10339,148 @@ async function isMinQtyValid(symbol, qty, exchange){
     return false
 }
 
+
+//getUserDailyBuyTrades
+router.post('/getUserDailyBuyTrades', async (req, res) => {
+
+    let user_id = req.body.user_id
+    let application_mode = req.body.application_mode
+    let exchange = req.body.exchange
+
+    if (typeof user_id != 'undefined' && user_id != '') {
+        let where = {
+            'user_id': user_id,
+        }
+        
+        if (typeof application_mode != 'undefined'){
+            where['application_mode'] = application_mode  
+        }else{
+            where['application_mode'] = 'live'  
+        }
+
+        if (typeof exchange != 'undefined'){
+            let binanceSettings = await getUserDailyBuyTrades(where, exchange);
+            let resData = {}
+            resData[exchange] = binanceSettings
+            res.send({
+                status: true,
+                data: resData,
+                message: 'data found successfully.'
+            });
+        }else{
+            let binanceSettings = getUserDailyBuyTrades(where, 'binance');
+            let bamSettings = getUserDailyBuyTrades(where, 'bam');
+            let krakenSettings = getUserDailyBuyTrades(where, 'kraken');
+            let myPromises = await Promise.all([binanceSettings, bamSettings, krakenSettings])
+
+            let resData = {
+                'binance': myPromises[0],
+                'bam': myPromises[1],
+                'kraken': myPromises[2],
+            }
+
+            res.send({
+                status: true,
+                data: resData,
+                message: 'data found successfully.'
+            });
+        }
+
+    } else {
+        res.send({
+            status: false,
+            message: 'user_id is required.'
+        });
+    }
+
+})//end getUserDailyBuyTrades
+
+async function getUserDailyBuyTrades(where, exchange) {
+    return new Promise(async (resolve) => {
+        conn.then(async (db) => {
+            let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+            let result = await db.collection(collectionName).find(where).toArray();
+            if (result.length > 0) {
+                let res = result[0]
+                let obj = {}
+                if (typeof res.step_4 != 'undefined'){
+                    obj['noOfDailyBTCTrades'] = typeof res.step_4.noOfDailyBTCTrades != 'undefined' && res.step_4.noOfDailyBTCTrades > 0 ? res.step_4.noOfDailyBTCTrades : 0
+                    obj['noOfDailyUSDTTrades'] = typeof res.step_4.noOfDailyUSDTTrades != 'undefined' && res.step_4.noOfDailyUSDTTrades > 0 ? res.step_4.noOfDailyUSDTTrades : 0 
+                }
+                resolve(obj)
+            } else {
+                resolve({})
+            }
+        })
+    })
+}
+
+//updateUserDailyBuyTrades
+router.post('/updateUserDailyBuyTrades', async (req, res) => {
+
+    let user_id = req.body.user_id
+    let currency = req.body.currency
+    let decrement = req.body.decrement
+    let application_mode = req.body.application_mode
+    let exchange = req.body.exchange
+
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof currency != 'undefined' && currency != '') {
+        let where = {
+            'user_id': user_id,
+        }
+        if (typeof application_mode != 'undefined') {
+            where['application_mode'] = application_mode
+        } else {
+            where['application_mode'] = 'live'
+        }
+        let update = await updateUserDailyBuyTrades(where, exchange, currency, decrement);
+        res.send({
+            status: true,
+            message: 'action successfully.'
+        });
+    } else {
+        res.send({
+            status: false,
+            message: 'user_id and exchange and currency is required.'
+        });
+    }
+
+})//end getUserDailyBuyTrades
+
+async function updateUserDailyBuyTrades(where, exchange, currency, decrement) {
+    return new Promise(async (resolve) => {
+        conn.then(async (db) => {
+            let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+            let result = await db.collection(collectionName).find(where).toArray();
+            if (result.length > 0) {
+                let res = result[0]
+                let obj = res['step_4']
+                if (typeof res.step_4 != 'undefined'){
+                    if (currency == 'BTC') {
+                        let dailyBtc =  res.step_4.noOfDailyBTCTrades - decrement
+                        obj['noOfDailyBTCTrades'] = dailyBtc < 0 ? 0 : dailyBtc 
+                    }else if(currency == 'USDT'){
+                        let dailyUsdt = res.step_4.noOfDailyUSDTTrades - decrement
+                        obj['noOfDailyUSDTTrades'] = dailyUsdt < 0 ? 0 : dailyUsdt 
+                    }
+
+                    let set = { 
+                        '$set': {
+                            'step_4': obj
+                        }  
+                    }
+
+                    console.log()
+                    console.log(obj)
+
+                    let update = await db.collection(collectionName).updateOne(where, set)
+                }
+                resolve(true)
+            } else {
+                resolve(false)
+            }
+        })
+    })
+}
+
 module.exports = router;
