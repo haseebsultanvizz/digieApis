@@ -8611,55 +8611,115 @@ router.post('/resume_order_minQty', (req, res) => {
                 'message': 'order_id and exchange are required'
             });
         } else {
-            let filter = {
-                '_id': new ObjectID(order_id),
-                'is_sell_order': 'pause'
-            }
 
-            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
+            if (typeof updateData['lth_pause_resume'] != 'undefined' && updateData['lth_pause_resume'] == 'yes'){
 
-            let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
+                let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_'+exchange
+                let buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
 
-            if (data1.length > 0) {
-                obj = data1[0];
-
-                updateData['is_sell_order'] = 'resume_pause'
-                updateData['modified_date'] = new Date()
-                updateData['resume_date'] = typeof updateData['resume_date'] != 'undefined' && updateData['resume_date'] != '' ? new Date(updateData['resume_date']) : new Date()
-
-                let set = {};
-                set['$set'] = updateData
-                
-                // set['$set'] = {
-                //     'is_sell_order': 'resume_pause',
-                //     'modified_date': new Date()
-                // };
-                let where = {
-                    '_id': obj._id
+                let filter = {
+                    '_id': new ObjectID(order_id),
+                    // 'is_sell_order': 'pause'
                 }
 
-                let update = db.collection(sold_collection).updateOne(where, set);
+                let data1 = await db.collection(buyCollectionName).find(filter).limit(1).toArray();
+                if (data1.length > 0) {
+                    let obj = data1[0];
 
-                // // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
-                // // let ins = await db.collection(pause_collection).insertOne(obj);
+                    resumeObj = obj;
+                    delete resumeObj['_id']
+                    resumeObj['status'] = 'resume_pending'
+                    let insert = db.collection(resumeCollectionName).insertOne(resumeObj, async (err, result) => {
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            let insert_id = result.insertedId
 
-                let show_hide_log = 'yes';
-                let type = 'resume_order';
-                let order_mode = obj.application_mode;
-                let log_msg = 'Order resumed manually.'
-                var order_created_date = obj.created_date
-                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-                promiseLog.then((callback) => { })
+                            updateData['is_sell_order'] = 'resume_pause'
+                            updateData['modified_date'] = new Date()
+                            updateData['resume_date'] = typeof updateData['resume_date'] != 'undefined' && updateData['resume_date'] != '' ? new Date(updateData['resume_date']) : new Date()
 
-                res.send({
-                    'status': true,
-                    'message': 'Order resumed successfully'
-                });
-            } else {
-                res.send({
-                    'status': false,
-                    'message': 'Something went wrong'
-                });
+                            var set = {};
+                            set['$set'] = updateData
+                            let where = {
+                                '_id': insert_id
+                            }
+                            var update = db.collection(resumeCollectionName).updateOne(where, set);
+
+                            var set = {};
+                            set['$set'] = {
+                                'resume_order_id': insert_id
+                            }
+                            var update = db.collection(buyCollectionName).updateOne(filter, set)
+                        }
+                    })
+
+                    let show_hide_log = 'yes';
+                    let type = 'resume_order';
+                    let order_mode = obj.application_mode;
+                    let log_msg = 'Order paused from LTH manually.'
+                    var order_created_date = obj.created_date
+                    var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                    promiseLog.then((callback) => { })
+
+                    res.send({
+                        'status': true,
+                        'message': 'Order paused successfully'
+                    });
+                }
+            }else{
+
+                let filter = {
+                    '_id': new ObjectID(order_id),
+                    'is_sell_order': 'pause'
+                }
+    
+                let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
+    
+                let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
+    
+                if (data1.length > 0) {
+                    obj = data1[0];
+    
+                    updateData['is_sell_order'] = 'resume_pause'
+                    updateData['modified_date'] = new Date()
+                    updateData['resume_date'] = typeof updateData['resume_date'] != 'undefined' && updateData['resume_date'] != '' ? new Date(updateData['resume_date']) : new Date()
+    
+                    let set = {};
+                    set['$set'] = updateData
+                    
+                    // set['$set'] = {
+                    //     'is_sell_order': 'resume_pause',
+                    //     'modified_date': new Date()
+                    // };
+                    let where = {
+                        '_id': obj._id
+                    }
+    
+                    let update = db.collection(sold_collection).updateOne(where, set);
+    
+                    // // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
+                    // // let ins = await db.collection(pause_collection).insertOne(obj);
+    
+                    let show_hide_log = 'yes';
+                    let type = 'resume_order';
+                    let order_mode = obj.application_mode;
+                    let log_msg = 'Order resumed manually.'
+                    var order_created_date = obj.created_date
+                    var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                    promiseLog.then((callback) => { })
+    
+                    res.send({
+                        'status': true,
+                        'message': 'Order resumed successfully'
+                    });
+                } else {
+                    res.send({
+                        'status': false,
+                        'message': 'Something went wrong'
+                    });
+                }
+
             }
         }
 
