@@ -1634,6 +1634,13 @@ router.post('/editAutoOrder', async (req, resp) => {
     } else {
         order['lth_functionality'] = 'no'
         order['lth_profit'] = ''
+
+        if (status == 'LTH') {
+            order['sell_price'] = ((parseFloat(purchased_price) / 100) * order['sell_profit_percent']) + parseFloat(purchased_price);
+            order['is_lth_order'] = 'no'
+            order['status'] = 'FILLED'
+        }
+
     }
 
     order['modified_date'] = new Date();
@@ -6048,6 +6055,14 @@ router.post('/updateManualOrder', async (req, resp) => {
         } else {
             buyorderArr['lth_functionality'] = 'no'
             buyorderArr['lth_profit'] = ''
+
+            if (getBuyOrder[0]['status'] == 'LTH'){
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                buyorderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+                buyorderArr['is_lth_order'] = 'no' 
+                buyorderArr['status'] = 'FILLED' 
+            }
+
         }
 
         if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
@@ -6092,6 +6107,13 @@ router.post('/updateManualOrder', async (req, resp) => {
         } else {
             buyorderArr['lth_functionality'] = 'no'
             buyorderArr['lth_profit'] = ''
+
+            if (getBuyOrder[0]['status'] == 'LTH') {
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                buyorderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+                buyorderArr['is_lth_order'] = 'no'
+                buyorderArr['status'] = 'FILLED'
+            }
         }
 
         if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
@@ -6148,6 +6170,11 @@ router.post('/updateManualOrder', async (req, resp) => {
         } else {
             sellOrderArr['lth_functionality'] = 'no'
             sellOrderArr['lth_profit'] = ''
+
+            if (getBuyOrder[0]['status'] == 'LTH') {
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                sellOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+            }
         }
 
         if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
@@ -6196,7 +6223,7 @@ router.post('/updateManualOrder', async (req, resp) => {
             tempOrderArr['stop_loss'] = 'no'
             tempOrderArr['loss_percentage'] = ''
         }
-
+        
         //set lth profit 
         if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
             tempOrderArr['lth_functionality'] = 'yes'
@@ -6204,6 +6231,12 @@ router.post('/updateManualOrder', async (req, resp) => {
         } else {
             tempOrderArr['lth_functionality'] = 'no'
             tempOrderArr['lth_profit'] = ''
+            
+            if (getBuyOrder[0]['status'] == 'LTH') {
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                tempOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+            }
+
         }
 
         if (typeof tempOrderArr['trail_interval'] != 'undefined' && tempOrderArr['trail_interval'] != '') {
@@ -6262,6 +6295,11 @@ router.post('/updateManualOrder', async (req, resp) => {
         } else {
             sellOrderArr['lth_functionality'] = 'no'
             sellOrderArr['lth_profit'] = ''
+
+            if (getBuyOrder[0]['status'] == 'LTH') {
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                sellOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+            }
         }
 
         if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
@@ -6308,6 +6346,11 @@ router.post('/updateManualOrder', async (req, resp) => {
         } else {
             updArr['lth_functionality'] = 'no'
             updArr['lth_profit'] = ''
+
+            if (getBuyOrder[0]['status'] == 'LTH') {
+                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                updArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+            }
         }
 
         if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
