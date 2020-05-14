@@ -2188,7 +2188,7 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_9['admin_id'] = admin_id;
     filter_9['application_mode'] = application_mode;
     filter_9['is_sell_order'] = {
-        '$in': ['resume_pause']
+        '$in': ['pause', 'resume_pause']
         // '$in': ['pause', 'resume_pause', 'resume_complete']
     };
 
@@ -2737,7 +2737,7 @@ async function listOrderListing(postDAta, dbConnection) {
     if (postDAta.status == 'lth_pause') {
         filter['status'] = 'FILLED'
         filter['is_sell_order'] = {
-            '$in': ['resume_pause']
+            '$in': ['pause', 'resume_pause']
             // '$in': ['pause', 'resume_pause', 'resume_complete']
         };
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
