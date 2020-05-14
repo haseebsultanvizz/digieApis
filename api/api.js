@@ -2191,6 +2191,7 @@ router.post('/listOrderListing', async (req, resp) => {
         '$in': ['pause', 'resume_pause']
         // '$in': ['pause', 'resume_pause', 'resume_complete']
     };
+    filter_9['resume_status'] = { '$ne': 'complete'}
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -2740,6 +2741,7 @@ async function listOrderListing(postDAta, dbConnection) {
             '$in': ['pause', 'resume_pause']
             // '$in': ['pause', 'resume_pause', 'resume_complete']
         };
+        filter['resume_status'] = { '$ne': 'complete' }
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
 
@@ -10523,12 +10525,17 @@ async function setUserDailyBuyTrades(user_id=''){
             }
             let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
             let settingsArr = await db.collection(collectionName).find(where).toArray()
-            if (settingsArr.length > 0){
 
+            if (settingsArr.length > 0){
                 let settingsArrCount = settingsArr.length
                 for (let i = 0; i < settingsArrCount; i++) {
                     let obj = settingsArr[i];
                     
+                    // obj['step_4']['noOfDailyBTCTrades']
+                    // obj['step_4']['noOfDailyUSDTTrades']
+
+
+
                     let totalWeekly = 35
                     let weeklyUsed = 5
                     if ((totalWeekly - weeklyUsed) > 0){
