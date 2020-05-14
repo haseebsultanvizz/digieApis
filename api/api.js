@@ -8613,9 +8613,13 @@ router.post('/resume_order_minQty', (req, res) => {
         } else {
 
             if (typeof updateData['lth_pause_resume'] != 'undefined' && updateData['lth_pause_resume'] == 'yes'){
-
+                
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_'+exchange
-                let buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+                var buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+                
+                if (typeof updateData['resumeOrderType'] != 'undefined' && updateData['resumeOrderType'] == 'lth_pause') {
+                    buyCollectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+                }
 
                 let filter = {
                     '_id': new ObjectID(order_id),
@@ -8628,7 +8632,14 @@ router.post('/resume_order_minQty', (req, res) => {
 
                     resumeObj = obj;
                     delete resumeObj['_id']
-                    resumeObj['status'] = 'resume_pending'
+
+                    if (typeof updateData['resumeOrderType'] != 'undefined' && updateData['lth_pause_resume'] == 'yes'){
+                        resumeObj['status'] = 'resume'
+                    }else{
+                        resumeObj['status'] = 'resume_pending'
+                    }
+
+                    resumeObj['buy_order_id'] = obj['_id']
                     let insert = db.collection(resumeCollectionName).insertOne(resumeObj, async (err, result) => {
                         if (err) {
                             console.log(err)
@@ -8648,8 +8659,14 @@ router.post('/resume_order_minQty', (req, res) => {
 
                             var set = {};
                             set['$set'] = {
-                                'resume_order_id': insert_id
+                                'resume_order_id': insert_id,
                             }
+
+                            if (typeof updateData['resumeOrderType'] != 'undefined' && updateData['lth_pause_resume'] == 'yes') {
+                                set['$set']['is_sell_order'] = 'resume_pause'
+                                set['$set']['modified_date'] = new Date()  
+                            }
+
                             var update = db.collection(buyCollectionName).updateOne(filter, set)
                         }
                     })
