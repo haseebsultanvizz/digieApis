@@ -2188,7 +2188,7 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_9['admin_id'] = admin_id;
     filter_9['application_mode'] = application_mode;
     filter_9['is_sell_order'] = {
-        '$in': ['pause', 'resume_pause']
+        '$in': ['resume_pause']
         // '$in': ['pause', 'resume_pause', 'resume_complete']
     };
 
@@ -2737,7 +2737,7 @@ async function listOrderListing(postDAta, dbConnection) {
     if (postDAta.status == 'lth_pause') {
         filter['status'] = 'FILLED'
         filter['is_sell_order'] = {
-            '$in': ['pause', 'resume_pause']
+            '$in': ['resume_pause']
             // '$in': ['pause', 'resume_pause', 'resume_complete']
         };
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
@@ -9318,6 +9318,10 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 let data = dataArr
                 data['user_id'] = user_id
                 data['application_mode'] = application_mode
+                data['usedDailyTrades'] = 0 
+                data['weeklyTrades'] = 35  
+                data['usedWeeklyTrades'] = 0  
+                data['week_start_date'] = new Date()
 
                 let settings = db.collection(collectionName).insertOne(data);
 
@@ -10464,6 +10468,9 @@ async function updateUserDailyBuyTrades(where, exchange, currency, decrement) {
                         obj['noOfDailyUSDTTrades'] = dailyUsdt < 0 ? 0 : dailyUsdt 
                     }
 
+                    obj['usedDailyTrades'] = res.usedDailyTrades + decrement
+                    obj['usedWeeklyTrades'] = res.usedWeeklyTrades + decrement
+
                     let set = { 
                         '$set': {
                             'step_4': obj
@@ -10482,5 +10489,51 @@ async function updateUserDailyBuyTrades(where, exchange, currency, decrement) {
         })
     })
 }
+
+/* CRON SCRIPT for setUserDailyBuyTrades */
+async function setUserDailyBuyTrades(user_id=''){
+    return new Promise((resolve) => {
+        conn.then(async (db) => {
+            var where = {
+                'application_mode': 'live',
+                'step_4.actualTradeableBTC': {'$exists': true},
+                'step_4.actualTradeableUSDT': {'$exists': true},
+                'step_4.dailyTradeableBTC': {'$exists': true},
+                'step_4.dailyTradeableUSDT': {'$exists': true},
+            }
+            if(user_id != ''){
+                where['user_id'] = user_id
+            }
+            let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+            let settingsArr = await db.collection(collectionName).find(where).toArray()
+            if (settingsArr.length > 0){
+
+                let settingsArrCount = settingsArr.length
+                for (let i = 0; i < settingsArrCount; i++) {
+                    let obj = settingsArr[i];
+                    
+                    let totalWeekly = 35
+                    let weeklyUsed = 5
+                    if ((totalWeekly - weeklyUsed) > 0){
+                        let totalDaily = 5
+                        let dailyUsed = 3
+
+                        let dailyRemaining = totalDaily - dailyUsed
+                        if (dailyRemaining > 0) {
+                            
+                            //Set Daily noOfTradeAble  
+
+                        }
+
+                    }
+
+
+
+                }
+            }
+        })
+    })
+}
+/* END CRON SCRIPT for setUserDailyBuyTrades */
 
 module.exports = router;
