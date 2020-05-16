@@ -9324,15 +9324,16 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
     let application_mode = req.body.application_mode
     // let exchangesArr = ['binance', 'bam', 'kraken']
 
-    let autoTradeData = {
-        'user_id': user_id,
-        'exchange': exchange,
-        'settings': dataArr,
-        'application_mode': application_mode 
-    }
-
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != '') {
-
+        
+        dataArr['step_1'] = {'exchange': exchange}
+        let autoTradeData = {
+            'user_id': user_id,
+            'exchange': exchange,
+            'settings': dataArr,
+            'application_mode': application_mode 
+        }
+        
         conn.then(async (db) => {
             let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
             var where = {
@@ -9485,40 +9486,6 @@ async function createAutoTradeParents(settings){
     return new Promise(async (resolve) => {
         // resolve(true)
 
-   /*      settings  { user_id: '5c0912b7fc9aadaac61dd072',
-        exchange: 'binance',
-        settings:
-        { curr_step: 'step_4',
-            step_1: { exchange: 'binance' },
-            step_2: { coins: [Array] },
-            step_3: { bots: [Array] },
-            step_4:
-            { availableBTC: 0.002563,
-                availableUSDT: 91,
-                availableBNB: 3.741181,
-                btcInvestPercentage: 10,
-                usdtInvestPercentage: 90,
-                tradeableUSDT: 900,
-                tradeableBTC: 0.011084,
-                actualTradeableUSDT: 91,
-                actualTradeableBTC: 0.002563,
-                dailTradeAbleBalancePercentage: 20,
-                dailyTradeableBTC: 0.000513,
-                dailyTradeableUSDT: 18.2,
-                noOfDailyBTCTrades: 1,
-                noOfDailyUSDTTrades: 5,
-                cancel_previous_parents: 'yes',
-                update_trade_worth: 'yes',
-                enable_money_managment: 'yes',
-                auto_buy_bnb: 'yes' },
-            user_id: '5c0912b7fc9aadaac61dd072',
-            application_mode: 'test',
-            _id: 5eb25fd869c675277be22363 },
-        application_mode: 'test' } */
-
-        // console.log('settings ', settings);
-        // process.exit(0)
-
         let user_id = settings.user_id
         let application_mode = settings.application_mode
         let exchange = settings.settings.step_1.exchange
@@ -9536,21 +9503,40 @@ async function createAutoTradeParents(settings){
         let stop_loss = step4.stop_loss
         let loss_percentage = step4.loss_percentage
         let lth_profit = step4.lth_profit
+        let cancel_previous_parents = step4.cancel_previous_parents
         
         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        //TODO: if delete previous order selected then delete all previous parents
+        if (typeof cancel_previous_parents != 'undefined' && cancel_previous_parents == 'yes'){
+            conn.then(async (db) => {
+                let filter = {
+                    'admin_id': user_id,
+                    'application_mode': application_mode,
+                    'parent_status': 'parent',
+                    'status': {'$ne':'canceled'},
+                };
+                let set = {};
+                set['$set'] = {
+                    'status': 'canceled',
+                    'pause_status': 'pause',
+                    'modified_date': new Date()
+                };
+                let deleted = db.collection(collectionName).updateMany(filter, set)
+            })
+        }
 
         whereCoins = { '$in': coins}
-        if(!coins.includes('BTCUSDT')){
-            whereCoins['$in'].push('BTCUSDT') 
-        }
         let coinData = await listmarketPriceMinNotationCoinArr(whereCoins, exchange)
+        let btcCoinObj = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
+        let BTCUSDTPRICE = btcCoinObj['BTCUSDT']['currentmarketPrice']
 
-        let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+        let dailyTradeableBtcUSdWorth = step4.dailyTradeableBTC * BTCUSDTPRICE 
 
-        let numBtcTradesWithUsdWorth = await calculateNumberOfTradesPerDay(step4.dailyTradeableBTC, step4.totalTradeAbleInUSD)
-        // console.log('btc', numBtcTradesWithUsdWorth)
+        let numBtcTradesWithUsdWorth = await calculateNumberOfTradesPerDay(dailyTradeableBtcUSdWorth, step4.totalTradeAbleInUSD)
         let btcNumTrades = typeof numBtcTradesWithUsdWorth['numberOfTrades'] != 'undefined' ? numBtcTradesWithUsdWorth['numberOfTrades'] : 0
         let btcQty = typeof numBtcTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numBtcTradesWithUsdWorth['perTradeUsd'] : 0
+        let btcQtyUsdWorth = typeof numBtcTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numBtcTradesWithUsdWorth['perTradeUsd'] : 0
+        
         if (btcQty != 0) {
             btcQty = (1 / BTCUSDTPRICE) * btcQty
             btcPerTrade = btcQty 
@@ -9564,10 +9550,12 @@ async function createAutoTradeParents(settings){
             usdtPerTrade = usdtQty 
         }
 
+        // console.log('usdtNumTrades: ', usdtNumTrades, ' ::: ', usdtQty)
+        // console.log('btcNumTrades: ', btcNumTrades, ' ::: ', btcQtyUsdWorth)
+
         let parentTradesArr = [] 
 
         let coninsCount = coins.length
-        
         for(let i=0; i<coninsCount; i++){
 
             let coin = coins[i]
@@ -9607,13 +9595,12 @@ async function createAutoTradeParents(settings){
                 numT = usdtNumTrades
 
                 if (usdtNumTrades == 0) {
-                    console.log('USDT', numT)
+                    // console.log('USDT', numT)
                     continue
                 }
 
                 //usdtPerTrade
                 usd_worth = usdtPerTrade
-
                 oneUsdWorthQty = 1 / currentMarketPrice
                 // console.log('USD COIN', oneUsdWorthQty);
             } else {
@@ -9627,7 +9614,7 @@ async function createAutoTradeParents(settings){
                 }
 
                 //btcPerTrade
-                usd_worth = btcPerTrade * currentMarketPrice * BTCUSDTPRICE
+                usd_worth = btcQtyUsdWorth
 
                 oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
                 // console.log('BTC COIN', oneUsdWorthQty);
@@ -9642,70 +9629,54 @@ async function createAutoTradeParents(settings){
 
             if (quantity < minReqQty) {
                 //Do nothing
+                // console.log('Discard ------- ', coin, ' Qty: ', quantity,' Required: ', minReqQty)
             } else {
+                // console.log('Created $$$$$  ', coin, ' Qty: ', quantity, ' Required: ', minReqQty)
 
-                let parentObj = {
-                    'auto_trade_generator': 'yes',
-                    'admin_id': user_id,
-                    'order_mode': application_mode,
-                    'application_mode': application_mode,
-                    'market_value': '',
-                    'price': '',
-                    'quantity': quantity,
-                    'symbol': coin,
-                    'order_type': 'market_order',
-                    'status': 'new',
-                    'trigger_type': 'barrier_percentile_trigger',
-                    'pause_status': 'play',
-                    'usd_worth': usd_worth,
-                    'parent_status': 'parent',
-                    'exchange': exchange,
-                    'defined_sell_percentage': profit_percentage,
-                    'sell_profit_percent': profit_percentage,
-                    'current_market_price': currentMarketPrice,
-                    'stop_loss_rule': 'custom_stop_loss',
-                    'custom_stop_loss_percentage': loss_percentage,
-                    'loss_percentage': loss_percentage,
-                    'activate_stop_loss_profit_percentage': 100,
-                    'lth_functionality': 'yes',
-                    'lth_profit': lth_profit,
-                    'stop_loss': stop_loss,
-                    'un_limit_child_orders': 'no',
-                    'created_date': new Date(),
-                    'modified_date': new Date(),
-                    'is_sell_order': 'no',
-                    'sell_price': '',
-                }                
-
-                let botCount = bots.length
-                for (let j = 0; j < botCount; j++){
-                    let newObj = parentObj
-                    newObj['order_level'] = bots[j]
-
-
-                    conn.then((db) => {
+                bots.map(level => {
+                    let parentObj = {
+                        'auto_trade_generator': 'yes',
+                        'admin_id': user_id,
+                        'order_mode': application_mode,
+                        'application_mode': application_mode,
+                        'market_value': '',
+                        'price': '',
+                        'quantity': quantity,
+                        'order_level': level,
+                        'symbol': coin,
+                        'order_type': 'market_order',
+                        'status': 'new',
+                        'trigger_type': 'barrier_percentile_trigger',
+                        'pause_status': 'play',
+                        'usd_worth': usd_worth,
+                        'parent_status': 'parent',
+                        'exchange': exchange,
+                        'defined_sell_percentage': profit_percentage,
+                        'sell_profit_percent': profit_percentage,
+                        'current_market_price': currentMarketPrice,
+                        'stop_loss_rule': 'custom_stop_loss',
+                        'custom_stop_loss_percentage': loss_percentage,
+                        'loss_percentage': loss_percentage,
+                        'activate_stop_loss_profit_percentage': 100,
+                        'lth_functionality': 'yes',
+                        'lth_profit': lth_profit,
+                        'stop_loss': stop_loss,
+                        'un_limit_child_orders': 'no',
+                        'created_date': new Date(),
+                        'modified_date': new Date(),
+                        'is_sell_order': 'no',
+                        'sell_price': '',
+                    }
+                    // console.log(parentObj)
+                    conn.then(async (db) => {
                         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-                        
-                        // db.collection(collectionName).createIndex({ '_id': 1 })
-                        db.collection(collectionName).insertOne(newObj, async (err, result) => {
-                            if (err) {
-                                // console.log(err)
-                                // resolve(false)
-                            } else {
-                                // console.log('parentTradesArr created', newObj)
-                                // resolve(true)
-                            }
-                        })
-
+                        let ins = await db.collection(collectionName).insertOne(parentObj)
                     })
-
-                    // parentTradesArr.push(newObj)
-                }
-
+                })
             }
 
         }
-        
+
         resolve(true)
         
     })
@@ -10632,63 +10603,6 @@ async function setUserDailyBuyTrades(user_id='', exchange){
     })
 }
 
-async function convertBtcToUsd(btc, BTCUSDT=null,exchange=null){
-    if(BTCUSDT){
-        return parseFloat((btc * BTCUSDT).toFixed(2))
-    }else{
-        if (exchange){
-            let where = {};
-            where.coin = 'BTCUSDT';
-            conn.then(async (db) => {
-                var collectionName =  'market_prices';
-                if (exchange == 'bam'){
-                    collectionName = 'market_prices_node_bam'
-                }else{
-                    collectionName = exchange == 'binance' ? 'market_prices' : 'market_prices_'+exchange
-                }
-                await db.collection(collectionName).find(where).sort({
-                    "created_date": -1
-                }).limit(1).toArray((err, result) => {
-                    if (err) {
-                        return false
-                    } else {
-                        return  parseFloat((btc*result[0]['price']).toFixed(2))
-                    }
-                })
-            })
-        }
-        return false
-    }
-}
-async function convertUsdToBtc(usd, BTCUSDT = null, exchange = null){
-    if (BTCUSDT) {
-        return parseFloat((usd / BTCUSDT).toFixed(6))
-    } else {
-        if (exchange) {
-            let where = {};
-            where.coin = 'BTCUSDT';
-            conn.then(async (db) => {
-                var collectionName = 'market_prices';
-                if (exchange == 'bam') {
-                    collectionName = 'market_prices_node_bam'
-                } else {
-                    collectionName = exchange == 'binance' ? 'market_prices' : 'market_prices_' + exchange
-                }
-                await db.collection(collectionName).find(where).sort({
-                    "created_date": -1
-                }).limit(1).toArray((err, result) => {
-                    if (err) {
-                        return false
-                    } else {
-                        return parseFloat((usd / result[0]['price']).toFixed(6))
-                    }
-                })
-            })
-        }
-        return false
-    }
-}
-
 async function getTodayBuyTrades(user_id, exchange, application_mode='live') {
     return new Promise(async (resolve) => {
         conn.then(async (db) => {
@@ -10844,7 +10758,9 @@ async function updateDailyTradedBalanceAndUsdWorth(user_id, exchange, data, appl
             let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
             let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
 
-            let numBtcTradesWithUsdWorth = await calculateNumberOfTradesPerDay(dailyTradeableBTC, totalTradeAbleInUSD)
+            let dailyTradeableBtcUSdWorth = dailyTradeableBTC * BTCUSDTPRICE
+
+            let numBtcTradesWithUsdWorth = await calculateNumberOfTradesPerDay(dailyTradeableBtcUSdWorth, totalTradeAbleInUSD)
             // console.log('btc', numBtcTradesWithUsdWorth)
             let btcNumTrades = typeof numBtcTradesWithUsdWorth['numberOfTrades'] != 'undefined' ? numBtcTradesWithUsdWorth['numberOfTrades'] : 0
             let btcQty = typeof numBtcTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numBtcTradesWithUsdWorth['perTradeUsd'] : 0
