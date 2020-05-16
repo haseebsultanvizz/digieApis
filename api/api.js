@@ -9266,7 +9266,8 @@ router.post('/getAutoTradeSettings', async (req, res) => {
             exchangesArr.map(exchange =>{
                 let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
                 var where = {
-                    'user_id': user_id
+                    'user_id': user_id,
+                    'application_mode': application_mode,
                 }
                 settingsArr[exchange] = db.collection(collectionName).find(where).toArray();
             })
@@ -9299,12 +9300,13 @@ router.post('/getAutoTradeSettings', async (req, res) => {
     }
 })//end getAutoTradeSettings
 
-async function getAutoTradeSettings(user_id, exchange) {
+async function getAutoTradeSettings(user_id, exchange, application_mode) {
     return new Promise(async (resolve)=>{
         conn.then(async (db) => {
                 let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
                 var where = {
-                    'user_id': user_id
+                    'user_id': user_id,
+                    'application_mode': application_mode,
                 }
                 let settingsArr = await db.collection(collectionName).find(where).toArray();
             if (settingsArr.length > 0){
