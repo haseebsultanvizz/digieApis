@@ -9320,7 +9320,7 @@ async function getAutoTradeSettings(user_id, exchange, application_mode) {
 async function getAutoTradeParents(user_id, exchange, application_mode) {
     return new Promise(async (resolve) => {
         conn.then(async (db) => {
-            let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+            let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
             var where = {
                 'admin_id': user_id,
                 'application_mode': application_mode,
@@ -9346,8 +9346,8 @@ router.post('/getAutoTradeParents', async (req, res) => {
     let exchange = req.body.exchange
 
     if (typeof user_id != 'undefined' && user_id != '' && typeof application_mode != 'undefined' && application_mode != '' && typeof exchange != 'undefined' && exchange != '') {
-
-        let parentTrades = getAutoTradeParents(user_id, exchange, application_mode)
+        
+        let parentTrades = await getAutoTradeParents(user_id, exchange, application_mode)
         if (parentTrades.length > 0){
             res.send({
                 status: true,
