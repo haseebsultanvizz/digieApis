@@ -9317,6 +9317,59 @@ async function getAutoTradeSettings(user_id, exchange, application_mode) {
     })
 }
 
+async function getAutoTradeParents(user_id, exchange, application_mode) {
+    return new Promise(async (resolve) => {
+        conn.then(async (db) => {
+            let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+            var where = {
+                'admin_id': user_id,
+                'application_mode': application_mode,
+                'auto_trade_generator': 'yes',
+                'parent_status': 'parent',
+                'status': {
+                    '$in': ['new', 'takingOrder']
+                }
+            }
+            let settingsArr = await db.collection(collectionName).find(where).toArray();
+            if (settingsArr.length > 0) {
+                resolve(settingsArr)
+            }
+            resolve([])
+        })
+    })
+}
+
+//getAutoTradeSettings
+router.post('/getAutoTradeParents', async (req, res) => {
+    let user_id = req.body.user_id
+    let application_mode = req.body.application_mode
+    let exchange = req.body.exchange
+
+    if (typeof user_id != 'undefined' && user_id != '' && typeof application_mode != 'undefined' && application_mode != '' && typeof exchange != 'undefined' && exchange != '') {
+
+        let parentTrades = getAutoTradeParents(user_id, exchange, application_mode)
+        if (parentTrades.length > 0){
+            res.send({
+                status: true,
+                data: {
+                    'parentTrades':parentTrades,
+                },
+                message: 'Parent trades found successfully',
+            });
+        }else{
+            res.send({
+                status: false,
+                message: 'Parent trades not found',
+            });
+        }
+    } else {
+        res.send({
+            status: false,
+            message: 'user_id, exchange and  application_mode is required.'
+        });
+    }
+})//end getAutoTradeSettings
+
 //saveAutoTradeSettings
 router.post('/saveAutoTradeSettings', async (req, res) => {
 
