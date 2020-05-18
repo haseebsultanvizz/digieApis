@@ -9212,10 +9212,10 @@ router.post('/listCurrentUserExchanges', async (req, res) => {
                     bam = typeof bam.api_key != 'undefined' && bam.api_key != '' && typeof bam.api_secret != 'undefined' && bam.api_secret != '' ? true : false
                 }
                 let kraken = false
-                if (myPromises[2].length > 0){
-                    kraken = myPromises[2][0]
-                    kraken = typeof kraken.api_key != 'undefined' && kraken.api_key != '' && typeof kraken.api_secret != 'undefined' && kraken.api_secret != '' ? true : false
-                }
+                // if (myPromises[2].length > 0){
+                //     kraken = myPromises[2][0]
+                //     kraken = typeof kraken.api_key != 'undefined' && kraken.api_key != '' && typeof kraken.api_secret != 'undefined' && kraken.api_secret != '' ? true : false
+                // }
 
                 if (binance){
                     available_exchanges.push('binance')
