@@ -8644,6 +8644,7 @@ router.post('/resume_order_minQty', (req, res) => {
 
                     let resumeObj = obj;
                     resumeObj['buy_order_id'] = obj['_id']
+                    resumeObj['buy_parent_id'] = obj['buy_parent_id']
                     delete resumeObj['_id']
 
                     if (typeof updateData['resumeOrderType'] != 'undefined' && updateData['lth_pause_resume'] == 'yes'){
