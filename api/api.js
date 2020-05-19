@@ -2228,6 +2228,11 @@ router.post('/listOrderListing', async (req, resp) => {
             obj['$lte'] = new Date(postDAta.end_date);
         }
         filter_all['created_date'] = obj;
+        filter_all['is_sell_order'] = {
+            '$nin': ['pause', 'resume_pause']
+            // '$in': ['pause', 'resume_pause', 'resume_complete']
+        };
+        filter_all['resume_status'] = { '$ne': 'complete' }
     }
 
     if (count > 0) {
@@ -2784,6 +2789,11 @@ async function listOrderListing(postDAta, dbConnection) {
         filter['is_sell_order'] = {
             '$ne': 'resume_complete'
         };
+        filter['is_sell_order'] = {
+            '$nin': ['pause', 'resume_pause']
+            // '$in': ['pause', 'resume_pause', 'resume_complete']
+        };
+        filter['resume_status'] = { '$ne': 'complete' }
 
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
