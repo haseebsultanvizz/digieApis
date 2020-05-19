@@ -8642,7 +8642,8 @@ router.post('/resume_order_minQty', (req, res) => {
                 if (data1.length > 0) {
                     let obj = data1[0];
 
-                    resumeObj = obj;
+                    let resumeObj = obj;
+                    resumeObj['buy_order_id'] = obj['_id']
                     delete resumeObj['_id']
 
                     if (typeof updateData['resumeOrderType'] != 'undefined' && updateData['lth_pause_resume'] == 'yes'){
@@ -8651,7 +8652,6 @@ router.post('/resume_order_minQty', (req, res) => {
                         resumeObj['status'] = 'resume_pending'
                     }
 
-                    resumeObj['buy_order_id'] = obj['_id']
                     let insert = db.collection(resumeCollectionName).insertOne(resumeObj, async (err, result) => {
                         if (err) {
                             console.log(err)
