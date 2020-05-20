@@ -8972,6 +8972,26 @@ async function update_user_balance(user_id) {
         }
     };
     request(options, function (error, response, body) { });
+    
+    //Update Kraken Balance
+    var options = {
+        method: 'POST',
+        url: 'http://34.205.124.51:3100/updateUserBalanceKraken',
+        headers: {
+            'cache-control'   : 'no-cache',
+            'Connection'      : 'keep-alive',
+            'Accept-Encoding' : 'gzip, deflate',
+            'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control'   : 'no-cache',
+            'Accept'          : '*/*',
+            'User-Agent'      : 'PostmanRuntime/7.20.1',
+            'Content-Type'    : 'application/json'
+        },
+        json: {
+            'user_id': user_id
+        }
+    };
+    request(options, function (error, response, body) { });
 
     return true
 }
