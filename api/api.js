@@ -270,7 +270,7 @@ router.post('/authenticate', async function (req, resp, next) {
                 "message": "You are not Authorized"
             })
         } else {
-            let username = req.body.username;
+            let username = req.body.username.toLowerCase();
             let pass     = req.body.password;
             //Convert password to md5
             let md5Pass = md5(pass);
@@ -292,7 +292,8 @@ router.post('/authenticate', async function (req, resp, next) {
                 if (true) {
 
                     where['$or'] = [{
-                        username: username
+                        // username: username
+                        username_lowercase: username
                     }, {
                         email_address: username
                     }]
@@ -364,7 +365,8 @@ router.post('/authenticate', async function (req, resp, next) {
                 //In the case when Normal Login
                 where.password = md5Pass;
                 where['$or'] = [{
-                    username: username
+                    // username: username
+                    username_lowercase: username
                 }, {
                     email_address: username
                 }]
