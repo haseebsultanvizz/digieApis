@@ -9691,7 +9691,10 @@ async function createAutoTradeParents(settings){
 
         let dailyTradeableBtcUSdWorth = step4.dailyTradeableBTC * BTCUSDTPRICE 
 
-        let numBtcTradesWithUsdWorth = await calculateNumberOfTradesPerDay(dailyTradeableBtcUSdWorth, step4.totalTradeAbleInUSD)
+        let actualTradeableBTCusdWorth = typeof step4.actualTradeableBTC != 'undefined' ? parseFloat((step4.actualTradeableBTC * BTCUSDTPRICE).toFixed(2))  : 0
+        let actualTradeableUSDTusdWorth = typeof step4.actualTradeableUSDT != 'undefined' ? step4.actualTradeableUSDT : 0  
+
+        let numBtcTradesWithUsdWorth = await calculateNumberOfTradesPerDay(dailyTradeableBtcUSdWorth, step4.totalTradeAbleInUSD, 'BTC', actualTradeableBTCusdWorth)
         let btcNumTrades = typeof numBtcTradesWithUsdWorth['numberOfTrades'] != 'undefined' ? numBtcTradesWithUsdWorth['numberOfTrades'] : 0
         let btcQty = typeof numBtcTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numBtcTradesWithUsdWorth['perTradeUsd'] : 0
         let btcQtyUsdWorth = typeof numBtcTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numBtcTradesWithUsdWorth['perTradeUsd'] : 0
@@ -9701,8 +9704,7 @@ async function createAutoTradeParents(settings){
             btcPerTrade = btcQty 
         }
         
-        let numUsdtTradesWithUsdWorth = await calculateNumberOfTradesPerDay(step4.dailyTradeableUSDT, step4.totalTradeAbleInUSD)
-        // console.log('usdt',numUsdtTradesWithUsdWorth)
+        let numUsdtTradesWithUsdWorth = await calculateNumberOfTradesPerDay(step4.dailyTradeableUSDT, step4.totalTradeAbleInUSD, 'USDT', actualTradeableUSDTusdWorth)
         let usdtNumTrades = typeof numUsdtTradesWithUsdWorth['numberOfTrades'] != 'undefined' ? numUsdtTradesWithUsdWorth['numberOfTrades'] : 0
         let usdtQty = typeof numUsdtTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numUsdtTradesWithUsdWorth['perTradeUsd'] : 0
         if (usdtQty != 0) {
@@ -9841,10 +9843,25 @@ async function createAutoTradeParents(settings){
     })
 }
 
-async function calculateNumberOfTradesPerDay(dailyTradeable, totalTradeAbleInUSD){
+async function calculateNumberOfTradesPerDay(dailyTradeable, totalTradeAbleInUSD, currency, actualTradeableUsdWorth){
 
     let minQtyUsd = 15
 
+    // let packageArr = [
+    //     {
+    //         'limit': 1000,
+    //         'arr': [5, 3, 1],
+    //     },
+    //     {
+    //         'limit': 2500,
+    //         'arr': [9, 7, 5, 3, 1],
+    //     },
+    //     {
+    //         'limit': 5000,
+    //         'arr': [11, 9, 7, 5, 3, 1],
+    //     },
+    // ]
+    
     let packageArr = [
         {
             'limit': 1000,
@@ -9852,11 +9869,11 @@ async function calculateNumberOfTradesPerDay(dailyTradeable, totalTradeAbleInUSD
         },
         {
             'limit': 2500,
-            'arr': [9, 7, 5, 3, 1],
+            'arr': [7, 5, 3, 1],
         },
         {
             'limit': 5000,
-            'arr': [11, 9, 7, 5, 3, 1],
+            'arr': [7, 5, 3, 1],
         },
     ]
 
@@ -9879,6 +9896,17 @@ async function calculateNumberOfTradesPerDay(dailyTradeable, totalTradeAbleInUSD
             dailyTradeObj['perTradeUsd'] = perTradeUsd
             break
         }
+    }
+
+    //TODO: if 20% is less than min qty then check if available is greater than minqty if so create one trade
+    if (typeof dailyTradeObj['numberOfTrades'] == 'undefined' && actualTradeableUsdWorth >= minQtyUsd && currency == 'BTC') {
+        dailyTradeObj['numberOfTrades'] = 1
+        dailyTradeObj['perTradeUsd'] = minQtyUsd
+    }
+
+    if (typeof dailyTradeObj['numberOfTrades'] == 'undefined' && actualTradeableUsdWorth >= minQtyUsd && currency == 'USDT') {
+        dailyTradeObj['numberOfTrades'] = 1
+        dailyTradeObj['perTradeUsd'] = minQtyUsd
     }
 
     return dailyTradeObj
