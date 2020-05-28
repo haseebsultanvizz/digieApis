@@ -2487,7 +2487,7 @@ router.post('/listOrderListing', async (req, resp) => {
                 if (is_sell_order == 'pause') {
                     htmlStatus += '<span class="badge badge-success">Paused</span>';
                 } else if (is_sell_order == 'resume_pause') {
-                    htmlStatus += '<span class="badge badge-info">Resumed</span>';
+                    htmlStatus += '<span class="badge badge-info">In progress</span>';
                     //TODO: find child trade current profit
                     let child_order = await listOrderById(orderListing[index]._id, exchange)
                     child_order = (child_order.length > 0 ? child_order[0] : false)
