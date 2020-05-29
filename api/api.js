@@ -8858,6 +8858,89 @@ router.post('/resume_order_minQty', (req, res) => {
 })
 //End resume_order_minQty
 
+
+// ******************* Resume / Pause APIs **************** //
+
+router.post('/resume_order_test', (req, res) => {
+    conn.then(async (db) => {
+        let exchange = req.body.exchange
+        let order_id = req.body.order_id
+        let updateArr = req.body.order
+
+        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == '') {
+            res.send({
+                'status': false,
+                'message': 'order_id and exchange are required'
+            });
+        } else {
+            let filter = {
+                '_id': new ObjectID(order_id),
+                'is_sell_order': 'pause'
+            }
+
+            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
+
+            let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
+
+            if (data1.length > 0) {
+                obj = data1[0];
+
+                let tempOrder = obj
+                delete tempOrder['_id']
+                tempOrder['modified_date'] = new Date()
+                tempOrder['resume_date'] = new Date()
+                tempOrder['status'] = 'resume'
+                tempOrder['buy_order_id'] = obj['_id']
+                let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
+                let insert = db.collection(resumeCollectionName).insertOne(tempOrder, async (err, result) => {
+                    if (err) {
+                        console.log(err)
+                    } else {
+                        //insert resume id in sold collection order
+                        let insert_id = result.insertedId
+                        var set = {};
+                        set['$set'] = {
+                            'resume_order_id': insert_id,
+                            'is_sell_order': 'resume_pause',
+                            'modified_date': new Date()
+                            // 'status': 'resume',
+                        }
+                        var update = db.collection(sold_collection).updateOne(filter, set)
+                    }
+                })
+
+                let show_hide_log = 'yes';
+                let type = 'resume_order';
+                let order_mode = obj.application_mode;
+                let log_msg = 'Order resumed manually.'
+                var order_created_date = obj.created_date
+                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                promiseLog.then((callback) => { })
+
+                res.send({
+                    'status': true,
+                    'message': 'Order resumed successfully'
+                });
+            } else {
+                res.send({
+                    'status': false,
+                    'message': 'Something went wrong'
+                });
+            }
+        }
+
+    })
+})
+//End resume_order
+
+
+
+
+// ******************* End Resume / Pause APIs **************** //  
+
+
+
+
 router.post('/latest_user_activity', (req, res) => {
     conn.then(async (db) => {
         const user_id = req.body.user_id
