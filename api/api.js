@@ -2443,16 +2443,25 @@ router.post('/listOrderListing', async (req, resp) => {
 
         var profitLossPercentageHtml = '';
 
+        let resumePL = 0
+        if (typeof orderListing[index].resume_order_arr != 'undefined'){
+            await Promise.all(orderListing[index].resume_order_arr.map(item => {
+                resumePL = parseFloat(resumePL) + parseFloat(item.resumeLossPercentage)
+            }))
+        }
+
         //part for calculating profit loss percentage 
         if (orderSellPrice != '') {
             //function for calculating percentage 
             let profitLossPercentage = calculate_percentage(orderPurchasePrice, orderSellPrice);
+            resumePL = parseFloat(resumePL) + parseFloat(profitLossPercentage)
             let profitLossCls = (orderSellPrice > orderPurchasePrice) ? 'success' : 'danger';
             profitLossPercentageHtml = '<span class="text-' + profitLossCls + '"><b>' + profitLossPercentage + '%</b></span>';
         } else {
             if (status == 'FILLED' || status == 'LTH') {
                 if (is_sell_order == 'yes' || status == 'LTH') {
                     let percentage = calculate_percentage(orderPurchasePrice, currentMarketPrice);
+                    resumePL = parseFloat(resumePL) + parseFloat(percentage)
                     let PLCls = (currentMarketPrice > orderPurchasePrice) ? 'success' : 'danger'
                     profitLossPercentageHtml = '<span class="text-' + PLCls + '"><b>' + percentage + '%</b></span>';
                 } else {
@@ -2538,6 +2547,10 @@ router.post('/listOrderListing', async (req, resp) => {
         
         if (typeof orderListing[index].resume_order_id != 'undefined') {
             htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
+
+            let resumePlClass = resumePL > 0 ? 'success' : 'danger'
+            resumePL = resumePL.toFixed(2)
+            htmlStatus += ' <span class="text-' + resumePlClass + '" style="margin-left:4px;" ><b>' + resumePL + '%</b></span>'
         }
 
         order['childProfitLossPercentageHtml'] = childProfitLossPercentageHtml
@@ -10486,6 +10499,11 @@ router.post('/buyCoin', (req, res) => {
                 'status': false,
                 'message': 'exchange, application_mode, admin_id, symbol, buy_currency, buy_now, auto_buy are required fields.'
             });
+        } else if(application_mode == 'test') {
+            res.send({
+                'status': true,
+                'message': 'Request sent.'
+            });
         } else {
 
             //Check if AutoBuy enbled
@@ -10505,7 +10523,7 @@ router.post('/buyCoin', (req, res) => {
 
                 //Update or Insert CoinAutoBuy settings 
                 if (await coinAutoBuy(buyArr, exchange)){
-                    hit_auto_buy_cron(admin_id)
+                    hit_auto_buy_cron(admin_id, exchange)
                     res.send({
                         'status': true,
                         'message': 'Auto Buy settings saved successfully.'
@@ -10531,9 +10549,9 @@ router.post('/buyCoin', (req, res) => {
                     }else{
                         let buyArr = {
                             'application_mode': application_mode,
-                            'admin_id': admin_id,
-                            'symbol': symbol,
-                            'buy_currency': buy_currency,
+                            'user_id': admin_id,
+                            'coin': symbol,
+                            'currency': buy_currency,
                             'quantity': quantity,
                             'buy_now': buy_now,
                             'status': 'new_bnb_autoBuy',
@@ -10574,44 +10592,81 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
     //     "quantity": 0.06,
     //         "currency": "BTC"
 
-    let reqData = {
-        'user_id': buyArr.user_id,
-        'coin': buyArr.coin,
-        'quantity': buyArr.quantity,
-        'currency': buyArr.currency,
-    }
+    if (typeof buyArr.user_id != 'undefined' && buyArr.user_id != '' && typeof buyArr.coin != 'undefined' && buyArr.coin != '' && typeof buyArr.quantity != 'undefined' && buyArr.quantity != '' && typeof buyArr.currency != 'undefined' && buyArr.currency != ''){
 
-    if(exchange == 'binance'){
-        var options = {
-            method: 'POST',
-            url: 'https://app.digiebot.com/admin/Api_calls/get_google_auth_secret',
-            headers: {
-                'cache-control': 'no-cache',
-                'Connection': 'keep-alive',
-                'Accept-Encoding': 'gzip, deflate',
-                'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-                'Cache-Control': 'no-cache',
-                'Accept': '*/*',
-                'User-Agent': 'PostmanRuntime/7.20.1',
-                'Content-Type': 'application/json'
-            },
-            json: {}
+        let str = buyArr.coin;
+        let splitArr = str.split('USDT');
+        if (splitArr[1] == '') {
+            buyArr.coin = splitArr[0]
+        } else {
+            let splitArr = str.split('BTC');
+            buyArr.coin = splitArr[0]
         }
-        request(options, function (error, response, body) {
-            if (error) {
-                //Do nothing
-            } else {
-                if (body.status) {
-                    //Save Buy History
-                    // saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
-                }
+
+        let reqData = {
+            'user_id': buyArr.user_id,
+            'coin': buyArr.coin,
+            'quantity': buyArr.quantity,
+            'currency': buyArr.currency,
+        }
+
+        if(exchange == 'binance'){
+            var options = {
+                method: 'POST',
+                url: 'http://34.205.124.51:3600/buyBNBPost',
+                headers: {
+                    'cache-control': 'no-cache',
+                    'Connection': 'keep-alive',
+                    'Accept-Encoding': 'gzip, deflate',
+                    'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                    'Cache-Control': 'no-cache',
+                    'Accept': '*/*',
+                    'User-Agent': 'PostmanRuntime/7.20.1',
+                    'Content-Type': 'application/json'
+                },
+                json: reqData
             }
-        })
-    } else if (exchange == 'bam'){
+            request(options, function (error, response, body) {
+                if (error) {
+                    //Do nothing
+                } else {
+                    if (body.status == 'true') {
+                        //Save Buy History
+                        saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
+                    }
+                }
+            })
+        } else if (exchange == 'bam'){
+            var options = {
+                method: 'POST',
+                url: 'http://34.205.124.51:2607/buyBNBPost',
+                headers: {
+                    'cache-control': 'no-cache',
+                    'Connection': 'keep-alive',
+                    'Accept-Encoding': 'gzip, deflate',
+                    'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                    'Cache-Control': 'no-cache',
+                    'Accept': '*/*',
+                    'User-Agent': 'PostmanRuntime/7.20.1',
+                    'Content-Type': 'application/json'
+                },
+                json: reqData
+            }
+            request(options, function (error, response, body) {
+                if (error) {
+                    //Do nothing
+                } else {
+                    if (body.status == 'true') {
+                        //Save Buy History
+                        saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
+                    }
+                }
+            })
+        }
+        return true
+    }else{
+        return false
     }
-
-    return true
-
 }//End coinBuyNow
 
 //coinAutoBuy
@@ -10661,7 +10716,17 @@ async function coinAutoBuy(buyArr, exchange) {
 }//End coinAutoBuy
 
 //hit_auto_buy_cron
-async function hit_auto_buy_cron(user_id='') {
+async function hit_auto_buy_cron(user_id='', exchange) {
+
+    //modified_date 5 days before
+    let updated_date = new Date(new Date().setDate(new Date().getDate() - 5))
+    var where = {
+        'updated_date': { '$lte': updated_date}
+    }
+    if(user_id != ''){
+        where = {}
+        where['admin_id'] = user_id 
+    }
     
 }//end hit_auto_buy_cron(user_id)
 
