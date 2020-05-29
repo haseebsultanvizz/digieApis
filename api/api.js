@@ -2537,7 +2537,7 @@ router.post('/listOrderListing', async (req, resp) => {
         }
         
         if (typeof orderListing[index].resume_order_id != 'undefined') {
-            htmlStatus += '<span class="badge badge-info" style="margin-left:4px;">Resumed</span>';
+            htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
         }
 
         order['childProfitLossPercentageHtml'] = childProfitLossPercentageHtml
