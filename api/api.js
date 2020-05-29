@@ -8651,7 +8651,6 @@ router.post('/resume_order_minQty', (req, res) => {
         } else {
 
             if (typeof updateData['lth_pause_resume'] != 'undefined' && updateData['lth_pause_resume'] == 'yes'){
-                
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_'+exchange
                 var buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
                 
@@ -8725,51 +8724,127 @@ router.post('/resume_order_minQty', (req, res) => {
                 }
             }else{
 
-                let filter = {
-                    '_id': new ObjectID(order_id),
-                    'is_sell_order': 'pause'
-                }
-    
-                let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
-    
-                let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
-    
-                if (data1.length > 0) {
-                    obj = data1[0];
-    
-                    updateData['is_sell_order'] = 'resume_pause'
-                    updateData['modified_date'] = new Date()
-                    updateData['resume_date'] = typeof updateData['resume_date'] != 'undefined' && updateData['resume_date'] != '' ? new Date(updateData['resume_date']) : new Date()
-    
-                    let set = {};
-                    set['$set'] = updateData
-                    
-                    // set['$set'] = {
-                    //     'is_sell_order': 'resume_pause',
-                    //     'modified_date': new Date()
-                    // };
-                    let where = {
-                        '_id': obj._id
+                if (typeof updateData['resumeOrderType'] != 'undefined' && updateData['resumeOrderType'] == 'lth'){
+                    let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
+                    var buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+
+                    let filter = {
+                        '_id': new ObjectID(order_id),
+                        // 'is_sell_order': 'pause'
                     }
-    
-                    let update = db.collection(sold_collection).updateOne(where, set);
-    
-                    // // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
-                    // // let ins = await db.collection(pause_collection).insertOne(obj);
-    
-                    let show_hide_log = 'yes';
-                    let type = 'resume_order';
-                    let order_mode = obj.application_mode;
-                    let log_msg = 'Order resumed manually.'
-                    var order_created_date = obj.created_date
-                    var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-                    promiseLog.then((callback) => { })
-    
-                    res.send({
-                        'status': true,
-                        'message': 'Order resumed successfully'
-                    });
-                } else {
+
+                    let data1 = await db.collection(buyCollectionName).find(filter).limit(1).toArray();
+                    if (data1.length > 0) {
+                        let obj = data1[0];
+
+                        let resumeObj = obj;
+                        resumeObj['buy_order_id'] = obj['_id']
+                        resumeObj['buy_parent_id'] = obj['buy_parent_id']
+                        delete resumeObj['_id']
+                        resumeObj['status'] = 'resume_pending'
+
+                        let insert = db.collection(resumeCollectionName).insertOne(resumeObj, async (err, result) => {
+                            if (err) {
+                                console.log(err)
+                            } else {
+                                let insert_id = result.insertedId
+
+                                updateData['is_sell_order'] = 'resume_pause'
+                                updateData['modified_date'] = new Date()
+                                updateData['resume_date'] = typeof updateData['resume_date'] != 'undefined' && updateData['resume_date'] != '' ? new Date(updateData['resume_date']) : new Date()
+
+                                var set = {};
+                                set['$set'] = updateData
+                                let where = {
+                                    '_id': insert_id
+                                }
+                                var update = db.collection(resumeCollectionName).updateOne(where, set);
+
+                                var set = {};
+                                set['$set'] = {
+                                    'resume_order_id': insert_id,
+                                }
+
+                                if (typeof updateData['resumeOrderType'] != 'undefined' && updateData['lth_pause_resume'] == 'yes') {
+                                    set['$set']['is_sell_order'] = 'resume_pause'
+                                    set['$set']['modified_date'] = new Date()
+                                }
+
+                                var update = db.collection(buyCollectionName).updateOne(filter, set)
+                            }
+                        })
+
+                        let show_hide_log = 'yes';
+                        let type = 'resume_order';
+                        let order_mode = obj.application_mode;
+                        let log_msg = 'Order paused from LTH manually.'
+                        var order_created_date = obj.created_date
+                        var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                        promiseLog.then((callback) => { })
+
+                        res.send({
+                            'status': true,
+                            'message': 'Order paused successfully'
+                        });
+                    }else{
+                        res.send({
+                            'status': false,
+                            'message': 'Something went wrong'
+                        });
+                    }
+                } else if (typeof updateData['resumeOrderType'] != 'undefined' && updateData['resumeOrderType'] == 'lth_pause'){
+
+                    let filter = {
+                        '_id': new ObjectID(order_id),
+                        'is_sell_order': 'pause'
+                    }
+        
+                    let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
+        
+                    let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
+        
+                    if (data1.length > 0) {
+                        obj = data1[0];
+        
+                        updateData['is_sell_order'] = 'resume_pause'
+                        updateData['modified_date'] = new Date()
+                        updateData['resume_date'] = typeof updateData['resume_date'] != 'undefined' && updateData['resume_date'] != '' ? new Date(updateData['resume_date']) : new Date()
+        
+                        let set = {};
+                        set['$set'] = updateData
+                        
+                        // set['$set'] = {
+                        //     'is_sell_order': 'resume_pause',
+                        //     'modified_date': new Date()
+                        // };
+                        let where = {
+                            '_id': obj._id
+                        }
+        
+                        let update = db.collection(sold_collection).updateOne(where, set);
+        
+                        // // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
+                        // // let ins = await db.collection(pause_collection).insertOne(obj);
+        
+                        let show_hide_log = 'yes';
+                        let type = 'resume_order';
+                        let order_mode = obj.application_mode;
+                        let log_msg = 'Order resumed manually.'
+                        var order_created_date = obj.created_date
+                        var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                        promiseLog.then((callback) => { })
+        
+                        res.send({
+                            'status': true,
+                            'message': 'Order resumed successfully'
+                        });
+                    } else {
+                        res.send({
+                            'status': false,
+                            'message': 'Something went wrong'
+                        });
+                    }
+                }else{
                     res.send({
                         'status': false,
                         'message': 'Something went wrong'
@@ -10156,6 +10231,7 @@ router.post('/getOrderById', async (req, res) => {
 
 // ***************** End Auto Trading Module APIs **************** //
 
+// ****************** BNB auto Buy ****************************** //
 
 router.post('/buyCoin', (req, res) => {
     conn.then(async (db) => {
@@ -10195,9 +10271,6 @@ router.post('/buyCoin', (req, res) => {
                     'admin_id': admin_id,
                     'symbol': symbol,
                     'buy_currency': buy_currency,
-                    // 'quantity': quantity,
-                    // 'buy_now': buy_now,
-                    // 'status': status,
                     'auto_buy': auto_buy,
                     'trigger_buy_usdt_worth': trigger_buy_usdt_worth,
                     'auto_buy_usdt_worth': auto_buy_usdt_worth,
@@ -10242,7 +10315,7 @@ router.post('/buyCoin', (req, res) => {
                             'created_date': created_date,
                         }
                         //TODO: send for buyNow
-                        if(await coinBuyNow(buyArr, exchange)){
+                        if(await coinBuyNow(buyArr, exchange, 'buyNow')){
                             res.send({
                                 'status': true,
                                 'message': 'Buy now request sent successfully.'
@@ -10268,20 +10341,52 @@ router.post('/buyCoin', (req, res) => {
 })//End buyCoin
 
 //coinBuyNow
-async function coinBuyNow(buyArr, exchange) {
-    return new Promise((resolve) => {
-        conn.then((db) => {
-            let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
-            db.collection(collectionName).insertOne(buyArr, async (err, result) => {
-                if (err) {
-                    console.log(err)
-                    resolve(false)
-                } else {
-                    resolve(true)
+async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
+    //Hit API request for coin buy
+
+    // "user_id": "5c0912b7fc9aadaac61dd072",
+    // "coin": "BNB",
+    //     "quantity": 0.06,
+    //         "currency": "BTC"
+
+    let reqData = {
+        'user_id': buyArr.user_id,
+        'coin': buyArr.coin,
+        'quantity': buyArr.quantity,
+        'currency': buyArr.currency,
+    }
+
+    if(exchange == 'binance'){
+        var options = {
+            method: 'POST',
+            url: 'https://app.digiebot.com/admin/Api_calls/get_google_auth_secret',
+            headers: {
+                'cache-control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Accept-Encoding': 'gzip, deflate',
+                'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                'Cache-Control': 'no-cache',
+                'Accept': '*/*',
+                'User-Agent': 'PostmanRuntime/7.20.1',
+                'Content-Type': 'application/json'
+            },
+            json: {}
+        }
+        request(options, function (error, response, body) {
+            if (error) {
+                //Do nothing
+            } else {
+                if (body.status) {
+                    //Save Buy History
+                    // saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
                 }
-            })
+            }
         })
-    })
+    } else if (exchange == 'bam'){
+    }
+
+    return true
+
 }//End coinBuyNow
 
 //coinAutoBuy
@@ -10331,26 +10436,31 @@ async function coinAutoBuy(buyArr, exchange) {
 }//End coinAutoBuy
 
 //hit_auto_buy_cron
-async function hit_auto_buy_cron(user_id) {
-    var options = {
-        method: 'GET',
-        url: 'https://app.digiebot.com/admin/api_calls/auto_buy_bnb/' + user_id,
-        headers: {
-            'cache-control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Accept-Encoding': 'gzip, deflate',
-            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-            'Cache-Control': 'no-cache',
-            'Accept': '*/*',
-            'User-Agent': 'PostmanRuntime/7.20.1',
-            'Content-Type': 'application/json'
-        },
-        json: {}
-    };
-    request(options, function (error, response, body) { });
-
-    return true
+async function hit_auto_buy_cron(user_id='') {
+    
 }//end hit_auto_buy_cron(user_id)
+
+async function saveBnbAutoBuyHistory(user_id, exchange, response, buyType='autoBuy') {
+    return new Promise((resolve) => {
+        conn.then((db) => {
+            let insData = response
+            insData['user_id'] = user_id
+            insData['buy_type'] = buyType
+            insData['created_date'] = new Date()
+            let collectionName = exchange == 'binance' ? 'auto_buy_history' : 'auto_buy_history_' + exchange
+            //Insert auto_buy_history
+            db.collection(collectionName).insertOne(insData, async (err, result) => {
+                if (err) {
+                    resolve(false)
+                } else {
+                    resolve(true)
+                }
+            })
+        })
+    })
+}
+
+// ****************** END BNB auto Buy ****************************** //
 
 /* CRON SCRIPT for update_qty_from_usd_worth */
 router.post('/update_qty_from_usd_worth', (req, res) => {
