@@ -10610,7 +10610,10 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
             'currency': buyArr.currency,
         }
 
+        // console.log(reqData)
+        
         if(exchange == 'binance'){
+            // console.log(exchange)
             var options = {
                 method: 'POST',
                 url: 'http://34.205.124.51:3600/buyBNBPost',
@@ -10629,10 +10632,14 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
             request(options, function (error, response, body) {
                 if (error) {
                     //Do nothing
+                    // console.log(error)
                 } else {
                     if (body.status == 'true') {
+                        // console.log('success')
                         //Save Buy History
                         saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
+                    }else{
+                        // console.log(body)
                     }
                 }
             })
@@ -10715,19 +10722,113 @@ async function coinAutoBuy(buyArr, exchange) {
     })
 }//End coinAutoBuy
 
+
+//hit_auto_buy_cron
+router.get('/hit_auto_buy_cron', async (req, res) => {
+    hit_auto_buy_cron('5c0912b7fc9aadaac61dd072', 'binance')
+
+    res.send({
+        status:true,
+        message:'success',
+    })
+
+})//end hit_auto_buy_cron
+
 //hit_auto_buy_cron
 async function hit_auto_buy_cron(user_id='', exchange) {
 
-    //modified_date 5 days before
-    let updated_date = new Date(new Date().setDate(new Date().getDate() - 5))
-    var where = {
-        'updated_date': { '$lte': updated_date}
-    }
-    if(user_id != ''){
-        where = {}
-        where['admin_id'] = user_id 
-    }
+    conn.then(async (db) => {
+        //modified_date 5 days before
+        let updated_date = new Date(new Date().setDate(new Date().getDate() - 5))
+        var where = { 
+            'updated_date': { '$lte': updated_date}
+        }
+        if(user_id != ''){
+            where = {}
+            where['admin_id'] = user_id 
+        }
     
+        let collectionName = exchange == 'binance' ? 'auto_buy' : 'auto_buy_' + exchange
+        let autoBuyUsers = await db.collection(collectionName).find(where).limit(5).toArray()
+        if (autoBuyUsers.length > 0){
+            let count = autoBuyUsers.length
+            for (let i = 0; i < count; i++){
+                let obj = autoBuyUsers[i]
+
+                let buy_currency = obj['buy_currency']
+                let auto_buy = obj['auto_buy']
+                let trigger_buy_usdt_worth = obj['trigger_buy_usdt_worth']
+                let auto_buy_usdt_worth = obj['auto_buy_usdt_worth']
+                
+                //TODO: get balance
+                let balanceArr = await getBtcUsdtBalance(obj['admin_id'], exchange)
+                let balanceObj = {}
+                balanceArr.map(item => { balanceObj[item.coin_symbol] = item.coin_balance })
+                
+                //TODO: check if balance usd worth is less than trigger
+                let promise1 = listmarketPriceMinNotation('BTCUSDT', exchange)
+                let promise2 = listmarketPriceMinNotation(obj['symbol'], exchange)
+
+                let myPromises = await Promise.all([promise1, promise2])
+                let BTCUSDT_Data = myPromises[0]
+                let symbol_Data = myPromises[1]
+
+                let BTCUSDTPRICE = BTCUSDT_Data['currentmarketPrice'][0]['price']
+                let currentMarketPrice = symbol_Data['currentmarketPrice'][0]['price']
+                let marketMinNotation = symbol_Data.marketMinNotation
+                let marketMinNotationStepSize = symbol_Data.marketMinNotationStepSize
+                let toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+
+                //find min required quantity
+                var calculatedMinNotation = parseFloat(marketMinNotation)
+                var minReqQty = (calculatedMinNotation / currentMarketPrice)
+                minReqQty += marketMinNotationStepSize
+                minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
+
+                //TODO: find one usd worth of quantity
+                let selectedCoin = obj['symbol']
+                let splitArr = selectedCoin.split('USDT')
+                let oneUsdWorthQty = 0;
+                var usdWorthQty = 0
+                var quantity = 0
+                let avaialableUsdWorth = 0
+
+                if (splitArr[1] == '') {
+                    oneUsdWorthQty = 1 / currentMarketPrice
+                    avaialableUsdWorth = parseFloat(balanceObj['BNB']) * currentMarketPrice 
+                } else {
+                    oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
+                    avaialableUsdWorth = parseFloat(balanceObj['BNB']) * currentMarketPrice * BTCUSDTPRICE 
+                }
+                //TODO: find qty from usd worth
+                usdWorthQty = parseFloat(auto_buy_usdt_worth) * oneUsdWorthQty
+                quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
+
+                // console.log(avaialableUsdWorth, ' < ', parseFloat(trigger_buy_usdt_worth))
+                // if (avaialableUsdWorth < parseFloat(trigger_buy_usdt_worth)){
+                    //TODO: check if balance available to buy more
+                    //Add 10% extr over current quantity trying to purchase 
+                    let currentQty = ((10 * (currentMarketPrice * quantity)) / 100);
+                    let balance = (splitArr[1] == '' ? parseFloat(balanceObj['USDT']) : parseFloat(balanceObj['BTC']))
+
+                    // console.log(balance, ' < ', currentQty)
+                    if (balance > currentQty) {
+                        //TODO: send for buy
+                        let buyArr = {
+                            'user_id': obj['admin_id'],
+                            'coin': selectedCoin,
+                            // 'quantity': quantity,
+                            'quantity': 0.06,
+                            'currency': buy_currency,
+                        }
+                        coinBuyNow(buyArr, exchange, 'autoBuy')
+                    }
+                // }
+    
+            }
+        }
+    })
+
 }//end hit_auto_buy_cron(user_id)
 
 async function saveBnbAutoBuyHistory(user_id, exchange, response, buyType='autoBuy') {
