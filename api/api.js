@@ -10724,8 +10724,10 @@ async function coinAutoBuy(buyArr, exchange) {
 
 
 //hit_auto_buy_cron
-router.get('/hit_auto_buy_cron', async (req, res) => {
-    hit_auto_buy_cron('5c0912b7fc9aadaac61dd072', 'binance')
+router.post('/hit_auto_buy_cron', async (req, res) => {
+    if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined'){
+        hit_auto_buy_cron(req.body.user_id, req.body.exchange)
+    }
 
     res.send({
         status:true,
