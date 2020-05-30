@@ -10740,8 +10740,8 @@ router.post('/hit_auto_buy_cron', async (req, res) => {
 async function hit_auto_buy_cron(user_id='', exchange) {
 
     conn.then(async (db) => {
-        //modified_date 5 days before
-        let updated_date = new Date(new Date().setDate(new Date().getDate() - 5))
+        //updated_date 2 days before
+        let updated_date = new Date(new Date().setDate(new Date().getDate() - 2))
         var where = { 
             'updated_date': { '$lte': updated_date}
         }
@@ -10807,7 +10807,7 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                 quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
 
                 // console.log(avaialableUsdWorth, ' < ', parseFloat(trigger_buy_usdt_worth))
-                // if (avaialableUsdWorth < parseFloat(trigger_buy_usdt_worth)){
+                if (avaialableUsdWorth < parseFloat(trigger_buy_usdt_worth)){
                     //TODO: check if balance available to buy more
                     //Add 10% extr over current quantity trying to purchase 
                     let currentQty = ((10 * (currentMarketPrice * quantity)) / 100);
@@ -10825,8 +10825,19 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                         }
                         coinBuyNow(buyArr, exchange, 'autoBuy')
                     }
-                // }
-    
+                }
+                
+                //update the cron time for this user
+                let where1 = {
+                    'admin_id': obj['admin_id'] 
+                } 
+                let set1 = {
+                    '$set': {
+                        'updated_date': new Date
+                    }
+                }
+                db.collection(collectionName).updateOne(where1, set1)
+
             }
         }
     })
