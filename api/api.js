@@ -10826,6 +10826,10 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                         coinBuyNow(buyArr, exchange, 'autoBuy')
                     }
                 }
+
+
+                //sleep 2 seconds before sending call next
+                await new Promise(r => setTimeout(r, 2000));
                 
                 //update the cron time for this user
                 let where1 = {
