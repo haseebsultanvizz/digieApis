@@ -10586,12 +10586,6 @@ router.post('/buyCoin', (req, res) => {
 //coinBuyNow
 async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
     //Hit API request for coin buy
-
-    // "user_id": "5c0912b7fc9aadaac61dd072",
-    // "coin": "BNB",
-    //     "quantity": 0.06,
-    //         "currency": "BTC"
-
     if (typeof buyArr.user_id != 'undefined' && buyArr.user_id != '' && typeof buyArr.coin != 'undefined' && buyArr.coin != '' && typeof buyArr.quantity != 'undefined' && buyArr.quantity != '' && typeof buyArr.currency != 'undefined' && buyArr.currency != ''){
 
         let str = buyArr.coin;
@@ -10609,8 +10603,6 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
             'quantity': buyArr.quantity,
             'currency': buyArr.currency,
         }
-
-        // console.log(reqData)
         
         if(exchange == 'binance'){
             // console.log(exchange)
@@ -10618,26 +10610,29 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                 method: 'POST',
                 url: 'http://34.205.124.51:3600/buyBNBPost',
                 headers: {
-                    'cache-control': 'no-cache',
-                    'Connection': 'keep-alive',
-                    'Accept-Encoding': 'gzip, deflate',
-                    'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-                    'Cache-Control': 'no-cache',
-                    'Accept': '*/*',
-                    'User-Agent': 'PostmanRuntime/7.20.1',
                     'Content-Type': 'application/json'
                 },
                 json: reqData
             }
             request(options, function (error, response, body) {
+                console.log(body)
                 if (error) {
                     //Do nothing
                     // console.log(error)
                 } else {
-                    if (body.status == 'true') {
-                        // console.log('success')
+                    if (body.success == 'true') {
                         //Save Buy History
-                        saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
+                        // saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
+                        conn.then((db) => {
+                            let insData = body
+                            insData['user_id'] = buyArr.user_id
+                            insData['buy_type'] = buyType
+                            insData['created_date'] = new Date()
+                            let collectionName = exchange == 'binance' ? 'auto_buy_history' : 'auto_buy_history_' + exchange
+                            //Insert auto_buy_history
+                            db.collection(collectionName).insertOne(insData)
+                        })
+
                     }else{
                         // console.log(body)
                     }
@@ -10648,13 +10643,6 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                 method: 'POST',
                 url: 'http://34.205.124.51:2607/buyBNBPost',
                 headers: {
-                    'cache-control': 'no-cache',
-                    'Connection': 'keep-alive',
-                    'Accept-Encoding': 'gzip, deflate',
-                    'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-                    'Cache-Control': 'no-cache',
-                    'Accept': '*/*',
-                    'User-Agent': 'PostmanRuntime/7.20.1',
                     'Content-Type': 'application/json'
                 },
                 json: reqData
@@ -10663,9 +10651,18 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                 if (error) {
                     //Do nothing
                 } else {
-                    if (body.status == 'true') {
+                    if (body.success == 'true') {
                         //Save Buy History
-                        saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
+                        // saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
+                        conn.then((db) => {
+                            let insData = body
+                            insData['user_id'] = buyArr.user_id
+                            insData['buy_type'] = buyType
+                            insData['created_date'] = new Date()
+                            let collectionName = exchange == 'binance' ? 'auto_buy_history' : 'auto_buy_history_' + exchange
+                            //Insert auto_buy_history
+                            db.collection(collectionName).insertOne(insData)
+                        })
                     }
                 }
             })
@@ -10743,7 +10740,7 @@ async function hit_auto_buy_cron(user_id='', exchange) {
         //updated_date 2 days before
         let updated_date = new Date(new Date().setDate(new Date().getDate() - 2))
         var where = { 
-            'updated_date': { '$lte': updated_date}
+            // 'updated_date': { '$lte': updated_date}
         }
         if(user_id != ''){
             where = {}
@@ -10811,7 +10808,7 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                     //TODO: check if balance available to buy more
                     //Add 10% extr over current quantity trying to purchase 
                     let currentQty = ((10 * (currentMarketPrice * quantity)) / 100);
-                    let balance = (splitArr[1] == '' ? parseFloat(balanceObj['USDT']) : parseFloat(balanceObj['BTC']))
+                    let balance = (buy_currency == 'USDT' ? parseFloat(balanceObj['USDT']) : parseFloat(balanceObj['BTC']))
 
                     // console.log(balance, ' < ', currentQty)
                     if (balance > currentQty) {
@@ -10819,8 +10816,7 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                         let buyArr = {
                             'user_id': obj['admin_id'],
                             'coin': selectedCoin,
-                            // 'quantity': quantity,
-                            'quantity': 0.06,
+                            'quantity': quantity,
                             'currency': buy_currency,
                         }
                         coinBuyNow(buyArr, exchange, 'autoBuy')
@@ -10859,11 +10855,41 @@ async function saveBnbAutoBuyHistory(user_id, exchange, response, buyType='autoB
             //Insert auto_buy_history
             db.collection(collectionName).insertOne(insData, async (err, result) => {
                 if (err) {
+                    console.log(err)
                     resolve(false)
                 } else {
+                    console.log(result)
                     resolve(true)
                 }
             })
+        })
+    })
+}
+
+//getBnbBuyHistory
+router.post('/getBnbBuyHistory', async (req, res) => {
+    if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined') {
+        let history = await getBnbBuyHistory(req.body.user_id, req.body.exchange)
+        res.send({
+            status: true,
+            data: history,
+            message: 'Data found successfully',
+        })
+    }else{
+        res.send({
+            status: false,
+            message: 'No data found',
+        })
+    }
+})//end getBnbBuyHistory
+
+async function getBnbBuyHistory(user_id, exchange) {
+    return new Promise((resolve) => {
+        conn.then(async (db) => {
+            let where = {'user_id': user_id}
+            let collectionName = exchange == 'binance' ? 'auto_buy_history' : 'auto_buy_history_' + exchange
+            let hsitory = await db.collection(collectionName).find(where).limit(20).toArray()
+            resolve(hsitory)
         })
     })
 }
