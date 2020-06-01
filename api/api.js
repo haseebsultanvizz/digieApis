@@ -10615,7 +10615,6 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                 json: reqData
             }
             request(options, function (error, response, body) {
-                console.log(body)
                 if (error) {
                     //Do nothing
                     // console.log(error)
@@ -10623,16 +10622,20 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                     if (body.success == 'true') {
                         //Save Buy History
                         // saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
-                        conn.then((db) => {
-                            let insData = body
-                            insData['user_id'] = buyArr.user_id
-                            insData['buy_type'] = buyType
-                            insData['created_date'] = new Date()
-                            let collectionName = exchange == 'binance' ? 'auto_buy_history' : 'auto_buy_history_' + exchange
-                            //Insert auto_buy_history
-                            db.collection(collectionName).insertOne(insData)
-                        })
+                        // conn.then((db) => {
+                        //     let insData = body
+                        //     insData['user_id'] = buyArr.user_id
+                        //     insData['buy_type'] = buyType
+                        //     insData['created_date'] = new Date()
+                        //     let collectionName = exchange == 'binance' ? 'auto_buy_history' : 'auto_buy_history_' + exchange
+                        //     //Insert auto_buy_history
+                        //     db.collection(collectionName).insertOne(insData)
+                        // })
 
+                        
+                        //Save Buy History
+                        saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
+                        //Update User Balance
                         update_user_balance(buyArr.user_id)
 
                     }else{
@@ -10656,16 +10659,19 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                     if (body.success == 'true') {
                         //Save Buy History
                         // saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
-                        conn.then((db) => {
-                            let insData = body
-                            insData['user_id'] = buyArr.user_id
-                            insData['buy_type'] = buyType
-                            insData['created_date'] = new Date()
-                            let collectionName = exchange == 'binance' ? 'auto_buy_history' : 'auto_buy_history_' + exchange
-                            //Insert auto_buy_history
-                            db.collection(collectionName).insertOne(insData)
-                        })
+                        // conn.then((db) => {
+                        //     let insData = body
+                        //     insData['user_id'] = buyArr.user_id
+                        //     insData['buy_type'] = buyType
+                        //     insData['created_date'] = new Date()
+                        //     let collectionName = exchange == 'binance' ? 'auto_buy_history' : 'auto_buy_history_' + exchange
+                        //     //Insert auto_buy_history
+                        //     db.collection(collectionName).insertOne(insData)
+                        // })
                         
+                        //Save Buy History
+                        saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
+                        //Update User Balance
                         update_user_balance(buyArr.user_id)
 
                     }
