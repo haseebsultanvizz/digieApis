@@ -10633,6 +10633,8 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                             db.collection(collectionName).insertOne(insData)
                         })
 
+                        update_user_balance(buyArr.user_id)
+
                     }else{
                         // console.log(body)
                     }
@@ -10663,6 +10665,9 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                             //Insert auto_buy_history
                             db.collection(collectionName).insertOne(insData)
                         })
+                        
+                        update_user_balance(buyArr.user_id)
+
                     }
                 }
             })
