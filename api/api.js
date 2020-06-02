@@ -9059,7 +9059,9 @@ router.post('/pause_sold_order_test', (req, res) => {
                         var set = {};
                         set['$set'] = {
                             'resume_order_id': insert_id,
-                            'is_sell_order': 'pause',
+                            // 'is_sell_order': 'pause',
+                            'resume_status': 'resume',
+                            'is_sell_order': 'resume_pause', 
                             'modified_date': new Date()
                             // 'status': 'resume',
                         }
