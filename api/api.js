@@ -10730,7 +10730,6 @@ async function coinAutoBuy(buyArr, exchange) {
     })
 }//End coinAutoBuy
 
-
 //hit_auto_buy_cron
 router.post('/hit_auto_buy_cron', async (req, res) => {
     if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined'){
@@ -10751,7 +10750,7 @@ async function hit_auto_buy_cron(user_id='', exchange) {
         //updated_date 2 days before
         let updated_date = new Date(new Date().setDate(new Date().getDate() - 2))
         var where = { 
-            // 'updated_date': { '$lte': updated_date}
+            'updated_date': { '$lte': updated_date}
         }
         if(user_id != ''){
             where = {}
@@ -10901,6 +10900,37 @@ async function getBnbBuyHistory(user_id, exchange) {
             let collectionName = exchange == 'binance' ? 'auto_buy_history' : 'auto_buy_history_' + exchange
             let hsitory = await db.collection(collectionName).find(where).limit(20).toArray()
             resolve(hsitory)
+        })
+    })
+}
+
+//getBnbBuySettings
+router.post('/getBnbBuySettings', async (req, res) => {
+    if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined') {
+        let history = await getBnbBuySettings(req.body.user_id, req.body.exchange)
+        res.send({
+            status: true,
+            data: history,
+            message: 'Data found successfully',
+        })
+    } else {
+        res.send({
+            status: false,
+            message: 'No data found',
+        })
+    }
+})//end getBnbBuySettings
+
+async function getBnbBuySettings(user_id, exchange) {
+    return new Promise((resolve) => {
+        conn.then(async (db) => {
+            let where = { 
+                'admin_id': user_id,
+                'application_mode': 'live'
+             }
+            let collectionName = exchange == 'binance' ? 'auto_buy' : 'auto_buy_' + exchange
+            let settings = await db.collection(collectionName).find(where).limit(1).toArray()
+            resolve(settings)
         })
     })
 }
