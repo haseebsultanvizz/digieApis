@@ -2204,6 +2204,7 @@ router.post('/listOrderListing', async (req, resp) => {
     var filter_9 = {};
     filter_9['admin_id'] = admin_id;
     filter_9['application_mode'] = application_mode;
+    filter_9['status'] = 'FILLED';
     filter_9['is_sell_order'] = {
         '$in': ['pause', 'resume_pause']
         // '$in': ['pause', 'resume_pause', 'resume_complete']
@@ -2256,9 +2257,19 @@ router.post('/listOrderListing', async (req, resp) => {
         for (let [key, value] of Object.entries(search)) {
             filter_all[key] = value;
         }
+        // filter_all['is_sell_order'] = {
+        //     '$ne': 'resume_complete'
+        // };
+
         filter_all['is_sell_order'] = {
             '$ne': 'resume_complete'
         };
+        filter_all['is_sell_order'] = {
+            '$nin': ['pause', 'resume_pause']
+            // '$in': ['pause', 'resume_pause', 'resume_complete']
+        };
+        filter_all['resume_status'] = { '$ne': 'complete' }
+
     }
     let soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     let all1Promise = countCollection(soldOrdercollection, filter_all);
