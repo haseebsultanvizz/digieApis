@@ -2245,31 +2245,22 @@ router.post('/listOrderListing', async (req, resp) => {
         if (postDAta.end_date != '') {
             obj['$lte'] = new Date(postDAta.end_date);
         }
-        filter_all['created_date'] = obj;
-        filter_all['is_sell_order'] = {
-            '$nin': ['pause', 'resume_pause']
-            // '$in': ['pause', 'resume_pause', 'resume_complete']
-        };
-        filter_all['resume_status'] = { '$ne': 'complete' }
+        filter_all['created_date'] = obj
     }
+
+    filter_all['is_sell_order'] = {
+        '$ne': 'resume_complete'
+    };
+    filter_all['is_sell_order'] = {
+        '$nin': ['pause', 'resume_pause']
+        // '$in': ['pause', 'resume_pause', 'resume_complete']
+    };
+    filter_all['resume_status'] = { '$ne': 'complete' }
 
     if (count > 0) {
         for (let [key, value] of Object.entries(search)) {
             filter_all[key] = value;
         }
-        // filter_all['is_sell_order'] = {
-        //     '$ne': 'resume_complete'
-        // };
-
-        filter_all['is_sell_order'] = {
-            '$ne': 'resume_complete'
-        };
-        filter_all['is_sell_order'] = {
-            '$nin': ['pause', 'resume_pause']
-            // '$in': ['pause', 'resume_pause', 'resume_complete']
-        };
-        filter_all['resume_status'] = { '$ne': 'complete' }
-
     }
     let soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     let all1Promise = countCollection(soldOrdercollection, filter_all);
@@ -8996,6 +8987,7 @@ router.post('/pause_lth_order_test', (req, res) => {
                         var set = {};
                         set['$set'] = {
                             'resume_order_id': insert_id,
+                            'status': 'lth_pause',
                             'is_sell_order': 'pause',
                             'modified_date': new Date()
                             // 'status': 'resume',
