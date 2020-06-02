@@ -8904,7 +8904,7 @@ router.post('/resume_order_test', (req, res) => {
                 tempOrder['modified_date'] = new Date()
                 tempOrder['resume_date'] = new Date()
                 tempOrder['status'] = 'resume'
-                tempOrder['buy_order_id'] = obj['_id']
+                tempOrder['sold_buy_order_id'] = obj['_id']
                 delete tempOrder['_id']
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).insertOne(tempOrder, async (err, result) => {
@@ -9047,7 +9047,7 @@ router.post('/pause_sold_order_test', (req, res) => {
                 tempOrder['modified_date'] = new Date()
                 tempOrder['resume_date'] = new Date()
                 tempOrder['status'] = 'resume'
-                tempOrder['buy_order_id'] = obj['_id']
+                tempOrder['sold_buy_order_id'] = obj['_id']
                 delete tempOrder['_id']
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).insertOne(tempOrder, async (err, result) => {
