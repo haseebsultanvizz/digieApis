@@ -11609,10 +11609,11 @@ async function updateTradedBalance(user_id, exchange, balanceObj, application_mo
             let actualTradeableBTC = 0
             let actualTradeableUSDT = 0
             if (settings.length > 0){
+                settings = settings[0]
                 tradedBtc = typeof settings.tradedBtc != 'undefined' && settings.tradedBtc != '' ? settings.tradedBtc : 0 
                 tradedUsdt = typeof settings.tradedUsdt != 'undefined' && settings.tradedUsdt != '' ? settings.tradedUsdt : 0 
-                actualTradeableBTC = typeof settings.actualTradeableBTC != 'undefined' && settings.actualTradeableBTC != '' ? settings.actualTradeableBTC : 0 
-                actualTradeableUSDT = typeof settings.actualTradeableUSDT != 'undefined' && settings.actualTradeableUSDT != '' ? settings.actualTradeableUSDT : 0 
+                actualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' && settings.step_4.actualTradeableBTC != '' ? settings.step_4.actualTradeableBTC : 0 
+                actualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' && settings.step_4.actualTradeableUSDT != '' ? settings.step_4.actualTradeableUSDT : 0 
             }
             tradedBtc += balanceObj['tradedBtc']
             tradedUsdt += balanceObj['tradedUsdt']
@@ -11693,7 +11694,7 @@ async function updateDailyTradedBalanceAndUsdWorth(user_id, exchange, data, appl
                 }
             }
 
-            console.log('daily btc/usd trade value in usd and number of trades updated')
+            // console.log('daily btc/usd trade value in usd and number of trades updated')
             let update = await db.collection(collectionName).updateOne(where, set);
 
             if (!isNaN(usdtPerTrade) && !isNaN(btcPerTrade)){
@@ -11718,6 +11719,9 @@ async function updateAutoTradeParentUsdWorth(user_id, exchange, worthObj, applic
                 'application_mode': application_mode,
                 'parent_status': 'parent',
                 'auto_trade_generator': 'yes',
+                'status': {
+                    '$ne': 'canceled'
+                },
             }
             let parents = await db.collection(collectionName).find(where).toArray();
             let parentCount = parents.length
@@ -11798,13 +11802,12 @@ async function updateAutoTradeQtyByUsdWorth(worthObj, exchange, parentObj){
                 }
             }
             // console.log('parent order updated')
-
             conn.then(async (db) => {
                 let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
                 await db.collection(collectionName).updateOne(where, set, async (err, result)=>{
                     if(err){
                     }else{
-                        // console.log('parent_id: ', parentObj['_id'])
+                        console.log('parent_id: ', parentObj['_id'])
                         let show_hide_log = 'yes'
                         let type = 'auto_trade_usd_worth_update'
                         let log_msg = 'usd worth and quantity updated by auto trade system'
@@ -11929,7 +11932,6 @@ async function  updateDailyTradeSettings(user_id, exchange, application_mode='li
             'totalTradeAbleInUSD': totalTradeAbleInUSD,
         }
         let update2 = await updateDailyTradedBalanceAndUsdWorth(user_id, exchange, data, application_mode)
-    
         if (update2){
             //TODO: 7) Update parent trades worth to this  
             let updatePrentTradeQty = await updateAutoTradeParentUsdWorth(user_id, exchange, update2, application_mode)
