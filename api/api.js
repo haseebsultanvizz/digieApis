@@ -2456,14 +2456,14 @@ router.post('/listOrderListing', async (req, resp) => {
         if (orderSellPrice != '') {
             //function for calculating percentage 
             let profitLossPercentage = calculate_percentage(orderPurchasePrice, orderSellPrice);
-            resumePL = parseFloat(resumePL) + parseFloat(profitLossPercentage)
+            // resumePL = parseFloat(resumePL) + parseFloat(profitLossPercentage)
             let profitLossCls = (orderSellPrice > orderPurchasePrice) ? 'success' : 'danger';
             profitLossPercentageHtml = '<span class="text-' + profitLossCls + '"><b>' + profitLossPercentage + '%</b></span>';
         } else {
             if (status == 'FILLED' || status == 'LTH') {
                 if (is_sell_order == 'yes' || status == 'LTH') {
                     let percentage = calculate_percentage(orderPurchasePrice, currentMarketPrice);
-                    resumePL = parseFloat(resumePL) + parseFloat(percentage)
+                    // resumePL = parseFloat(resumePL) + parseFloat(percentage)
                     let PLCls = (currentMarketPrice > orderPurchasePrice) ? 'success' : 'danger'
                     profitLossPercentageHtml = '<span class="text-' + PLCls + '"><b>' + percentage + '%</b></span>';
                 } else {
@@ -2551,6 +2551,19 @@ router.post('/listOrderListing', async (req, resp) => {
             htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
 
             let resumePlClass = resumePL > 0 ? 'success' : 'danger'
+
+            let lastRow = false
+            //lth_pause check
+            if (typeof orderListing[index].status != 'undefined' && orderListing[index].status == 'FILLED' && typeof orderListing[index].is_sell_order != 'undefined' && (orderListing[index].is_sell_order == 'pause' || orderListing[index].is_sell_order == 'resume_pause')) {
+                lastRow = true
+                //sold check
+            } else if (typeof orderListing[index].is_sell_order != 'undefined' && orderListing[index].is_sell_order == 'sold') {
+                lastRow = true
+            }
+            if (lastRow){
+                let lossPercent = (typeof orderListing[index].custom_stop_loss_percentage != 'undefined') && !isNaN(parseFloat(orderListing[index].custom_stop_loss_percentage)) ? parseFloat(orderListing[index].custom_stop_loss_percentage) : 0
+                resumePL = parseFloat(resumePL) + parseFloat(lossPercent)
+            }
             resumePL = resumePL.toFixed(2)
             htmlStatus += ' <span class="text-' + resumePlClass + '" style="margin-left:4px;" ><b>' + resumePL + '%</b></span>'
         }
@@ -9946,10 +9959,66 @@ router.post('/getAutoTradeParents', async (req, res) => {
         
         let parentTrades = await getAutoTradeParents(user_id, exchange, application_mode)
         if (parentTrades.length > 0){
+
+            // let parent_order_ids = []
+            // await Promise.all(parentTrades.map(item => {parent_order_ids.push(item['_id'])}))
+
+            // conn.then(async (db) => {
+            //     //find only today buy trades
+            //     let startTime = new Date();
+            //     startTime.setHours(0, 0, 0, 0);
+            //     var endTime = new Date();
+            //     endTime.setHours(23, 59, 59, 999);
+            //     let buyCount = 0
+            //     let buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+            //     let soldCollectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+            //     var where = {
+            //         'buy_parent_id': {'$in': parent_order_ids},
+            //         'buy_date': {'$gte': startTime, '$lte': endTime},
+            //     }
+            //     console.log(where)
+            //     p1 = await db.collection(buyCollectionName).aggregate([
+            //         {'$match': where},
+            //         { "$group": { _id: "$_id", count: { $sum: 1 } } }
+            //     ]).toArray();
+            //     console.log(p1)
+            // })
+            // p2 = db.collection(soldCollectionName).countDocuments(where);
+            // let myPromises = await Promise.all([p1, p2])
+
+
+
+/*
+            for(let i=0; i<parentTrades.length; i++){
+                let item = parentTrades[i]
+                //TODO find number or trades each parent buy today
+                //find only today buy trades
+                let startTime = new Date();
+                startTime.setHours(0, 0, 0, 0);
+                var endTime = new Date();
+                endTime.setHours(23, 59, 59, 999);
+                conn.then(async (db) => {
+                    // 1) check in buy collection
+                    let buyCount = 0
+                    let buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+                    let soldCollectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+                    var where = {
+                        'buy_parent_id': item['_id'],
+                        'buy_date': { '$gte': startTime, '$lte': endTime},
+                    }
+                    p1 = db.collection(buyCollectionName).countDocuments(where);
+                    p2 = db.collection(soldCollectionName).countDocuments(where);
+                    let myPromises = await Promise.all([p1, p2])
+                    buyCount = myPromises[0] + myPromises[1]
+                    console.log(buyCount)
+                })
+            }
+*/
+
             res.send({
                 status: true,
                 data: {
-                    'parentTrades':parentTrades,
+                    'parentTrades': parentTrades,
                 },
                 message: 'Parent trades found successfully',
             });
