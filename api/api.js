@@ -8901,6 +8901,20 @@ router.post('/resume_order_test', (req, res) => {
                 let obj = data1[0];
 
                 let tempOrder = obj
+
+                var count = 0;
+                var i;
+                for (i in updateArr) {
+                    if (updateArr.hasOwnProperty(i)) {
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    for (let [key, value] of Object.entries(updateArr)) {
+                        tempOrder[key] = value;
+                    }
+                }
+
                 tempOrder['modified_date'] = new Date()
                 tempOrder['resume_date'] = new Date()
                 tempOrder['status'] = 'resume'
@@ -8914,12 +8928,28 @@ router.post('/resume_order_test', (req, res) => {
                         //insert resume id in sold collection order
                         let insert_id = result.insertedId
                         var set = {};
-                        set['$set'] = {
-                            'resume_order_id': insert_id,
-                            'is_sell_order': 'resume_pause',
-                            'modified_date': new Date()
-                            // 'status': 'resume',
+
+                        let updArr = {}
+
+                        var count = 0;
+                        var i;
+                        for (i in updateArr) {
+                            if (updateArr.hasOwnProperty(i)) {
+                                count++;
+                            }
                         }
+                        if (count > 0) {
+                            for (let [key, value] of Object.entries(updateArr)) {
+                                updArr[key] = value;
+                            }
+                        }
+
+                        updArr['resume_order_id'] = insert_id
+                        updArr['is_sell_order'] = 'resume_pause'
+                        updArr['modified_date'] = new Date()
+
+
+                        set['$set'] = updArr
                         var update = db.collection(sold_collection).updateOne(filter, set)
                     }
                 })
@@ -8972,6 +9002,20 @@ router.post('/pause_lth_order_test', (req, res) => {
                 let obj = data1[0];
 
                 let tempOrder = obj
+
+                var count = 0;
+                var i;
+                for (i in updateArr) {
+                    if (updateArr.hasOwnProperty(i)) {
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    for (let [key, value] of Object.entries(updateArr)) {
+                        tempOrder[key] = value;
+                    }
+                }
+
                 tempOrder['modified_date'] = new Date()
                 tempOrder['resume_date'] = new Date()
                 tempOrder['status'] = 'resume_pending'
@@ -8984,14 +9028,27 @@ router.post('/pause_lth_order_test', (req, res) => {
                     } else {
                         //insert resume id in sold collection order
                         let insert_id = result.insertedId
-                        var set = {};
-                        set['$set'] = {
-                            'resume_order_id': insert_id,
-                            'status': 'lth_pause',
-                            'is_sell_order': 'pause',
-                            'modified_date': new Date()
-                            // 'status': 'resume',
+
+                        let updArr = {}
+                        var count = 0;
+                        var i;
+                        for (i in updateArr) {
+                            if (updateArr.hasOwnProperty(i)) {
+                                count++;
+                            }
                         }
+                        if (count > 0) {
+                            for (let [key, value] of Object.entries(updateArr)) {
+                                updArr[key] = value;
+                            }
+                        }
+                        updArr['resume_order_id'] = insert_id
+                        updArr['status'] = 'lth_pause'
+                        updArr['is_sell_order'] = 'pause'
+                        updArr['modified_date'] = new Date()
+
+                        var set = {};
+                        set['$set'] = updArr
                         var update = db.collection(buy_collection).updateOne(filter, set)
                     }
                 })
@@ -9044,6 +9101,20 @@ router.post('/pause_sold_order_test', (req, res) => {
                 let obj = data1[0];
 
                 let tempOrder = obj
+
+                var count = 0;
+                var i;
+                for (i in updateArr) {
+                    if (updateArr.hasOwnProperty(i)) {
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    for (let [key, value] of Object.entries(updateArr)) {
+                        tempOrder[key] = value;
+                    }
+                }
+
                 tempOrder['modified_date'] = new Date()
                 tempOrder['resume_date'] = new Date()
                 tempOrder['status'] = 'resume'
@@ -9056,15 +9127,30 @@ router.post('/pause_sold_order_test', (req, res) => {
                     } else {
                         //insert resume id in sold collection order
                         let insert_id = result.insertedId
-                        var set = {};
-                        set['$set'] = {
-                            'resume_order_id': insert_id,
-                            // 'is_sell_order': 'pause',
-                            'resume_status': 'resume',
-                            'is_sell_order': 'resume_pause', 
-                            'modified_date': new Date()
-                            // 'status': 'resume',
+
+
+                        let updArr = {}
+                        var count = 0;
+                        var i;
+                        for (i in updateArr) {
+                            if (updateArr.hasOwnProperty(i)) {
+                                count++;
+                            }
                         }
+                        if (count > 0) {
+                            for (let [key, value] of Object.entries(updateArr)) {
+                                updArr[key] = value;
+                            }
+                        }
+
+                        updArr['resume_order_id'] = insert_id
+                        updArr['is_sell_order'] = 'pause'
+                        updArr['resume_status'] = 'resume'
+                        updArr['is_sell_order'] = 'resume_pause' 
+                        updArr['modified_date'] = new Date()
+
+                        var set = {};
+                        set['$set'] = updArr
                         var update = db.collection(sold_collection).updateOne(filter, set)
                     }
                 })
@@ -9093,7 +9179,83 @@ router.post('/pause_sold_order_test', (req, res) => {
 })
 //End pause_sold_order_test
 
+router.post('/genral_order_update', (req, res) => {
+    conn.then(async (db) => {
+        let exchange = req.body.exchange
+        let order_id = req.body.order_id
+        let updateArr = req.body.order
 
+        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == '') {
+            res.send({
+                'status': false,
+                'message': 'order_id and exchange are required'
+            });
+        } else {
+            let filter = {
+                '_id': new ObjectID(order_id)
+            }
+            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
+            let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
+
+            if (data1.length > 0) {
+                let updateStatus = false 
+                
+                let obj = data1[0];
+
+                // console.log(obj['resume_order_id'])
+                if (typeof obj['resume_order_id'] != 'undefined' && obj['resume_order_id'] != ''){
+                    let where = {
+                        '_id': obj['resume_order_id']
+                    }
+                    let set = {
+                        '$set':updateArr
+                    }
+                    let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
+                    let update = db.collection(resumeCollectionName).updateOne(where, set, async (err, result) => {
+                        if (err) {
+                            updateStatus = false
+
+                            res.send({
+                                'status': updateStatus,
+                                'message': updateStatus == true ? 'Order Updated successfully' : 'Unable to Update'
+                            });
+
+                        } else {
+                            updateStatus = true
+                            let show_hide_log = 'yes';
+                            let type = 'lth_pause_order_update';
+                            let order_mode = obj['application_mode'];
+                            let log_msg = 'Order updated from LTH pause tab manually'
+                            var order_created_date = obj['created_date']
+                            var promiseLog = create_orders_history_log(obj['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                            promiseLog.then((callback) => { })
+                            
+                            res.send({
+                                'status': updateStatus,
+                                'message': updateStatus == true ? 'Order Updated successfully' : 'Unable to Update' 
+                            });
+
+                        }
+                    })
+                }else{
+                    res.send({
+                        'status': updateStatus,
+                        'message': updateStatus == true ? 'Order Updated successfully' : 'Unable to Update'
+                    });
+                }
+
+
+            } else {
+                res.send({
+                    'status': false,
+                    'message': 'Something went wrong'
+                });
+            }
+        }
+
+    })
+})
+//End genral_order_update
 
 
 // ******************* End Resume / Pause APIs **************** //  
