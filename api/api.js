@@ -2554,6 +2554,10 @@ router.post('/listOrderListing', async (req, resp) => {
             resumePL = resumePL.toFixed(2)
             htmlStatus += ' <span class="text-' + resumePlClass + '" style="margin-left:4px;" ><b>' + resumePL + '%</b></span>'
         }
+        
+        if (typeof orderListing[index].resume_status != 'undefined' && orderListing[index].resume_status == 'completed') {
+            htmlStatus = '<span class="badge badge-success" style="margin-left:4px;">Resume Completed</span>';
+        }
 
         order['childProfitLossPercentageHtml'] = childProfitLossPercentageHtml
 
