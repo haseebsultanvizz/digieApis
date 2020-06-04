@@ -9960,68 +9960,46 @@ router.post('/getAutoTradeParents', async (req, res) => {
         let parentTrades = await getAutoTradeParents(user_id, exchange, application_mode)
         if (parentTrades.length > 0){
 
-            // let parent_order_ids = []
-            // await Promise.all(parentTrades.map(item => {parent_order_ids.push(item['_id'])}))
+            let parent_order_ids = []
+            await Promise.all(parentTrades.map(item => {parent_order_ids.push(item['_id'])}))
 
-            // conn.then(async (db) => {
-            //     //find only today buy trades
-            //     let startTime = new Date();
-            //     startTime.setHours(0, 0, 0, 0);
-            //     var endTime = new Date();
-            //     endTime.setHours(23, 59, 59, 999);
-            //     let buyCount = 0
-            //     let buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-            //     let soldCollectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-            //     var where = {
-            //         'buy_parent_id': {'$in': parent_order_ids},
-            //         'buy_date': {'$gte': startTime, '$lte': endTime},
-            //     }
-            //     console.log(where)
-            //     p1 = await db.collection(buyCollectionName).aggregate([
-            //         {'$match': where},
-            //         { "$group": { _id: "$_id", count: { $sum: 1 } } }
-            //     ]).toArray();
-            //     console.log(p1)
-            // })
-            // p2 = db.collection(soldCollectionName).countDocuments(where);
-            // let myPromises = await Promise.all([p1, p2])
-
-
-
-/*
-            for(let i=0; i<parentTrades.length; i++){
-                let item = parentTrades[i]
-                //TODO find number or trades each parent buy today
+            var myPromises = []
+            conn.then(async (db) => {
                 //find only today buy trades
                 let startTime = new Date();
-                startTime.setHours(0, 0, 0, 0);
-                var endTime = new Date();
-                endTime.setHours(23, 59, 59, 999);
-                conn.then(async (db) => {
-                    // 1) check in buy collection
-                    let buyCount = 0
-                    let buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-                    let soldCollectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-                    var where = {
-                        'buy_parent_id': item['_id'],
-                        'buy_date': { '$gte': startTime, '$lte': endTime},
-                    }
-                    p1 = db.collection(buyCollectionName).countDocuments(where);
-                    p2 = db.collection(soldCollectionName).countDocuments(where);
-                    let myPromises = await Promise.all([p1, p2])
-                    buyCount = myPromises[0] + myPromises[1]
-                    console.log(buyCount)
-                })
-            }
-*/
-
-            res.send({
-                status: true,
-                data: {
-                    'parentTrades': parentTrades,
-                },
-                message: 'Parent trades found successfully',
-            });
+                let endTime = new Date();
+                startTime.setHours(startTime.getHours() - 24)
+                let buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+                let soldCollectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+                var where = {
+                    'buy_parent_id': {'$in': parent_order_ids},
+                    'buy_date': {
+                        '$gte': startTime, 
+                        '$lte': endTime
+                    },
+                }
+                let p1 = db.collection(buyCollectionName).aggregate([
+                    {'$match': where},
+                    { "$group": { "_id": "$buy_parent_id", "count": { "$sum": 1 } } },
+                    { "$project": { "buy_parent_id": 1, "count": 1 } }
+                ]).toArray();
+                let p2 = db.collection(soldCollectionName).aggregate([
+                    {'$match': where},
+                    { "$group": { "_id": "$buy_parent_id", "count": { "$sum": 1 } } },
+                    { "$project": { "buy_parent_id": 1, "count": 1 } }
+                ]).toArray();
+                myPromises = await Promise.all([p1, p2])
+              
+                res.send({
+                    status: true,
+                    data: {
+                        'parentTrades': parentTrades,
+                        'buyTradeCount': myPromises[0],
+                        'sellTradeCount': myPromises[1],
+                    },
+                    message: 'Parent trades found successfully',
+                });
+            })
         }else{
             res.send({
                 status: false,
