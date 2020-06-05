@@ -9973,6 +9973,18 @@ router.post('/getAutoTradeParents', async (req, res) => {
                 let soldCollectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
                 var where = {
                     'buy_parent_id': {'$in': parent_order_ids},
+                    'status': {
+                        '$nin': [
+                            'canceled',
+                            'error',
+                            'new_ERROR',
+                            'FILLED_ERROR',
+                            'submitted_ERROR',
+                            'LTH_ERROR',
+                            'canceled_ERROR',
+                            'credentials_ERROR',
+                        ]
+                    },
                     'buy_date': {
                         '$gte': startTime, 
                         '$lte': endTime
