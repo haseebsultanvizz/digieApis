@@ -2477,6 +2477,7 @@ router.post('/listOrderListing', async (req, resp) => {
 
         order['profitLossPercentageHtml'] = profitLossPercentageHtml;
 
+        let is_sold = false
 
         let pause_status_arr = ['pause', 'resume_pause', 'resume_complete']
 
@@ -2527,8 +2528,10 @@ router.post('/listOrderListing', async (req, resp) => {
                 }
             } else if (is_lth_order == 'yes') {
                 htmlStatus += '<span class="badge badge-warning">LTH</span><span class="badge badge-success">Sold</span>';
+                is_sold = true
             } else {
                 htmlStatus += '<span class="badge badge-success">Sold</span>';
+                is_sold = true
             }
         } else {
             var statusClass = (status == 'error' || status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR' || status == 'canceled_ERROR') ? 'danger' : 'success'
@@ -2565,6 +2568,9 @@ router.post('/listOrderListing', async (req, resp) => {
                 resumePL = parseFloat(resumePL) + parseFloat(lossPercent)
             }
             resumePL = resumePL.toFixed(2)
+            // if(is_sold){
+            //     order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"><b>' + resumePL + '%</b></span>';
+            // }
             htmlStatus += ' <span class="text-' + resumePlClass + '" style="margin-left:4px;" ><b>' + resumePL + '%</b></span>'
         }
         
