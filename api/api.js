@@ -10232,7 +10232,24 @@ async function createAutoTradeParents(settings){
                     'pause_status': 'pause',
                     'modified_date': new Date()
                 };
-                let deleted = db.collection(collectionName).updateMany(filter, set)
+                let parents = await db.collection(collectionName).find(filter).project({ '_id': 1, 'application_mode': 1, 'created_date':1}).toArray()
+                if (parents.length > 0){
+                    let deleted = await db.collection(collectionName).updateMany(filter, set)
+
+                    parents.map(item=>{
+                        // TODO: set vars to create log
+                        let show_hide_log = 'yes';
+                        let type = 'canceled_by_auto_trade_generator';
+                        let order_mode = item['application_mode'];
+                        let order_created_date = item['created_date'];
+                        let log_msg = 'Parent canceled becuase of auto trade generator cancel previous.'
+                        //Save LOG
+                        let promiseLog = create_orders_history_log(item['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                        promiseLog.then((callback) => { })
+                    })
+
+                }
+
             })
         }
 
