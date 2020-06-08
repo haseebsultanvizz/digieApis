@@ -379,6 +379,7 @@ router.post('/authenticate', async function (req, resp, next) {
                         if (userArr.length > 0) {
                             if (await blockLoginAttempt(username, 'temp_block_check')) {
                                 resp.status(400).send({
+                                    type: 'unsuccessfull_attempts',
                                     message: 'User temporary blocked for 15 minutes due to 3 unsuccessful login attempts.'
                                 });
                             } else {
@@ -442,6 +443,7 @@ router.post('/authenticate', async function (req, resp, next) {
                         } else {
                             if (await blockLoginAttempt(username, 'increment')) {
                                 resp.status(400).send({
+                                    type: 'unsuccessfull_attempts',
                                     message: 'User temporary blocked for 15 minutes due to 3 unsuccessful login attempts.'
                                 });
                             } else {
@@ -10523,6 +10525,8 @@ router.post('/getLTHBalance', async (req, res) => {
 
 })//end getLTHBalance
 
+
+
 async function getLTHBalance(user_id, exchange) {
     return new Promise(async (resolve)=>{
         conn.then(async (db) => {
@@ -10600,6 +10604,76 @@ async function getLTHBalance(user_id, exchange) {
             } else {
                 resolve({})
             }
+        })
+    })
+}
+
+//resetAutoTradeGenerator
+router.post('/resetAutoTradeGenerator', async (req, res) => {
+
+    let user_id = req.body.user_id
+    let exchange = req.body.exchange
+    let application_mode = req.body.application_mode
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != '') {
+
+        let data = await resetAutoTradeGenerator(user_id, exchange, application_mode)
+        // console.log(data)
+        res.send({
+            status: true,
+            message: 'Auto trade generator reset successfully.'
+        });
+    } else {
+        res.send({
+            status: false,
+            message: 'user_id and exchange adn application_mode is required.'
+        });
+    }
+
+})//end resetAutoTradeGenerator
+
+async function resetAutoTradeGenerator(user_id, exchange, application_mode) {
+    return new Promise(async (resolve)=>{
+        conn.then(async (db) => {
+            //TODO: Delete all parents created from auto trade generator
+            let filter = {
+                'admin_id': user_id,
+                'auto_trade_generator': 'yes',
+                'application_mode': application_mode,
+                'parent_status': 'parent',
+                'status': { '$ne': 'canceled' },
+            };
+            let set = {};
+            set['$set'] = {
+                'status': 'canceled',
+                'pause_status': 'pause',
+                'modified_date': new Date()
+            };
+            let buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+            let parents = await db.collection(buyCollectionName).find(filter).project({ '_id': 1, 'application_mode': 1, 'created_date': 1 }).toArray()
+            if (parents.length > 0) {
+                let deleted = await db.collection(buyCollectionName).updateMany(filter, set)
+                parents.map(item => {
+                    // TODO: set vars to create log
+                    let show_hide_log = 'yes';
+                    let type = 'reset_by_auto_trade_generator';
+                    let order_mode = item['application_mode'];
+                    let order_created_date = item['created_date'];
+                    let log_msg = 'Parent canceled becuase of auto trade generator reset.'
+                    //Save LOG
+                    let promiseLog = create_orders_history_log(item['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                    promiseLog.then((callback) => { })
+                })
+            }
+            
+            //TODO: Delete auto trade generator settings
+            let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+            var where = {
+                'user_id': user_id,
+                'application_mode': application_mode,
+            }
+            let deleted = await db.collection(collectionName).deleteOne(where)
+
+            resolve(true)
         })
     })
 }
