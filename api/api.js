@@ -10407,7 +10407,7 @@ async function createAutoTradeParents(settings){
                         'defined_sell_percentage': profit_percentage,
                         'sell_profit_percent': profit_percentage,
                         'current_market_price': currentMarketPrice,
-                        'stop_loss_rule': 'custom_stop_loss',
+                        'stop_loss_rule': typeof stop_loss != 'undefined' && stop_loss == 'yes' ? 'custom_stop_loss' : '',
                         'custom_stop_loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
                         'loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
                         'activate_stop_loss_profit_percentage': 100,
