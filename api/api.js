@@ -10057,8 +10057,6 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
     let application_mode = req.body.application_mode
     // let exchangesArr = ['binance', 'bam', 'kraken']
 
-    console.log(dataArr)
-
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != '') {
         
         dataArr['step_1'] = {'exchange': exchange}
