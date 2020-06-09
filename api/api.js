@@ -9605,6 +9605,9 @@ router.post('/getSubscription', async (req, res) => {
 
     let user_id = req.body.user_id
     if (typeof user_id != 'undefined' && user_id != ''){
+
+        let token = await get_temp_req_token()
+
         var options = {
             method: 'POST',
             url: 'https://users.digiebot.com/cronjob/GetUserSubscriptionDetails/',
@@ -9620,9 +9623,10 @@ router.post('/getSubscription', async (req, res) => {
             },
             json: {
                 'user_id': user_id,
-                'handshake': 'wsdvasegvvfalxxxxxxxeee',
+                'handshake': token,
             }
         };
+        
         request(options, function (error, response, body) {
             if (error){
                 res.send({
@@ -9641,6 +9645,31 @@ router.post('/getSubscription', async (req, res) => {
     }
 })
 
+/* ************** temp request token ************ */
+async function get_temp_req_token(type){
+    return new Promise((resolve) => {
+        conn.then((db) => {
+            let token = md5(String(new Date()))
+            db.collection('temp_auth_tokens').insertOne({ 'type': type, 'token': token})
+            resolve(token);
+        })
+    })
+}
+
+async function destroy_temp_req_token(type, token){
+    return new Promise((resolve) => {
+        let where = {
+            "type": type,
+            "token": token,
+        };
+        conn.then((db) => {
+            let token = md5(String(new Date()))
+            db.collection('temp_auth_tokens').deleteOne(where)
+            resolve(true)
+        })
+    })
+}
+/* ************** End temp request token ************ */
 
 //helper function to get a sigle document by id
 async function get_item_by_id(collection, _id) {
