@@ -9620,6 +9620,7 @@ router.post('/getSubscription', async (req, res) => {
             },
             json: {
                 'user_id': user_id,
+                'handshake': 'wsdvasegvvfalxxxxxxxeee',
             }
         };
         request(options, function (error, response, body) {
@@ -10056,6 +10057,8 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
     let application_mode = req.body.application_mode
     // let exchangesArr = ['binance', 'bam', 'kraken']
 
+    console.log(dataArr)
+
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != '') {
         
         dataArr['step_1'] = {'exchange': exchange}
@@ -10235,6 +10238,7 @@ async function createAutoTradeParents(settings){
         let stop_loss = step4.stop_loss
         let loss_percentage = step4.loss_percentage
         let lth_profit = step4.lth_profit
+        let lth_functionality = step4.lth_functionality
         let cancel_previous_parents = step4.cancel_previous_parents
         
         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
@@ -10406,12 +10410,12 @@ async function createAutoTradeParents(settings){
                         'sell_profit_percent': profit_percentage,
                         'current_market_price': currentMarketPrice,
                         'stop_loss_rule': 'custom_stop_loss',
-                        'custom_stop_loss_percentage': loss_percentage,
-                        'loss_percentage': loss_percentage,
+                        'custom_stop_loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
+                        'loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
                         'activate_stop_loss_profit_percentage': 100,
-                        'lth_functionality': 'yes',
-                        'lth_profit': lth_profit,
-                        'stop_loss': stop_loss,
+                        'lth_functionality': typeof loss_percentage != 'undefined' ? loss_percentage : '',
+                        'lth_profit': typeof lth_profit != 'undefined' ? lth_proft : '' ,
+                        'stop_loss': typeof stop_loss != 'undefined' ? stop_loss : '' ,
                         'un_limit_child_orders': 'no',
                         'created_date': new Date(),
                         'modified_date': new Date(),
