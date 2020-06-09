@@ -12273,4 +12273,18 @@ async function  updateDailyTradeSettings(user_id, exchange, application_mode='li
 
 /* END CRON SCRIPT for setUserDailyBuyTrades */
 
+
+router.get('/req_info', async (req, res) => {
+    var ip = req.headers['x-forwarded-for'] ||
+        req.connection.remoteAddress ||
+        req.socket.remoteAddress ||
+        (req.connection.socket ? req.connection.socket.remoteAddress : null);
+
+    res.send({
+        'ip': ip,
+        'myIp': req.connection.remoteAddress,
+        'forwardedIp': req.headers
+    })
+})
+
 module.exports = router;
