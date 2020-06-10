@@ -10440,8 +10440,8 @@ async function createAutoTradeParents(settings){
                         'custom_stop_loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
                         'loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
                         'activate_stop_loss_profit_percentage': 100,
-                        'lth_functionality': typeof loss_percentage != 'undefined' ? loss_percentage : '',
-                        'lth_profit': typeof lth_profit != 'undefined' ? lth_proft : '' ,
+                        'lth_functionality': typeof lth_functionality != 'undefined' ? lth_functionality : '',
+                        'lth_profit': typeof lth_profit != 'undefined' ? lth_profit : '' ,
                         'stop_loss': typeof stop_loss != 'undefined' ? stop_loss : '' ,
                         'un_limit_child_orders': 'no',
                         'created_date': new Date(),
@@ -12316,6 +12316,55 @@ router.get('/req_info', async (req, res) => {
         'myIp': req.connection.remoteAddress,
         'forwardedIp': req.headers
     })
+})
+
+router.get('/testUpdate', async (req, res) => {
+    // process.exit(0)
+    // conn.then(async (db) => {
+    //     let where = {
+    //         '_id':{
+    //             '$in':[
+    //                 new  ObjectID('5ededd1d52269d001a42ae07'),
+    //                 new  ObjectID('5ededd1f52269d001a42ae2c'),
+    //                 new  ObjectID('5edff53352269d001a42d80b'),
+    //                 new  ObjectID('5edff53c52269d001a42d8b2'),
+    //                 new  ObjectID('5edff1b752269d001a42ca86'),
+    //                 new  ObjectID('5edff1d252269d001a42cc52'),
+    //                 new  ObjectID('5edff1d652269d001a42cca2'),
+    //                 new  ObjectID('5edff1e652269d001a42cdc6'),
+    //                 new  ObjectID('5edff1eb52269d001a42ce1f'), 
+    //             ]
+    //         }
+    //     }
+    //     var queryRes = await db.collection('buy_orders').find(where).toArray();
+    
+
+    //     ids = []
+    //     await Promise.all(queryRes.map(item=>{
+    //         let where = {
+    //             '_id': item['_id']
+    //         }
+    //         let set = {
+    //             '$set':{
+    //                 'defined_sell_percentage': 1.2,
+    //                 'sell_profit_percent': 1.2,
+    //                 'sell_price': ((parseFloat(item['purchased_price']) * 1.2) / 100) + parseFloat(item['purchased_price']),
+    //             }
+    //         }
+    //         // db.collection('buy_orders').updateOne(where, set);
+    //         ids.push(item['_id'])
+    //     }))
+
+    //     console.log(ids)
+
+        res.send({
+            'status': true,
+            // 'total': queryRes.length,
+            // 'ids': ids,
+            // 'result': queryRes
+        })
+    // })
+
 })
 
 module.exports = router;
