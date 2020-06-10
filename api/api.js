@@ -9606,7 +9606,7 @@ router.post('/getSubscription', async (req, res) => {
     let user_id = req.body.user_id
     if (typeof user_id != 'undefined' && user_id != ''){
 
-        let token = await get_temp_req_token()
+        let token = await get_temp_req_token('users')
 
         var options = {
             method: 'POST',
