@@ -2149,7 +2149,7 @@ router.post('/listOrderListing', async (req, resp) => {
     //:::::::::::::  filter_7 for count all submitted order :::::::::::::::::::
     var filter_7 = {};
     filter_7['status'] = {
-        '$in': ['submitted', 'fraction_submitted_sell', 'submitted_ERROR']
+        '$in': ['submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'submitted_ERROR']
     }
     filter_7['admin_id'] = admin_id;
     filter_7['application_mode'] = application_mode;
@@ -2845,7 +2845,7 @@ async function listOrderListing(postDAta, dbConnection) {
 
     if (postDAta.status == 'submitted') {
         filter['status'] = {
-            '$in': ['submitted', 'fraction_submitted_sell', 'submitted_ERROR']
+            '$in': ['submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'submitted_ERROR']
         }
     }
 
