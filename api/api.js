@@ -10108,7 +10108,7 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 delete dataArr._id
                 let set = {};
                 set['$set'] = dataArr
-                let settings = db.collection(collectionName).updateOne(where, set);
+                let settings = await db.collection(collectionName).updateOne(where, set);
 
                 await createAutoTradeParents(autoTradeData)
 
@@ -10128,7 +10128,7 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 data['usedWeeklyTrades'] = 0  
                 data['week_start_date'] = new Date()
 
-                let settings = db.collection(collectionName).insertOne(data);
+                let settings = await db.collection(collectionName).insertOne(data);
 
                 await createAutoTradeParents(autoTradeData)
 
