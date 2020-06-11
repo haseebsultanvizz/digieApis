@@ -10448,7 +10448,20 @@ async function createAutoTradeParents(settings){
                     // console.log(parentObj)
                     conn.then(async (db) => {
                         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-                        let ins = await db.collection(collectionName).insertOne(parentObj)
+                        let ins = await db.collection(collectionName).insertOne(parentObj, (err, result)=>{
+                            if(err){
+                                //console.log(err)
+                            }else{
+                                //TODO: insert parent creation log
+                                let show_hide_log = 'yes'
+                                let type = 'parent_created_by_ATG'
+                                let log_msg = 'Parent created from auto trade generator.'
+                                let order_mode = application_mode
+                                var promiseLog = create_orders_history_log(result.insertedId, log_msg, type, show_hide_log, exchange, order_mode, parentObj['created_date'])
+                                promiseLog.then((callback) => { })
+                            }
+                        })
+
                     })
                 })
 
@@ -10492,7 +10505,20 @@ async function createAutoTradeParents(settings){
                     // console.log(parentObj)
                     conn.then(async (db) => {
                         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-                        let ins = await db.collection(collectionName).insertOne(parentObj)
+                        let ins = await db.collection(collectionName).insertOne(parentObj, (err, result) => {
+                            if (err) {
+                                //console.log(err)
+                            } else {
+                                //TODO: insert parent creation log
+                                let show_hide_log = 'yes'
+                                let type = 'parent_created_by_ATG'
+                                let log_msg = 'Parent created from auto trade generator.'
+                                let order_mode = application_mode
+                                var promiseLog = create_orders_history_log(result.insertedId, log_msg, type, show_hide_log, exchange, order_mode, parentObj['created_date'])
+                                promiseLog.then((callback) => { })
+                            }
+                        })
+                        
                     })
                 })
             }
@@ -12207,7 +12233,7 @@ async function updateAutoTradeQtyByUsdWorth(worthObj, exchange, parentObj){
                 await db.collection(collectionName).updateOne(where, set, async (err, result)=>{
                     if(err){
                     }else{
-                        console.log('parent_id: ', parentObj['_id'])
+                        // console.log('parent_id: ', parentObj['_id'])
                         let show_hide_log = 'yes'
                         let type = 'auto_trade_usd_worth_update'
                         let log_msg = 'usd worth from (' + parentObj['usd_worth'] + ') to (' + usd_worth + ') and quantity from (' + parentObj['quantity'] + ') to (' + quantity +') updated by auto trade system'
