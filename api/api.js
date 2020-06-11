@@ -10378,7 +10378,7 @@ async function createAutoTradeParents(settings){
 
                 if (usdtNumTrades == 0) {
                     // console.log('USDT', numT)
-                    continue
+                    // continue
                 }
 
                 //usdtPerTrade
@@ -10390,9 +10390,8 @@ async function createAutoTradeParents(settings){
                 numT = btcNumTrades
 
                 if(btcNumTrades == 0){
-
                     // console.log('BTC', numT)
-                    continue
+                    // continue
                 }
 
                 //btcPerTrade
