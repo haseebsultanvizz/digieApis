@@ -12210,7 +12210,7 @@ async function updateAutoTradeQtyByUsdWorth(worthObj, exchange, parentObj){
                         console.log('parent_id: ', parentObj['_id'])
                         let show_hide_log = 'yes'
                         let type = 'auto_trade_usd_worth_update'
-                        let log_msg = 'usd worth and quantity updated by auto trade system'
+                        let log_msg = 'usd worth from (' + parentObj['usd_worth'] + ') to (' + usd_worth + ') and quantity from (' + parentObj['quantity'] + ') to (' + quantity +') updated by auto trade system'
                         let order_mode = parentObj['application_mode']
                         var promiseLog = create_orders_history_log(parentObj['_id'], log_msg, type, show_hide_log, exchange, order_mode, parentObj['created_date'])
                         promiseLog.then((callback) => { })
