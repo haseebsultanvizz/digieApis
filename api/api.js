@@ -10106,9 +10106,15 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
             //update settings I already exist for this user
             if (userSettings.length > 0){
                 delete dataArr._id
+                delete dataArr.week_start_date
+                delete dataArr.created_date
+
+                dataArr['modified_date'] = new Date()
                 let set = {};
                 set['$set'] = dataArr
                 let settings = await db.collection(collectionName).updateOne(where, set);
+
+                saveATGLog(user_id, exchange, 'update', 'Auto trade settings updated successfully', application_mode)
 
                 await createAutoTradeParents(autoTradeData)
 
@@ -10127,8 +10133,12 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 data['weeklyTrades'] = 35  
                 data['usedWeeklyTrades'] = 0  
                 data['week_start_date'] = new Date()
+                dataArr['created_date'] = new Date()
+                dataArr['modified_date'] = new Date()
 
                 let settings = await db.collection(collectionName).insertOne(data);
+
+                saveATGLog(user_id, exchange, 'new', 'Auto trade settings added successfully', application_mode)
 
                 await createAutoTradeParents(autoTradeData)
 
@@ -10208,6 +10218,23 @@ async function getBtcUsdtBalance(user_id, exchange){
                 resolve(balanceArr)
             }
             resolve(false)
+        })
+    })
+}
+
+async function saveATGLog(user_id, exchange, log_type, log_message, application_mode=''){
+    return new Promise(async (resolve)=>{
+        conn.then(async (db) => {
+            let collectionName = exchange == 'binance' ? 'auto_trade_settings_log' : 'auto_trade_settings_log_' + exchange
+            let obj = {
+                'user_id': user_id,
+                'application_mode': application_mode,
+                'log_type': log_type,
+                'log_message': log_message,
+                'created_date': new Date(),
+            }
+            await db.collection(collectionName).insertOne(obj)
+            resolve(true)
         })
     })
 }
@@ -10769,6 +10796,7 @@ async function resetAutoTradeGenerator(user_id, exchange, application_mode) {
                 'application_mode': application_mode,
             }
             let deleted = await db.collection(collectionName).deleteOne(where)
+            saveATGLog(user_id, exchange, 'reset_manually', 'auto trade settings deleted by reset button', application_mode)
 
             resolve(true)
         })
@@ -11867,7 +11895,8 @@ async function setUserDailyBuyTrades(user_id='', exchange){
     return new Promise((resolve) => {
         conn.then(async (db) => {
             var where = {
-                'application_mode': 'test',
+                'application_mode': 'live',
+                'step_4.update_trade_worth': {'$eq': 'yes'},
                 'step_4.btcInvestPercentage': {'$exists': true},
                 'step_4.usdtInvestPercentage': {'$exists': true},
                 'step_4.actualTradeableBTC': {'$exists': true},
@@ -11918,8 +11947,8 @@ async function setUserDailyBuyTrades(user_id='', exchange){
                             '$set': updateArr,
                         }
 
-                        console.log(updateArr)
                         let update = await db.collection(collectionName).updateOne(where, set)
+                        saveATGLog(user_id, exchange, 'update_daily_trade', 'set User Daily Buy BTC and USDT Trades worth cron', 'live')
                         // console.log(update)
                     }
                 }
@@ -12058,6 +12087,9 @@ async function updateTradedBalance(user_id, exchange, balanceObj, application_mo
                 }
             }
             let update = await db.collection(collectionName).updateOne(where, set);
+
+            saveATGLog(user_id, exchange, 'updateTradedBalance', 'update Traded Balance', application_mode)
+
             resolve({
                 'tradedBtc': tradedBtc,
                 'tradedUsdt': tradedUsdt,
@@ -12122,6 +12154,8 @@ async function updateDailyTradedBalanceAndUsdWorth(user_id, exchange, data, appl
 
             // console.log('daily btc/usd trade value in usd and number of trades updated')
             let update = await db.collection(collectionName).updateOne(where, set);
+
+            saveATGLog(user_id, exchange, 'daily_worth_no_of_buy', 'update Daily Traded Balance And Usd Worth', application_mode)
 
             if (!isNaN(usdtPerTrade) && !isNaN(btcPerTrade)){
                 resolve({
@@ -12430,6 +12464,9 @@ async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, applica
 
             settings = settings[0]
 
+            let OldactualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' ? settings.step_4.actualTradeableBTC : 0 
+            let OldactualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' ? settings.step_4.actualTradeableUSDT : 0 
+
             let totalTradeAbleInUSD = typeof settings.step_4.totalTradeAbleInUSD != 'undefined' ? settings.step_4.totalTradeAbleInUSD : 0 
             let btcInvestPercentage = typeof settings.step_4.btcInvestPercentage != 'undefined' ? settings.step_4.btcInvestPercentage : 0 
             let usdtInvestPercentage = typeof settings.step_4.usdtInvestPercentage != 'undefined' ? settings.step_4.usdtInvestPercentage : 0
@@ -12491,6 +12528,9 @@ async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, applica
             // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
 
             let updateSettings = await db.collection(collectionName).updateOne(where, set)
+
+            let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT+")]"
+            saveATGLog(user_id, exchange, 'daily_actual_tradeable_cron', 'update Daily Actual Trade Able Auto Trade Gen ' + msg, application_mode)
 
             // let upd = updateDailyTradeSettings(user_id, exchange, application_mode = 'live')
             
