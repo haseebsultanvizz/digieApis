@@ -467,7 +467,7 @@ router.post('/resetPassword', async function (req, resp) {
         let password = req.body.password;
         let password = req.body.password;
         let token = req.body.handshake
-        if (await validate_temp_req_token(token)){
+        // if (await validate_temp_req_token(token)){
             if (Object.keys(post_data).length > 0) {
                 if ("user_id" in post_data && "password" in post_data) {
                     let md5Password = md5(password);
@@ -505,12 +505,12 @@ router.post('/resetPassword', async function (req, resp) {
                     message: 'Empty Parameters Recieved'
                 });
             }
-        }else{
-            resp.status(400).send({
-                status: false,
-                message: 'invalid'
-            });
-        }
+        // }else{
+        //     resp.status(400).send({
+        //         status: false,
+        //         message: 'invalid'
+        //     });
+        // }
 
     })
 }) //End of resetPassword
