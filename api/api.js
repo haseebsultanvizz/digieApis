@@ -10114,7 +10114,7 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 set['$set'] = dataArr
                 let settings = await db.collection(collectionName).updateOne(where, set);
 
-                saveATGLog(user_id, exchange, 'update', 'Auto trade settings updated successfully', application_mode)
+                saveATGLog(user_id, exchange, 'update', 'Auto trade settings update manually successful', application_mode)
 
                 await createAutoTradeParents(autoTradeData)
 
@@ -10138,7 +10138,7 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
 
                 let settings = await db.collection(collectionName).insertOne(data);
 
-                saveATGLog(user_id, exchange, 'new', 'Auto trade settings added successfully', application_mode)
+                saveATGLog(user_id, exchange, 'new', 'Auto trade settings added manually successful', application_mode)
 
                 await createAutoTradeParents(autoTradeData)
 
