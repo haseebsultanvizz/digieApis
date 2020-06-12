@@ -2552,7 +2552,9 @@ router.post('/listOrderListing', async (req, resp) => {
             htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Buy Fraction</span>';
         }
         
+        order['showResume'] = true
         if (typeof orderListing[index].resume_order_id != 'undefined') {
+            order['showResume'] = false 
             htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
 
             let resumePlClass = resumePL > 0 ? 'success' : 'danger'
