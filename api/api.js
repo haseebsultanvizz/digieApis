@@ -465,41 +465,50 @@ router.post('/resetPassword', async function (req, resp) {
         let post_data = req.body;
         let user_id = req.body.user_id;
         let password = req.body.password;
-        if (Object.keys(post_data).length > 0) {
-            if ("user_id" in post_data && "password" in post_data) {
-                let md5Password = md5(password);
-                let where = {
-                    "_id": new ObjectID(user_id)
-                };
-                let set = {
-                    '$set': {
-                        'password': md5Password
+        let password = req.body.password;
+        let token = req.body.handshake
+        if (validate_temp_req_token(token)){
+            if (Object.keys(post_data).length > 0) {
+                if ("user_id" in post_data && "password" in post_data) {
+                    let md5Password = md5(password);
+                    let where = {
+                        "_id": new ObjectID(user_id)
+                    };
+                    let set = {
+                        '$set': {
+                            'password': md5Password
+                        }
                     }
-                }
 
-                let reset = await db.collection("users").updateOne(where, set);
-                if (reset.result.ok) {
-                    resp.status(200).send({
-                        status: true,
-                        message: 'password reset successful'
-                    });
+                    let reset = await db.collection("users").updateOne(where, set);
+                    if (reset.result.ok) {
+                        resp.status(200).send({
+                            status: true,
+                            message: 'password reset successful'
+                        });
+                    } else {
+                        resp.status(400).send({
+                            status: false,
+                            message: 'password reset failed Invalid User'
+                        });
+                    }
+
                 } else {
                     resp.status(400).send({
                         status: false,
-                        message: 'password reset failed Invalid User'
+                        message: 'User Id or Password is empty'
                     });
                 }
-
             } else {
                 resp.status(400).send({
                     status: false,
-                    message: 'User Id or Password is empty'
+                    message: 'Empty Parameters Recieved'
                 });
             }
-        } else {
+        }else{
             resp.status(400).send({
                 status: false,
-                message: 'Empty Parameters Recieved'
+                message: 'invalid'
             });
         }
 
