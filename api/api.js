@@ -3517,7 +3517,7 @@ router.post('/sellOrderManually', async (req, resp) => {
         var buyParentOrderId = (typeof buyOrderArr['buy_parent_id'] == undefined) ? '' : buyOrderArr['buy_parent_id'];
 
         console.log("sell_order_id ", sell_order_id)
-        if (sell_order_id != '') {
+        if (typeof sell_order_id != 'undefined' && sell_order_id != '') {
             let application_mode = (typeof buyOrderArr['application_mode'] == undefined) ? '' : buyOrderArr['application_mode'];
             let buy_order_id = buyOrderArr['_id'];
             let quantity = (typeof buyOrderArr['quantity'] == undefined) ? '' : buyOrderArr['quantity'];
@@ -3575,7 +3575,7 @@ router.post('/sellOrderManually', async (req, resp) => {
                 logPromise_1.then((resp) => {})
                 //send order for sell on specific ip
                 var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, 'barrier_percentile_trigger', 'sell_market_order', exchange);
-                console.log("SellOrderResolve ", SellOrderResolve)
+                // console.log("SellOrderResolve ", SellOrderResolve)
 
                 SellOrderResolve.then((resp) => {})
             } else {
