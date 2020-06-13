@@ -2587,6 +2587,10 @@ router.post('/listOrderListing', async (req, resp) => {
             htmlStatus += ' <span class="text-' + resumePlClass + '" style="margin-left:4px;" ><b>' + resumePL + '%</b></span>'
         }
         
+        if (typeof orderListing[index].secondary_resume_level != 'undefined') {
+            order['order_level'] = orderListing[index].secondary_resume_level
+        }
+        
         if (typeof orderListing[index].resume_status != 'undefined' && orderListing[index].resume_status == 'completed') {
             htmlStatus = '<span class="badge badge-success" style="margin-left:4px;">Resume Completed</span>';
         }
@@ -9257,6 +9261,10 @@ router.post('/genral_order_update', (req, res) => {
                             });
 
                         } else {
+
+                            //update in sold collection too for user satsfaction
+                            db.collection(sold_collection).updateOne({ '_id': new ObjectID(order_id) }, { '$set': { 'secondary_resume_level': updateArr['order_level']}})
+
                             updateStatus = true
                             let show_hide_log = 'yes';
                             let type = 'lth_pause_order_update';
