@@ -8990,7 +8990,7 @@ router.post('/resume_order_test', (req, res) => {
                     }
                 }
                 if (resumeCount > 0) {
-                    for (let [key, value] of Object.entries(resumeCount)) {
+                    for (let [key, value] of Object.entries(tempOrder)) {
                         if (!resumeFieldsArr.includes(key)) {
                             delete tempOrder[key]
                         }
@@ -9143,7 +9143,7 @@ router.post('/pause_lth_order_test', (req, res) => {
                     }
                 }
                 if (resumeCount > 0) {
-                    for (let [key, value] of Object.entries(resumeCount)) {
+                    for (let [key, value] of Object.entries(tempOrder)) {
                         if (!resumeFieldsArr.includes(key)) {
                             delete tempOrder[key]
                         }
@@ -9293,7 +9293,7 @@ router.post('/pause_sold_order_test', (req, res) => {
                     }
                 }
                 if (resumeCount > 0) {
-                    for (let [key, value] of Object.entries(resumeCount)) {
+                    for (let [key, value] of Object.entries(tempOrder)) {
                         if (!resumeFieldsArr.includes(key)){
                             delete tempOrder[key]
                         }
