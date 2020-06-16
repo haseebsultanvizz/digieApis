@@ -8975,6 +8975,7 @@ router.post('/resume_order_test', (req, res) => {
                     "resumeOrderType",
                     "resume_date",
                     "sold_buy_order_id",
+                    "resume_order_arr",
                 ]
                 var resumeCount = 0;
                 var resumeI;
@@ -9127,6 +9128,7 @@ router.post('/pause_lth_order_test', (req, res) => {
                     "resumeOrderType",
                     "resume_date",
                     "sold_buy_order_id",
+                    "resume_order_arr",
                 ]
                 var resumeCount = 0;
                 var resumeI;
@@ -9276,6 +9278,7 @@ router.post('/pause_sold_order_test', (req, res) => {
                     "resumeOrderType",
                     "resume_date",
                     "sold_buy_order_id",
+                    "resume_order_arr",
                 ]
                 var resumeCount = 0;
                 var resumeI;
