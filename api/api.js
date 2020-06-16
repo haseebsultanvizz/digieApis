@@ -8942,6 +8942,57 @@ router.post('/resume_order_test', (req, res) => {
 
                 let tempOrder = obj
 
+                //Save only resumeFileds Arr keys in resume order
+                let resumeFieldsArr = [
+                    "admin_id",
+                    "application_mode",
+                    "buy_parent_id",
+                    "custom_stop_loss_percentage",
+                    "defined_sell_percentage",
+                    "iniatial_trail_stop",
+                    "is_lth_order",
+                    "lth_functionality",
+                    "lth_profit",
+                    "market_sold_price",
+                    "market_value",
+                    "opportunityId",
+                    "order_level",
+                    "order_mode",
+                    "price",
+                    "purchased_price",
+                    "quantity",
+                    "sell_date",
+                    "sell_order_id",
+                    "sell_price",
+                    "sell_profit_percent",
+                    "status",
+                    "stop_loss_rule",
+                    "symbol",
+                    "trading_ip",
+                    "trigger_type",
+                    "stop_loss",
+                    "loss_percentage",
+                    "resumeOrderType",
+                    "resume_date",
+                    "sold_buy_order_id",
+                ]
+                var resumeCount = 0;
+                var resumeI;
+                for (resumeI in tempOrder) {
+                    if (tempOrder.hasOwnProperty(resumeI)) {
+                        resumeCount++;
+                    }
+                }
+                if (resumeCount > 0) {
+                    for (let [key, value] of Object.entries(resumeCount)) {
+                        if (!resumeFieldsArr.includes(key)) {
+                            delete tempOrder[key]
+                        }
+                    }
+                }
+
+
+                //update new edit fields
                 var count = 0;
                 var i;
                 for (i in updateArr) {
@@ -9043,6 +9094,56 @@ router.post('/pause_lth_order_test', (req, res) => {
 
                 let tempOrder = obj
 
+                //Save only resumeFileds Arr keys in resume order
+                let resumeFieldsArr = [
+                    "admin_id",
+                    "application_mode",
+                    "buy_parent_id",
+                    "custom_stop_loss_percentage",
+                    "defined_sell_percentage",
+                    "iniatial_trail_stop",
+                    "is_lth_order",
+                    "lth_functionality",
+                    "lth_profit",
+                    "market_sold_price",
+                    "market_value",
+                    "opportunityId",
+                    "order_level",
+                    "order_mode",
+                    "price",
+                    "purchased_price",
+                    "quantity",
+                    "sell_date",
+                    "sell_order_id",
+                    "sell_price",
+                    "sell_profit_percent",
+                    "status",
+                    "stop_loss_rule",
+                    "symbol",
+                    "trading_ip",
+                    "trigger_type",
+                    "stop_loss",
+                    "loss_percentage",
+                    "resumeOrderType",
+                    "resume_date",
+                    "sold_buy_order_id",
+                ]
+                var resumeCount = 0;
+                var resumeI;
+                for (resumeI in tempOrder) {
+                    if (tempOrder.hasOwnProperty(resumeI)) {
+                        resumeCount++;
+                    }
+                }
+                if (resumeCount > 0) {
+                    for (let [key, value] of Object.entries(resumeCount)) {
+                        if (!resumeFieldsArr.includes(key)) {
+                            delete tempOrder[key]
+                        }
+                    }
+                }
+
+                //update new edit fields 
                 var count = 0;
                 var i;
                 for (i in updateArr) {
@@ -9142,6 +9243,56 @@ router.post('/pause_sold_order_test', (req, res) => {
 
                 let tempOrder = obj
 
+                //Save only resumeFileds Arr keys in resume order
+                let resumeFieldsArr = [
+                    "admin_id",
+                    "application_mode",
+                    "buy_parent_id",
+                    "custom_stop_loss_percentage",
+                    "defined_sell_percentage",
+                    "iniatial_trail_stop",
+                    "is_lth_order",
+                    "lth_functionality",
+                    "lth_profit",
+                    "market_sold_price",
+                    "market_value",
+                    "opportunityId",
+                    "order_level",
+                    "order_mode",
+                    "price",
+                    "purchased_price",
+                    "quantity",
+                    "sell_date",
+                    "sell_order_id",
+                    "sell_price",
+                    "sell_profit_percent",
+                    "status",
+                    "stop_loss_rule",
+                    "symbol",
+                    "trading_ip",
+                    "trigger_type",
+                    "stop_loss",
+                    "loss_percentage",
+                    "resumeOrderType",
+                    "resume_date",
+                    "sold_buy_order_id",
+                ]
+                var resumeCount = 0;
+                var resumeI;
+                for (resumeI in tempOrder) {
+                    if (tempOrder.hasOwnProperty(resumeI)) {
+                        resumeCount++;
+                    }
+                }
+                if (resumeCount > 0) {
+                    for (let [key, value] of Object.entries(resumeCount)) {
+                        if (!resumeFieldsArr.includes(key)){
+                            delete tempOrder[key]
+                        }
+                    }
+                }
+
+                //Update new edit fields 
                 var count = 0;
                 var i;
                 for (i in updateArr) {
@@ -9154,6 +9305,7 @@ router.post('/pause_sold_order_test', (req, res) => {
                         tempOrder[key] = value;
                     }
                 }
+
 
                 tempOrder['modified_date'] = new Date()
                 tempOrder['resume_date'] = new Date()
@@ -10551,6 +10703,11 @@ async function createAutoTradeParents(settings){
                     // console.log(parentObj)
                     conn.then(async (db) => {
                         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+
+                        //TODO: save temporary preview in preview collection 
+
+
+
                         let ins = await db.collection(collectionName).insertOne(parentObj, (err, result)=>{
                             if(err){
                                 //console.log(err)
@@ -10630,6 +10787,18 @@ async function createAutoTradeParents(settings){
 
         resolve(true)
         
+    })
+}
+
+async function createAutoTradeParentsNow(user_id, exchange, application_mode) {
+    return new Promise(async (resolve) => {
+        conn.then(async (db) => {
+            let ATGPreviewCollection = exchange == 'binance' ? 'temp_auto_trades_preview' : 'temp_auto_trades_preview_'+exchange
+
+
+
+            resolve(true)
+        })
     })
 }
 
