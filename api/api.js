@@ -2198,6 +2198,8 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_8['admin_id'] = admin_id;
     filter_8['application_mode'] = application_mode;
     filter_8['is_sell_order'] = 'sold';
+    // filter_8['$or'] = [{ 'resume_status': 'completed'}];
+    filter_8['$or'] = [{ 'resume_status': 'completed' }, { 'is_sell_order': 'sold' }];
     if (!digie_admin_ids.includes(admin_id)) {
         filter_8['show_order'] = {'$ne': 'no'};
     }
@@ -2231,7 +2233,7 @@ router.post('/listOrderListing', async (req, resp) => {
         '$in': ['pause', 'resume_pause']
         // '$in': ['pause', 'resume_pause', 'resume_complete']
     };
-    filter_9['resume_status'] = { '$ne': 'complete'}
+    filter_9['resume_status'] = { '$ne': 'completed'}
     if (!digie_admin_ids.includes(admin_id)) {
         filter_9['show_order'] = { '$ne': 'no' };
     }
@@ -2488,7 +2490,10 @@ router.post('/listOrderListing', async (req, resp) => {
             if (status == 'FILLED' || status == 'LTH') {
                 if (is_sell_order == 'yes' || status == 'LTH') {
                     let percentage = calculate_percentage(orderPurchasePrice, currentMarketPrice);
-                    resumePL = parseFloat(resumePL) + parseFloat(percentage)
+
+                    if (postDAta.status == 'open'){
+                        resumePL = parseFloat(resumePL) + parseFloat(percentage)
+                    }
                     let PLCls = (currentMarketPrice > orderPurchasePrice) ? 'success' : 'danger'
                     profitLossPercentageHtml = '<span class="text-' + PLCls + '"><b>' + percentage + '%</b></span>';
                 } else {
@@ -2836,7 +2841,8 @@ async function listOrderListing(postDAta, dbConnection) {
 
     if (postDAta.status == 'sold') {
         // filter['status'] = 'FILLED'
-        filter['is_sell_order'] = 'sold';
+        // filter['is_sell_order'] = 'sold';
+        filter['$or'] = [{ 'resume_status': 'completed' }, {'is_sell_order': 'sold'}];
         if (!digie_admin_ids.includes(postDAta.admin_id)){
             filter['show_order'] = { '$ne': 'no' };
         }
@@ -2849,7 +2855,7 @@ async function listOrderListing(postDAta, dbConnection) {
             '$in': ['pause', 'resume_pause']
             // '$in': ['pause', 'resume_pause', 'resume_complete']
         };
-        filter['resume_status'] = { '$ne': 'complete' }
+        filter['resume_status'] = { '$ne': 'completed' }
         if (!digie_admin_ids.includes(postDAta.admin_id)) {
             filter['show_order'] = { '$ne': 'no' };
         }
