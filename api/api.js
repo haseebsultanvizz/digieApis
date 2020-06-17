@@ -10,6 +10,14 @@ var auth = require('basic-auth')
 var compare = require('tsscmp')
 var googleAuthenticator = require('authenticator');
 
+var digie_admin_ids = [
+    '5c0912b7fc9aadaac61dd072',
+    '5c3a4986fc9aad6bbd55b4f2',
+    '5e566497ab24936219344562',
+    '5eb5a5a628914a45246bacc6',
+    // '5c0915befc9aadaac61dd1b8',
+];
+
 //********************************************************* */
 //TODO: verify old password
 //verifyOldPassword //Umer Abbas [6-1-2020]
@@ -2190,6 +2198,9 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_8['admin_id'] = admin_id;
     filter_8['application_mode'] = application_mode;
     filter_8['is_sell_order'] = 'sold';
+    if (!digie_admin_ids.includes(admin_id)) {
+        filter_8['show_order'] = {'$ne': 'no'};
+    }
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -2221,6 +2232,9 @@ router.post('/listOrderListing', async (req, resp) => {
         // '$in': ['pause', 'resume_pause', 'resume_complete']
     };
     filter_9['resume_status'] = { '$ne': 'complete'}
+    if (!digie_admin_ids.includes(admin_id)) {
+        filter_9['show_order'] = { '$ne': 'no' };
+    }
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -2823,6 +2837,9 @@ async function listOrderListing(postDAta, dbConnection) {
     if (postDAta.status == 'sold') {
         // filter['status'] = 'FILLED'
         filter['is_sell_order'] = 'sold';
+        if (!digie_admin_ids.includes(postDAta.admin_id)){
+            filter_8['show_order'] = { '$ne': 'no' };
+        }
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
 
@@ -2833,6 +2850,9 @@ async function listOrderListing(postDAta, dbConnection) {
             // '$in': ['pause', 'resume_pause', 'resume_complete']
         };
         filter['resume_status'] = { '$ne': 'complete' }
+        if (!digie_admin_ids.includes(postDAta.admin_id)) {
+            filter_8['show_order'] = { '$ne': 'no' };
+        }
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
 
@@ -10601,6 +10621,9 @@ async function createAutoTradeParents(settings){
         let parentTradesArr = [] 
 
         let coninsCount = coins.length
+
+        let tempParentsArr = []
+
         for(let i=0; i<coninsCount; i++){
 
             let coin = coins[i]
@@ -10708,14 +10731,13 @@ async function createAutoTradeParents(settings){
                         'is_sell_order': 'no',
                         'sell_price': '',
                     }
+
+                    //TODO: save temporary preview in preview collection
+                    tempParentsArr.push(parentObj)
+
                     // console.log(parentObj)
                     conn.then(async (db) => {
                         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-
-                        //TODO: save temporary preview in preview collection 
-
-
-
                         let ins = await db.collection(collectionName).insertOne(parentObj, (err, result)=>{
                             if(err){
                                 //console.log(err)
@@ -10729,7 +10751,6 @@ async function createAutoTradeParents(settings){
                                 promiseLog.then((callback) => { })
                             }
                         })
-
                     })
                 })
 
@@ -10770,6 +10791,10 @@ async function createAutoTradeParents(settings){
                         'is_sell_order': 'no',
                         'sell_price': '',
                     }
+
+                    //TODO: save temporary preview in preview collection
+                    tempParentsArr.push(parentObj)
+
                     // console.log(parentObj)
                     conn.then(async (db) => {
                         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
@@ -10793,6 +10818,19 @@ async function createAutoTradeParents(settings){
 
         }
 
+        if(tempParentsArr.length > 0){
+            //Save in temp parent preview collection
+            conn.then(async (db) => {
+                let insArr = {
+                    'user_id': user_id,
+                    'application_mode': application_mode,
+                    'parent_trades': tempParentsArr
+                }
+                let ATGPreviewCollection = exchange == 'binance' ? 'temp_auto_trades_preview' : 'temp_auto_trades_preview_' + exchange
+                // let parents = await db.collection(ATGPreviewCollection).insertOne(insArr)
+            })
+        }
+
         resolve(true)
         
     })
@@ -10801,10 +10839,41 @@ async function createAutoTradeParents(settings){
 async function createAutoTradeParentsNow(user_id, exchange, application_mode) {
     return new Promise(async (resolve) => {
         conn.then(async (db) => {
+
+            let where = {
+                'user_id': user_id,
+                'application_mode': application_mode
+            }
             let ATGPreviewCollection = exchange == 'binance' ? 'temp_auto_trades_preview' : 'temp_auto_trades_preview_'+exchange
+            let parents = await db.collection(ATGPreviewCollection).find(where).sort({'_id': -1}).limit(1).toArray()
 
+            if (parents.length > 0){
+                let parentTradesArr = parents[0]['parent_trades']
+                await Promise.all(parentTradesArr.map(parentObj =>{
+                    delete parentObj['_id']
+                    parentObj['created_date'] = new Date()
+                    parentObj['modified_date'] = new Date()
 
+                    let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+                    let ins = db.collection(collectionName).insertOne(parentObj, (err, result) => {
+                        if (err) {
+                            //console.log(err)
+                        } else {
+                            //TODO: insert parent creation log
+                            let show_hide_log = 'yes'
+                            let type = 'parent_created_by_ATG'
+                            let log_msg = 'Parent created from auto trade generator.'
+                            let order_mode = application_mode
+                            var promiseLog = create_orders_history_log(result.insertedId, log_msg, type, show_hide_log, exchange, order_mode, parentObj['created_date'])
+                            promiseLog.then((callback) => { })
+                        }
+                    })
+                }))
 
+                //TODO: delete preview parents
+                let deleted = await db.collection(ATGPreviewCollection).deleteOne(where)
+
+            }
             resolve(true)
         })
     })
