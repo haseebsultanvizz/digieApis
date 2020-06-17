@@ -8969,6 +8969,7 @@ router.post('/resume_order_test', (req, res) => {
 
                 //Save only resumeFileds Arr keys in resume order
                 let resumeFieldsArr = [
+                    "_id",
                     "admin_id",
                     "application_mode",
                     "buy_parent_id",
@@ -8997,7 +8998,6 @@ router.post('/resume_order_test', (req, res) => {
                     "trigger_type",
                     "stop_loss",
                     "loss_percentage",
-                    "resumeOrderType",
                     "resume_date",
                     "sold_buy_order_id",
                     "resume_order_arr",
@@ -9122,6 +9122,7 @@ router.post('/pause_lth_order_test', (req, res) => {
 
                 //Save only resumeFileds Arr keys in resume order
                 let resumeFieldsArr = [
+                    "_id",
                     "admin_id",
                     "application_mode",
                     "buy_parent_id",
@@ -9150,7 +9151,6 @@ router.post('/pause_lth_order_test', (req, res) => {
                     "trigger_type",
                     "stop_loss",
                     "loss_percentage",
-                    "resumeOrderType",
                     "resume_date",
                     "sold_buy_order_id",
                     "resume_order_arr",
@@ -9267,11 +9267,11 @@ router.post('/pause_sold_order_test', (req, res) => {
 
             if (data1.length > 0) {
                 let obj = data1[0];
-
                 let tempOrder = obj
 
                 //Save only resumeFileds Arr keys in resume order
                 let resumeFieldsArr = [
+                    "_id",
                     "admin_id",
                     "application_mode",
                     "buy_parent_id",
@@ -9300,7 +9300,6 @@ router.post('/pause_sold_order_test', (req, res) => {
                     "trigger_type",
                     "stop_loss",
                     "loss_percentage",
-                    "resumeOrderType",
                     "resume_date",
                     "sold_buy_order_id",
                     "resume_order_arr",
@@ -9319,7 +9318,6 @@ router.post('/pause_sold_order_test', (req, res) => {
                         }
                     }
                 }
-
                 //Update new edit fields 
                 var count = 0;
                 var i;
@@ -9333,8 +9331,6 @@ router.post('/pause_sold_order_test', (req, res) => {
                         tempOrder[key] = value;
                     }
                 }
-
-
                 tempOrder['modified_date'] = new Date()
                 tempOrder['resume_date'] = new Date()
                 tempOrder['status'] = 'resume'
