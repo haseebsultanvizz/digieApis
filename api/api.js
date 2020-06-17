@@ -2481,7 +2481,7 @@ router.post('/listOrderListing', async (req, resp) => {
         if (orderSellPrice != '') {
             //function for calculating percentage 
             let profitLossPercentage = calculate_percentage(orderPurchasePrice, orderSellPrice);
-            resumePL = parseFloat(resumePL) + parseFloat(profitLossPercentage)
+            // resumePL = parseFloat(resumePL) + parseFloat(profitLossPercentage)
             let profitLossCls = (orderSellPrice > orderPurchasePrice) ? 'success' : 'danger';
             profitLossPercentageHtml = '<span class="text-' + profitLossCls + '"><b>' + profitLossPercentage + '%</b></span>';
         } else {
