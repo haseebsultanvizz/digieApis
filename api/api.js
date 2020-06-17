@@ -2838,7 +2838,7 @@ async function listOrderListing(postDAta, dbConnection) {
         // filter['status'] = 'FILLED'
         filter['is_sell_order'] = 'sold';
         if (!digie_admin_ids.includes(postDAta.admin_id)){
-            filter_8['show_order'] = { '$ne': 'no' };
+            filter['show_order'] = { '$ne': 'no' };
         }
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
@@ -2851,7 +2851,7 @@ async function listOrderListing(postDAta, dbConnection) {
         };
         filter['resume_status'] = { '$ne': 'complete' }
         if (!digie_admin_ids.includes(postDAta.admin_id)) {
-            filter_8['show_order'] = { '$ne': 'no' };
+            filter['show_order'] = { '$ne': 'no' };
         }
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
