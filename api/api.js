@@ -8965,7 +8965,7 @@ router.post('/resume_order_test', (req, res) => {
             if (data1.length > 0) {
                 let obj = data1[0];
 
-                let tempOrder = obj
+                let tempOrder = Object.assign({}, obj)
 
                 //Save only resumeFileds Arr keys in resume order
                 let resumeFieldsArr = [
@@ -9036,6 +9036,7 @@ router.post('/resume_order_test', (req, res) => {
                 tempOrder['resume_date'] = new Date()
                 tempOrder['status'] = 'resume'
                 tempOrder['sold_buy_order_id'] = obj['_id']
+                tempOrder['last_buy_order_id'] = obj['_id']
                 delete tempOrder['_id']
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).insertOne(tempOrder, async (err, result) => {
@@ -9118,7 +9119,7 @@ router.post('/pause_lth_order_test', (req, res) => {
             if (data1.length > 0) {
                 let obj = data1[0];
 
-                let tempOrder = obj
+                let tempOrder = Object.assign({}, obj)
 
                 //Save only resumeFileds Arr keys in resume order
                 let resumeFieldsArr = [
@@ -9267,7 +9268,7 @@ router.post('/pause_sold_order_test', (req, res) => {
 
             if (data1.length > 0) {
                 let obj = data1[0];
-                let tempOrder = obj
+                let tempOrder = Object.assign({}, obj)
 
                 //Save only resumeFileds Arr keys in resume order
                 let resumeFieldsArr = [
@@ -9335,6 +9336,7 @@ router.post('/pause_sold_order_test', (req, res) => {
                 tempOrder['resume_date'] = new Date()
                 tempOrder['status'] = 'resume'
                 tempOrder['sold_buy_order_id'] = obj['_id']
+                tempOrder['last_buy_order_id'] = obj['_id']
                 delete tempOrder['_id']
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).insertOne(tempOrder, async (err, result) => {
@@ -12045,6 +12047,8 @@ async function isMinQtyValid(symbol, qty, exchange){
 }
 
 
+/* Code for Number of trades to buy */
+
 //getUserDailyBuyTrades
 router.post('/getUserDailyBuyTrades', async (req, res) => {
 
@@ -12189,6 +12193,14 @@ async function updateUserDailyBuyTrades(where, exchange, currency, decrement) {
         })
     })
 }
+
+/* Multiple users call */
+
+/* getUserDailyBuyTrades */
+
+/* End Multiple users call */
+
+/* End Code for Number of trades to buy */
 
 /* CRON SCRIPT for setUserDailyBuyTrades */
 router.post('/setUserDailyBuyTrades', async (req, res) => {
