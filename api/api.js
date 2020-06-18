@@ -9084,13 +9084,15 @@ router.post('/resume_order_test', (req, res) => {
                     }
                 })
 
+                let if_direct_resume = (typeof tempOrder['direct_resume'] != 'undefined' && tempOrder['direct_resume'] == 'yes') ? ' using Direct Resume' : ''
+
                 let show_hide_log = 'yes';
                 let type = 'resume_order';
                 let order_mode = obj.application_mode;
-                let log_msg = 'Order resumed manually.'
+                let log_msg = 'Order resumed manually ' + if_direct_resume 
                 var order_created_date = obj.created_date
                 var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-                promiseLog.then((callback) => { })
+                promiseLog.then((callback) => { }) 
 
                 res.send({
                     'status': true,
@@ -9385,10 +9387,12 @@ router.post('/pause_sold_order_test', (req, res) => {
                     }
                 })
 
+                let if_direct_resume = (typeof tempOrder['direct_resume'] != 'undefined' && tempOrder['direct_resume'] == 'yes') ? ' using Direct Resume' : ''
+
                 let show_hide_log = 'yes';
                 let type = 'resume_order';
                 let order_mode = obj.application_mode;
-                let log_msg = 'Order paused manually from Sold tab.'
+                let log_msg = 'Order paused manually from Sold tab ' + if_direct_resume
                 var order_created_date = obj.created_date
                 var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
                 promiseLog.then((callback) => { })
