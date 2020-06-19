@@ -11,7 +11,7 @@ var compare = require('tsscmp')
 var googleAuthenticator = require('authenticator');
 
 var digie_admin_ids = [
-    '5c0912b7fc9aadaac61dd072',
+    // '5c0912b7fc9aadaac61dd072',
     '5c3a4986fc9aad6bbd55b4f2',
     '5e566497ab24936219344562',
     '5eb5a5a628914a45246bacc6',
@@ -8979,6 +8979,20 @@ router.post('/resume_order_test', (req, res) => {
 
                 let tempOrder = Object.assign({}, obj)
 
+                //update new edit fields
+                var count = 0;
+                var i;
+                for (i in updateArr) {
+                    if (updateArr.hasOwnProperty(i)) {
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    for (let [key, value] of Object.entries(updateArr)) {
+                        tempOrder[key] = value;
+                    }
+                }
+
                 //Save only resumeFileds Arr keys in resume order
                 let resumeFieldsArr = [
                     "_id",
@@ -9026,21 +9040,6 @@ router.post('/resume_order_test', (req, res) => {
                         if (!resumeFieldsArr.includes(key)) {
                             delete tempOrder[key]
                         }
-                    }
-                }
-
-
-                //update new edit fields
-                var count = 0;
-                var i;
-                for (i in updateArr) {
-                    if (updateArr.hasOwnProperty(i)) {
-                        count++;
-                    }
-                }
-                if (count > 0) {
-                    for (let [key, value] of Object.entries(updateArr)) {
-                        tempOrder[key] = value;
                     }
                 }
 
@@ -9135,6 +9134,20 @@ router.post('/pause_lth_order_test', (req, res) => {
 
                 let tempOrder = Object.assign({}, obj)
 
+                //update new edit fields 
+                var count = 0;
+                var i;
+                for (i in updateArr) {
+                    if (updateArr.hasOwnProperty(i)) {
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    for (let [key, value] of Object.entries(updateArr)) {
+                        tempOrder[key] = value;
+                    }
+                }
+
                 //Save only resumeFileds Arr keys in resume order
                 let resumeFieldsArr = [
                     "_id",
@@ -9182,20 +9195,6 @@ router.post('/pause_lth_order_test', (req, res) => {
                         if (!resumeFieldsArr.includes(key)) {
                             delete tempOrder[key]
                         }
-                    }
-                }
-
-                //update new edit fields 
-                var count = 0;
-                var i;
-                for (i in updateArr) {
-                    if (updateArr.hasOwnProperty(i)) {
-                        count++;
-                    }
-                }
-                if (count > 0) {
-                    for (let [key, value] of Object.entries(updateArr)) {
-                        tempOrder[key] = value;
                     }
                 }
 
@@ -9284,6 +9283,20 @@ router.post('/pause_sold_order_test', (req, res) => {
                 let obj = data1[0];
                 let tempOrder = Object.assign({}, obj)
 
+                //Update new edit fields 
+                var count = 0;
+                var i;
+                for (i in updateArr) {
+                    if (updateArr.hasOwnProperty(i)) {
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    for (let [key, value] of Object.entries(updateArr)) {
+                        tempOrder[key] = value;
+                    }
+                }
+
                 //Save only resumeFileds Arr keys in resume order
                 let resumeFieldsArr = [
                     "_id",
@@ -9328,24 +9341,12 @@ router.post('/pause_sold_order_test', (req, res) => {
                 }
                 if (resumeCount > 0) {
                     for (let [key, value] of Object.entries(tempOrder)) {
-                        if (!resumeFieldsArr.includes(key)){
+                        if (!resumeFieldsArr.includes(key)) {
                             delete tempOrder[key]
                         }
                     }
                 }
-                //Update new edit fields 
-                var count = 0;
-                var i;
-                for (i in updateArr) {
-                    if (updateArr.hasOwnProperty(i)) {
-                        count++;
-                    }
-                }
-                if (count > 0) {
-                    for (let [key, value] of Object.entries(updateArr)) {
-                        tempOrder[key] = value;
-                    }
-                }
+
                 tempOrder['modified_date'] = new Date()
                 tempOrder['resume_date'] = new Date()
                 tempOrder['status'] = 'resume'
@@ -10838,7 +10839,9 @@ async function createAutoTradeParents(settings){
                 let insArr = {
                     'user_id': user_id,
                     'application_mode': application_mode,
-                    'parent_trades': tempParentsArr
+                    'exchange': exchange,
+                    'parent_trades': tempParentsArr,
+                    'cancel_parents': (typeof cancel_previous_parents != 'undefined' && cancel_previous_parents == 'yes' ? 'yes' : 'no'),
                 }
                 let ATGPreviewCollection = exchange == 'binance' ? 'temp_auto_trades_preview' : 'temp_auto_trades_preview_' + exchange
                 // let parents = await db.collection(ATGPreviewCollection).insertOne(insArr)
@@ -10862,6 +10865,49 @@ async function createAutoTradeParentsNow(user_id, exchange, application_mode) {
             let parents = await db.collection(ATGPreviewCollection).find(where).sort({'_id': -1}).limit(1).toArray()
 
             if (parents.length > 0){
+
+                let exchange = parents[0]['parent_trades']
+                // let exchange = parents[0]['parent_trades']
+                //cancel previous parents check
+                if(true){
+                    let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+                    //TODO: if delete previous order selected then delete all previous parents
+                    if (typeof cancel_previous_parents != 'undefined' && cancel_previous_parents == 'yes') {
+                        conn.then(async (db) => {
+                            let filter = {
+                                'admin_id': user_id,
+                                'application_mode': application_mode,
+                                'parent_status': 'parent',
+                                'status': { '$ne': 'canceled' },
+                            };
+                            let set = {};
+                            set['$set'] = {
+                                'status': 'canceled',
+                                'pause_status': 'pause',
+                                'modified_date': new Date()
+                            };
+                            let parents = await db.collection(collectionName).find(filter).project({ '_id': 1, 'application_mode': 1, 'created_date': 1 }).toArray()
+                            if (parents.length > 0) {
+                                let deleted = await db.collection(collectionName).updateMany(filter, set)
+
+                                parents.map(item => {
+                                    // TODO: set vars to create log
+                                    let show_hide_log = 'yes';
+                                    let type = 'canceled_by_auto_trade_generator';
+                                    let order_mode = item['application_mode'];
+                                    let order_created_date = item['created_date'];
+                                    let log_msg = 'Parent canceled becuase of auto trade generator cancel previous.'
+                                    //Save LOG
+                                    let promiseLog = create_orders_history_log(item['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                                    promiseLog.then((callback) => { })
+                                })
+
+                            }
+
+                        })
+                    }
+                }
+
                 let parentTradesArr = parents[0]['parent_trades']
                 await Promise.all(parentTradesArr.map(parentObj =>{
                     delete parentObj['_id']
@@ -10892,6 +10938,11 @@ async function createAutoTradeParentsNow(user_id, exchange, application_mode) {
         })
     })
 }
+
+router.post('/createAutoTradeParentsNow', async (req, res) => {
+    let autoTradeParents = await createAutoTradeParentsNow(user_id, exchange, application_mode)
+    res.send({ 'status': true, 'data': coinData })
+})
 
 async function calculateNumberOfTradesPerDay(dailyTradeable, totalTradeAbleInUSD, currency, actualTradeableUsdWorth){
 
