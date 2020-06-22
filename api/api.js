@@ -2601,19 +2601,20 @@ router.post('/listOrderListing', async (req, resp) => {
             if (lastRow){
                 // let lossPercent = (typeof orderListing[index].custom_stop_loss_percentage != 'undefined') && !isNaN(parseFloat(orderListing[index].custom_stop_loss_percentage)) ? parseFloat(orderListing[index].custom_stop_loss_percentage) : 0
 
-                let pl = parseFloat((((orderListing[index].market_sold_price - orderListing[index].purchased_price) * 100) / orderListing[index].purchased_price).toFixed(2));
+                let pl = parseFloat((((orderListing[index].market_sold_price - orderListing[index].purchased_price) / orderListing[index].purchased_price) * 100).toFixed(2));
                 pl = !isNaN(pl) ? pl : 0
 
                 if (postDAta.status == 'lth_pause') {
 
                     let sell_p = typeof orderListing[index].last_sell != 'undefined' && orderListing[index].last_sell != '' ? orderListing[index].last_sell : orderListing[index].market_sold_price
-                    let purchase_p = typeof orderListing[index].purchase_p != 'undefined' && orderListing[index].purchase_p != '' ? orderListing[index].purchase_p : orderListing[index].purchased_price
+                    let purchase_p = typeof orderListing[index].last_purchase != 'undefined' && orderListing[index].last_purchase != '' ? orderListing[index].last_purchase : orderListing[index].purchased_price
 
                     sell_p = parseFloat(sell_p)
                     purchase_p = parseFloat(purchase_p)
 
-                    pl = parseFloat((((sell_p - purchase_p) * 100) / purchase_p).toFixed(2));
+                    pl = parseFloat((((sell_p - purchase_p) / purchase_p) * 100).toFixed(2));
                     pl = !isNaN(pl) ? pl : 0
+
                 }
                 
                 resumePL = parseFloat(resumePL) + parseFloat(pl)
