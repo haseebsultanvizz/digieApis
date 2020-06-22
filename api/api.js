@@ -2601,11 +2601,17 @@ router.post('/listOrderListing', async (req, resp) => {
             if (lastRow){
                 // let lossPercent = (typeof orderListing[index].custom_stop_loss_percentage != 'undefined') && !isNaN(parseFloat(orderListing[index].custom_stop_loss_percentage)) ? parseFloat(orderListing[index].custom_stop_loss_percentage) : 0
 
-                let pl = parseFloat((((orderListing[index].market_sold_price - orderListing[index].purchased_price) * 100) / orderListing[index].purchased_price).toFixed(2));
+                // let pl = parseFloat((((orderListing[index].market_sold_price - orderListing[index].purchased_price) * 100) / orderListing[index].purchased_price).toFixed(2));
+                // pl = !isNaN(pl) ? pl : 0
+                
+                let pl = parseFloat((((orderListing[index].last_sell - orderListing[index].last_purchase) * 100) / orderListing[index].last_purchase).toFixed(2));
                 pl = !isNaN(pl) ? pl : 0
 
                 resumePL = parseFloat(resumePL) + parseFloat(pl)
                 resumePlClass = resumePL > 0 ? 'success' : 'danger'
+
+                order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"> <b>' + resumePL.toFixed(2) + '%</b></span>'
+
             }
             resumePL = resumePL.toFixed(2)
             // if(is_sold){
