@@ -11,11 +11,11 @@ var compare = require('tsscmp')
 var googleAuthenticator = require('authenticator');
 
 var digie_admin_ids = [
-    // '5c0912b7fc9aadaac61dd072',
+    '5c0912b7fc9aadaac61dd072',
     '5c3a4986fc9aad6bbd55b4f2',
     '5e566497ab24936219344562',
     '5eb5a5a628914a45246bacc6',
-    // '5c0915befc9aadaac61dd1b8',
+    '5c0915befc9aadaac61dd1b8',
 ];
 
 //********************************************************* */
@@ -2286,6 +2286,9 @@ router.post('/listOrderListing', async (req, resp) => {
         // '$in': ['pause', 'resume_pause', 'resume_complete']
     };
     filter_all['resume_status'] = { '$ne': 'complete' }
+    if (!digie_admin_ids.includes(admin_id)) {
+        filter_all['resume_order_id'] = { '$exists': false };
+    }
 
     if (count > 0) {
         for (let [key, value] of Object.entries(search)) {
@@ -2930,6 +2933,9 @@ async function listOrderListing(postDAta, dbConnection) {
             // '$in': ['pause', 'resume_pause', 'resume_complete']
         };
         filter['resume_status'] = { '$ne': 'complete' }
+        if (!digie_admin_ids.includes(postDAta.admin_id)) {
+            filter['resume_order_id'] = { '$exists': false };
+        }
 
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
