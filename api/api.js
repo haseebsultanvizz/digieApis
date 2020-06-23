@@ -11343,6 +11343,55 @@ router.post('/getOrderById', async (req, res) => {
 })//end getOrderById
 
 
+//getResumeOrderByOrderId
+router.post('/getResumeOrderByOrderId', async (req, res) => {
+
+    let order_id = req.body.order_id
+    let exchange = req.body.exchange
+    if (typeof order_id != 'undefined' && order_id != '' && typeof exchange != 'undefined' && exchange != '') {
+        conn.then(async (db) => {
+
+            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
+            let data1 = await db.collection(sold_collection).find({'_id':new ObjectID(order_id)}).limit(1).toArray();
+
+            if (data1.length > 0){
+
+                data1 = data1[0]
+
+                let resumeCollection = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_'+exchange
+                let where = {
+                    '_id': data1['resume_order_id']
+                }
+                let resumeOrder = await db.collection(resumeCollection).find(where).toArray()
+                if (resumeOrder.length > 0){
+                    res.send({
+                        status: true,
+                        data: resumeOrder[0],
+                        message: 'Order found successfully.'
+                    });
+                }else{
+                    res.send({
+                        status: false,
+                        message: 'Order not found.'
+                    });
+                }
+            }else{
+                res.send({
+                    status: false,
+                    message: 'Order not found.'
+                });
+            }
+        })
+    } else {
+        res.send({
+            status: false,
+            message: 'order_id and exchange is required.'
+        });
+    }
+
+})//end getResumeOrderByOrderId
+
+
 // ***************** End Auto Trading Module APIs **************** //
 
 // ****************** BNB auto Buy ****************************** //
