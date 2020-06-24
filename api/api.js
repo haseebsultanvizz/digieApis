@@ -11,11 +11,11 @@ var compare = require('tsscmp')
 var googleAuthenticator = require('authenticator');
 
 var digie_admin_ids = [
-    '5c0912b7fc9aadaac61dd072',
+    '5c0912b7fc9aadaac61dd072', //admin
     // '5c3a4986fc9aad6bbd55b4f2',
     // '5e566497ab24936219344562',
-    // '5eb5a5a628914a45246bacc6',
-    '5c0915befc9aadaac61dd1b8',
+    '5eb5a5a628914a45246bacc6', //jamesparker
+    '5c0915befc9aadaac61dd1b8', //vizzdeveloper
 ];
 
 //********************************************************* */
