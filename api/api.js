@@ -12,9 +12,9 @@ var googleAuthenticator = require('authenticator');
 
 var digie_admin_ids = [
     '5c0912b7fc9aadaac61dd072',
-    '5c3a4986fc9aad6bbd55b4f2',
-    '5e566497ab24936219344562',
-    '5eb5a5a628914a45246bacc6',
+    // '5c3a4986fc9aad6bbd55b4f2',
+    // '5e566497ab24936219344562',
+    // '5eb5a5a628914a45246bacc6',
     '5c0915befc9aadaac61dd1b8',
 ];
 
@@ -2237,9 +2237,7 @@ router.post('/listOrderListing', async (req, resp) => {
         // '$in': ['pause', 'resume_pause', 'resume_complete']
     };
     filter_9['resume_status'] = { '$ne': 'completed'}
-    if (!digie_admin_ids.includes(admin_id)) {
-        filter_9['show_order'] = { '$ne': 'no' };
-    }
+    filter_9['show_order'] = { '$ne': 'no' };
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -2278,15 +2276,12 @@ router.post('/listOrderListing', async (req, resp) => {
         filter_all['created_date'] = obj
     }
 
-    filter_all['is_sell_order'] = {
-        '$ne': 'resume_complete'
-    };
-    filter_all['is_sell_order'] = {
-        '$nin': ['pause', 'resume_pause']
-        // '$in': ['pause', 'resume_pause', 'resume_complete']
-    };
-    filter_all['resume_status'] = { '$ne': 'complete' }
     if (!digie_admin_ids.includes(admin_id)) {
+        filter_all['is_sell_order'] = {
+            '$nin': ['pause', 'resume_pause']
+            // '$in': ['pause', 'resume_pause', 'resume_complete']
+        };
+        filter_all['resume_status'] = { '$ne': 'complete' }
         filter_all['resume_order_id'] = { '$exists': false };
     }
 
@@ -2908,9 +2903,8 @@ async function listOrderListing(postDAta, dbConnection) {
             // '$in': ['pause', 'resume_pause', 'resume_complete']
         };
         filter['resume_status'] = { '$ne': 'completed' }
-        if (!digie_admin_ids.includes(postDAta.admin_id)) {
-            filter['show_order'] = { '$ne': 'no' };
-        }
+        filter['show_order'] = { '$ne': 'no' };
+        
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
 
@@ -2950,15 +2944,12 @@ async function listOrderListing(postDAta, dbConnection) {
     //if status is all the get from both buy_orders and sold_buy_orders 
     if (postDAta.status == 'all') {
 
-        filter['is_sell_order'] = {
-            '$ne': 'resume_complete'
-        };
-        filter['is_sell_order'] = {
-            '$nin': ['pause', 'resume_pause']
-            // '$in': ['pause', 'resume_pause', 'resume_complete']
-        };
-        filter['resume_status'] = { '$ne': 'complete' }
         if (!digie_admin_ids.includes(postDAta.admin_id)) {
+            filter['is_sell_order'] = {
+                '$nin': ['pause', 'resume_pause']
+                // '$in': ['pause', 'resume_pause', 'resume_complete']
+            };
+            filter['resume_status'] = { '$ne': 'complete' }
             filter['resume_order_id'] = { '$exists': false };
         }
 
