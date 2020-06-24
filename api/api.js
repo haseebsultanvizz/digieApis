@@ -2479,7 +2479,7 @@ router.post('/listOrderListing', async (req, resp) => {
         var profitLossPercentageHtml = '';
 
         let resumePL = 0
-        if (typeof orderListing[index].resume_order_arr != 'undefined' && orderListing[index].resume_order_arr != null){
+        if (typeof orderListing[index].resume_order_arr != 'undefined' && orderListing[index].resume_order_arr != null && orderListing[index].resume_order_arr.length > 0){
             await Promise.all(orderListing[index].resume_order_arr.map(item => {
                 resumePL = parseFloat(resumePL) + parseFloat(item.resumeLossPercentage)
             }))
