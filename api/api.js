@@ -1989,7 +1989,7 @@ router.post('/listOrderListing', async (req, resp) => {
     //::::::::::::: filter_2 count new orders for order listing ::::::::::::
     var filter_2 = {};
     filter_2['status'] = {
-        '$in': ['new', 'new_ERROR']
+        '$in': ['new', 'new_ERROR', 'BUY_ID_ERROR']
     };
     filter_2['price'] = {
         '$nin': ['', null]
@@ -2022,7 +2022,7 @@ router.post('/listOrderListing', async (req, resp) => {
     //:::::::::::::::: filter_3 for count open order :::::::::::::::::
     var filter_3 = {};
     filter_3['status'] = {
-        '$in': ['FILLED', 'FILLED_ERROR']
+        '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
     }
     filter_3['is_sell_order'] = 'yes';
     filter_3['is_lth_order'] = {
@@ -2136,7 +2136,7 @@ router.post('/listOrderListing', async (req, resp) => {
     //::::::::::::: filter_6 for count all lth order :::::::::::::::::::
     var filter_6 = {};
     filter_6['status'] = {
-        $in: ['LTH', 'LTH_ERROR']
+        $in: ['LTH', 'LTH_ERROR', 'SELL_ID_ERROR']
     };
     filter_6['admin_id'] = admin_id;
     filter_6['application_mode'] = application_mode;
@@ -2516,6 +2516,7 @@ router.post('/listOrderListing', async (req, resp) => {
         let is_sold = false
 
         let pause_status_arr = ['pause', 'resume_pause', 'resume_complete']
+        let front_status_arr = [];
 
         var childProfitLossPercentageHtml = '-'
         //part for showing different status labels
@@ -2534,8 +2535,10 @@ router.post('/listOrderListing', async (req, resp) => {
             if (pause_status_arr.includes(is_sell_order)) {
                 if (is_sell_order == 'pause') {
                     htmlStatus += '<span class="badge badge-success">Paused</span>';
+                    front_status_arr.push('Paused')
                 } else if (is_sell_order == 'resume_pause') {
                     htmlStatus += '<span class="badge badge-info">In progress</span>';
+                    front_status_arr.push('In progress')
                     //TODO: find child trade current profit
                     let child_order = await listOrderById(orderListing[index]._id, exchange)
                     child_order = (child_order.length > 0 ? child_order[0] : false)
@@ -2549,6 +2552,7 @@ router.post('/listOrderListing', async (req, resp) => {
 
                 } else if (is_sell_order == 'resume_complete') {
                     htmlStatus += '<span class="badge badge-warning">Completed</span>';
+                    front_status_arr.push('Completed')
                     //TODO: find child trade profit
                     let child_order = await listOrderById(orderListing[index]._id, exchange)
                     child_order = (child_order.length > 0 ? child_order[0] : false)
@@ -2570,9 +2574,21 @@ router.post('/listOrderListing', async (req, resp) => {
                 is_sold = true
             }
         } else {
-            var statusClass = (status == 'error' || status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR' || status == 'canceled_ERROR') ? 'danger' : 'success'
+
+            let errorStatusArr = [
+                'error', 
+                'LTH_ERROR', 
+                'FILLED_ERROR', 
+                'submitted_ERROR', 
+                'new_ERROR',
+                'canceled_ERROR',
+                'SELL_ID_ERROR',
+                'BUY_ID_ERROR',
+            ]
+
+            var statusClass = errorStatusArr.includes(status) ? 'danger' : 'success'
             status = (parent_status == 'parent') ? parent_status : status;
-            if (status == 'LTH_ERROR' || status == 'FILLED_ERROR' || status == 'submitted_ERROR' || status == 'new_ERROR' || status == 'canceled_ERROR') {
+            if (errorStatusArr.includes(status)) {
                 let err_lth_filled = status.replace('_', ' ')
                 htmlStatus += '<span class="badge badge-' + statusClass + '">' + err_lth_filled + '</span>';
             } else {
@@ -2589,7 +2605,12 @@ router.post('/listOrderListing', async (req, resp) => {
         order['showResume'] = true
         if (typeof orderListing[index].resume_order_id != 'undefined') {
             order['showResume'] = false 
-            htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
+
+            if (front_status_arr.length > 0){
+                //Do nothing
+            }else{
+                htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
+            }
 
             let resumePlClass = resumePL > 0 ? 'success' : 'danger'
 
@@ -2849,7 +2870,7 @@ async function listOrderListing(postDAta, dbConnection) {
 
     if (postDAta.status == 'open') {
         filter['status'] = {
-            '$in': ['FILLED', 'FILLED_ERROR']
+            '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
         }
         filter['is_sell_order'] = 'yes';
         filter['is_lth_order'] = {
@@ -2898,14 +2919,14 @@ async function listOrderListing(postDAta, dbConnection) {
 
     if (postDAta.status == 'LTH') {
         filter['status'] = {
-            '$in': ['LTH', 'LTH_ERROR']
+            '$in': ['LTH', 'LTH_ERROR', 'SELL_ID_ERROR']
         };
         filter['is_sell_order'] = 'yes';
     }
 
     if (postDAta.status == 'new') {
         filter['status'] = {
-            '$in': ['new', 'new_ERROR']
+            '$in': ['new', 'new_ERROR', 'BUY_ID_ERROR']
         };
         filter['price'] = {
             '$ne': ''
@@ -9078,6 +9099,15 @@ router.post('/resume_order_test', (req, res) => {
                     if (err) {
                         console.log(err)
                     } else {
+
+                        //don't update following fields in sold collection from resume
+                        let fields_not_update_in_sold_collection = [
+                            'stop_loss_rule',
+                            'custom_stop_loss_percentage',
+                            'stop_loss',
+                            'loss_percentage', 
+                        ]
+
                         //insert resume id in sold collection order
                         let insert_id = result.insertedId
                         var set = {};
@@ -9093,7 +9123,9 @@ router.post('/resume_order_test', (req, res) => {
                         }
                         if (count > 0) {
                             for (let [key, value] of Object.entries(updateArr)) {
-                                updArr[key] = value;
+                                if (!fields_not_update_in_sold_collection.includes(key)){
+                                    updArr[key] = value;
+                                }
                             }
                         }
 
