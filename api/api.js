@@ -2231,7 +2231,7 @@ router.post('/listOrderListing', async (req, resp) => {
     var filter_9 = {};
     filter_9['admin_id'] = admin_id;
     filter_9['application_mode'] = application_mode;
-    filter_9['status'] = 'FILLED';
+    filter_9['status'] = {'$in': ['FILLED', 'pause']};
     filter_9['is_sell_order'] = {
         '$in': ['pause', 'resume_pause']
         // '$in': ['pause', 'resume_pause', 'resume_complete']
@@ -2591,7 +2591,7 @@ router.post('/listOrderListing', async (req, resp) => {
             if (errorStatusArr.includes(status)) {
                 let err_lth_filled = status.replace('_', ' ')
                 htmlStatus += '<span class="badge badge-' + statusClass + '">' + err_lth_filled + '</span>';
-            } else {
+            } else if(status != 'pause') {
                 htmlStatus += '<span class="badge badge-' + statusClass + '">' + status + '</span>';
             }
         }
@@ -2602,12 +2602,16 @@ router.post('/listOrderListing', async (req, resp) => {
             htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Buy Fraction</span>';
         }
         
+        order['resumeStopped'] = false
         order['showResume'] = true
         if (typeof orderListing[index].resume_order_id != 'undefined') {
             order['showResume'] = false 
 
             if (front_status_arr.length > 0){
                 //Do nothing
+            }else if(status == 'pause'){
+                htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resume Stopped</span>';
+                order['resumeStopped'] = true
             }else{
                 htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
             }
@@ -2898,7 +2902,7 @@ async function listOrderListing(postDAta, dbConnection) {
     }
 
     if (postDAta.status == 'lth_pause') {
-        filter['status'] = 'FILLED'
+        filter['status'] = { '$in': ['FILLED', 'pause'] }
         filter['is_sell_order'] = {
             '$in': ['pause', 'resume_pause']
             // '$in': ['pause', 'resume_pause', 'resume_complete']
@@ -9620,6 +9624,73 @@ router.post('/pauseAlreadyResumedOrder', (req, res) => {
     })
 })
 //End pauseAlreadyResumedOrder
+
+router.post('/resumeAlreadyPausedOrder', (req, res) => {
+    conn.then(async (db) => {
+        let exchange = req.body.exchange
+        let order_id = req.body.order_id
+
+        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == '') {
+            res.send({
+                'status': false,
+                'message': 'order_id and exchange are required'
+            });
+        } else {
+            
+            let filter = {
+                '_id': new ObjectID(order_id),
+            }
+
+            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
+            let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
+
+            if (data1.length > 0) {
+                let obj = data1[0];
+
+                let updateArr = {
+                    '$set': {
+                        'modified_date': new Date(),
+                        'status': 'resume',
+                    }
+                }
+                let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
+                let update = db.collection(resumeCollectionName).updateOne({'_id': obj.resume_order_id}, updateArr, async (err, result) => {
+                    if (err) {
+                        console.log(err)
+                    } else {
+                        let set = {
+                            '$set': {
+                                'modified_date': new Date(),
+                                'status': 'FILLED',
+                            }
+                        }
+                        let update = db.collection(sold_collection).updateOne({'_id': obj._id}, set)
+                    }
+                })
+
+                let show_hide_log = 'yes';
+                let type = 'resume_continue';
+                let order_mode = obj.application_mode;
+                let log_msg = 'Paused order was resumed again manually'
+                var order_created_date = obj.created_date
+                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                promiseLog.then((callback) => { })
+
+                res.send({
+                    'status': true,
+                    'message': 'Order is resumed successfully'
+                });
+            } else {
+                res.send({
+                    'status': false,
+                    'message': 'Something went wrong'
+                });
+            }
+        }
+
+    })
+})
+//End resumeAlreadyPausedOrder
 
 
 // ******************* End Resume / Pause APIs **************** //  
