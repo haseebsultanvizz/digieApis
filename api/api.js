@@ -9553,6 +9553,75 @@ router.post('/genral_order_update', (req, res) => {
 //End genral_order_update
 
 
+router.post('/pauseAlreadyResumedOrder', (req, res) => {
+    conn.then(async (db) => {
+        let exchange = req.body.exchange
+        let order_id = req.body.order_id
+
+        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == '') {
+            res.send({
+                'status': false,
+                'message': 'order_id and exchange are required'
+            });
+        } else {
+            
+            let filter = {
+                '_id': new ObjectID(order_id),
+            }
+
+            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
+            let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
+
+            if (data1.length > 0) {
+                let obj = data1[0];
+
+                let updateArr = {
+                    '$set': {
+                        'modified_date': new Date(),
+                        'status': 'pause',
+                        'direct_resume': 'no',
+                    }
+                }
+                let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
+                let update = db.collection(resumeCollectionName).updateOne({'_id': obj.resume_order_id}, updateArr, async (err, result) => {
+                    if (err) {
+                        console.log(err)
+                    } else {
+                        let set = {
+                            '$set': {
+                                'modified_date': new Date(),
+                                'status': 'pause',
+                            }
+                        }
+                        let update = db.collection(sold_collection).updateOne({'_id': obj._id}, set)
+                    }
+                })
+
+                let show_hide_log = 'yes';
+                let type = 'resume_stop';
+                let order_mode = obj.application_mode;
+                let log_msg = 'Resumed order was stopped manually'
+                var order_created_date = obj.created_date
+                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                promiseLog.then((callback) => { })
+
+                res.send({
+                    'status': true,
+                    'message': 'Resumed order stopped successfully'
+                });
+            } else {
+                res.send({
+                    'status': false,
+                    'message': 'Something went wrong'
+                });
+            }
+        }
+
+    })
+})
+//End pauseAlreadyResumedOrder
+
+
 // ******************* End Resume / Pause APIs **************** //  
 
 
