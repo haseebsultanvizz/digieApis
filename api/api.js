@@ -9173,6 +9173,164 @@ router.post('/resume_order_test', (req, res) => {
 })
 //End resume_order
 
+router.post('/resume_already_paused_test', (req, res) => {
+    conn.then(async (db) => {
+        let exchange = req.body.exchange
+        let order_id = req.body.order_id
+        let updateArr = req.body.order
+
+        if (typeof exchange == 'undefined' || exchange == '' || typeof order_id == 'undefined' || order_id == '') {
+            res.send({
+                'status': false,
+                'message': 'order_id and exchange are required'
+            });
+        } else {
+            let filter = {
+                '_id': new ObjectID(order_id),
+            }
+
+            let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
+
+            let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
+
+            if (data1.length > 0) {
+                let obj = data1[0];
+
+                let tempOrder = Object.assign({}, obj)
+
+                //update new edit fields
+                var count = 0;
+                var i;
+                for (i in updateArr) {
+                    if (updateArr.hasOwnProperty(i)) {
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    for (let [key, value] of Object.entries(updateArr)) {
+                        tempOrder[key] = value;
+                    }
+                }
+
+                //Save only resumeFileds Arr keys in resume order
+                let resumeFieldsArr = [
+                    "_id",
+                    "admin_id",
+                    "application_mode",
+                    "buy_parent_id",
+                    "custom_stop_loss_percentage",
+                    "defined_sell_percentage",
+                    "iniatial_trail_stop",
+                    "is_lth_order",
+                    "lth_functionality",
+                    "lth_profit",
+                    "market_sold_price",
+                    "market_value",
+                    "opportunityId",
+                    "order_level",
+                    "order_mode",
+                    "price",
+                    "purchased_price",
+                    "quantity",
+                    "sell_date",
+                    "sell_order_id",
+                    "sell_price",
+                    "sell_profit_percent",
+                    "status",
+                    "stop_loss_rule",
+                    "symbol",
+                    "trading_ip",
+                    "trigger_type",
+                    "stop_loss",
+                    "loss_percentage",
+                    "resume_date",
+                    "sold_buy_order_id",
+                    "resume_order_arr",
+                ]
+                var resumeCount = 0;
+                var resumeI;
+                for (resumeI in tempOrder) {
+                    if (tempOrder.hasOwnProperty(resumeI)) {
+                        resumeCount++;
+                    }
+                }
+                if (resumeCount > 0) {
+                    for (let [key, value] of Object.entries(tempOrder)) {
+                        if (!resumeFieldsArr.includes(key)) {
+                            delete tempOrder[key]
+                        }
+                    }
+                }
+
+                tempOrder['modified_date'] = new Date()
+                // tempOrder['resume_date'] = new Date()
+                tempOrder['status'] = 'resume'
+                delete tempOrder['_id']
+                let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
+                let insert = db.collection(resumeCollectionName).updateOne({'_id':obj['resume_order_id']}, {'$set':tempOrder}, async (err, result) => {
+                    if (err) {
+                        console.log(err)
+                    } else {
+
+                        //don't update following fields in sold collection from resume
+                        let fields_not_update_in_sold_collection = [
+                            'stop_loss_rule',
+                            'custom_stop_loss_percentage',
+                            'stop_loss',
+                            'loss_percentage', 
+                        ]
+
+                        var set = {};
+                        let updArr = {}
+                        var count = 0;
+                        var i;
+                        for (i in updateArr) {
+                            if (updateArr.hasOwnProperty(i)) {
+                                count++;
+                            }
+                        }
+                        if (count > 0) {
+                            for (let [key, value] of Object.entries(updateArr)) {
+                                if (!fields_not_update_in_sold_collection.includes(key)){
+                                    updArr[key] = value;
+                                }
+                            }
+                        }
+
+                        updArr['status'] = 'FILLED'
+                        updArr['modified_date'] = new Date()
+
+                        set['$set'] = updArr
+                        var update = db.collection(sold_collection).updateOne(filter, set)
+                    }
+                })
+
+                let if_direct_resume = (typeof tempOrder['direct_resume'] != 'undefined' && tempOrder['direct_resume'] == 'yes') ? ' using Direct Resume' : ''
+
+                let show_hide_log = 'yes';
+                let type = 'resume_continue';
+                let order_mode = obj.application_mode;
+                let log_msg = 'Paused order was resumed again manually ' + if_direct_resume 
+                var order_created_date = obj.created_date
+                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                promiseLog.then((callback) => { }) 
+
+                res.send({
+                    'status': true,
+                    'message': 'Order is resumed successfully'
+                });
+            } else {
+                res.send({
+                    'status': false,
+                    'message': 'Something went wrong'
+                });
+            }
+        }
+
+    })
+})
+//End resume_already_paused_test
+
 router.post('/pause_lth_order_test', (req, res) => {
     conn.then(async (db) => {
         let exchange = req.body.exchange
