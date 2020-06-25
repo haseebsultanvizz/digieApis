@@ -2514,6 +2514,8 @@ router.post('/listOrderListing', async (req, resp) => {
         let pause_status_arr = ['pause', 'resume_pause', 'resume_complete']
         let front_status_arr = [];
 
+        let is_resumed_label_added = false
+
         var childProfitLossPercentageHtml = '-'
         //part for showing different status labels
         if ((status == 'FILLED' && is_sell_order == 'yes') || status == "LTH") {
@@ -2539,6 +2541,7 @@ router.post('/listOrderListing', async (req, resp) => {
                         front_status_arr.push('In progress')
                     }else{
                         htmlStatus += '<span class="badge badge-warning">Resumed</span>';
+                        is_resumed_label_added = true
                     }
 
                     //TODO: find child trade current profit
@@ -2604,18 +2607,20 @@ router.post('/listOrderListing', async (req, resp) => {
             htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Buy Fraction</span>';
         }
         
+        order['resume_order_id_exists'] = false 
         order['resumeStopped'] = false
         order['showResume'] = true
         if (typeof orderListing[index].resume_order_id != 'undefined') {
             order['showResume'] = false 
+            order['resume_order_id_exists'] = true 
 
             if (front_status_arr.length > 0){
                 //Do nothing
             }else if(status == 'pause'){
                 htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resume Stopped</span>';
                 order['resumeStopped'] = true
-            }else{
-                // htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
+            } else if (!is_resumed_label_added){
+                htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
             }
 
             let resumePlClass = resumePL > 0 ? 'success' : 'danger'
