@@ -2283,6 +2283,7 @@ router.post('/listOrderListing', async (req, resp) => {
         };
         filter_all['resume_status'] = { '$ne': 'complete' }
         filter_all['resume_order_id'] = { '$exists': false };
+        filter_all['resumed_parent_buy_order_id'] = { '$exists': false }
     }
 
     if (count > 0) {
@@ -2957,6 +2958,7 @@ async function listOrderListing(postDAta, dbConnection) {
             };
             filter['resume_status'] = { '$ne': 'complete' }
             filter['resume_order_id'] = { '$exists': false };
+            filter['resumed_parent_buy_order_id'] = { '$exists': false }
         }
 
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
