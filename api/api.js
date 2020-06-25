@@ -9102,6 +9102,11 @@ router.post('/resume_order_test', (req, res) => {
                 tempOrder['sold_buy_order_id'] = obj['_id']
                 tempOrder['last_buy_order_id'] = obj['_id']
                 delete tempOrder['_id']
+
+                if (typeof tempOrder['direct_resume'] != 'undefined' && tempOrder['direct_resume'] == 'yes') {
+                    tempOrder['order_level'] = 'direct_resume'
+                }
+                
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).insertOne(tempOrder, async (err, result) => {
                     if (err) {
@@ -9266,6 +9271,11 @@ router.post('/resume_already_paused_test', (req, res) => {
                 // tempOrder['resume_date'] = new Date()
                 tempOrder['status'] = 'resume'
                 delete tempOrder['_id']
+
+                if (typeof tempOrder['direct_resume'] != 'undefined' && tempOrder['direct_resume'] == 'yes') {
+                    tempOrder['order_level'] = 'direct_resume'
+                }
+
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).updateOne({'_id':obj['resume_order_id']}, {'$set':tempOrder}, async (err, result) => {
                     if (err) {
@@ -9575,6 +9585,11 @@ router.post('/pause_sold_order_test', (req, res) => {
                 tempOrder['sold_buy_order_id'] = obj['_id']
                 tempOrder['last_buy_order_id'] = obj['_id']
                 delete tempOrder['_id']
+
+                if (typeof tempOrder['direct_resume'] != 'undefined' && tempOrder['direct_resume'] == 'yes') {
+                    tempOrder['order_level'] = 'direct_resume'
+                }
+
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).insertOne(tempOrder, async (err, result) => {
                     if (err) {
@@ -9666,6 +9681,9 @@ router.post('/genral_order_update', (req, res) => {
                     }
                     let set = {
                         '$set':updateArr
+                    }
+                    if (typeof updateArr['direct_resume'] != 'undefined' && updateArr['direct_resume'] == 'yes'){
+                        set['$set']['order_level'] = 'direct_resume' 
                     }
                     let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                     let update = db.collection(resumeCollectionName).updateOne(where, set, async (err, result) => {
