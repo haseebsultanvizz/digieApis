@@ -2532,8 +2532,14 @@ router.post('/listOrderListing', async (req, resp) => {
                     htmlStatus += '<span class="badge badge-success">Paused</span>';
                     front_status_arr.push('Paused')
                 } else if (is_sell_order == 'resume_pause') {
-                    htmlStatus += '<span class="badge badge-info">In progress</span>';
-                    front_status_arr.push('In progress')
+
+                    if (typeof orderListing[index].resume_order_arr != 'undefined' && orderListing[index].resume_order_arr != null && orderListing[index].resume_order_arr.length > 0){
+                        htmlStatus += '<span class="badge badge-info">In progress</span>';
+                        front_status_arr.push('In progress')
+                    }else{
+                        htmlStatus += '<span class="badge badge-warning">Resumed</span>';
+                    }
+
                     //TODO: find child trade current profit
                     let child_order = await listOrderById(orderListing[index]._id, exchange)
                     child_order = (child_order.length > 0 ? child_order[0] : false)
@@ -2608,7 +2614,7 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resume Stopped</span>';
                 order['resumeStopped'] = true
             }else{
-                htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
+                // htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
             }
 
             let resumePlClass = resumePL > 0 ? 'success' : 'danger'
