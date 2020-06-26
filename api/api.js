@@ -2627,7 +2627,7 @@ router.post('/listOrderListing', async (req, resp) => {
 
             let lastRow = false
             //lth_pause check
-            if (typeof orderListing[index].status != 'undefined' && orderListing[index].status == 'FILLED' && typeof orderListing[index].is_sell_order != 'undefined' && (orderListing[index].is_sell_order == 'pause' || orderListing[index].is_sell_order == 'resume_pause')) {
+            if (typeof orderListing[index].status != 'undefined' && (orderListing[index].status == 'pause' || orderListing[index].status == 'FILLED') && typeof orderListing[index].is_sell_order != 'undefined' && (orderListing[index].is_sell_order == 'pause' || orderListing[index].is_sell_order == 'resume_pause')) {
                 lastRow = true
                 //sold check
             } else if (typeof orderListing[index].is_sell_order != 'undefined' && orderListing[index].is_sell_order == 'sold') {
@@ -9106,7 +9106,7 @@ router.post('/resume_order_test', (req, res) => {
                 if (typeof tempOrder['direct_resume'] != 'undefined' && tempOrder['direct_resume'] == 'yes') {
                     tempOrder['order_level'] = 'direct_resume'
                 }
-                
+
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).insertOne(tempOrder, async (err, result) => {
                     if (err) {
