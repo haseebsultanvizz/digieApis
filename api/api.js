@@ -2276,7 +2276,7 @@ router.post('/listOrderListing', async (req, resp) => {
         filter_all['created_date'] = obj
     }
 
-    if (!digie_admin_ids.includes(admin_id)) {
+    if (!digie_admin_ids.includes(postDAta.admin_id)) {
         filter_all['is_sell_order'] = {
             '$nin': ['pause', 'resume_pause']
             // '$in': ['pause', 'resume_pause', 'resume_complete']
