@@ -10220,7 +10220,7 @@ router.post('/getSubscription', async (req, res) => {
                 'Content-Type': 'application/json'
             },
             json: {
-                'user_id': user_id,
+                'user_id': String(user_id),
                 'handshake': token,
             }
         };
