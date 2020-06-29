@@ -2775,9 +2775,17 @@ function calculateAverageOrdersProfit(postDAta) {
     var filter = {};
     filter['application_mode'] = postDAta.application_mode
     filter['admin_id'] = postDAta.admin_id
-    filter['is_sell_order'] = 'sold'
+    // filter['is_sell_order'] = 'sold'
     filter['market_sold_price'] = {
         '$exists': true
+    }
+
+    filter['$or'] = [
+        { 'resume_status': 'completed' },
+        { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false } }
+    ];
+    if (!digie_admin_ids.includes(postDAta.admin_id)) {
+        filter['show_order'] = { '$ne': 'no' };
     }
 
     if (postDAta.coins != '') {
