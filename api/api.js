@@ -7843,6 +7843,7 @@ router.post('/remove_error', async (req, resp) => {
             var error_type = '';
 
             var update_buy_status = '';
+            var buy_status_update = false
 
             if (buy_status == 'error') {
                 update_buy_status = 'new'
@@ -7851,20 +7852,27 @@ router.post('/remove_error', async (req, resp) => {
                 let statusArr = buy_status.split('_');
                 update_buy_status = statusArr[0];
                 error_type = statusArr.join(' ');
+            }else{
+                update_buy_status = 'skip'
+                //check if error exist in sell order status
             }
 
             if (update_buy_status != '') {
-                //remove error from buy_order
-                let where = {
-                    '_id': new ObjectID(order_id)
-                }
-                let update = {
-                    '$set': {
-                        'status': update_buy_status,
-                        'modified_date': new Date()
+
+                //skip buy status update if error only exist in sell order 
+                if (update_buy_status != 'skip'){
+                    //remove error from buy_order
+                    let where = {
+                        '_id': new ObjectID(order_id)
                     }
+                    let update = {
+                        '$set': {
+                            'status': update_buy_status,
+                            'modified_date': new Date()
+                        }
+                    }
+                    let updated = await db.collection(buy_collection).updateOne(where, update)
                 }
-                let updated = await db.collection(buy_collection).updateOne(where, update)
 
                 //remove error from sell_order
                 if (typeof buy_order['sell_order_id'] != 'undefined') {
