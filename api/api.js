@@ -10151,18 +10151,24 @@ router.post('/getNotifications', (req, res) => {
                 limit = 20
             }
 
+            let latest_where = {
+                'admin_id': admin_id
+            }
             let notifications = await db.collection('notifications').find(where).sort(sort).skip(skip).limit(limit).toArray();
+            let latest_notification = await db.collection('notifications').find(latest_where).sort(sort).limit(10).toArray();
 
-            if (notifications.length > 0) {
+            if (notifications.length > 0 || latest_notification.length > 0) {
                 res.send({
                     'status': true,
                     'notifications': notifications,
+                    'latest_notification': latest_notification,
                     'message': 'Notifications found successfully'
                 });
             } else {
                 res.send({
                     'status': false,
                     'notifications': [],
+                    'latest_notification': [],
                     'message': 'Notifications not found.'
                 });
             }
