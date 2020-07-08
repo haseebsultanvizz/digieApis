@@ -11391,49 +11391,27 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
                         var extra_qty_val = 0;
                         extra_qty_val = (extra_qty_percentage * item['marketMinNotation']) / 100
                         var calculatedMinNotation = item['marketMinNotation'] + extra_qty_val;
-                        let minReqQty = calculatedMinNotation
-        
+                        let minReqQty = calculatedMinNotation / item['price']
+
                         if (exchange == 'kraken') {
-                            minReqQty = calculatedMinNotation / item['price'];
+                            minReqQty = calculatedMinNotation;
                         }
-        
-                        minReqQty = calculatedMinNotation + item['marketMinNotationStepSize']
-        
+                        minReqQty += item['marketMinNotationStepSize']
+
                         let minUsdWorth = 0
                         let splitArr = item.coin.split('USDT')
                         if (splitArr[1] == '') {
-        
-                            if (exchange == 'kraken') {
-                                minUsdWorth = minReqQty * item['price']
-                            }
-        
-                            // console.log(item.coin , minUsdWorth, defined_min_usd_worth)
-                            if (minUsdWorth < defined_min_usd_worth) {
-                                usdtCoinsMinQty.push({
-                                    'coin': item.coin,
-                                    'usd_worth': parseFloat(defined_min_usd_worth.toFixed(2)),
-                                })
-                            } else {
-                                usdtCoinsMinQty.push({
-                                    'coin': item.coin,
-                                    'usd_worth': parseFloat(minUsdWorth.toFixed(2)),
-                                })
-                            }
-                            
+                            minUsdWorth = minReqQty * item['price']
+                            usdtCoinsMinQty.push({
+                                'coin': item.coin,
+                                'usd_worth': parseFloat(minUsdWorth.toFixed(2)),
+                            })
                         } else {
                             minUsdWorth = minReqQty * item['price'] * BTCUSDTPrice
-                            // console.log(item.coin , minUsdWorth, defined_min_usd_worth)
-                            if (minUsdWorth < defined_min_usd_worth) {
-                                btcCoinsMinQty.push({
-                                    'coin': item.coin,
-                                    'usd_worth': parseFloat(defined_min_usd_worth.toFixed(2)),
-                                })
-                            } else {
-                                btcCoinsMinQty.push({
-                                    'coin': item.coin,
-                                    'usd_worth': parseFloat(minUsdWorth.toFixed(2)),
-                                })
-                            }
+                            btcCoinsMinQty.push({
+                                'coin': item.coin,
+                                'usd_worth': parseFloat(minUsdWorth.toFixed(2)),
+                            })
                         }
         
                     }))
