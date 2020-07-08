@@ -2136,7 +2136,7 @@ router.post('/listOrderListing', async (req, resp) => {
     //::::::::::::: filter_6 for count all lth order :::::::::::::::::::
     var filter_6 = {};
     filter_6['status'] = {
-        $in: ['LTH', 'LTH_ERROR', 'SELL_ID_ERROR']
+        $in: ['LTH', 'LTH_ERROR']
     };
     filter_6['admin_id'] = admin_id;
     filter_6['application_mode'] = application_mode;
@@ -2937,7 +2937,7 @@ async function listOrderListing(postDAta, dbConnection) {
 
     if (postDAta.status == 'LTH') {
         filter['status'] = {
-            '$in': ['LTH', 'LTH_ERROR', 'SELL_ID_ERROR']
+            '$in': ['LTH', 'LTH_ERROR']
         };
         filter['is_sell_order'] = 'yes';
     }
