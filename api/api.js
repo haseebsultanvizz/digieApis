@@ -534,7 +534,7 @@ router.get('/myTest2', async (req,res)=>{
 async function getClientInfo(req){
     return new Promise(resolve=>{
         let data = Bowser.parse(req.headers['user-agent'])
-        data['client_ip'] = String(req.connection.remoteAddress).replace("::ffff:", '');
+        data['client_ip'] = req.headers['x-forwarded-for'];
         resolve(data)
     })
 }
