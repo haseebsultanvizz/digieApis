@@ -253,6 +253,7 @@ async function blockLoginAttempt(username, action) {
                             let set = {
                                 'unsuccessfull_login_attempt_count': 0,
                                 'login_attempt_block_time': '',
+                                'temporary_blocked_email_sent': '',
                                 // 'user_soft_delete': ''
                             }
                             db.collection('users').updateOne(where, {
@@ -388,6 +389,9 @@ router.post('/authenticate', async function (req, resp, next) {
                         let respObj = {};
                         if (userArr.length > 0) {
                             if (await blockLoginAttempt(username, 'temp_block_check')) {
+
+                                let email = sendTempBlockEmail(req)
+
                                 resp.status(400).send({
                                     type: 'unsuccessfull_attempts',
                                     message: 'User temporary blocked for 15 minutes due to 3 unsuccessful login attempts.'
@@ -452,6 +456,9 @@ router.post('/authenticate', async function (req, resp, next) {
                             }
                         } else {
                             if (await blockLoginAttempt(username, 'increment')) {
+                                
+                                let email = sendTempBlockEmail(req)
+
                                 resp.status(400).send({
                                     type: 'unsuccessfull_attempts',
                                     message: 'User temporary blocked for 15 minutes due to 3 unsuccessful login attempts.'
@@ -535,8 +542,33 @@ async function getClientInfo(req){
     return new Promise(resolve=>{
         let data = Bowser.parse(req.headers['user-agent'])
         data['client_ip'] = req.headers['x-forwarded-for'];
+        data['username'] = req.body.username.toLowerCase()
         resolve(data)
     })
+}
+
+async function sendTempBlockEmail(req){
+    let clientInfo = await getClientInfo(req)
+
+    //Send block email call
+    var options = {
+        method: 'POST',
+        url: 'https://app.digiebot.com/admin/Api_calls/send_temp_block_email',
+        headers: {
+            'cache-control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Accept-Encoding': 'gzip, deflate',
+            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control': 'no-cache',
+            'Accept': '*/*',
+            'User-Agent': 'PostmanRuntime/7.20.1',
+            'Content-Type': 'application/json'
+        },
+        json: clientInfo
+    };
+    request(options, function (error, response, body) { });
+
+    return true
 }
 
 /****************** Google Authentication //Umer Abbas [5-4-20] *******************/
