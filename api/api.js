@@ -10,6 +10,8 @@ var auth = require('basic-auth')
 var compare = require('tsscmp')
 var googleAuthenticator = require('authenticator');
 
+const Bowser = require("bowser");
+
 var digie_admin_ids = [
     '5c0912b7fc9aadaac61dd072', //admin
     // '5c3a4986fc9aad6bbd55b4f2',
@@ -523,6 +525,19 @@ router.post('/resetPassword', async function (req, resp) {
     })
 }) //End of resetPassword
 
+
+router.get('/myTest2', async (req,res)=>{
+    console.log(await getClientInfo(req))
+    res.send({ data: await getClientInfo(req) })
+})
+
+async function getClientInfo(req){
+    return new Promise(resolve=>{
+        let data = Bowser.parse(req.headers['user-agent'])
+        data['client_ip'] = String(req.connection.remoteAddress).replace("::ffff:", '');
+        resolve(data)
+    })
+}
 
 /****************** Google Authentication //Umer Abbas [5-4-20] *******************/
 //generateGoogleAuthSecret
