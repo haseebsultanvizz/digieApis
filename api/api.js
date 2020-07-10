@@ -10217,7 +10217,7 @@ router.post('/getNotifications', (req, res) => {
             if (notifications.length > 0 || latest_notification.length > 0) {
                 res.send({
                     'status': true,
-                    'notifications': notifications,
+                    'notifications': notifications.length > 0 ? notifications : latest_notification,
                     'latest_notification': latest_notification,
                     'message': 'Notifications found successfully'
                 });
