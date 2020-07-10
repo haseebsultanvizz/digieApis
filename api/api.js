@@ -11206,6 +11206,49 @@ async function createAutoTradeParents(settings){
     })
 }
 
+async function get_active_parent_coins_arr(user_id, exchange, application_mode) {
+    return new Promise( (resolve) => {
+        conn.then(async (db) => {
+            let collection_name = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange  
+            let coins = await db.collection(collection_name).aggregate([
+                {
+                    $match: {
+                        'admin_id': user_id,
+                        'application_mode': application_mode,
+                        'status': { '$ne': 'canceled' },
+                        'parent_status': 'parent',
+                    }
+                },
+                {
+                    $group: {
+                        '_id': "$symbol",
+                        'symbol': { '$first': '$symbol' },
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        symbol: {
+                            $push: '$symbol'
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        symbol: 1,
+                    }
+                },
+            ], { allowDiskUse: true }).toArray()
+            if(coins.length > 0){
+                resolve(coins[0]['symbol'])
+            }else{
+                resolve([])
+            }
+        })
+    })
+}
+
 async function createAutoTradeParentsNow(user_id, exchange, application_mode) {
     return new Promise(async (resolve) => {
         conn.then(async (db) => {
@@ -11739,6 +11782,85 @@ async function resetAutoTradeGenerator(user_id, exchange, application_mode) {
         })
     })
 }
+
+
+//getRemainingTestBalance
+router.post('/getRemainingTestBalance', async (req, res) => {
+
+    let user_id = req.body.user_id
+    let exchange = req.body.exchange
+    let application_mode = 'test'
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '') {
+
+        let data = await getRemainingTestBalance(user_id, exchange, application_mode)
+        if(data){
+            res.send({
+                status: true,
+                data: data,
+                message: 'Test balance found successfully.'
+            });
+        }else{
+            res.send({
+                status: false,
+                message: 'Test not found.'
+            });
+        }
+    } else {
+        res.send({
+            status: false,
+            message: 'user_id and exchange are required.'
+        });
+    }
+
+})//end getRemainingTestBalance
+
+async function getRemainingTestBalance(user_id, exchange, application_mode) {
+    return new Promise(async (resolve) => {
+        conn.then(async (db) => {
+            //TODO: ATG settings created date 
+            let atgSettings = await getAutoTradeSettings(user_id, exchange, application_mode)
+            if (atgSettings){
+                if (typeof atgSettings[0]['created_date'] != 'undefined' && atgSettings[0]['created_date'] != ''){
+                    let created_date = atgSettings[0]['created_date']
+                    //TODO: get all sold orders after atg_created_date
+                    let where = {}
+                    where['admin_id'] = user_id
+                    where['application_mode'] = application_mode
+                    where['$or'] = [
+                        { 'resume_status': 'completed' },
+                        { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false } }
+                    ]
+                    where['show_order'] = { '$ne': 'no' }
+                    where['created_date'] = { '$gte': created_date }
+                    var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+                    var orderArr = await db.collection(collectionName).find(where).project({ 'symbol': 1, 'market_sold_price': 1}).toArray()
+                    
+                    console.log('total orders', orderArr.length)
+                    
+                    if(orderArr.length > 0){
+                        let count = orderArr.length
+
+                        let btc_qty =  0
+                        for(let i=0; i<count; i++){
+
+
+
+                        }
+
+                        resolve(true)
+                    }else{
+                        resolve(false)
+                    }
+                }else{
+                    resolve(false)
+                }
+            }else{
+                resolve(false)
+            }
+        })
+    })
+}
+
 
 //getOpenBalance
 router.post('/getOpenBalance', async (req, res) => {
@@ -13356,7 +13478,10 @@ async function  updateDailyTradeSettings(user_id, exchange, application_mode='li
     // console.log('new trade balnce settings ', settingsArr)
 
     if (settingsArr.length > 0){
-        let coins = settingsArr[0]['step_2']['coins']
+
+        let coins = await get_active_parent_coins_arr(user_id, exchange, application_mode)
+        // let coins = settingsArr[0]['step_2']['coins']
+        // console.log('coins', coins)
 
         if(coins.length > 0){
 
