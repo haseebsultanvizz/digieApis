@@ -10182,7 +10182,7 @@ router.post('/getNotifications', (req, res) => {
         let skip = req.body.skip
         let limit = req.body.limit
         let load_more = req.body.load_more
-        let sort = {'_id': -1}
+        let sort = {'created_date': -1}
 
         if (typeof admin_id == 'undefined' || admin_id == '') {
             res.send({
