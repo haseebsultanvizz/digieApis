@@ -332,7 +332,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             }
 
                             let exchangesArr = await getUserExchangesWithAPISet(String(userArr['_id']))
-                            if (exchangesArr.length > 0) {
+                            if (exchangesArr.length > 0 && app_mode != 'test' && app_mode != '') {
                                 check_api_settings = 'yes';
                                 app_mode = 'live'
                             }
@@ -417,7 +417,7 @@ router.post('/authenticate', async function (req, resp, next) {
                                 }
 
                                 let exchangesArr = await getUserExchangesWithAPISet(String(userArr['_id']))
-                                if (exchangesArr.length > 0) {
+                                if (exchangesArr.length > 0 && app_mode != 'test' && app_mode != '') {
                                     check_api_settings = 'yes';
                                     app_mode = 'live'
                                 }
