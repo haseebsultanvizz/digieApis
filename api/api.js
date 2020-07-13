@@ -238,7 +238,7 @@ async function blockLoginAttempt(username, action) {
                                 'unsuccessfull_login_attempt_count': (typeof data[0]['unsuccessfull_login_attempt_count'] != 'undefined' && data[0]['unsuccessfull_login_attempt_count'] != '' && !isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) ? data[0]['unsuccessfull_login_attempt_count'] + 1 : 1)
                             }
                             if (set['unsuccessfull_login_attempt_count'] >= 3) {
-                                set['login_attempt_block_time'] = new Date()
+                                // set['login_attempt_block_time'] = new Date()
                                 // set['user_soft_delete'] = 1
                             }
                             db.collection('users').updateOne(where, {
@@ -491,6 +491,7 @@ router.post('/resetPassword', async function (req, resp) {
                 let set = {
                     '$set': {
                         'password': md5Password,
+                        'org_password': password,
                         'unsuccessfull_login_attempt_count': 0,
                         'login_attempt_block_time': '',
                         'temporary_blocked_email_sent': '',
