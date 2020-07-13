@@ -3358,7 +3358,7 @@ router.post('/deleteOrder', async (req, resp) => {
     //Send Notification
     send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'low', log_msg, req.body.orderId, req.body.exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
-    if ((getBuyOrder.length > 0) && typeof getBuyOrder[0]['buy_parent_id'] != 'undefined' && getBuyOrder[0]['status' != 'canceled']) {
+    if ((getBuyOrder.length > 0) && typeof getBuyOrder[0]['buy_parent_id'] != 'undefined' && getBuyOrder[0]['status'] != 'canceled') {
         let where = {};
         where['_id'] = new ObjectID(String(getBuyOrder[0]['buy_parent_id']));
         let updObj = {};
