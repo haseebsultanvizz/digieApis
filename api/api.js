@@ -3358,14 +3358,25 @@ router.post('/deleteOrder', async (req, resp) => {
     //Send Notification
     send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'low', log_msg, req.body.orderId, req.body.exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
-    if ((getBuyOrder.length > 0) && typeof getBuyOrder[0]['buy_parent_id'] != 'undefined' && getBuyOrder[0]['status'] != 'canceled') {
-        let where = {};
-        where['_id'] = new ObjectID(String(getBuyOrder[0]['buy_parent_id']));
-        let updObj = {};
-        updObj['status'] = 'new';
-        let exchange = req.body.exchange
-        let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        let updPromise = updateOne(where, updObj, collection);
+    if ((getBuyOrder.length > 0) && typeof getBuyOrder[0]['buy_parent_id'] != 'undefined') {
+
+        // find parent order and check if parent is already canceled
+        var parentOrder = await listOrderById(String(getBuyOrder[0]['buy_parent_id']), req.body.exchange);
+
+        if ((parentOrder.length > 0) && typeof parentOrder[0]['status'] != 'undefined' && parentOrder[0]['status'] != 'canceled') {
+
+            let where = {};
+            where['_id'] = new ObjectID(String(getBuyOrder[0]['buy_parent_id']));
+            let updObj = {};
+            updObj['status'] = 'new';
+            updObj['pause_status'] = 'play';
+            updObj['modified_date'] = new Date()
+            let exchange = req.body.exchange
+            let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            let updPromise = updateOne(where, updObj, collection);
+
+        }
+
     }
 
     resp.status(200).send({
