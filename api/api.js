@@ -1336,6 +1336,10 @@ router.post('/createManualOrder', (req, resp) => {
             orders['sell_price'] = ''
             orders['profit_price'] = ''
         }
+        
+        if (typeof orders['auto_sell'] != 'undefined' && orders['auto_sell'] == 'yes') {
+            orders['is_sell_order'] = 'yes'
+        }
 
         //set profit percentage if sell price is fixed
         if (orders['profit_type'] == 'fixed_price') {
@@ -1419,6 +1423,10 @@ router.post('/createManualOrder', (req, resp) => {
                     if (typeof orders['auto_sell'] == 'undefined' || orders['auto_sell'] == 'no') {
                         tempOrder['sell_price'] = ''
                         tempOrder['profit_price'] = ''
+                    }
+
+                    if (typeof orders['auto_sell'] != 'undefined' && orders['auto_sell'] == 'yes') {
+                        tempOrder['is_sell_order'] = 'yes'
                     }
 
                     // //set profit percentage if sell price is fixed
