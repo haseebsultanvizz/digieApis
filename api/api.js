@@ -3811,7 +3811,7 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
             var insert_arr = {};
             insert_arr['order_id'] = order_id;
             insert_arr['quantity'] = quantity;
-            insert_arr['market_price'] = market_price;
+            insert_arr['market_price'] = parseFloat(market_price);
             insert_arr['coin_symbol'] = coin_symbol;
             insert_arr['admin_id'] = admin_id;
             insert_arr['buy_orders_id'] = buy_orders_id;
@@ -3824,11 +3824,11 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
             insert_arr['modified_date'] = new Date();
             let collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange;
 
-            console.log('insert_arr', insert_arr);
+            // console.log('insert_arr', insert_arr);
 
             db.collection(collection).insertOne(insert_arr, (err, result) => {
 
-                console.log('result', result);
+                // console.log('result', result);
 
                 if (err) {
                     resolve(err)
