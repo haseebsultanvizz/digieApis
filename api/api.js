@@ -3379,6 +3379,15 @@ router.post('/deleteOrder', async (req, resp) => {
 
     }
 
+
+    //delete order from this collection also
+    if (exchange == 'kraken' && getBuyOrder.length > 0){
+        conn.then(async (db) => {
+            let deleted = await db.collection('ready_orders_for_buy_ip_based_kraken').deleteOne({ 'buy_order_id': getBuyOrder[0]['_id']})
+        })
+    }
+
+
     resp.status(200).send({
         message: promiseResponse
     });
