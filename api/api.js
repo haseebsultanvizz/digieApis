@@ -225,7 +225,7 @@ async function blockLoginAttempt(username, action) {
                                 let login_block_expiry = new Date(login_attempt_block_time.getTime() + 15 * 60000);
                                 let current_time = new Date()
                                 // console.log(login_block_expiry, '  =================  ', current_time)
-                                if (login_block_expiry >= current_time) {
+                                if (login_block_expiry >= current_time && (!isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) && data[0]['unsuccessfull_login_attempt_count'] >= 3) ) {
                                     resolve(true)
                                 } else {
                                     blockLoginAttempt(username, 'reset')
