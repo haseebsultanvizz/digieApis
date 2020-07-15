@@ -3463,6 +3463,7 @@ router.post('/orderMoveToLth', async (req, resp) => {
     if (typeof buyOrderObj['buy_parent_id'] != 'undefined') {
         let where = {};
         where['_id'] = new ObjectID(String(buyOrderObj['buy_parent_id']));
+        where['status'] = {'$ne': 'canceled'};
         let updObj = {};
         updObj['status'] = 'new';
         let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
