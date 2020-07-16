@@ -1377,6 +1377,13 @@ router.post('/createManualOrder', (req, resp) => {
             orders['lth_profit'] = ''
         }
 
+
+        //add these fields in kraken order array
+        if(exchange == 'kraken'){
+            orders['defined_sell_percentage'] = typeof orders['sell_profit_percent'] != 'undefined' ? orders['sell_profit_percent'] : ''
+            orders['custom_stop_loss_percentage'] = typeof orders['loss_percentage'] != 'undefined' ? orders['loss_percentage'] : ''
+        }
+
         //collection on the base of exchange
         var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         //create buy order
@@ -1476,6 +1483,13 @@ router.post('/createManualOrder', (req, resp) => {
 
                     tempOrder['created_date'] = new Date();
                     tempOrder['buy_order_id'] = buyOrderId;
+
+                    //add these fields in kraken order array
+                    if (exchange == 'kraken') {
+                        tempOrder['defined_sell_percentage'] = typeof tempOrder['sell_profit_percent'] != 'undefined' ? tempOrder['sell_profit_percent'] : '' 
+                        tempOrder['custom_stop_loss_percentage'] = typeof tempOrder['loss_percentage'] != 'undefined' ? tempOrder['loss_percentage'] : '' 
+                    }
+
                     //Temp sell order collection on the base of exchange 
                     var tempCollection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
 
@@ -6397,6 +6411,14 @@ router.post('/updateManualOrder', async (req, resp) => {
     var upsert = {
         'upsert': true
     };
+
+
+    //add these fields in kraken order array
+    if (exchange == 'kraken') {
+        buyorderArr['defined_sell_percentage'] = typeof buyorderArr['sell_profit_percent'] != 'undefined' ? buyorderArr['sell_profit_percent'] : ''
+        buyorderArr['custom_stop_loss_percentage'] = typeof buyorderArr['loss_percentage'] != 'undefined' ? buyorderArr['loss_percentage'] : ''
+    }
+
     var updPromise = updateSingle(buy_order_collection, where, buyorderArr, upsert);
     updPromise.then((callback) => {});
 
@@ -6456,6 +6478,14 @@ router.post('/updateManualOrder', async (req, resp) => {
         var upsert = {
             'upsert': true
         };
+
+
+        //add these fields in kraken order array
+        if (exchange == 'kraken') {
+            sellOrderArr['defined_sell_percentage'] = typeof sellOrderArr['sell_profit_percent'] != 'undefined' ? sellOrderArr['sell_profit_percent'] : ''
+            sellOrderArr['custom_stop_loss_percentage'] = typeof sellOrderArr['loss_percentage'] != 'undefined' ? sellOrderArr['loss_percentage'] : ''
+        }
+
         var updPromise_1 = updateSingle(orders_collection, where_1, sellOrderArr, upsert);
         updPromise_1.then((callback) => {});
     }
@@ -6518,6 +6548,14 @@ router.post('/updateManualOrder', async (req, resp) => {
         var upsert = {
             'upsert': true
         };
+
+
+        //add these fields in kraken order array
+        if (exchange == 'kraken') {
+            tempOrderArr['defined_sell_percentage'] = typeof tempOrderArr['sell_profit_percent'] != 'undefined' ? tempOrderArr['sell_profit_percent'] : ''
+            tempOrderArr['custom_stop_loss_percentage'] = typeof tempOrderArr['loss_percentage'] != 'undefined' ? tempOrderArr['loss_percentage'] : ''
+        }
+
         var updPromise_2 = updateSingle(temp_sell_order_collection, where_2, tempOrderArr, upsert);
         updPromise_2.then((callback) => {})
     }else{
@@ -6577,6 +6615,12 @@ router.post('/updateManualOrder', async (req, resp) => {
             sellOrderArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
         }
 
+        //add these fields in kraken order array
+        if (exchange == 'kraken') {
+            sellOrderArr['defined_sell_percentage'] = typeof sellOrderArr['sell_profit_percent'] != 'undefined' ? sellOrderArr['sell_profit_percent'] : ''
+            sellOrderArr['custom_stop_loss_percentage'] = typeof sellOrderArr['loss_percentage'] != 'undefined' ? sellOrderArr['loss_percentage'] : ''
+        }
+
         //function to set manual order for sell
         var sellOrderId = await setForSell(sellOrderArr, exchange, buy_order_id);
 
@@ -6633,6 +6677,14 @@ router.post('/updateManualOrder', async (req, resp) => {
             '$in': [buyOrderId, new ObjectID(buyOrderId)]
         }
         updArr['modified_date'] = new Date();
+
+
+        //add these fields in kraken order array
+        if (exchange == 'kraken') {
+            updArr['defined_sell_percentage'] = typeof updArr['sell_profit_percent'] != 'undefined' ? updArr['sell_profit_percent'] : ''
+            updArr['custom_stop_loss_percentage'] = typeof updArr['loss_percentage'] != 'undefined' ? updArr['loss_percentage'] : ''
+        }
+
         var updPrmise = updateOne(where, updArr, collection);
         updPrmise.then((callback) => { })
 
@@ -6699,6 +6751,13 @@ router.post('/setForSell', async (req, resp) => {
 
     let exchange = req.body.exchange;
     let buyOrderId = req.body.buyOrderId;
+
+    //add these fields in kraken order array
+    if (exchange == 'kraken') {
+        sellOrderArr['defined_sell_percentage'] = typeof sellOrderArr['sell_profit_percent'] != 'undefined' ? sellOrderArr['sell_profit_percent'] : ''
+        sellOrderArr['custom_stop_loss_percentage'] = typeof sellOrderArr['loss_percentage'] != 'undefined' ? sellOrderArr['loss_percentage'] : ''
+    }
+
     //function to set manual order for sell
     var sellOrderId = await setForSell(sellOrderArr, exchange, buy_order_id);
 
@@ -6749,6 +6808,14 @@ router.post('/setForSell', async (req, resp) => {
     where['_id'] = {
         '$in': [buyOrderId, new ObjectID(buyOrderId)]
     }
+
+
+    //add these fields in kraken order array
+    if (exchange == 'kraken') {
+        updArr['defined_sell_percentage'] = typeof updArr['sell_profit_percent'] != 'undefined' ? updArr['sell_profit_percent'] : ''
+        updArr['custom_stop_loss_percentage'] = typeof updArr['loss_percentage'] != 'undefined' ? updArr['loss_percentage'] : ''
+    }
+
     updArr['modified_date'] = new Date();
     var updPrmise = updateOne(where, updArr, collection);
     updPrmise.then((callback) => {})
