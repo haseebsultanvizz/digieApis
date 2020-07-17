@@ -1015,7 +1015,7 @@ function listCurrentMarketPrice(coin, exchange) {
             conn.then((db) => {
                 let where = {};
                 where['coin'] = coin;
-                db.collection('market_prices_node_bam').find(where).toArray((err, result) => {
+                db.collection('market_prices_bam').find(where).toArray((err, result) => {
                     if (err) {
                         resolve(err);
                     } else {
@@ -1950,7 +1950,7 @@ function listCurrentMarketPriceArr(coin, exchange) {
             conn.then((db) => {
                 let where = {};
                 where['coin'] = coin;
-                db.collection('market_prices_node_bam').find(where).toArray((err, result) => {
+                db.collection('market_prices_bam').find(where).toArray((err, result) => {
                     if (err) {
                         resolve(err);
                     } else {
@@ -7552,7 +7552,7 @@ function listBamCurrentMarketPrice(coin) {
         conn.then((db) => {
             let where = {};
             where['coin'] = coin;
-            db.collection('market_prices_node_bam').find(where).toArray((err, result) => {
+            db.collection('market_prices_bam').find(where).toArray((err, result) => {
                 if (err) {
                     resolve(err);
                 } else {
