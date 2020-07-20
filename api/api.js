@@ -3258,7 +3258,8 @@ function togglePausePlayOrder(orderId, status, exchange) {
             filter['_id'] = new ObjectID(orderId);
             let set = {};
             set['$set'] = {
-                'pause_status': status
+                'pause_status': status,
+                'modified_date': new Date()
             }
             let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             db.collection(collection).updateOne(filter, set, (err, result) => {
