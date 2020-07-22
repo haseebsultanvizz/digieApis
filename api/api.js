@@ -11482,33 +11482,24 @@ async function calculateNumberOfTradesPerDay(dailyTradeable, totalTradeAbleInUSD
 
     let minQtyUsd = 15
 
-    // let packageArr = [
-    //     {
-    //         'limit': 1000,
-    //         'arr': [5, 3, 1],
-    //     },
-    //     {
-    //         'limit': 2500,
-    //         'arr': [9, 7, 5, 3, 1],
-    //     },
-    //     {
-    //         'limit': 5000,
-    //         'arr': [11, 9, 7, 5, 3, 1],
-    //     },
-    // ]
-    
+
+
     let packageArr = [
         {
             'limit': 1000,
-            'arr': [5, 3, 1],
+            'arr': [5, 4, 3, 2, 1],
         },
         {
             'limit': 2500,
-            'arr': [7, 5, 3, 1],
+            'arr': [5, 4, 3, 2, 1],
         },
         {
             'limit': 5000,
-            'arr': [7, 5, 3, 1],
+            'arr': [5, 4, 3, 2, 1],
+        },
+        {
+            'limit': 20000,
+            'arr': [5, 4, 3, 2, 1],
         },
     ]
 
@@ -11641,6 +11632,10 @@ async function calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBT
             },
             {
                 'limit': 5000,
+                'arr': [5, 4, 3, 2, 1],
+            },
+            {
+                'limit': 20000,
                 'arr': [5, 4, 3, 2, 1],
             },
         ]
