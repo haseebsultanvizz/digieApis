@@ -1756,6 +1756,25 @@ router.post('/editAutoOrder', async (req, resp) => {
 
     var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
     delete order['orderId'];
+    
+    // if custom_stop_loss positive then only update target profit and sell price fields
+    let tttOrder = {}
+    let tpPrice = 0
+    let itsPrice = 0
+    if (buyOrderArr.length > 0){
+        tpPrice = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && !isNaN(parseFloat(buyOrderArr[0]['purchased_price'])) ? parseFloat(buyOrderArr[0]['purchased_price']) : 0);
+        itsPrice = (typeof buyOrderArr[0]['iniatial_trail_stop'] != 'undefined' && !isNaN(parseFloat(buyOrderArr[0]['iniatial_trail_stop'])) ? parseFloat(buyOrderArr[0]['iniatial_trail_stop']) : 0);
+
+            if (itsPrice > tpPrice){
+                tttOrder['sell_price'] =  order['sell_price'] 
+                tttOrder['sell_profit_percent'] = order['sell_profit_percent']
+                tttOrder['defined_sell_percentage'] = order['defined_sell_percentage']
+                tttOrder['modified_date'] = new Date()
+                order = {}
+                order = tttOrder
+            }
+        }
+
     var where = {};
     where['_id'] = new ObjectID(orderId);
     var updPrmise = updateOne(where, order, collection);
@@ -1770,6 +1789,13 @@ router.post('/editAutoOrder', async (req, resp) => {
         let sell_order = {
             'sell_price': order['sell_price']
         }
+        
+        // if custom_stop_loss positive then only update target profit and sell price fields
+        if (itsPrice > tpPrice){
+            sell_order = {}
+            sell_order = tttOrder
+        }
+
         where['_id'] = new ObjectID(String(buyOrderArr[0]['sell_order_id']));
         var updPrmise = updateOne(where, sell_order, sell_collection);
         updPrmise.then((callback) => {})
