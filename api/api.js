@@ -9270,6 +9270,7 @@ router.post('/resume_order_test', (req, res) => {
                     "resume_date",
                     "sold_buy_order_id",
                     "resume_order_arr",
+                    "direct_resume",
                 ]
                 var resumeCount = 0;
                 var resumeI;
@@ -9441,6 +9442,7 @@ router.post('/resume_already_paused_test', (req, res) => {
                     "resume_date",
                     "sold_buy_order_id",
                     "resume_order_arr",
+                    "direct_resume",
                 ]
                 var resumeCount = 0;
                 var resumeI;
@@ -9604,6 +9606,7 @@ router.post('/pause_lth_order_test', (req, res) => {
                     "resume_date",
                     "sold_buy_order_id",
                     "resume_order_arr",
+                    "direct_resume",
                 ]
                 var resumeCount = 0;
                 var resumeI;
@@ -9753,6 +9756,7 @@ router.post('/pause_sold_order_test', (req, res) => {
                     "resume_date",
                     "sold_buy_order_id",
                     "resume_order_arr",
+                    "direct_resume",
                 ]
                 var resumeCount = 0;
                 var resumeI;
