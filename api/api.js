@@ -1727,9 +1727,14 @@ router.post('/editAutoOrder', async (req, resp) => {
         if (typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent'){
             //Do nothing
         }else{
-            order['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+            var ttt_purchased_price = parseFloat(buyOrderArr[0]['purchased_price'])
+            var ttt_iniatial_trail_stop = parseFloat(buyOrderArr[0]['iniatial_trail_stop'])
+            if (!isNaN(ttt_iniatial_trail_stop) && !isNaN(ttt_purchased_price) && ttt_iniatial_trail_stop > ttt_purchased_price){
+                order['iniatial_trail_stop'] = parseFloat(purchased_price) + parseFloat(loss_price);    
+            }else{
+                order['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+            }
         }
-
     } else {
         order['stop_loss'] = 'no'
         order['loss_percentage'] = ''
