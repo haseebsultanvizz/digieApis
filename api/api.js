@@ -12638,8 +12638,9 @@ async function getBnbBuyHistory(user_id, exchange) {
     return new Promise((resolve) => {
         conn.then(async (db) => {
             let where = {'user_id': user_id}
+            let sort = { 'created_date': -1 }
             let collectionName = exchange == 'binance' ? 'auto_buy_history' : 'auto_buy_history_' + exchange
-            let hsitory = await db.collection(collectionName).find(where).limit(20).toArray()
+            let hsitory = await db.collection(collectionName).find(where).sort(sort).limit(20).toArray()
             resolve(hsitory)
         })
     })
