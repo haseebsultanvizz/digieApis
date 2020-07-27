@@ -2304,7 +2304,8 @@ router.post('/listOrderListing', async (req, resp) => {
     // filter_8['is_sell_order'] = 'sold';
     // filter_8['$or'] = [{ 'resume_status': 'completed'}];
     filter_8['$or'] = [
-        { 'resume_status': 'completed', 'resumed_parent_buy_order_id': { '$exists': true } },
+        // { 'resume_status': 'completed', 'resumed_parent_buy_order_id': { '$exists': true } },
+        { 'resume_status': 'completed'},
         { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false } }
     ];
     if (!digie_admin_ids.includes(admin_id)) {
@@ -3016,7 +3017,8 @@ async function listOrderListing(postDAta, dbConnection) {
         // filter['status'] = 'FILLED'
         // filter['is_sell_order'] = 'sold';
         filter['$or'] = [
-            { 'resume_status': 'completed', 'resumed_parent_buy_order_id': { '$exists': true } }, 
+            { 'resume_status': 'completed' }, 
+            // { 'resume_status': 'completed', 'resumed_parent_buy_order_id': { '$exists': true } }, 
             { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
         ];
         if (!digie_admin_ids.includes(postDAta.admin_id)){
