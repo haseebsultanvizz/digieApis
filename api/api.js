@@ -2304,7 +2304,7 @@ router.post('/listOrderListing', async (req, resp) => {
     // filter_8['is_sell_order'] = 'sold';
     // filter_8['$or'] = [{ 'resume_status': 'completed'}];
     filter_8['$or'] = [
-        { 'resume_status': 'completed' },
+        { 'resume_status': 'completed', 'resumed_parent_buy_order_id': { '$exists': true } },
         { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false } }
     ];
     if (!digie_admin_ids.includes(admin_id)) {
@@ -2776,6 +2776,11 @@ router.post('/listOrderListing', async (req, resp) => {
         }
         
         if (typeof orderListing[index].resume_status != 'undefined' && orderListing[index].resume_status == 'completed') {
+
+            resumePL = parseFloat(resumePL) 
+            resumePlClass = resumePL > 0 ? 'success' : 'danger'
+            order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"> <b>' + resumePL.toFixed(2) + '%</b></span>'
+
             htmlStatus = '<span class="badge badge-success" style="margin-left:4px;">Resume Completed</span>';
         }
 
@@ -3011,7 +3016,7 @@ async function listOrderListing(postDAta, dbConnection) {
         // filter['status'] = 'FILLED'
         // filter['is_sell_order'] = 'sold';
         filter['$or'] = [
-            { 'resume_status': 'completed' }, 
+            { 'resume_status': 'completed', 'resumed_parent_buy_order_id': { '$exists': true } }, 
             { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
         ];
         if (!digie_admin_ids.includes(postDAta.admin_id)){
@@ -13840,6 +13845,82 @@ async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, applica
 }
 
 /* End CRON SCRIPT for update Actual TradeAble BTC/USDT and total Tradeable in USD  */
+
+
+
+
+//get_latest_buy_sell_details
+router.post('/get_latest_buy_sell_details', async (req, res) => {
+    let exchange = req.body.exchange 
+    let admin_id = req.body.user_id
+    if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
+
+        conn.then(async (db) => {
+            let where1 = { 
+                'admin_id': admin_id,
+                'application_mode': 'live',
+                'buy_date':{'$exists':true},
+             }
+             let project1 = {
+                 'admin_id':1,
+                 'application_mode':1,
+                 'symbol':1,
+                 'quantity':1,
+                 'purchased_price':1,
+                 'buy_date':1,
+             }
+            let sort1 = { 'buy_date': -1 }
+            let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+            let buyPromise = db.collection(buyCollection).find(where1).sort(sort1).project(project1).limit(10).toArray()
+            
+            let where2 = {
+                'admin_id': admin_id,
+                'application_mode': 'live',
+                'sell_date': { '$exists': true },
+            }
+            let project2 = {
+                'admin_id': 1,
+                'application_mode': 1,
+                'symbol': 1,
+                'quantity': 1,
+                'purchased_price': 1,
+                'market_sold_price': 1,
+                'buy_date': 1,
+                'sell_date': 1,
+            }
+            let sort2 = { 'sell_date': -1 }
+            let soldCollection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+            let soldPromise = db.collection(soldCollection).find(where1).sort(sort1).project(project2).limit(10).toArray()
+
+            let myPromise = await Promise.all([buyPromise, soldPromise])
+
+            let tempOrders = myPromise[0].concat(myPromise[1])
+            
+            let orders = [] 
+            tempOrders.map(order=>{
+                order['t_date'] = typeof order['sell_date'] != 'undefined' ? order['sell_date'] : order['buy_date']
+                orders.push(order) 
+            })
+            
+            orders.sort(function (a, b) {
+                return new Date(b.t_date) - new Date(a.t_date);
+            });
+            orders = orders.slice(0, 10);
+
+            res.send({
+                status: true,
+                data: orders,
+                message: 'Data found successfully',
+            })
+
+        })
+    } else {
+        res.send({
+            status: false,
+            message: 'exchange and user_id are required',
+        })
+    }
+})//end get_latest_buy_sell_details
 
 
 router.get('/req_info', async (req, res) => {
