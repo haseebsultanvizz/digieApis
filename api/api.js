@@ -2305,7 +2305,8 @@ router.post('/listOrderListing', async (req, resp) => {
     // filter_8['$or'] = [{ 'resume_status': 'completed'}];
     filter_8['$or'] = [
         // { 'resume_status': 'completed', 'resumed_parent_buy_order_id': { '$exists': true } },
-        { 'resume_status': 'completed'},
+        // { 'resume_status': 'completed'},
+        { 'resume_status': 'completed', 'trading_status': 'complete' },
         { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false } }
     ];
     if (!digie_admin_ids.includes(admin_id)) {
@@ -2785,6 +2786,38 @@ router.post('/listOrderListing', async (req, resp) => {
             htmlStatus = '<span class="badge badge-success" style="margin-left:4px;">Resume Completed</span>';
         }
 
+        if (postDAta.status == 'sold') {
+
+            if (typeof orderListing[index].resume_order_arr != 'undefined' && orderListing[index].resume_order_arr != null && orderListing[index].resume_order_arr.length > 0) {
+                resumePL = 0
+                await Promise.all(orderListing[index].resume_order_arr.map(item => {
+                    resumePL = parseFloat(resumePL) + parseFloat(item.resumeLossPercentage)
+                }))
+            }
+
+            let lastRow1 = false
+            if (typeof orderListing[index].status != 'undefined' && (orderListing[index].status == 'pause' || orderListing[index].status == 'FILLED') && typeof orderListing[index].is_sell_order != 'undefined' && (orderListing[index].is_sell_order == 'pause' || orderListing[index].is_sell_order == 'resume_pause')) {
+                lastRow1 = true
+                //sold check
+            } else if (typeof orderListing[index].is_sell_order != 'undefined' && orderListing[index].is_sell_order == 'sold') {
+                lastRow1 = true
+            }
+
+            let pl = 0
+            if (lastRow1) {
+                let sell_p = typeof orderListing[index].last_sell != 'undefined' && orderListing[index].last_sell != '' ? orderListing[index].last_sell : orderListing[index].market_sold_price
+                let purchase_p = typeof orderListing[index].last_purchase != 'undefined' && orderListing[index].last_purchase != '' ? orderListing[index].last_purchase : orderListing[index].purchased_price
+                sell_p = parseFloat(sell_p)
+                purchase_p = parseFloat(purchase_p)
+                pl = parseFloat((((sell_p - purchase_p) / purchase_p) * 100).toFixed(2));
+                pl = !isNaN(pl) ? pl : 0
+            }
+
+            resumePL = parseFloat(resumePL) + parseFloat(pl)
+            resumePlClass = resumePL > 0 ? 'success' : 'danger'
+            order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"> <b>' + resumePL.toFixed(2) + '%</b></span>'
+        }
+
         order['childProfitLossPercentageHtml'] = childProfitLossPercentageHtml
 
 
@@ -3017,8 +3050,9 @@ async function listOrderListing(postDAta, dbConnection) {
         // filter['status'] = 'FILLED'
         // filter['is_sell_order'] = 'sold';
         filter['$or'] = [
-            { 'resume_status': 'completed' }, 
+            // { 'resume_status': 'completed' }, 
             // { 'resume_status': 'completed', 'resumed_parent_buy_order_id': { '$exists': true } }, 
+            { 'resume_status': 'completed', 'trading_status': 'complete' }, 
             { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
         ];
         if (!digie_admin_ids.includes(postDAta.admin_id)){
