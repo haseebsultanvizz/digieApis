@@ -7920,7 +7920,8 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
 router.post('/validate_kraken_credentials', async (req, resp) => {
     let APIKEY = req.body.APIKEY;
     let APISECRET = req.body.APISECRET;
-    var credentials = await validate_kraken_credentials(APIKEY, APISECRET);
+    let user_id = req.body.user_id;
+    var credentials = await validate_kraken_credentials(APIKEY, APISECRET, user_id);
     resp.status(200).send({
         message: credentials
     });
@@ -7929,59 +7930,40 @@ router.post('/validate_kraken_credentials', async (req, resp) => {
 function validate_kraken_credentials(APIKEY, APISECRET, user_id = '') {
     return new Promise((resolve, reject) => {
 
-        const KrakenClient = require('kraken-api');
-        const kraken = new KrakenClient(APIKEY, APISECRET);
-
-        kraken.api('Balance', function (error, balances) {
+        var options = {
+            method: 'POST',
+            url: 'http://34.199.235.34:3200/updateUserBalance',
+            headers: {
+                'cache-control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Accept-Encoding': 'gzip, deflate',
+                'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                'Cache-Control': 'no-cache',
+                'Accept': '*/*',
+                'User-Agent': 'PostmanRuntime/7.20.1',
+                'Content-Type': 'application/json'
+            },
+            json: {
+                'validating': true,
+                'user_id': user_id,
+                'api_key': APIKEY,
+                'api_secret': APISECRET,
+            }
+        };
+        request(options, function (error, response, body) {
+            // console.log(body)
             if (error) {
-                //invalid Credentials
-                let where = {
-                    'api_key': APIKEY,
-                    'api_secret': APISECRET
-                }
-                if (user_id != '') {
-                    where['user_id'] = user_id
-                }
-                let set = {
-                    '$set': {
-                        'status': 'credentials_error'
-                    }
-                }
-                conn.then(async (db) => {
-                    await db.collection('kraken_credentials').updateOne(where, set)
-                })
-
                 let message = {};
                 message['status'] = 'error';
-                message['message'] = error.body;
+                message['message'] = 'Something went wrong';
                 resolve(message);
             } else {
-
-                //valid Credentials
-                let where = {
-                    'api_key': APIKEY,
-                    'api_secret': APISECRET
-                }
-                if (user_id != '') {
-                    where['user_id'] = user_id
-                }
-                let set = {
-                    '$set': {
-                        'status': 'active'
-                    }
-                }
-                conn.then(async (db) => {
-                    await db.collection('kraken_credentials').updateOne(where, set)
-                })
-
-                // let updateWallet = update_user_balance(user_id)
-
                 let message = {};
-                message['status'] = 'success';
-                message['message'] = balances;
+                message['status'] = (body['success'] == true || body['success'] == 'true'? 'success' : 'error');
+                message['message'] = (body['success'] == true || body['success'] == 'true' ? 'Api key secret is valid' : 'Invalid Api key secret');
                 resolve(message);
             }
-        })
+        });
 
     })
 } //End of validate_kraken_credentials
@@ -10332,7 +10314,8 @@ async function update_user_balance(user_id) {
     //Update Kraken Balance
     var options = {
         method: 'POST',
-        url: 'http://34.205.124.51:3100/updateUserBalanceKraken',
+        // url: 'http://34.205.124.51:3100/updateUserBalanceKraken',
+        url: 'http://34.199.235.34:3200/updateUserBalance',
         headers: {
             'cache-control'   : 'no-cache',
             'Connection'      : 'keep-alive',
