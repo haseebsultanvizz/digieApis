@@ -2319,16 +2319,12 @@ router.post('/listOrderListing', async (req, resp) => {
     var filter_8 = {};
     filter_8['admin_id'] = admin_id;
     filter_8['application_mode'] = application_mode;
-    // filter_8['is_sell_order'] = 'sold';
-    // filter_8['$or'] = [{ 'resume_status': 'completed'}];
     filter_8['$or'] = [
-        // { 'resume_status': 'completed', 'resumed_parent_buy_order_id': { '$exists': true } },
-        // { 'resume_status': 'completed'},
         { 'resume_status': 'completed', 'trading_status': 'complete' },
         { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false } }
     ];
     if (!digie_admin_ids.includes(admin_id)) {
-        filter_8['show_order'] = {'$ne': 'no'};
+        filter_8['$or'][0]['show_order'] = 'yes'
     }
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
@@ -3065,16 +3061,12 @@ async function listOrderListing(postDAta, dbConnection) {
     }
 
     if (postDAta.status == 'sold') {
-        // filter['status'] = 'FILLED'
-        // filter['is_sell_order'] = 'sold';
         filter['$or'] = [
-            // { 'resume_status': 'completed' }, 
-            // { 'resume_status': 'completed', 'resumed_parent_buy_order_id': { '$exists': true } }, 
             { 'resume_status': 'completed', 'trading_status': 'complete' }, 
             { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
         ];
         if (!digie_admin_ids.includes(postDAta.admin_id)){
-            filter['show_order'] = { '$ne': 'no' };
+            filter['$or'][0]['show_order'] = 'yes'
         }
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
