@@ -1685,6 +1685,8 @@ router.post('/editAutoOrder', async (req, resp) => {
     var defined_sell_percentage = order['defined_sell_percentage'];
     //get order detail which you want to update
     var buyOrderArr = await listOrderById(orderId, exchange);
+    var ttt_is_custom_stop_loss_possitive = typeof buyOrderArr[0]['stop_loss_type'] != 'undefined' && buyOrderArr[0]['stop_loss_type'] == 'positive' ? true : false
+
     var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0]['purchased_price'] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
     var status = buyOrderArr[0]['status'];
     //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
@@ -1729,7 +1731,7 @@ router.post('/editAutoOrder', async (req, resp) => {
         }else{
             var ttt_purchased_price = parseFloat(buyOrderArr[0]['purchased_price'])
             var ttt_iniatial_trail_stop = parseFloat(buyOrderArr[0]['iniatial_trail_stop'])
-            if (!isNaN(ttt_iniatial_trail_stop) && !isNaN(ttt_purchased_price) && ttt_iniatial_trail_stop > ttt_purchased_price){
+            if (!isNaN(ttt_iniatial_trail_stop) && !isNaN(ttt_purchased_price) && (ttt_iniatial_trail_stop > ttt_purchased_price || ttt_is_custom_stop_loss_possitive)){
                 order['iniatial_trail_stop'] = parseFloat(purchased_price) + parseFloat(loss_price);    
             }else{
                 order['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
@@ -1781,7 +1783,7 @@ router.post('/editAutoOrder', async (req, resp) => {
                     } else {
                         var ttt_purchased_price = parseFloat(buyOrderArr[0]['purchased_price'])
                         var ttt_iniatial_trail_stop = parseFloat(loss_price)
-                        if (!isNaN(ttt_iniatial_trail_stop) && !isNaN(ttt_purchased_price) && ttt_iniatial_trail_stop > ttt_purchased_price) {
+                        if (!isNaN(ttt_iniatial_trail_stop) && !isNaN(ttt_purchased_price) && (ttt_iniatial_trail_stop > ttt_purchased_price || ttt_is_custom_stop_loss_possitive)) {
                             tttOrder['iniatial_trail_stop'] = parseFloat(purchased_price) + parseFloat(loss_price);
                         } else {
                             tttOrder['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
