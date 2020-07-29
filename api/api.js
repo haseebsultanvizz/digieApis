@@ -13989,6 +13989,68 @@ router.post('/get_latest_buy_sell_details', async (req, res) => {
     }
 })//end get_latest_buy_sell_details
 
+//getParentsGridData
+router.post('/getParentsGridData', async (req, res) => {
+    let admin_id = req.body.user_id
+    let exchange = req.body.exchange 
+    let application_mode = req.body.application_mode
+    if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined' && typeof application_mode != 'undefined' && typeof application_mode != 'undefined') {
+
+        conn.then(async (db) => {
+            let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange 
+            
+            let where = {
+                'admin_id': admin_id,
+                'application_mode': application_mode,
+                'parent_status': 'parent',
+                'status': {
+                    '$in': ['new', 'takingOrder']
+                }
+            }
+
+            let result = await db.collection(collectionName).aggregate([
+                {
+                    '$match': where,
+                },
+                {
+                    '$group': {
+                        '_id': { 'symbol': '$symbol' },
+                        'levels': { '$push': '$order_level' },
+                    }
+                }
+            ]).toArray()
+
+            let count = result.length
+            
+            let resArr = []
+            if(count > 0){
+                for(let i=0; i<count; i++){
+                    let obj = {}
+                    obj['coin'] = result[i]['_id']['symbol']
+                    for(let j=1; j<=20; j++){
+                        let currLevel = 'level_'+j
+                        let currLevelsArr = result[i]['levels'].filter(item => { return item == currLevel }) 
+                        obj[currLevel] = currLevelsArr.length
+                    }
+                    resArr.push(obj)
+                }
+            }
+
+            res.send({
+                status: true,
+                data: resArr,
+                message: 'Data found successfully',
+            })
+
+        })
+    } else {
+        res.send({
+            status: false,
+            message: 'exchange and user_id, and application_mode are required',
+        })
+    }
+})//end getParentsGridData
+
 
 router.get('/req_info', async (req, res) => {
     var ip = req.headers['x-forwarded-for'] ||
