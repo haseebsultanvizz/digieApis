@@ -7748,6 +7748,42 @@ router.post('/saveKrakenCredentials', (req, resp) => {
 
 }) //End of saveKrakenCredentials
 
+//save kraken credentials from setting component
+router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
+    var user_id = req.body.user_id;
+    var api_key = req.body.api_key_secondary;
+    var api_secret = req.body.api_secret_secondary;
+
+    conn.then((db) => {
+        let insertArr = {};
+        insertArr['user_id'] = user_id;
+        insertArr['api_key_secondary'] = api_key;
+        insertArr['api_secret_secondary'] = api_secret;
+        let set = {};
+        set['$set'] = insertArr;
+        let where = {};
+        where['user_id'] = user_id; {
+            upsert: true
+        }
+        let upsert = {
+            upsert: true
+        };
+        db.collection('kraken_credentials').updateOne(where, set, upsert, (err, result) => {
+            if (err) {
+                console.log(err);
+            } else {
+                let validation = validate_kraken_credentials(api_key, api_secret, user_id)
+                resp.status(200).send({
+                    "success": "true",
+                    "message": "Credentials Updated Successfully"
+                })
+            }
+        })
+    })
+
+
+}) //End of saveKrakenCredentialsSecondary
+
 router.post('/getBamCredentials', async (req, resp) => {
     var user_id = req.body.user_id;
     var bamCredentials = await getBamCredentials(user_id);
