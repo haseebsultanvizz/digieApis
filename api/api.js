@@ -11209,6 +11209,7 @@ async function createAutoTradeParents(settings){
         let lth_profit = step4.lth_profit
         let lth_functionality = step4.lth_functionality
         let cancel_previous_parents = step4.cancel_previous_parents
+        let remove_duplicates = step4.remove_duplicates
 
         let coinsWorthArr = await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
         // console.log('coinsWorthArr ', coinsWorthArr)
@@ -11262,6 +11263,8 @@ async function createAutoTradeParents(settings){
         let coninsCount = coins.length
 
         let tempParentsArr = []
+
+        let keepParentIdsArr = []
 
         for(let i=0; i<coninsCount; i++){
 
@@ -11419,6 +11422,12 @@ async function createAutoTradeParents(settings){
                                     // console.log('Inserted_id ', result.upsertedId._id)
                                     await db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, {'$set': remainingFields}, (err, result) => {})
 
+                                    keepParentIdsArr.push(result.upsertedId._id)
+                                    //TODO: cancel duplicate orders if loop end here
+                                    if (typeof remove_duplicates != 'undefined' && remove_duplicates == 'yes' && (coins.length * bots.length) == keepParentIdsArr.length) {
+                                        let removeDuplicateParents = removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode, keepParentIdsArr)
+                                    }
+                                    
                                     //TODO: insert parent creation log
                                     let show_hide_log = 'yes'
                                     let type = 'parent_created_by_ATG'
@@ -11434,6 +11443,12 @@ async function createAutoTradeParents(settings){
                                     if (result2.length > 0) {
                                         // console.log('modified_id ', String(result2[0]['_id']))
 
+                                        //TODO: cancel duplicate orders if loop end here
+                                        keepParentIdsArr.push(result2[0]['_id'])
+                                        if (typeof remove_duplicates != 'undefined' && remove_duplicates == 'yes' && (coins.length * bots.length) == keepParentIdsArr.length) {
+                                            let removeDuplicateParents = removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode, keepParentIdsArr)
+                                        }
+                                        
                                         //TODO: insert parent creation log
                                         let show_hide_log = 'yes'
                                         let type = 'parent_updated_by_ATG_manually'
@@ -11558,6 +11573,12 @@ async function createAutoTradeParents(settings){
                                     // console.log('Inserted_id ', result.upsertedId._id)
                                     await db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields }, (err, result) => { })
 
+                                    keepParentIdsArr.push(result.upsertedId._id)
+                                    //TODO: cancel duplicate orders if loop end here
+                                    if (typeof remove_duplicates != 'undefined' && remove_duplicates == 'yes' && (coins.length * bots.length) == keepParentIdsArr.length) {
+                                        let removeDuplicateParents = removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode, keepParentIdsArr)
+                                    }
+
                                     //TODO: insert parent creation log
                                     let show_hide_log = 'yes'
                                     let type = 'parent_created_by_ATG'
@@ -11573,6 +11594,12 @@ async function createAutoTradeParents(settings){
                                     if (result2.length > 0) {
                                         // console.log('modified_id ', String(result2[0]['_id']))
 
+                                        keepParentIdsArr.push(result2[0]['_id'])
+                                        //TODO: cancel duplicate orders if loop end here
+                                        if (typeof remove_duplicates != 'undefined' && remove_duplicates == 'yes' && (coins.length * bots.length) == keepParentIdsArr.length) {
+                                            let removeDuplicateParents = removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode, keepParentIdsArr)
+                                        }
+                                        
                                         //TODO: insert parent creation log
                                         let show_hide_log = 'yes'
                                         let type = 'parent_updated_by_ATG_manually'
@@ -11617,6 +11644,71 @@ async function createAutoTradeParents(settings){
         resolve(true)
         
     })
+}
+
+async function removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode, keepParentIdsArr){
+
+    //TODO: Remove duplicate parents and only keep these parents 
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != 'undefined' && typeof keepParentIdsArr != 'undefined' && keepParentIdsArr.length > 0) {
+
+        conn.then(async (db) => {
+
+            let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange 
+
+            let where = {
+                'auto_trade_generator': 'yes',
+                'admin_id': user_id,
+                'application_mode': application_mode,
+                'parent_status': 'parent',
+                'status': { '$ne': 'canceled' },
+            }
+            let result = await db.collection(collectionName).find(where).sort({ 'modified_date': -1 }).project({ '_id': 1, 'order_level': 1, 'symbol': 1 }).toArray()
+
+            let duplicateTestObj = {}
+            let parentIdsToDelete = []
+            result.map(item => {
+                let duplicateKey = item.symbol + '_' + item.order_level
+                if (!(duplicateKey in duplicateTestObj)) {
+                    duplicateTestObj[duplicateKey] = item._id
+                } else {
+                    parentIdsToDelete.push(item._id)
+                }
+            })
+
+            let filter = {
+                '_id': { '$in': parentIdsToDelete},
+                'auto_trade_generator': 'yes',
+                'admin_id': user_id,
+                'application_mode': application_mode,
+                'parent_status': 'parent',
+                'status': { '$ne': 'canceled' },
+            };
+            let set = {};
+            set['$set'] = {
+                'status': 'canceled',
+                'pause_status': 'pause',
+                'pause_by_script': 'no',
+                'modified_date': new Date()
+            };
+            let parents = await db.collection(collectionName).find(filter).project({ '_id': 1, 'application_mode': 1, 'created_date': 1 }).toArray()
+            if (parents.length > 0) {
+                let deleted = await db.collection(collectionName).updateMany(filter, set)
+
+                parents.map(item => {
+                    // TODO: set vars to create log
+                    let show_hide_log = 'yes';
+                    let type = 'canceled_by_auto_trade_generator_duplicate';
+                    let order_mode = item['application_mode'];
+                    let order_created_date = item['created_date'];
+                    let log_msg = 'Duplicate Parent canceled.'
+                    //Save LOG
+                    let promiseLog = create_orders_history_log(item['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                    promiseLog.then((callback) => { })
+                })
+            }
+        })
+    }
+    return true
 }
 
 async function get_active_parent_coins_arr(user_id, exchange, application_mode) {
