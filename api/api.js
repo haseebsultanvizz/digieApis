@@ -1730,11 +1730,15 @@ router.post('/editAutoOrder', async (req, resp) => {
             //Do nothing
         }else{
             var ttt_purchased_price = parseFloat(buyOrderArr[0]['purchased_price'])
-            var ttt_iniatial_trail_stop = parseFloat(buyOrderArr[0]['iniatial_trail_stop'])
-            if (!isNaN(ttt_iniatial_trail_stop) && !isNaN(ttt_purchased_price) && (ttt_iniatial_trail_stop > ttt_purchased_price || ttt_is_custom_stop_loss_possitive)){
-                order['iniatial_trail_stop'] = parseFloat(purchased_price) + parseFloat(loss_price);    
-            }else{
-                order['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+            // var ttt_iniatial_trail_stop = parseFloat(buyOrderArr[0]['iniatial_trail_stop'])
+            if (typeof order['iniatial_trail_stop'] != 'undefined' ){
+                var ttt_iniatial_trail_stop = parseFloat(order['iniatial_trail_stop'])
+                
+                if (!isNaN(ttt_iniatial_trail_stop) && !isNaN(ttt_purchased_price) && (ttt_iniatial_trail_stop > ttt_purchased_price || ttt_is_custom_stop_loss_possitive)){
+                    order['iniatial_trail_stop'] = parseFloat(purchased_price) + parseFloat(loss_price);    
+                }else{
+                    order['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+                }
             }
         }
     } else {
@@ -1770,10 +1774,11 @@ router.post('/editAutoOrder', async (req, resp) => {
     let itsPrice = 0
     if (buyOrderArr.length > 0){
         tpPrice = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && !isNaN(parseFloat(buyOrderArr[0]['purchased_price'])) ? parseFloat(buyOrderArr[0]['purchased_price']) : 0);
-        itsPrice = (typeof buyOrderArr[0]['iniatial_trail_stop'] != 'undefined' && !isNaN(parseFloat(buyOrderArr[0]['iniatial_trail_stop'])) ? parseFloat(buyOrderArr[0]['iniatial_trail_stop']) : 0);
+        // itsPrice = (typeof buyOrderArr[0]['iniatial_trail_stop'] != 'undefined' && !isNaN(parseFloat(buyOrderArr[0]['iniatial_trail_stop'])) ? parseFloat(buyOrderArr[0]['iniatial_trail_stop']) : 0);
+        itsPrice = (typeof order['iniatial_trail_stop'] != 'undefined' && !isNaN(parseFloat(order['iniatial_trail_stop'])) ? parseFloat(order['iniatial_trail_stop']) : 0);
 
-            if (itsPrice > tpPrice){
-                let tt_CSLP = parseFloat(parseFloat(buyOrderArr[0]['custom_stop_loss_percentage']).toFixed(1))
+        if (itsPrice > tpPrice && typeof order['custom_stop_loss_percentage'] != 'undefined'){
+                let tt_CSLP = parseFloat(parseFloat(order['custom_stop_loss_percentage']).toFixed(1))
                 if (!isNaN(tt_CSLP)){
                     //update initial_trail_price from order array CSL percentage
                     let loss_price = (parseFloat(buyOrderArr[0]['purchased_price']) * tt_CSLP) / 100;
