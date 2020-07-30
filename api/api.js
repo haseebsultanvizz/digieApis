@@ -3510,6 +3510,7 @@ function deleteOrder(orderId, exchange) {
             set['$set'] = {
                 'status': 'canceled',
                 'pause_status': 'pause',
+                'pause_by_script': 'no',
                 'modified_date': new Date()
             };
 
@@ -11227,6 +11228,7 @@ async function createAutoTradeParents(settings){
                 set['$set'] = {
                     'status': 'canceled',
                     'pause_status': 'pause',
+                    'pause_by_script': 'no',
                     'modified_date': new Date()
                 };
                 let parents = await db.collection(collectionName).find(filter).project({ '_id': 1, 'application_mode': 1, 'created_date':1}).toArray()
@@ -11276,6 +11278,7 @@ async function createAutoTradeParents(settings){
             extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
             var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
             var minReqQty = 0;
+            var minReqUsdWorth = 0;
             minReqQty = (calculatedMinNotation / currentMarketPrice);
 
             if (exchange == 'kraken') {
@@ -11300,8 +11303,14 @@ async function createAutoTradeParents(settings){
             
             if (splitArr[1] == '') {
                 oneUsdWorthQty = 1 / currentMarketPrice
+                
+                minReqUsdWorth = minReqQty * currentMarketPrice 
+                minReqUsdWorth = parseFloat(minReqUsdWorth.toFixed(2))
             } else {
                 oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
+
+                minReqUsdWorth = minReqQty * currentMarketPrice * BTCUSDTPRICE
+                minReqUsdWorth = parseFloat(minReqUsdWorth.toFixed(2))
             }
 
             usd_worth = parseFloat(usd_worth.toFixed(2))
@@ -11326,7 +11335,7 @@ async function createAutoTradeParents(settings){
                         'status': 'new',
                         'trigger_type': 'barrier_percentile_trigger',
                         'pause_status': 'play',
-                        'usd_worth': usd_worth,
+                        'usd_worth': minReqUsdWorth,
                         'parent_status': 'parent',
                         'exchange': exchange,
                         'defined_sell_percentage': profit_percentage,
@@ -11352,10 +11361,89 @@ async function createAutoTradeParents(settings){
                     // console.log(parentObj)
                     conn.then(async (db) => {
                         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-                        let ins = await db.collection(collectionName).insertOne(parentObj, (err, result)=>{
+
+                        let where1 = {
+                            'auto_trade_generator': 'yes',
+                            'admin_id': user_id,
+                            'order_mode': application_mode,
+                            'application_mode': application_mode,
+                            'order_level': level,
+                            'symbol': coin,
+                            'parent_status': 'parent',
+                            'order_type': 'market_order',
+                            'trigger_type': 'barrier_percentile_trigger',
+                            'exchange': exchange,
+                        }
+                        let set1 = {
+                            '$set': {
+                                'market_value': '',
+                                'price': '',
+                                'quantity': minReqQty,
+                                'usd_worth': minReqUsdWorth,
+                                'defined_sell_percentage': profit_percentage,
+                                'sell_profit_percent': profit_percentage,
+                                'current_market_price': currentMarketPrice,
+                                'stop_loss_rule': typeof stop_loss != 'undefined' && stop_loss == 'yes' ? 'custom_stop_loss' : '',
+                                'custom_stop_loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
+                                'loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
+                                'activate_stop_loss_profit_percentage': 100,
+                                'lth_functionality': typeof lth_functionality != 'undefined' ? lth_functionality : '',
+                                'lth_profit': typeof lth_profit != 'undefined' ? lth_profit : '',
+                                'stop_loss': typeof stop_loss != 'undefined' ? stop_loss : '',
+                                'un_limit_child_orders': 'no',
+                                'modified_date': new Date(),
+                                'is_sell_order': 'no',
+                                'sell_price': '',
+                            }
+                        }
+                        let upsert1 = {
+                            'upsert': true
+                        }
+
+                        let ins = await db.collection(collectionName).updateOne(where1, set1, upsert1, async (err, result)=>{
+                            
+                        // let ins = await db.collection(collectionName).insertOne(parentObj, (err, result)=>{
                             if(err){
                                 //console.log(err)
                             }else{
+
+                                if (result.upsertedCount > 0) {
+                                    let remainingFields = {
+                                        'market_value': '',
+                                        'price': '',
+                                        'status': 'new',
+                                        'pause_status': 'play',
+                                        'created_date': set1['$set']['modified_date'],
+                                    }
+                                    //get Id and update remaining fields
+                                    // console.log('Inserted_id ', result.upsertedId._id)
+                                    await db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, {'$set': remainingFields}, (err, result) => {})
+
+                                    //TODO: insert parent creation log
+                                    let show_hide_log = 'yes'
+                                    let type = 'parent_created_by_ATG'
+                                    let log_msg = 'Parent created from auto trade generator.'
+                                    let order_mode = application_mode
+                                    var promiseLog = create_orders_history_log(result.upsertedId._id, log_msg, type, show_hide_log, exchange, order_mode, remainingFields['created_date'])
+                                    promiseLog.then((callback) => { })
+
+
+                                } else if (result.modifiedCount > 0) {
+
+                                    let result2 = await db.collection(collectionName).find(where1).limit(1).toArray()
+                                    if (result2.length > 0) {
+                                        // console.log('modified_id ', String(result2[0]['_id']))
+
+                                        //TODO: insert parent creation log
+                                        let show_hide_log = 'yes'
+                                        let type = 'parent_updated_by_ATG_manually'
+                                        let log_msg = 'Parent updated from auto trade generator manually.'
+                                        let order_mode = application_mode
+                                        var promiseLog = create_orders_history_log(result2[0]['_id'], log_msg, type, show_hide_log, exchange, order_mode, result2[0]['created_date'])
+                                        promiseLog.then((callback) => { })
+                                    }
+                                }
+                                
                                 //TODO: insert parent creation log
                                 let show_hide_log = 'yes'
                                 let type = 'parent_created_by_ATG'
@@ -11365,6 +11453,7 @@ async function createAutoTradeParents(settings){
                                 promiseLog.then((callback) => { })
                             }
                         })
+
                     })
 
                 })
@@ -11411,17 +11500,96 @@ async function createAutoTradeParents(settings){
                     // console.log(parentObj)
                     conn.then(async (db) => {
                         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-                        let ins = await db.collection(collectionName).insertOne(parentObj, (err, result) => {
+
+                        let where1 = {
+                            'auto_trade_generator': 'yes',
+                            'admin_id': user_id,
+                            'order_mode': application_mode,
+                            'application_mode': application_mode,
+                            'order_level': level,
+                            'symbol': coin,
+                            'parent_status': 'parent',
+                            'order_type': 'market_order',
+                            'trigger_type': 'barrier_percentile_trigger',
+                            'exchange': exchange,
+                        }
+                        let set1 = {
+                            '$set': {
+                                'market_value': '',
+                                'price': '',
+                                'quantity': quantity,
+                                'usd_worth': usd_worth,
+                                'defined_sell_percentage': profit_percentage,
+                                'sell_profit_percent': profit_percentage,
+                                'current_market_price': currentMarketPrice,
+                                'stop_loss_rule': typeof stop_loss != 'undefined' && stop_loss == 'yes' ? 'custom_stop_loss' : '',
+                                'custom_stop_loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
+                                'loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
+                                'activate_stop_loss_profit_percentage': 100,
+                                'lth_functionality': typeof lth_functionality != 'undefined' ? lth_functionality : '',
+                                'lth_profit': typeof lth_profit != 'undefined' ? lth_profit : '',
+                                'stop_loss': typeof stop_loss != 'undefined' ? stop_loss : '',
+                                'un_limit_child_orders': 'no',
+                                'modified_date': new Date(),
+                                'is_sell_order': 'no',
+                                'sell_price': '',
+                            }
+                        }
+                        let upsert1 = {
+                            'upsert': true
+                        }
+
+                        let ins = await db.collection(collectionName).updateOne(where1, set1, upsert1, async (err, result) => {
+
+                            // let ins = await db.collection(collectionName).insertOne(parentObj, (err, result)=>{
                             if (err) {
                                 //console.log(err)
                             } else {
-                                //TODO: insert parent creation log
+
+                                if (result.upsertedCount > 0) {
+                                    let remainingFields = {
+                                        'market_value': '',
+                                        'price': '',
+                                        'status': 'new',
+                                        'pause_status': 'play',
+                                        'created_date': set1['$set']['modified_date'],
+                                    }
+                                    //get Id and update remaining fields
+                                    // console.log('Inserted_id ', result.upsertedId._id)
+                                    await db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields }, (err, result) => { })
+
+                                    //TODO: insert parent creation log
+                                    let show_hide_log = 'yes'
+                                    let type = 'parent_created_by_ATG'
+                                    let log_msg = 'Parent created from auto trade generator.'
+                                    let order_mode = application_mode
+                                    var promiseLog = create_orders_history_log(result.upsertedId._id, log_msg, type, show_hide_log, exchange, order_mode, remainingFields['created_date'])
+                                    promiseLog.then((callback) => { })
+
+
+                                } else if (result.modifiedCount > 0) {
+
+                                    let result2 = await db.collection(collectionName).find(where1).limit(1).toArray()
+                                    if (result2.length > 0) {
+                                        // console.log('modified_id ', String(result2[0]['_id']))
+
+                                        //TODO: insert parent creation log
+                                        let show_hide_log = 'yes'
+                                        let type = 'parent_updated_by_ATG_manually'
+                                        let log_msg = 'Parent updated from auto trade generator manually.'
+                                        let order_mode = application_mode
+                                        var promiseLog = create_orders_history_log(result2[0]['_id'], log_msg, type, show_hide_log, exchange, order_mode, result2[0]['created_date'])
+                                        promiseLog.then((callback) => { })
+                                    }
+                                }
+
+                                /* //TODO: insert parent creation log
                                 let show_hide_log = 'yes'
                                 let type = 'parent_created_by_ATG'
                                 let log_msg = 'Parent created from auto trade generator.'
                                 let order_mode = application_mode
                                 var promiseLog = create_orders_history_log(result.insertedId, log_msg, type, show_hide_log, exchange, order_mode, parentObj['created_date'])
-                                promiseLog.then((callback) => { })
+                                promiseLog.then((callback) => { }) */
                             }
                         })
                     })
@@ -11525,6 +11693,7 @@ async function createAutoTradeParentsNow(user_id, exchange, application_mode) {
                             set['$set'] = {
                                 'status': 'canceled',
                                 'pause_status': 'pause',
+                                'pause_by_script': 'no',
                                 'modified_date': new Date()
                             };
                             let parents = await db.collection(collectionName).find(filter).project({ '_id': 1, 'application_mode': 1, 'created_date': 1 }).toArray()
@@ -11990,6 +12159,7 @@ async function resetAutoTradeGenerator(user_id, exchange, application_mode) {
             set['$set'] = {
                 'status': 'canceled',
                 'pause_status': 'pause',
+                'pause_by_script': 'no',
                 'modified_date': new Date()
             };
             let buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
@@ -12967,6 +13137,7 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                                     //Pause parent
                                     updateFields = {
                                         'pause_status': 'pause',
+                                        'pause_by_script': 'yes',
                                         'modified_date': new Date()
                                     }
                                     let where22 = { '_id': order['_id'] }
