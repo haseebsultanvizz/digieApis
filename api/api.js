@@ -1790,8 +1790,12 @@ router.post('/editAutoOrder', async (req, resp) => {
                         var ttt_iniatial_trail_stop = parseFloat(loss_price)
                         if (!isNaN(ttt_iniatial_trail_stop) && !isNaN(ttt_purchased_price) && (ttt_iniatial_trail_stop > ttt_purchased_price || ttt_is_custom_stop_loss_possitive)) {
                             tttOrder['iniatial_trail_stop'] = parseFloat(purchased_price) + parseFloat(loss_price);
+                            tttOrder['custom_stop_loss_percentage'] = tt_CSLP;
+                            tttOrder['loss_percentage'] = tt_CSLP;
                         } else {
                             tttOrder['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+                            tttOrder['custom_stop_loss_percentage'] = tt_CSLP;
+                            tttOrder['loss_percentage'] = tt_CSLP;
                         }
                     }
                 }
