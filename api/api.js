@@ -11376,6 +11376,7 @@ async function createAutoTradeParents(settings){
                             'order_type': 'market_order',
                             'trigger_type': 'barrier_percentile_trigger',
                             'exchange': exchange,
+                            'status': { '$ne': 'canceled' },
                         }
                         let set1 = {
                             '$set': {
@@ -11407,7 +11408,7 @@ async function createAutoTradeParents(settings){
                             
                         // let ins = await db.collection(collectionName).insertOne(parentObj, (err, result)=>{
                             if(err){
-                                //console.log(err)
+                                console.log(err)
                             }else{
 
                                 if (result.upsertedCount > 0) {
@@ -11419,7 +11420,7 @@ async function createAutoTradeParents(settings){
                                         'created_date': set1['$set']['modified_date'],
                                     }
                                     //get Id and update remaining fields
-                                    // console.log('Inserted_id ', result.upsertedId._id)
+                                    console.log('Inserted_id ', result.upsertedId._id)
                                     await db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, {'$set': remainingFields}, (err, result) => {})
 
                                     keepParentIdsArr.push(result.upsertedId._id)
@@ -11441,7 +11442,7 @@ async function createAutoTradeParents(settings){
 
                                     let result2 = await db.collection(collectionName).find(where1).limit(1).toArray()
                                     if (result2.length > 0) {
-                                        // console.log('modified_id ', String(result2[0]['_id']))
+                                        console.log('modified_id ', String(result2[0]['_id']))
 
                                         //TODO: cancel duplicate orders if loop end here
                                         keepParentIdsArr.push(result2[0]['_id'])
@@ -11527,6 +11528,7 @@ async function createAutoTradeParents(settings){
                             'order_type': 'market_order',
                             'trigger_type': 'barrier_percentile_trigger',
                             'exchange': exchange,
+                            'status': { '$ne': 'canceled' },
                         }
                         let set1 = {
                             '$set': {
@@ -11558,7 +11560,7 @@ async function createAutoTradeParents(settings){
 
                             // let ins = await db.collection(collectionName).insertOne(parentObj, (err, result)=>{
                             if (err) {
-                                //console.log(err)
+                                console.log(err)
                             } else {
 
                                 if (result.upsertedCount > 0) {
@@ -11570,7 +11572,7 @@ async function createAutoTradeParents(settings){
                                         'created_date': set1['$set']['modified_date'],
                                     }
                                     //get Id and update remaining fields
-                                    // console.log('Inserted_id ', result.upsertedId._id)
+                                    console.log('Inserted_id ', result.upsertedId._id)
                                     await db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields }, (err, result) => { })
 
                                     keepParentIdsArr.push(result.upsertedId._id)
@@ -11592,7 +11594,7 @@ async function createAutoTradeParents(settings){
 
                                     let result2 = await db.collection(collectionName).find(where1).limit(1).toArray()
                                     if (result2.length > 0) {
-                                        // console.log('modified_id ', String(result2[0]['_id']))
+                                        console.log('modified_id ', String(result2[0]['_id']))
 
                                         keepParentIdsArr.push(result2[0]['_id'])
                                         //TODO: cancel duplicate orders if loop end here
