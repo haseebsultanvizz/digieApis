@@ -1765,39 +1765,22 @@ router.post('/editAutoOrder', async (req, resp) => {
     
     // if custom_stop_loss positive then only update target profit and sell price fields
     let tttOrder = {}
-    let tpPrice = 0
-    let itsPrice = 0
     if (buyOrderArr.length > 0){
-        tpPrice = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && !isNaN(parseFloat(buyOrderArr[0]['purchased_price'])) ? parseFloat(buyOrderArr[0]['purchased_price']) : 0);
-        // itsPrice = (typeof buyOrderArr[0]['iniatial_trail_stop'] != 'undefined' && !isNaN(parseFloat(buyOrderArr[0]['iniatial_trail_stop'])) ? parseFloat(buyOrderArr[0]['iniatial_trail_stop']) : 0);
-        itsPrice = (typeof order['iniatial_trail_stop'] != 'undefined' && !isNaN(parseFloat(order['iniatial_trail_stop'])) ? parseFloat(order['iniatial_trail_stop']) : 0);
-
-        console.log('itsPrice ', itsPrice)
-
         if (ttt_is_custom_stop_loss_possitive && typeof order['custom_stop_loss_percentage'] != 'undefined'){
             
             let tt_CSLP = parseFloat(parseFloat(order['custom_stop_loss_percentage']).toFixed(1))
             if (!isNaN(tt_CSLP)){
-                console.log('22222222 ', itsPrice)
                 //update initial_trail_price from order array CSL percentage
                 let loss_price = (parseFloat(buyOrderArr[0]['purchased_price']) * tt_CSLP) / 100;
                 
                 if (typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent') {
                     //Do nothing
                 } else {
-                    console.log('33333333333 ', itsPrice)
-                        var ttt_purchased_price = parseFloat(buyOrderArr[0]['purchased_price'])
-                        var ttt_iniatial_trail_stop = parseFloat(loss_price)
                         if (ttt_is_custom_stop_loss_possitive) {
                             tttOrder['iniatial_trail_stop'] = parseFloat(purchased_price) + parseFloat(loss_price);
                             tttOrder['custom_stop_loss_percentage'] = tt_CSLP;
                             tttOrder['loss_percentage'] = tt_CSLP;
-
-                            console.log('positive  -----------')
-                            
                         } else {
-                            console.log('negative  ******')
-
                             tttOrder['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
                             tttOrder['custom_stop_loss_percentage'] = tt_CSLP;
                             tttOrder['loss_percentage'] = tt_CSLP;
@@ -1833,7 +1816,7 @@ router.post('/editAutoOrder', async (req, resp) => {
         }
         
         // if custom_stop_loss positive then only update target profit and sell price fields
-        if (itsPrice > tpPrice){
+        if (ttt_is_custom_stop_loss_possitive){
             sell_order = {}
             sell_order = tttOrder
         }
