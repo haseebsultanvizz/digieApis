@@ -1685,7 +1685,7 @@ router.post('/editAutoOrder', async (req, resp) => {
     var defined_sell_percentage = order['defined_sell_percentage'];
     //get order detail which you want to update
     var buyOrderArr = await listOrderById(orderId, exchange);
-    var ttt_is_custom_stop_loss_possitive = typeof buyOrderArr[0]['stop_loss_type'] != 'undefined' && buyOrderArr[0]['stop_loss_type'] == 'positive' ? true : false
+    var ttt_is_custom_stop_loss_possitive = typeof order['stop_loss_type'] != 'undefined' && order['stop_loss_type'] == 'positive' ? true : false
 
     var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0]['purchased_price'] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
     var status = buyOrderArr[0]['status'];
@@ -1723,18 +1723,13 @@ router.post('/editAutoOrder', async (req, resp) => {
         order['loss_percentage'] = parseFloat(parseFloat(order['custom_stop_loss_percentage']).toFixed(1))
         order['custom_stop_loss_percentage'] = order['loss_percentage']
 
-        // let purchased_price = !isNaN(parseFloat(purchased_price)) ? parseFloat(purchased_price) : parseFloat(buyOrderArr[0]['price'])
         let loss_price = (parseFloat(purchased_price) * parseFloat(order['loss_percentage'])) / 100;
 
         if (typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent'){
             //Do nothing
         }else{
-            var ttt_purchased_price = parseFloat(buyOrderArr[0]['purchased_price'])
-            // var ttt_iniatial_trail_stop = parseFloat(buyOrderArr[0]['iniatial_trail_stop'])
-            if (typeof order['iniatial_trail_stop'] != 'undefined' ){
-                var ttt_iniatial_trail_stop = parseFloat(order['iniatial_trail_stop'])
-                
-                if (!isNaN(ttt_iniatial_trail_stop) && !isNaN(ttt_purchased_price) && (ttt_iniatial_trail_stop > ttt_purchased_price || ttt_is_custom_stop_loss_possitive)){
+            if (typeof order['iniatial_trail_stop'] != 'undefined'){
+                if (ttt_is_custom_stop_loss_possitive){
                     order['iniatial_trail_stop'] = parseFloat(purchased_price) + parseFloat(loss_price);    
                 }else{
                     order['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
@@ -1777,22 +1772,32 @@ router.post('/editAutoOrder', async (req, resp) => {
         // itsPrice = (typeof buyOrderArr[0]['iniatial_trail_stop'] != 'undefined' && !isNaN(parseFloat(buyOrderArr[0]['iniatial_trail_stop'])) ? parseFloat(buyOrderArr[0]['iniatial_trail_stop']) : 0);
         itsPrice = (typeof order['iniatial_trail_stop'] != 'undefined' && !isNaN(parseFloat(order['iniatial_trail_stop'])) ? parseFloat(order['iniatial_trail_stop']) : 0);
 
-        if (itsPrice > tpPrice && typeof order['custom_stop_loss_percentage'] != 'undefined'){
-                let tt_CSLP = parseFloat(parseFloat(order['custom_stop_loss_percentage']).toFixed(1))
-                if (!isNaN(tt_CSLP)){
-                    //update initial_trail_price from order array CSL percentage
-                    let loss_price = (parseFloat(buyOrderArr[0]['purchased_price']) * tt_CSLP) / 100;
+        console.log('itsPrice ', itsPrice)
 
-                    if (typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent') {
-                        //Do nothing
-                    } else {
+        if (ttt_is_custom_stop_loss_possitive && typeof order['custom_stop_loss_percentage'] != 'undefined'){
+            
+            let tt_CSLP = parseFloat(parseFloat(order['custom_stop_loss_percentage']).toFixed(1))
+            if (!isNaN(tt_CSLP)){
+                console.log('22222222 ', itsPrice)
+                //update initial_trail_price from order array CSL percentage
+                let loss_price = (parseFloat(buyOrderArr[0]['purchased_price']) * tt_CSLP) / 100;
+                
+                if (typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent') {
+                    //Do nothing
+                } else {
+                    console.log('33333333333 ', itsPrice)
                         var ttt_purchased_price = parseFloat(buyOrderArr[0]['purchased_price'])
                         var ttt_iniatial_trail_stop = parseFloat(loss_price)
-                        if (!isNaN(ttt_iniatial_trail_stop) && !isNaN(ttt_purchased_price) && (ttt_iniatial_trail_stop > ttt_purchased_price || ttt_is_custom_stop_loss_possitive)) {
+                        if (ttt_is_custom_stop_loss_possitive) {
                             tttOrder['iniatial_trail_stop'] = parseFloat(purchased_price) + parseFloat(loss_price);
                             tttOrder['custom_stop_loss_percentage'] = tt_CSLP;
                             tttOrder['loss_percentage'] = tt_CSLP;
+
+                            console.log('positive  -----------')
+                            
                         } else {
+                            console.log('negative  ******')
+
                             tttOrder['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
                             tttOrder['custom_stop_loss_percentage'] = tt_CSLP;
                             tttOrder['loss_percentage'] = tt_CSLP;
@@ -1800,6 +1805,9 @@ router.post('/editAutoOrder', async (req, resp) => {
                     }
                 }
 
+                if (typeof order['stop_loss_type'] != 'undefined'){
+                    tttOrder['sell_price'] = order['stop_loss_type']  
+                }
                 tttOrder['sell_price'] =  order['sell_price'] 
                 tttOrder['sell_profit_percent'] = order['sell_profit_percent']
                 tttOrder['defined_sell_percentage'] = order['defined_sell_percentage']
