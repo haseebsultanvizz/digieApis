@@ -11281,7 +11281,6 @@ async function createAutoTradeParents(settings){
             extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
             var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
             var minReqQty = 0;
-            var minReqUsdWorth = 0;
             minReqQty = (calculatedMinNotation / currentMarketPrice);
 
             if (exchange == 'kraken') {
@@ -11306,14 +11305,10 @@ async function createAutoTradeParents(settings){
             
             if (splitArr[1] == '') {
                 oneUsdWorthQty = 1 / currentMarketPrice
-                
-                minReqUsdWorth = minReqQty * currentMarketPrice 
-                minReqUsdWorth = parseFloat(minReqUsdWorth.toFixed(2))
+
             } else {
                 oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
 
-                minReqUsdWorth = minReqQty * currentMarketPrice * BTCUSDTPRICE
-                minReqUsdWorth = parseFloat(minReqUsdWorth.toFixed(2))
             }
 
             usd_worth = parseFloat(usd_worth.toFixed(2))
@@ -11321,9 +11316,9 @@ async function createAutoTradeParents(settings){
             quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
             // console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth, ' :::: ', oneUsdWorthQty, ' price ', currentMarketPrice, 'btcusdt_price', BTCUSDTPRICE)
 
-            if (quantity < minReqQty) {
+            if (quantity < minReqQty) {                
                 //Create trades with minReqQty
-                bots.map(level => {
+                await Promise.all(bots.map(level => {
                     let parentObj = {
                         'auto_trade_generator': 'yes',
                         'admin_id': user_id,
@@ -11338,7 +11333,7 @@ async function createAutoTradeParents(settings){
                         'status': 'new',
                         'trigger_type': 'barrier_percentile_trigger',
                         'pause_status': 'play',
-                        'usd_worth': minReqUsdWorth,
+                        'usd_worth': usd_worth,
                         'parent_status': 'parent',
                         'exchange': exchange,
                         'defined_sell_percentage': profit_percentage,
@@ -11383,7 +11378,7 @@ async function createAutoTradeParents(settings){
                                 'market_value': '',
                                 'price': '',
                                 'quantity': minReqQty,
-                                'usd_worth': minReqUsdWorth,
+                                'usd_worth': usd_worth,
                                 'defined_sell_percentage': profit_percentage,
                                 'sell_profit_percent': profit_percentage,
                                 'current_market_price': currentMarketPrice,
@@ -11403,7 +11398,7 @@ async function createAutoTradeParents(settings){
                         let upsert1 = {
                             'upsert': true
                         }
-
+                        // continue
                         let ins = await db.collection(collectionName).updateOne(where1, set1, upsert1, async (err, result)=>{
                             
                         // let ins = await db.collection(collectionName).insertOne(parentObj, (err, result)=>{
@@ -11420,7 +11415,7 @@ async function createAutoTradeParents(settings){
                                         'created_date': set1['$set']['modified_date'],
                                     }
                                     //get Id and update remaining fields
-                                    console.log('Inserted_id ', result.upsertedId._id)
+                                    // console.log('Inserted_id ', result.upsertedId._id)
                                     await db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, {'$set': remainingFields}, (err, result) => {})
 
                                     keepParentIdsArr.push(result.upsertedId._id)
@@ -11442,7 +11437,7 @@ async function createAutoTradeParents(settings){
 
                                     let result2 = await db.collection(collectionName).find(where1).limit(1).toArray()
                                     if (result2.length > 0) {
-                                        console.log('modified_id ', String(result2[0]['_id']))
+                                        // console.log('modified_id ', String(result2[0]['_id']))
 
                                         //TODO: cancel duplicate orders if loop end here
                                         keepParentIdsArr.push(result2[0]['_id'])
@@ -11472,10 +11467,10 @@ async function createAutoTradeParents(settings){
 
                     })
 
-                })
+                }))
 
             } else {
-                bots.map(level => {
+                await Promise.all(bots.map(level => {
                     let parentObj = {
                         'auto_trade_generator': 'yes',
                         'admin_id': user_id,
@@ -11572,7 +11567,7 @@ async function createAutoTradeParents(settings){
                                         'created_date': set1['$set']['modified_date'],
                                     }
                                     //get Id and update remaining fields
-                                    console.log('Inserted_id ', result.upsertedId._id)
+                                    // console.log('Inserted_id ', result.upsertedId._id)
                                     await db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields }, (err, result) => { })
 
                                     keepParentIdsArr.push(result.upsertedId._id)
@@ -11594,7 +11589,7 @@ async function createAutoTradeParents(settings){
 
                                     let result2 = await db.collection(collectionName).find(where1).limit(1).toArray()
                                     if (result2.length > 0) {
-                                        console.log('modified_id ', String(result2[0]['_id']))
+                                        // console.log('modified_id ', String(result2[0]['_id']))
 
                                         keepParentIdsArr.push(result2[0]['_id'])
                                         //TODO: cancel duplicate orders if loop end here
@@ -11623,7 +11618,7 @@ async function createAutoTradeParents(settings){
                         })
                     })
 
-                })
+                }))
             }
 
         }
