@@ -11649,21 +11649,20 @@ async function createAutoTradeParents(settings){
 async function removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode, keepParentIdsArr){
 
     //TODO: Remove duplicate parents and only keep these parents 
-    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != 'undefined' && typeof keepParentIdsArr != 'undefined' && keepParentIdsArr.length > 0) {
-
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != 'undefined') {
         conn.then(async (db) => {
-
+            
             let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange 
 
             let where = {
-                'auto_trade_generator': 'yes',
+                // 'auto_trade_generator': 'yes',
                 'admin_id': user_id,
                 'application_mode': application_mode,
                 'parent_status': 'parent',
                 'status': { '$ne': 'canceled' },
             }
             let result = await db.collection(collectionName).find(where).sort({ 'modified_date': -1 }).project({ '_id': 1, 'order_level': 1, 'symbol': 1 }).toArray()
-
+            
             let duplicateTestObj = {}
             let parentIdsToDelete = []
             result.map(item => {
@@ -11674,10 +11673,10 @@ async function removeDuplicateParentsOtherThanThese(user_id, exchange, applicati
                     parentIdsToDelete.push(item._id)
                 }
             })
-
+            
             let filter = {
                 '_id': { '$in': parentIdsToDelete},
-                'auto_trade_generator': 'yes',
+                // 'auto_trade_generator': 'yes',
                 'admin_id': user_id,
                 'application_mode': application_mode,
                 'parent_status': 'parent',
