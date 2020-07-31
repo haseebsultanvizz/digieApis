@@ -1001,7 +1001,7 @@ async function getUserCoins(userId, exchange) {
 router.post('/listCurrentmarketPrice', async (req, resp) => {
 
     let myIp = req.headers['x-forwarded-for']
-    console.log('======================================== ', myIp)
+    console.log('============================================================== Request Ip ::: ', myIp)
 
     let exchange = req.body.exchange;
     var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
