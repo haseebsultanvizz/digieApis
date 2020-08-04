@@ -13769,7 +13769,7 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
             // console.log('parent order updated')
             conn.then(async (db) => {
                 let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-                await db.collection(collectionName).updateOne(where, set, async (err, result)=>{
+                db.collection(collectionName).updateOne(where, set, async (err, result)=>{
                     if(err){
                     }else{
                         // console.log('parent_id: ', parentObj['_id'])
@@ -13825,7 +13825,7 @@ router.post('/updateDailyTradeSettings', async (req, res) => {
                 totalUsers = users.length
                 for(let i=0; i<totalUsers; i++){
                     user_id = users[i]['user_id']
-                    let tradeSettings = updateDailyTradeSettings(user_id, exchange, application_mode) 
+                    await updateDailyTradeSettings(user_id, exchange, application_mode) 
                 }
             }
 
@@ -13846,40 +13846,43 @@ router.post('/updateDailyTradeSettings', async (req, res) => {
 
 async function  updateDailyTradeSettings(user_id, exchange, application_mode='live') {
     
-    //TODO: 5) Find actual tradeable balance (BTC, USDT)
-    let settingsArr = await getAutoTradeSettings(user_id, exchange, application_mode)
-    // console.log('new trade balnce settings ', settingsArr)
-
-    if (settingsArr.length > 0){
-
-        let coins = await get_active_parent_coins_arr(user_id, exchange, application_mode)
-        // let coins = settingsArr[0]['step_2']['coins']
-        // console.log('coins', coins)
-
-        if(coins.length > 0){
-
-            let coinsWorthArr = await findCoinsTradeWorth(settingsArr[0]['step_4'].totalTradeAbleInUSD, settingsArr[0]['step_4'].dailyTradeableBTC, settingsArr[0]['step_4'].dailyTradeableUSDT, coins, exchange)
+    return new Promise(async (resolve) => {
+        //TODO: 5) Find actual tradeable balance (BTC, USDT)
+        let settingsArr = await getAutoTradeSettings(user_id, exchange, application_mode)
+        // console.log('new trade balnce settings ', settingsArr)
     
-            //update coins worth category in auto trade settings collection
-            let updateCoinsWorthSettingsArr = []
-            await Promise.all(coins.map(coin=>{
-                let catObj = coinsWorthArr.filter(cat=>{ return cat.coin == coin })
-                updateCoinsWorthSettingsArr.push(catObj[0])
-            }))
+        if (settingsArr.length > 0){
     
-            let updateObj = {
-                'step_4.coinsCategoryWorth': updateCoinsWorthSettingsArr,
-                'modified_date': new Date()
+            let coins = await get_active_parent_coins_arr(user_id, exchange, application_mode)
+            // let coins = settingsArr[0]['step_2']['coins']
+            // console.log('coins', coins)
+    
+            if(coins.length > 0){
+    
+                let coinsWorthArr = await findCoinsTradeWorth(settingsArr[0]['step_4'].totalTradeAbleInUSD, settingsArr[0]['step_4'].dailyTradeableBTC, settingsArr[0]['step_4'].dailyTradeableUSDT, coins, exchange)
+        
+                //update coins worth category in auto trade settings collection
+                let updateCoinsWorthSettingsArr = []
+                await Promise.all(coins.map(coin=>{
+                    let catObj = coinsWorthArr.filter(cat=>{ return cat.coin == coin })
+                    updateCoinsWorthSettingsArr.push(catObj[0])
+                }))
+        
+                let updateObj = {
+                    'step_4.coinsCategoryWorth': updateCoinsWorthSettingsArr,
+                    'modified_date': new Date()
+                }
+                let updateATG = await updateATGSettingsArr(user_id, exchange, application_mode, updateObj)
+        
+                //TODO: 7) Update parent trades worth to this  
+                let updatePrentTradeQty = await updateAutoTradeParentUsdWorth(user_id, exchange, application_mode, coinsWorthArr)
+                console.log('*********************  Update auto trade worth and balance End  ***********************')
             }
-            let updateATG = await updateATGSettingsArr(user_id, exchange, application_mode, updateObj)
-    
-            //TODO: 7) Update parent trades worth to this  
-            let updatePrentTradeQty = await updateAutoTradeParentUsdWorth(user_id, exchange, application_mode, coinsWorthArr)
-            console.log('*********************  Update auto trade worth and balance End  ***********************')
+        
         }
-    
-    }
-    return true
+        resolve(true)
+    })
+
 }
 
 async function updateATGSettingsArr(user_id, exchange, application_mode, updateObj){
@@ -13926,7 +13929,7 @@ router.post('/updateDailyActualTradeAbleAutoTradeGen', async (req, res) => {
                 totalUsers = users.length
                 for (let i = 0; i < totalUsers; i++) {
                     user_id = users[i]['user_id']
-                    let tradeSettings = updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, application_mode)
+                    await updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, application_mode)
                 }
             }
 
@@ -13946,8 +13949,10 @@ router.post('/updateDailyActualTradeAbleAutoTradeGen', async (req, res) => {
 })//End updateDailyActualTradeAbleAutoTradeGen
 
 async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, application_mode = 'live') {
+    return new Promise(async (resolve) => {
 
-    conn.then(async (db) => {
+        var db = await conn
+
         var collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
         var where = {
             'application_mode': application_mode,
@@ -14039,8 +14044,9 @@ async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, applica
             // let upd = updateDailyTradeSettings(user_id, exchange, application_mode = 'live')
             
         }
+        resolve(true)
+
     })
-    return true
 }
 
 /* End CRON SCRIPT for update Actual TradeAble BTC/USDT and total Tradeable in USD  */
