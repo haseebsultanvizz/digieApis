@@ -11468,7 +11468,7 @@ async function createAutoTradeParents(settings){
 
         //sleep 7 seconds before sending call next
         await new Promise(r => setTimeout(r, 7000));
-        // console.log('after sleep parents processed: ', keepParentIdsArr.length)
+        console.log('after sleep parents processed: ', keepParentIdsArr.length)
 
         //cancel previous parent orders
         var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
@@ -11476,8 +11476,6 @@ async function createAutoTradeParents(settings){
         if (typeof cancel_previous_parents != 'undefined' && cancel_previous_parents == 'yes' && (coins.length * bots.length) == keepParentIdsArr.length && keepParentIdsArr.length > 0) {
             let filter = {
                 '_id': { '$nin': keepParentIdsArr},
-                'symbol': {'$nin': coins},
-                'order_level': {'$nin': bots},
                 'auto_trade_generator': 'yes',
                 'admin_id': user_id,
                 'application_mode': application_mode,
