@@ -14127,6 +14127,36 @@ router.post('/get_latest_buy_sell_details', async (req, res) => {
     }
 })//end get_latest_buy_sell_details
 
+//get_dashboard_wallet
+router.post('/get_dashboard_wallet', async (req, res) => {
+    let exchange = req.body.exchange 
+    let admin_id = req.body.user_id
+    if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
+
+        let lthBalance = getLTHBalance(admin_id, exchange)
+        let openBalance = getOpenBalance(admin_id, exchange)
+        let avaiableBalance = getBtcUsdtBalance(admin_id, exchange)
+
+        let myPromises = await Promise.all([lthBalance, openBalance, avaiableBalance])
+        
+        res.send({
+            status: true,
+            data: {
+                'lthBalance': myPromises[0],
+                'openBalance': myPromises[1],
+                'avaiableBalance': myPromises[2],
+            },
+            message: 'Data found successfully',
+        })
+        
+    } else {
+        res.send({
+            status: false,
+            message: 'exchange and user_id are required',
+        })
+    }
+})//end get_dashboard_wallet
+
 //getParentsGridData
 router.post('/getParentsGridData', async (req, res) => {
     let admin_id = req.body.user_id
