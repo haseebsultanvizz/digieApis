@@ -14095,7 +14095,7 @@ router.post('/get_latest_buy_sell_details', async (req, res) => {
             }
             let sort2 = { 'sell_date': -1 }
             let soldCollection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-            let soldPromise = db.collection(soldCollection).find(where1).sort(sort1).project(project2).limit(10).toArray()
+            let soldPromise = db.collection(soldCollection).find(where2).sort(sort2).project(project2).limit(10).toArray()
 
             let myPromise = await Promise.all([buyPromise, soldPromise])
 
