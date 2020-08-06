@@ -11042,7 +11042,10 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 let settings = await db.collection(collectionName).updateOne(where, set);
 
                 if (application_mode == 'live') {
-                    db.collection('users').updateOne({ '_id': new ObjectID(user_id) }, { '$set': { 'atg_parents_update_cron_last_run': new Date() } });
+                    let field_name = exchange ==  'binance' ? 'atg_parents_update_cron_last_run' : 'atg_parents_update_cron_last_run_' + exchange
+                    let tempUpdArr = {}
+                    tempUpdArr[field_name] = new Date()
+                    db.collection('users').updateOne({ '_id': new ObjectID(user_id) }, { '$set': tempUpdArr });
                 }
 
                 saveATGLog(user_id, exchange, 'update', 'Auto trade settings update manually successful', application_mode)
@@ -11069,8 +11072,11 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 
                 let settings = await db.collection(collectionName).insertOne(data);
 
-                if (application_mode == 'live'){
-                    db.collection('users').updateOne({ '_id': new ObjectID(user_id)}, { '$set': {'atg_parents_update_cron_last_run': new Date()}});
+                if (application_mode == 'live') {
+                    let field_name = exchange == 'binance' ? 'atg_parents_update_cron_last_run' : 'atg_parents_update_cron_last_run_' + exchange
+                    let tempUpdArr = {}
+                    tempUpdArr[field_name] = new Date()
+                    db.collection('users').updateOne({ '_id': new ObjectID(user_id) }, { '$set': tempUpdArr });
                 }
 
                 saveATGLog(user_id, exchange, 'new', 'Auto trade settings added manually successful', application_mode)
