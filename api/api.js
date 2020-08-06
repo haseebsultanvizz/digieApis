@@ -11041,15 +11041,19 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 set['$set'] = dataArr
                 let settings = await db.collection(collectionName).updateOne(where, set);
 
+                if (application_mode == 'live') {
+                    db.collection('users').updateOne({ '_id': new ObjectID(user_id) }, { '$set': { 'atg_parents_update_cron_last_run': new Date() } });
+                }
+
                 saveATGLog(user_id, exchange, 'update', 'Auto trade settings update manually successful', application_mode)
-
+                
                 await createAutoTradeParents(autoTradeData)
-
+                
                 res.send({
                     status: true,
                     message: 'Auto trade settings updated successfully'
                 })
-
+                
             }else{
                 
                 //Insert auto trade settings
@@ -11062,8 +11066,12 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 data['week_start_date'] = new Date()
                 dataArr['created_date'] = new Date()
                 dataArr['modified_date'] = new Date()
-
+                
                 let settings = await db.collection(collectionName).insertOne(data);
+
+                if (application_mode == 'live'){
+                    db.collection('users').updateOne({ '_id': new ObjectID(user_id)}, { '$set': {'atg_parents_update_cron_last_run': new Date()}});
+                }
 
                 saveATGLog(user_id, exchange, 'new', 'Auto trade settings added manually successful', application_mode)
 
