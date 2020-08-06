@@ -13377,6 +13377,77 @@ async function updateUserDailyBuyTrades(where, exchange, currency, decrement) {
     })
 }
 
+
+//getTradeBuyLimitCheck
+router.post('/getTradeBuyLimitCheck', async (req, res) => {
+
+    let user_id = req.body.user_id
+    let exchange = req.body.exchange
+    let usd_worth = req.body.usd_worth
+    usd_worth = !isNaN(parseFloat(usd_worth)) ? parseFloat(usd_worth) : ''
+
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof usd_worth != 'undefined' && usd_worth != '') {
+        
+        let collectionName = exchange == 'binance' ? 'daily_trade_buy_limit' : 'daily_trade_buy_limit_'+exchange
+        var db = await conn
+        let result = await db.collection(collectionName).find({'user_id':user_id}).limit(1).toArray()
+        if (result.length > 0){
+            let daily_buy_usd_worth = parseFloat(result[0]['daily_buy_usd_worth']) + usd_worth
+            daily_buy_usd_worth = parseFloat(parseFloat(daily_buy_usd_worth).toFixed(2)) 
+            let daily_buy_usd_limit = parseFloat(parseFloat(result[0]['daily_buy_usd_limit']).toFixed(2))
+            let num_of_trades_buy_today = parseFloat(result[0]['num_of_trades_buy_today']) + 1
+            
+            if (daily_buy_usd_worth <= daily_buy_usd_limit){
+                //Buy yes
+                db.collection(collectionName).updateOne({ 'user_id': user_id }, { '$set': { 'daily_buy_usd_worth': daily_buy_usd_worth, 'num_of_trades_buy_today': num_of_trades_buy_today}})
+
+                res.send({
+                    status: true,
+                    message: 'buy trade.'
+                });
+            }else{
+                //Buy No
+                res.send({
+                    status: false,
+                    message: 'daily buy limit exceeded.'
+                });
+            }
+        }else{
+            res.send({
+                status: false,
+                message: 'settings not found.'
+            });
+        }
+    } else {
+        res.send({
+            status: false,
+            message: 'user_id, exchange, usd_worth is required.'
+        });
+    }
+
+})//end getTradeBuyLimitCheck
+
+async function getTradeBuyLimitCheck(where, exchange) {
+    return new Promise(async (resolve) => {
+        conn.then(async (db) => {
+            let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+            let result = await db.collection(collectionName).find(where).toArray();
+            if (result.length > 0) {
+                let res = result[0]
+                let obj = {}
+                if (typeof res.step_4 != 'undefined') {
+                    obj['noOfDailyBTCTrades'] = typeof res.step_4.noOfDailyBTCTrades != 'undefined' && res.step_4.noOfDailyBTCTrades > 0 ? res.step_4.noOfDailyBTCTrades : 0
+                    obj['noOfDailyUSDTTrades'] = typeof res.step_4.noOfDailyUSDTTrades != 'undefined' && res.step_4.noOfDailyUSDTTrades > 0 ? res.step_4.noOfDailyUSDTTrades : 0
+                }
+                resolve(obj)
+            } else {
+                resolve({})
+            }
+        })
+    })
+}
+
+
 /* Multiple users call */
 
 /* getUserDailyBuyTrades */
