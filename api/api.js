@@ -13898,7 +13898,7 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
 router.post('/updateDailyTradeSettings', async (req, res) => {
     
     let myIp = req.headers['x-forwarded-for']
-   console.log('============================================================== Request Ip ::: ', myIp)
+    console.log('============================================================== Request Ip ::: ', JSON.stringify(req.headers))
     
     var user_id = req.body.user_id
     let exchange = req.body.exchange
