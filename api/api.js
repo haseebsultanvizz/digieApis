@@ -28,6 +28,7 @@ router.post('/verifyOldPassword', async function (req, resp) {
         let post_data = req.body;
         let user_id = req.body.user_id;
         let password = req.body.password;
+        password = password.trim();
         if (Object.keys(post_data).length > 0) {
             if ("user_id" in post_data && "password" in post_data) {
                 let md5Password = md5(password);
@@ -283,6 +284,7 @@ router.post('/authenticate', async function (req, resp, next) {
         } else {
             let username = req.body.username.toLowerCase();
             let pass     = req.body.password;
+            pass = pass.trim();
             //Convert password to md5
             let md5Pass = md5(pass);
             let where = {};
@@ -482,6 +484,7 @@ router.post('/resetPassword', async function (req, resp) {
         let post_data = req.body;
         let user_id = req.body.user_id;
         let password = req.body.password;
+        password = password.trim();
         if (Object.keys(post_data).length > 0) {
             if ("user_id" in post_data && "password" in post_data) {
                 let md5Password = md5(password);
@@ -8290,6 +8293,7 @@ router.post('/removeOrderManually', async (req, resp) => {
 //validate user password for updting exchange credentials
 router.post('/validate_user_password', async (req, resp) => {
     var password = req.body.user_password;
+    password = password.trim();
     let md5Pass = md5(password);
     var user_id = req.body.user_id;
     var is_valid = await validate_user_password(user_id, md5Pass);
