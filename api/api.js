@@ -10751,13 +10751,13 @@ router.post('/listCurrentUserExchanges', async (req, res) => {
                 }
 
                 if (available_exchanges.length > 0 ){
-                    if (available_exchanges.length == 1 && available_exchanges[0] == 'kraken'){
-                        res.send({
-                            status: false,
-                            data: available_exchanges,
-                            message: 'Auto trade generator for kraken is coming soon.'
-                        });
-                    }else{
+                    // if (available_exchanges.length == 1 && available_exchanges[0] == 'kraken'){
+                    //     res.send({
+                    //         status: false,
+                    //         data: available_exchanges,
+                    //         message: 'Auto trade generator for kraken is coming soon.'
+                    //     });
+                    // }else{
 
                         // if (available_exchanges.includes('kraken')){
                         //     available_exchanges = available_exchanges.filter(item => item != 'kraken')
@@ -10768,7 +10768,8 @@ router.post('/listCurrentUserExchanges', async (req, res) => {
                             data: available_exchanges,
                             message: 'Exchanges found successfully.'
                         });
-                    }
+                        
+                    // }
                 }else{
                     res.send({
                         status: false,
