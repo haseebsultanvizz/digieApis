@@ -13886,7 +13886,7 @@ router.post('/updateDailyTradeSettings', async (req, res) => {
     var user_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : 'live'
-    if (typeof exchange != 'undefined' && exchange != '') {
+    if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && (user_id != '' || user_id != null)) {
         //get all users with auto trade settings
         conn.then(async(db) => {
             let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
@@ -13931,7 +13931,7 @@ router.post('/updateDailyTradeSettings', async (req, res) => {
     } else {
         res.send({
             'status': false,
-            'message': 'exchange is required.'
+            'message': 'exchange and user_id is required.'
         });
     }
 
