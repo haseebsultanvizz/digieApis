@@ -13900,6 +13900,11 @@ router.post('/updateDailyTradeSettings', async (req, res) => {
     var user_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : 'live'
+
+    console.log('11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111     ' , typeof user_id)
+    console.log('22222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222     ' , user_id)
+    console.log('33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333     ' , JSON.stringify(user_id))
+
     // if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && typeof user_id != 'object' && (user_id != '' || user_id != null || user_id != 'null')) {
     if (false) {
 
