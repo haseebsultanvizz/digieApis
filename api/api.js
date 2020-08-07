@@ -7279,6 +7279,14 @@ router.post('/update_user_info', function (req, res, next) {
                     if (Object.keys(data).length > 0) {
                         let update_arr = new Object(post_data);
                         delete update_arr.user_id;
+
+                        let fieldsArr = ['api_key', 'api_secret', 'pass_phrase']
+                        for (let [key, value] of Object.entries(update_arr)) {
+                            if (!fieldsArr.includes(key)) {
+                                delete update_arr[key]
+                            }
+                        }
+
                         db.collection("users").updateOne(search_arr, {
                             $set: update_arr
                         }, function (err1, obj) {
