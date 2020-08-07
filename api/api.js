@@ -13897,9 +13897,13 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
 
 router.post('/updateDailyTradeSettings', async (req, res) => {
     
+    let myIp = req.headers['x-forwarded-for']
+   console.log('============================================================== Request Ip ::: ', myIp)
+    
     var user_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : 'live'
+
 
     console.log('11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111     ', exchange, application_mode, typeof user_id)
     console.log('22222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222     ', exchange, application_mode, user_id)
