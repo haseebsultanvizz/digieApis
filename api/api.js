@@ -13880,13 +13880,15 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
 
 router.post('/updateDailyTradeSettings', async (req, res) => {
 
+    
     console.log('///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////        ', req.body.user_id)
-
-
+    
     var user_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : 'live'
     if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && (user_id != '' || user_id != null || user_id != 'null')) {
+
+        console.log('22222222222222222222222222222222222222222222222222222222222222        ', req.body.user_id)
         //get all users with auto trade settings
         conn.then(async(db) => {
             let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
@@ -13929,6 +13931,8 @@ router.post('/updateDailyTradeSettings', async (req, res) => {
             'message': 'Daily Auto Trade usdworth and min quantity updated successfully.'
         });
     } else {
+
+        console.log('33333333333333333333333333333333333333333333333333333333333333333333333333        ', req.body.user_id)
         res.send({
             'status': false,
             'message': 'exchange and user_id is required.'
