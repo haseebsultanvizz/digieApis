@@ -13879,6 +13879,10 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
 }
 
 router.post('/updateDailyTradeSettings', async (req, res) => {
+
+    console.log('///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////        ', req.body.user_id)
+
+
     var user_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : 'live'
