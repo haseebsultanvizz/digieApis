@@ -13883,7 +13883,8 @@ router.post('/updateDailyTradeSettings', async (req, res) => {
     var user_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : 'live'
-    if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && typeof user_id != 'object' && (user_id != '' || user_id != null || user_id != 'null')) {
+    // if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && typeof user_id != 'object' && (user_id != '' || user_id != null || user_id != 'null')) {
+    if (false) {
 
         //get all users with auto trade settings
         conn.then(async(db) => {
