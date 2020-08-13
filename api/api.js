@@ -2236,6 +2236,33 @@ router.post('/listOrderListing', async (req, resp) => {
     //:::::::::::: End of  filter_4 for count all canceled orders ::::::::::::;
     //Promise for canceled count orders :::::::::::::::::
     var cancelCountPromise = countCollection(collectionName, filter_4);
+   
+   
+    //:::::::::::; filter_errors for count all Errors orders ::::::::::::;
+    var filter_errors = {};
+    filter_errors['status'] = { '$nin': ['new', 'FILLED', 'fraction_submitted_buy', 'canceled', 'LTH', 'submitted', 'submitted_for_sell', 'fraction_submitted_sell' ] }
+    filter_errors['parent_status'] = {'$exists': false};
+    filter_errors['admin_id'] = admin_id;
+    filter_errors['application_mode'] = application_mode;
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter_errors['created_date'] = obj;
+    }
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_errors[key] = value;
+        }
+    }
+    //:::::::::::: End of  filter_errors for count all Errors orders ::::::::::::;
+    //Promise for Errors count orders :::::::::::::::::
+    var errorsCountPromise = countCollection(collectionName, filter_errors);
 
 
     //::::::: filter_5  for count all error orders ::::::::::::::::::::::: 
@@ -2428,7 +2455,7 @@ router.post('/listOrderListing', async (req, resp) => {
 
 
     //Resolve promised for count order for all tabs
-    var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise]);
+    var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise, errorsCountPromise]);
 
     var parentCount = PromiseResponse[0];
     var newCount = PromiseResponse[1];
@@ -2442,6 +2469,7 @@ router.post('/listOrderListing', async (req, resp) => {
     var lthPauseCount = PromiseResponse[9];
     var all1Count = PromiseResponse[10];
     var all2Count = PromiseResponse[11];
+    var errorsCount = PromiseResponse[12];
 
     // var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
 
@@ -2453,6 +2481,7 @@ router.post('/listOrderListing', async (req, resp) => {
     countArr['newCount'] = newCount;
     countArr['openCount'] = openCount;
     countArr['canceledCount'] = cancelCount;
+    countArr['errorsCount'] = errorsCount;
     countArr['errorCount'] = errorCount;
     countArr['lthCount'] = lthCount;
     countArr['submitCount'] = submitCount;
@@ -3116,6 +3145,11 @@ async function listOrderListing(postDAta, dbConnection) {
 
     if (postDAta.status == 'canceled') {
         filter['status'] = 'canceled';
+    }
+    
+    if (postDAta.status == 'errors') {
+        filter['parent_status'] = { '$exists': false };
+        filter['status'] = { '$nin': ['new', 'FILLED', 'fraction_submitted_buy', 'canceled', 'LTH', 'submitted', 'submitted_for_sell', 'fraction_submitted_sell'] }
     }
 
     if (postDAta.status == 'submitted') {
@@ -13436,7 +13470,7 @@ router.post('/getTradeBuyLimitCheck', async (req, res) => {
         }else{
             res.send({
                 status: false,
-                message: 'settings not found.'
+                message: 'daily buy limit settings not found.'
             });
         }
     } else {
@@ -14352,44 +14386,101 @@ router.get('/req_info', async (req, res) => {
     })
 })
 
-router.get('/testUpdate', async (req, res) => {
+router.get('/fixUsdWorth', async (req, res) => {
     // process.exit(0)
-    // conn.then(async (db) => {
-    //     let where = {
-    //         '_id':{
-    //             '$in':[
-    //                 new  ObjectID('5ededd1d52269d001a42ae07'),
-    //                 new  ObjectID('5ededd1f52269d001a42ae2c'),
-    //                 new  ObjectID('5edff53352269d001a42d80b'),
-    //                 new  ObjectID('5edff53c52269d001a42d8b2'),
-    //                 new  ObjectID('5edff1b752269d001a42ca86'),
-    //                 new  ObjectID('5edff1d252269d001a42cc52'),
-    //                 new  ObjectID('5edff1d652269d001a42cca2'),
-    //                 new  ObjectID('5edff1e652269d001a42cdc6'),
-    //                 new  ObjectID('5edff1eb52269d001a42ce1f'), 
-    //             ]
-    //         }
-    //     }
-    //     var queryRes = await db.collection('buy_orders').find(where).toArray();
-    
 
-    //     ids = []
-    //     await Promise.all(queryRes.map(item=>{
-    //         let where = {
-    //             '_id': item['_id']
-    //         }
-    //         let set = {
-    //             '$set':{
-    //                 'defined_sell_percentage': 1.2,
-    //                 'sell_profit_percent': 1.2,
-    //                 'sell_price': ((parseFloat(item['purchased_price']) * 1.2) / 100) + parseFloat(item['purchased_price']),
-    //             }
-    //         }
-    //         // db.collection('buy_orders').updateOne(where, set);
-    //         ids.push(item['_id'])
-    //     }))
+    //Calculate usd_worth for orders that not exist 
+    conn.then(async (db) => {
+        
+        var exchange = 'binance' 
+        var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange  
+        
+        let where = {
+            'symbol': { '$ne': 'NCASHBTC' },
+            'application_mode': 'live',
+            'parent_status': 'parent',
+            'status': {'$ne': 'canceled'},
+            'usd_worth': {'$exists':false}
+        }
+        var queryRes = await db.collection(collectionName).find(where).toArray();
+        
+        let queryResCount = queryRes.length
 
-    //     console.log(ids)
+        let symbols = [] 
+        await Promise.all(queryRes.map(item => { if (!symbols.includes(item.symbol) && item.symbol != 'NCASHBTC'){symbols.push(item.symbol)}}))
+        
+        let coinData = await listmarketPriceMinNotationCoinArr({ '$in': symbols }, exchange)
+        
+        let ids = []
+        for (let i = 0; i < queryResCount; i++){
+            let coin = queryRes[i]['symbol']
+            let splitArr = coin.split('USDT');   
+            if (!isNaN(queryRes[i]['quantity'])){
+                
+                let usd_worth = 0
+                if (splitArr[1] == '') { //USDT
+                    usd_worth = queryRes[i]['quantity'] * coinData[coin]['currentmarketPrice']
+                }else{ //BTC
+                    usd_worth = queryRes[i]['quantity'] * coinData[coin]['currentmarketPrice'] * coinData['BTCUSDT']['currentmarketPrice']
+                }
+                
+                usd_worth = parseFloat(usd_worth.toFixed(2))
+                console.log(typeof usd_worth, usd_worth)
+                // break;
+                // process.exit(0)
+                
+                let where = {
+                    '_id': queryRes[i]['_id']
+                }
+                let set = {
+                    '$set': {
+                        'usd_worth': usd_worth,
+                    }
+                }
+                if (!isNaN(usd_worth)){
+                    db.collection('buy_orders').updateOne(where, set);
+                    // console.log(queryRes[i]['_id'])
+                    ids.push(queryRes[i]['_id'])
+                }
+                // break;
+            }
+        }
+        // console.log(ids)
+        // console.log('============================================================')
+
+        //convert to float
+        where = {
+            'symbol': { '$ne': 'NCASHBTC' },
+            'application_mode': 'live',
+            'parent_status': 'parent',
+            'status': { '$ne': 'canceled' },
+            'usd_worth': { '$type': 'string' }
+        }
+        queryRes = await db.collection(collectionName).find(where).toArray();
+        queryResCount = queryRes.length
+
+        // console.log(queryResCount)
+        // process.exit(0)
+
+        ids = []
+        for (let i = 0; i < queryResCount; i++) {
+            let usd_worth_val = parseFloat(parseFloat(queryRes[i]['usd_worth']).toFixed(2))
+            
+            let where = {
+                '_id': queryRes[i]['_id']
+            }
+            let set = {
+                '$set': {
+                    'usd_worth': usd_worth_val,
+                }
+            }
+            if (!isNaN(usd_worth_val)) {
+                db.collection(collectionName).updateOne(where, set);
+                ids.push(queryRes[i]['_id'])
+            }
+        }
+        // console.log(ids)
+        console.log('================================ Usd worth fixed =======================================')
 
         res.send({
             'status': true,
@@ -14397,7 +14488,8 @@ router.get('/testUpdate', async (req, res) => {
             // 'ids': ids,
             // 'result': queryRes
         })
-    // })
+    })
+    
 
 })
 
