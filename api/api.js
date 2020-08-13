@@ -9651,8 +9651,12 @@ router.post('/resume_already_paused_test', (req, res) => {
                 let order_mode = obj.application_mode;
                 let log_msg = 'Paused order was resumed again manually ' + if_direct_resume 
                 var order_created_date = obj.created_date
-                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-                promiseLog.then((callback) => { }) 
+                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date) 
+                
+                if (typeof obj['order_level'] != 'undefined' && typeof tempOrder['order_level'] != 'undefined' && obj['order_level'] != tempOrder['order_level']){
+                    let msg22 = 'Order level was updated from ' + obj['order_level'] + ' to ' + tempOrder['order_level']
+                    create_orders_history_log(obj._id, msg22, type, show_hide_log, exchange, order_mode, order_created_date) 
+                }
 
                 res.send({
                     'status': true,
