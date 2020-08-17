@@ -14299,10 +14299,28 @@ router.post('/get_dashboard_wallet', async (req, res) => {
 
         let myPromises = await Promise.all([lthBalance, openBalance, avaiableBalance])
         
+        if(Object.keys(myPromises[0]).length === 0 && myPromises[0].constructor === Object){
+            myPromises[0] = {
+                'onlyBtc': 0,
+                'onlyUsdt': 0,
+                'LthBtcWorth': 0,
+                'LthUsdWorth': 0,
+            }
+        }
+        
+        if(Object.keys(myPromises[1]).length === 0 && myPromises[1].constructor === Object){
+            myPromises[1] = {
+                'onlyBtc': 0,
+                'onlyUsdt': 0,
+                'OpenBtcWorth': 0,
+                'OpenUsdWorth': 0,
+            }
+        }
+
         res.send({
             status: true,
             data: {
-                'lthBalance': myPromises[0],
+                'lthBalance':  myPromises[0],
                 'openBalance': myPromises[1],
                 'avaiableBalance': myPromises[2],
             },
