@@ -10794,12 +10794,21 @@ router.post('/getPrice', async (req, res) => {
 router.post('/listCurrentUserExchanges', async (req, res) => {
 
     let user_id = req.body.user_id
+    let application_mode = req.body.application_mode
+    let exchangesArr = ['binance', 'bam', 'kraken']
     
-    if (typeof user_id != 'undefined' && user_id != '') {
+    if (typeof application_mode != 'undefined' && application_mode == 'test' && typeof user_id != 'undefined' && user_id != ''){
+        
+        res.send({
+            status: true,
+            data: exchangesArr,
+            message: 'Exchanges found successfully.'
+        });
+
+    }else if (typeof user_id != 'undefined' && user_id != '') {
 
         conn.then(async (db) => {
 
-            let exchangesArr = ['binance', 'bam', 'kraken']
             let settingsArr = {}
             exchangesArr.map(exchange =>{
                 let collectionName = exchange == 'binance' ? 'users' : exchange +'_credentials'
