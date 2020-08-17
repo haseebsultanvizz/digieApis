@@ -3670,54 +3670,63 @@ router.post('/listOrderById', async (req, resp) => {
     var timezone = req.body.timezone;
     //promise for  getting order by id 
     var ordeArr = await listOrderById(orderId, exchange);
-    var orderObj = ordeArr[0];
-    var order_created_date = orderObj['created_date'];
-    var order_mode = (typeof orderObj['order_mode'] == 'undefined') ? orderObj['application_mode'] : orderObj['order_mode'];
+
+    if (ordeArr.length > 0){
+        var orderObj = ordeArr[0];
+        var order_created_date = orderObj['created_date'];
+        var order_mode = (typeof orderObj['order_mode'] == 'undefined') ? orderObj['application_mode'] : orderObj['order_mode'];
 
 
-    //promise for gettiong order log
-    var ordeLog = await listOrderLog(orderId, exchange, order_mode, order_created_date);
+        //promise for gettiong order log
+        var ordeLog = await listOrderLog(orderId, exchange, order_mode, order_created_date);
 
 
-    var respArr = {};
-    respArr['ordeArr'] = ordeArr;
-    let html = '';
+        var respArr = {};
+        respArr['ordeArr'] = ordeArr;
+        let html = '';
 
-    var index = 1;
-    for (let row in ordeLog) {
+        var index = 1;
+        for (let row in ordeLog) {
 
-        var timeZoneTime = ordeLog[row].created_date;
-        try {
-            timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {
-                timeZone: timezone
-            });
-            timeZoneTime = new Date(timeZoneTime);
-        } catch (e) {
-            console.log(e);
+            var timeZoneTime = ordeLog[row].created_date;
+            try {
+                timeZoneTime = new Date(ordeLog[row].created_date).toLocaleString("en-US", {
+                    timeZone: timezone
+                });
+                timeZoneTime = new Date(timeZoneTime);
+            } catch (e) {
+                console.log(e);
+            }
+
+
+
+            var date = timeZoneTime.toLocaleString() + ' ' + timezone;
+            //Remove indicator log message
+            if (ordeLog[row].type != 'indicator_log_message') {
+                html += '<tr>';
+                html += '<th scope="row" class="text-danger">' + index + '</th>';
+                html += '<td>' + ordeLog[row].log_msg + '</td>';
+                html += '<td>' + date + '</td>'
+                html += '</tr>';
+                index++;
+            }
+
+
         }
 
 
+        respArr['logHtml'] = html;
 
-        var date = timeZoneTime.toLocaleString() + ' ' + timezone;
-        //Remove indicator log message
-        if (ordeLog[row].type != 'indicator_log_message') {
-            html += '<tr>';
-            html += '<th scope="row" class="text-danger">' + index + '</th>';
-            html += '<td>' + ordeLog[row].log_msg + '</td>';
-            html += '<td>' + date + '</td>'
-            html += '</tr>';
-            index++;
-        }
-
-
+        resp.status(200).send({
+            message: respArr
+        });
+    }else{
+        resp.status(200).send({
+            message: {
+                'ordeArr': []
+            }
+        });
     }
-
-
-    respArr['logHtml'] = html;
-
-    resp.status(200).send({
-        message: respArr
-    });
 }) //End of listOrderById
 
 //post call for getting order log by id //Umer Abbas [2-1-19]
