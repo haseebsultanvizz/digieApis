@@ -3386,6 +3386,7 @@ function togglePausePlayOrder(orderId, status, exchange) {
             let set = {};
             set['$set'] = {
                 'pause_status': status,
+                'pause_manually': status == 'pause' ? 'yes' : 'no',
                 'modified_date': new Date()
             }
             let collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -3514,9 +3515,10 @@ router.post('/deleteOrder', async (req, resp) => {
         var parentOrder = await listOrderById(String(getBuyOrder[0]['buy_parent_id']), req.body.exchange);
 
         if ((parentOrder.length > 0) && typeof parentOrder[0]['status'] != 'undefined' && parentOrder[0]['status'] != 'canceled') {
-
+    
             let where = {};
             where['_id'] = new ObjectID(String(getBuyOrder[0]['buy_parent_id']));
+            where['pause_manually'] = {'$ne': 'yes'};
             let updObj = {};
             updObj['status'] = 'new';
             updObj['pause_status'] = 'play';
@@ -8150,6 +8152,7 @@ router.post('/remove_error', async (req, resp) => {
 
             //find error in buy_order
             let buy_status = buy_order['status']
+            let temp_buy_status_arr = buy_status.split('_')
             var error_type = '';
 
             var update_buy_status = '';
@@ -8158,6 +8161,24 @@ router.post('/remove_error', async (req, resp) => {
             if (buy_status == 'error') {
                 update_buy_status = 'new'
                 error_type = buy_status
+            } else if (temp_buy_status_arr[0] == 'new') {
+                
+                //remove new error
+                update_buy_status = 'canceled'
+                error_type = temp_buy_status_arr.join(' ')
+
+            } else if (temp_buy_status_arr[0] == 'buy' || temp_buy_status_arr[0] == 'BUY') {
+                
+                //remove buy error
+                update_buy_status = 'canceled'
+                error_type = temp_buy_status_arr.join(' ')
+
+            } else if (temp_buy_status_arr[0] == 'FILLED' || temp_buy_status_arr[0] == 'LTH') {
+                
+                //remove FILLED or LTH error
+                update_buy_status = 'FILLED'
+                error_type = temp_buy_status_arr.join(' ')
+
             } else if (buy_status == 'FILLED_ERROR' || buy_status == 'submitted_ERROR' || buy_status == 'LTH_ERROR' || buy_status == 'new_ERROR') {
                 let statusArr = buy_status.split('_');
                 update_buy_status = statusArr[0];
@@ -8182,6 +8203,31 @@ router.post('/remove_error', async (req, resp) => {
                         }
                     }
                     let updated = await db.collection(buy_collection).updateOne(where, update)
+
+                    if (update_buy_status == 'canceled'){
+                        //Delete sell order
+                        if (typeof buy_order['sell_order_id'] != 'undefined' && buy_order['sell_order_id'] != '') {
+                            let where2 = {
+                                '_id': new ObjectID(String(buy_order['sell_order_id']))
+                            }
+                            await db.collection(sell_collection).deleteOne(where2)
+                        }
+
+                        //set parent if exists
+                        if (typeof buy_order['buy_parent_id'] != 'undefined' && buy_order['buy_parent_id'] != '') {
+                            let where3 = {
+                                '_id': new ObjectID(String(buy_order['buy_parent_id'])),
+                                'pause_manually': { '$ne': 'yes' },
+                                'status': { '$ne': 'canceled' },
+                            }
+                            let updObj3 = {};
+                            updObj3['status'] = 'new';
+                            updObj3['pause_status'] = 'play';
+                            updObj3['modified_date'] = new Date()
+                            await db.collection(buy_collection).updateOne(where3, updObj3)
+                        }
+                    }
+
                 }
 
                 //remove error from sell_order
@@ -14307,7 +14353,7 @@ router.post('/get_dashboard_wallet', async (req, res) => {
                 'LthUsdWorth': 0,
             }
         }
-        
+
         if(Object.keys(myPromises[1]).length === 0 && myPromises[1].constructor === Object){
             myPromises[1] = {
                 'onlyBtc': 0,
