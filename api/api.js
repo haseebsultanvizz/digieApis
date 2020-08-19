@@ -12079,25 +12079,11 @@ async function calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBT
 
 async function makeTradeCategory(){
     return new Promise(resolve=>{
-        // let catArr = []
-        // let lower_limit = 0
-        // let upper_limit = 0
-        // for (let i = 1; i <= 20; i++) {
-        //     lower_limit = i == 1 ? i : upper_limit
-        //     upper_limit = lower_limit == 1 ? lower_limit + 9 : lower_limit + 10
-        //     catArr.push({
-        //         'category': i,
-        //         'lower_limit': lower_limit,
-        //         'upper_limit': upper_limit,
-        //         'worth': upper_limit,
-        //         'pt': 0.5 * i,
-        //     })
-        // }
 
         let catArr = []
         let lower_limit = 0
         let upper_limit = 0
-        for (let i = 1; i <= 20; i++) {
+        for (let i = 1; i <= 60; i++) {
             lower_limit = i == 1 ? i : upper_limit
             if (i <= 4) {
                 upper_limit = lower_limit == 1 ? lower_limit + 4 : lower_limit + 5
