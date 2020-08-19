@@ -13008,6 +13008,141 @@ async function getBnbBuySettings(user_id, exchange) {
 
 // ****************** END BNB auto Buy ****************************** //
 
+// ****************** Buy/Sell Required or Extra balance respectively ****************************** //
+
+router.post('/buySellCoinBalance', (req, res) => {
+    conn.then(async (db) => {
+        let data = req.body.data
+        let exchange = data.exchange
+        let application_mode = data.application_mode
+        let user_id = data.user_id
+        let action = data.action
+        let symbol = data.symbol
+        let quantity = data.quantity
+
+        if (typeof exchange == 'undefined' || exchange == ''
+            || typeof application_mode == 'undefined' || application_mode == ''
+            || typeof user_id == 'undefined' || user_id == ''
+            || typeof symbol == 'undefined' || symbol == ''
+            || typeof quantity == 'undefined' || quantity == ''
+            || typeof action == 'undefined' || action == '') {
+
+            res.send({
+                'status': false,
+                'message': 'exchange, application_mode, user_id, symbol, quantity, action are required fields.'
+            });
+        } else if (application_mode == 'test') {
+            res.send({
+                'status': true,
+                'message': 'Request successful.'
+            });
+        } else {
+            let dataArr = {
+                'user_id': user_id,
+                // 'application_mode': application_mode,
+                'exchange': exchange,
+                'action': action,
+                'symbol': symbol,
+                'quantity': quantity,
+            }
+            
+            let result = await buySellCoinBalanceNow(dataArr, exchange)
+            res.send(result);
+        }
+    })
+})//End buySellCoinBalance
+
+//buySellCoinBalanceNow
+async function buySellCoinBalanceNow(dataArr, exchange) {
+    
+    return new Promise(async (resolve)=>{
+        if (typeof dataArr.user_id != 'undefined' && dataArr.user_id != '' && typeof dataArr.symbol != 'undefined' && dataArr.symbol != '' && typeof dataArr.quantity != 'undefined' && dataArr.quantity != '' && typeof dataArr.action != 'undefined' && dataArr.action != '' && typeof exchange != 'undefined' && exchange != '')  {
+    
+            let reqData = {
+                'user_id': dataArr.user_id,
+                'symbol': dataArr.symbol,
+                'quantity': dataArr.quantity,
+                'exchange': exchange,
+                'action': dataArr.action,
+            }
+    
+            if (exchange == 'binance') {
+                var options = {
+                    method: 'POST',
+                    url: 'http://34.205.124.51:3600/buySellPost',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    json: reqData
+                }
+                request(options, function (error, response, body) {
+                    if (error) {
+                        //Do nothing
+                        console.log(error)
+
+                        resolve({
+                            'status': false,
+                            'message': 'An error occured'
+                        })
+                    } else {
+                        if (body.success == 'true') {
+    
+                            //Save History
+                            saveBuySellCoinBalanceHistory(dataArr.user_id, exchange, body, dataArr.action)
+                            //Update User Balance
+                            // update_user_balance(dataArr.user_id)
+    
+                            resolve({
+                                'status': true,
+                                'message': dataArr.action == 'buy' ? 'Balance buy successfull' : 'Balance sell successfull'
+                            })
+                        } else {
+                            // console.log(body)
+                            resolve({
+                                'status': false,
+                                'message': body.msg 
+                            })
+                        }
+                    }
+                })
+            } else if (exchange == 'bam') {
+                resolve({
+                    'status': false,
+                    'message': 'Buy/sell comming soon on Bam'
+                })
+            } else if (exchange == 'kraken'){
+                resolve({
+                    'status': false,
+                    'message': 'Buy/sell comming soon on Kraken'
+                })
+            }
+        } else {
+            resolve({
+                'status': false,
+                'message': 'Invalid request parameters'
+            })
+        }
+    })
+}//End buySellCoinBalanceNow
+
+//saveBuySellCoinBalanceHistory
+async function saveBuySellCoinBalanceHistory(user_id, exchange, response, action) {
+    return new Promise((resolve) => {
+        conn.then((db) => {
+            let insData = response
+            insData['user_id'] = user_id
+            insData['action'] = action
+            insData['created_date'] = new Date()
+            let collectionName = exchange == 'binance' ? 'buy_sell_coin_balance_history' : 'buy_sell_coin_balance_history_' + exchange
+            //Insert 
+            db.collection(collectionName).insertOne(insData)
+            resolve(true)
+        })
+    })
+}//End saveBuySellCoinBalanceHistory
+
+// ****************** END Buy/Sell Required or Extra balance respectively ************************* //
+
 /* CRON SCRIPT for update_qty_from_usd_worth */
 router.post('/update_qty_from_usd_worth', (req, res) => {
     let user_id = req.body.user_id
