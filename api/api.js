@@ -13090,7 +13090,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                             //Save History
                             saveBuySellCoinBalanceHistory(dataArr.user_id, exchange, body, dataArr.action)
                             //Update User Balance
-                            // update_user_balance(dataArr.user_id)
+                            update_user_balance(dataArr.user_id)
     
                             resolve({
                                 'status': true,
@@ -13100,6 +13100,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                             // console.log(body)
                             resolve({
                                 'status': false,
+                                'response': body,
                                 'message': body.msg 
                             })
                         }
@@ -13111,10 +13112,51 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                     'message': 'Buy/sell comming soon on Bam'
                 })
             } else if (exchange == 'kraken'){
-                resolve({
-                    'status': false,
-                    'message': 'Buy/sell comming soon on Kraken'
+
+                var options = {
+                    method: 'POST',
+                    url: 'http://34.199.235.34:3200/buySellPost',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    json: reqData
+                }
+                request(options, function (error, response, body) {
+                    if (error) {
+                        //Do nothing
+                        console.log(error)
+
+                        resolve({
+                            'status': false,
+                            'message': 'An error occured'
+                        })
+                    } else {
+                        if (body.success == 'true') {
+
+                            //Save History
+                            saveBuySellCoinBalanceHistory(dataArr.user_id, exchange, body, dataArr.action)
+                            //Update User Balance
+                            update_user_balance(dataArr.user_id)
+
+                            resolve({
+                                'status': true,
+                                'message': dataArr.action == 'buy' ? 'Balance buy successfull' : 'Balance sell successfull'
+                            })
+                        } else {
+                            console.log(body)
+                            resolve({
+                                'status': false,
+                                'response': body, 
+                                'message': body.msg
+                            })
+                        }
+                    }
                 })
+                
+                // resolve({
+                //     'status': false,
+                //     'message': 'Buy/sell comming soon on Kraken'
+                // })
             }
         } else {
             resolve({
