@@ -13087,6 +13087,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                     } else {
                         if (body.success == 'true') {
     
+                            body.reqData = reqData
                             //Save History
                             saveBuySellCoinBalanceHistory(dataArr.user_id, exchange, body, dataArr.action)
                             //Update User Balance
@@ -13133,6 +13134,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                     } else {
                         if (body.success == 'true') {
 
+                            body.reqData = reqData
                             //Save History
                             saveBuySellCoinBalanceHistory(dataArr.user_id, exchange, body, dataArr.action)
                             //Update User Balance
