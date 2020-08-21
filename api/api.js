@@ -8955,6 +8955,27 @@ router.post('/pause_sold_order', (req, res) => {
             if (data1.length > 0) {
                 obj = data1[0];
 
+
+                var parent_fields = {}
+                if (typeof obj['buy_parent_id'] != 'undefined') {
+                    let parent_filter = {
+                        '_id': new ObjectID(String(obj['buy_parent_id']))
+                    }
+                    let parent_order = await db.collection(sold_collection).find(parent_filter).limit(1).toArray();
+                    if (parent_order.length > 0) {
+                        parent_fields['parent_profit'] = parent_order[0]['defined_sell_percentage']
+                        parent_fields['parent_custom_stop_loss'] = parent_order[0]['custom_stop_loss_percentage']
+                        parent_fields['parent_LTH_profit'] = parent_order[0]['lth_profit']
+                    } else {
+                        parent_fields = {
+                            'parent_profit': 1.2,
+                            'parent_custom_stop_loss': 1,
+                            'parent_LTH_profit': 1.2,
+                        }
+                    }
+                }
+
+
                 let set = {};
                 set['$set'] = {
                     'is_sell_order': 'pause',
@@ -8962,6 +8983,18 @@ router.post('/pause_sold_order', (req, res) => {
                 };
                 let where = {
                     '_id': obj._id
+                }
+
+
+                // resume parent fields
+                if (typeof parent_fields['parent_profit'] != 'undefined') {
+                    set['$set']['parent_profit'] = parent_fields['parent_profit']
+                }
+                if (typeof parent_fields['parent_custom_stop_loss'] != 'undefined') {
+                    set['$set']['parent_custom_stop_loss'] = parent_fields['parent_custom_stop_loss']
+                }
+                if (typeof parent_fields['parent_LTH_profit'] != 'undefined') {
+                    set['$set']['parent_LTH_profit'] = parent_fields['parent_LTH_profit']
                 }
 
                 let update = db.collection(sold_collection).updateOne(where, set);
