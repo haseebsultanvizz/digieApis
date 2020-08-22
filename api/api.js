@@ -8146,6 +8146,10 @@ router.post('/remove_error', async (req, resp) => {
     let exchange = req.body.exchange;
     conn.then(async (db) => {
 
+        //delete sell order from ready_orders_for_sell_ip_based
+        let ready_for_sell_collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange  
+        await db.collection(ready_for_sell_collection).deleteOne({ 'buy_order_id': { '$in': [order_id, new ObjectID(order_id)]}});
+
         //get buy order
         let buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         let sell_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
