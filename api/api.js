@@ -12194,13 +12194,13 @@ async function getLTHBalance(user_id, exchange) {
                     let currUsd = 0
                     let currBtc = 0
 
-                    if (typeof order['buy_fraction_filled_order_arr'] != 'undefined'){
-                        quantity = 0
-                        order['buy_fraction_filled_order_arr'].map(item=>{
-                            quantity += item['filledQty']
-                            purchased_price = item['filledPrice']
-                        })
-                    }
+                    // if (typeof order['buy_fraction_filled_order_arr'] != 'undefined'){
+                    //     quantity = 0
+                    //     order['buy_fraction_filled_order_arr'].map(item=>{
+                    //         quantity += parseFloat(item['filledQty'])
+                    //         purchased_price = parseFloat(item['filledPrice'])
+                    //     })
+                    // }
 
                     let splitArr = selectedCoin.split('USDT');
                     if (splitArr[1] == '') {
@@ -12421,7 +12421,7 @@ async function getOpenBalance(user_id, exchange) {
             var where = {
                 'admin_id': user_id,
                 'application_mode': 'live',
-                'status': { '$in': ['FILLED', 'FILLED_ERROR']},
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
                 'is_sell_order': 'yes',
                 'is_lth_order': {
                     $ne: 'yes'
@@ -12452,13 +12452,13 @@ async function getOpenBalance(user_id, exchange) {
                     let currUsd = 0
                     let currBtc = 0
 
-                    if (typeof order['buy_fraction_filled_order_arr'] != 'undefined') {
-                        quantity = 0
-                        order['buy_fraction_filled_order_arr'].map(item => {
-                            quantity += item['filledQty']
-                            purchased_price = item['filledPrice']
-                        })
-                    }
+                    // if (typeof order['buy_fraction_filled_order_arr'] != 'undefined') {
+                    //     quantity = 0
+                    //     order['buy_fraction_filled_order_arr'].map(item => {
+                    //         quantity += parseFloat(item['filledQty'])
+                    //         purchased_price = parseFloat(item['filledPrice'])
+                    //     })
+                    // }
 
                     let splitArr = selectedCoin.split('USDT');
                     if (splitArr[1] == '') {
