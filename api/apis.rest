@@ -228,3 +228,13 @@ Content-Type: application/json
     "user_id": "5c0912b7fc9aadaac61dd072",
     "usd_worth": 50
 }
+
+###
+
+POST http://localhost:3010/apiEndPoint/get_user_id
+# POST http://34.205.124.51:3010/apiEndPoint/get_user_id
+Content-Type: application/json
+
+{ 
+    "username": "admin"
+}

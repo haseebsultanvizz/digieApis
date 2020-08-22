@@ -15254,4 +15254,35 @@ router.post('/getOrderStats', async (req, res) => {
     }
 })//end getOrderStats
 
+
+router.post('/get_user_id', async (req, res) => {
+    var username = req.body.username;
+    if (typeof username != 'undefined' && username != '') {
+        var db = await conn
+        var where = {} 
+        where['$or'] = [{
+            username_lowercase: username
+        }, {
+            email_address: username
+        }]
+        where['status'] = '0';
+        where['user_soft_delete'] = '0';
+        let user = await db.collection('users').find(where).project({'_id':1}).toArray();
+        if(user.length > 0){
+            res.send({
+                "status": true,
+                "user_id": String(user[0]['_id'])
+            })
+        }else{
+            res.send({
+                "status": false,
+            })
+        }
+    } else {
+        res.send({
+            "status": false,
+        })
+    }
+})
+
 module.exports = router;
