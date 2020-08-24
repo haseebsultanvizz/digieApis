@@ -2585,6 +2585,7 @@ router.post('/listOrderListing', async (req, resp) => {
 
 
         var htmlStatus = '';
+        var htmlStatusArr = [];
 
         var status = (typeof orderListing[index].status == 'undefined') ? '' : orderListing[index].status
         var is_sell_order = (typeof orderListing[index].is_sell_order == 'undefined') ? '' : orderListing[index].is_sell_order;
@@ -2683,23 +2684,29 @@ router.post('/listOrderListing', async (req, resp) => {
             order['sell_status'] = SellStatus;
             if (SellStatus == 'error') {
                 htmlStatus += '<span class="badge badge-danger">ERROR IN SELL</span>';
+                htmlStatusArr.push('ERROR IN SELL')
             } else if (SellStatus == 'submitted') {
                 htmlStatus += '<span class="badge badge-success">SUBMITTED FOR SELL</span>';
+                htmlStatusArr.push('SUBMITTED FOR SELL')
             } else {
                 htmlStatus += '<span class="badge badge-info">WAITING FOR SELL </span>';
+                htmlStatusArr.push('WAITING FOR SELL')
             }
         } else if (status == 'FILLED' && (is_sell_order == 'sold' || pause_status_arr.includes(is_sell_order))) {
 
             if (pause_status_arr.includes(is_sell_order)) {
                 if (is_sell_order == 'pause') {
                     htmlStatus += '<span class="badge badge-success">Paused</span>';
+                    htmlStatusArr.push('Paused')
                     front_status_arr.push('Paused')
                 } else if (is_sell_order == 'resume_pause') {
 
                     if (typeof orderListing[index].resume_order_arr != 'undefined' && orderListing[index].resume_order_arr != null && orderListing[index].resume_order_arr.length > 0){
                         htmlStatus += '<span class="badge badge-info">In progress</span>';
+                        htmlStatusArr.push('In progress')
                         front_status_arr.push('In progress')
                     }else{
+                        htmlStatusArr.push('Resumed')
                         htmlStatus += '<span class="badge badge-warning">Resumed</span>';
                         is_resumed_label_added = true
                     }
@@ -2717,6 +2724,7 @@ router.post('/listOrderListing', async (req, resp) => {
 
                 } else if (is_sell_order == 'resume_complete') {
                     htmlStatus += '<span class="badge badge-warning">Completed</span>';
+                    htmlStatusArr.push('Resumed')
                     front_status_arr.push('Completed')
                     //TODO: find child trade profit
                     let child_order = await listOrderById(orderListing[index]._id, exchange)
@@ -2733,9 +2741,12 @@ router.post('/listOrderListing', async (req, resp) => {
                 }
             } else if (is_lth_order == 'yes') {
                 htmlStatus += '<span class="badge badge-warning">LTH</span><span class="badge badge-success">Sold</span>';
+                htmlStatusArr.push('LTH')
+                htmlStatusArr.push('Sold')
                 is_sold = true
             } else {
                 htmlStatus += '<span class="badge badge-success">Sold</span>';
+                htmlStatusArr.push('Sold')
                 is_sold = true
             }
         } else {
@@ -2756,15 +2767,19 @@ router.post('/listOrderListing', async (req, resp) => {
             if (errorStatusArr.includes(status)) {
                 let err_lth_filled = status.replace('_', ' ')
                 htmlStatus += '<span class="badge badge-' + statusClass + '">' + err_lth_filled + '</span>';
+                htmlStatusArr.push(err_lth_filled)
             } else if(status != 'pause') {
                 htmlStatus += '<span class="badge badge-' + statusClass + '">' + status + '</span>';
+                htmlStatusArr.push(status)
             }
         }
 
         if (fraction_sell_type == 'parent' || fraction_sell_type == 'child') {
             htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Sell Fraction</span>';
+            htmlStatusArr.push('Sell Fraction')
         } else if (fraction_buy_type == 'parent' || fraction_buy_type == 'child') {
             htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Buy Fraction</span>';
+            htmlStatusArr.push('Buy Fraction')
         }
         
         order['resume_order_id_exists'] = false 
@@ -2778,9 +2793,11 @@ router.post('/listOrderListing', async (req, resp) => {
                 //Do nothing
             }else if(status == 'pause'){
                 htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resume Stopped</span>';
+                htmlStatusArr.push('Resume Stopped')
                 order['resumeStopped'] = true
             } else if (!is_resumed_label_added){
                 htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Resumed</span>';
+                htmlStatusArr.push('Resumed')
             }
 
             let resumePlClass = resumePL > 0 ? 'success' : 'danger'
@@ -2825,6 +2842,7 @@ router.post('/listOrderListing', async (req, resp) => {
             //     order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"><b>' + resumePL + '%</b></span>';
             // }
             htmlStatus += ' <span class="text-' + resumePlClass + '" style="margin-left:4px;" ><b>' + resumePL + '%</b></span>'
+            htmlStatusArr.push(resumePL)
         }
         
         if (typeof orderListing[index].secondary_resume_level != 'undefined') {
@@ -2838,6 +2856,7 @@ router.post('/listOrderListing', async (req, resp) => {
             order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"> <b>' + resumePL.toFixed(2) + '%</b></span>'
 
             htmlStatus = '<span class="badge badge-success" style="margin-left:4px;">Resume Completed</span>';
+            htmlStatusArr.push('Resume Completed')
         }
 
         if (postDAta.status == 'sold') {
@@ -2876,6 +2895,7 @@ router.post('/listOrderListing', async (req, resp) => {
 
 
         order['htmlStatus'] = htmlStatus;
+        order['htmlStatusArr'] = htmlStatusArr;
         customOrderListing.push(order)
     } //End of order Iteration
 
