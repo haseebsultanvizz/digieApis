@@ -8228,6 +8228,7 @@ router.post('/remove_error', async (req, resp) => {
 
 
                     let update = {}
+                    let set1 = {}
 
                     //Calculate initial trail price
                     if (typeof buy_order['purchased_price'] != 'undefined' && buy_order['purchased_price'] != '' && typeof buy_order['custom_stop_loss_percentage'] != 'undefined' && buy_order['custom_stop_loss_percentage'] != ''){
@@ -8236,10 +8237,10 @@ router.post('/remove_error', async (req, resp) => {
                             var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
                             if (!isNaN(tt_CSLP)) {
                                 var loss_price = (tt_purchased_price * tt_CSLP) / 100;
-                                update['$set']['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
-                                update['$set']['custom_stop_loss_percentage'] = tt_CSLP;
-                                update['$set']['loss_percentage'] = tt_CSLP;
-                                update['$set']['custom_stop_loss_step'] = 0;
+                                set1['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
+                                set1['custom_stop_loss_percentage'] = tt_CSLP;
+                                set1['loss_percentage'] = tt_CSLP;
+                                set1['custom_stop_loss_step'] = 0;
                             }
                         }
                     }
@@ -8248,8 +8249,10 @@ router.post('/remove_error', async (req, resp) => {
                     let where = {
                         '_id': new ObjectID(order_id)
                     }
-                    update['$set']['status'] = update_buy_status
-                    update['$set']['modified_date'] = new Date()
+                    set1['status'] = update_buy_status
+                    set1['modified_date'] = new Date()
+
+                    update['$set'] = set1
 
                     let updated = await db.collection(buy_collection).updateOne(where, update)
 
@@ -8283,6 +8286,7 @@ router.post('/remove_error', async (req, resp) => {
                 if (typeof buy_order['sell_order_id'] != 'undefined') {
 
                     let update2 = {}
+                    let set2 = {}
 
                     //Calculate initial trail price
                     if (typeof buy_order['purchased_price'] != 'undefined' && buy_order['purchased_price'] != '' && typeof buy_order['custom_stop_loss_percentage'] != 'undefined' && buy_order['custom_stop_loss_percentage'] != '') {
@@ -8291,10 +8295,10 @@ router.post('/remove_error', async (req, resp) => {
                             var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
                             if (!isNaN(tt_CSLP)) {
                                 var loss_price = (tt_purchased_price * tt_CSLP) / 100;
-                                update2['$set']['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
-                                update2['$set']['custom_stop_loss_percentage'] = tt_CSLP;
-                                update2['$set']['loss_percentage'] = tt_CSLP;
-                                update2['$set']['custom_stop_loss_step'] = 0;
+                                set2['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
+                                set2['custom_stop_loss_percentage'] = tt_CSLP;
+                                set2['loss_percentage'] = tt_CSLP;
+                                set2['custom_stop_loss_step'] = 0;
                             }
                         }
                     }
@@ -8302,8 +8306,9 @@ router.post('/remove_error', async (req, resp) => {
                     let where2 = {
                         '_id': new ObjectID(String(buy_order['sell_order_id']))
                     }
-                    update2['$set']['status'] = 'new'
-                    update2['$set']['modified_date'] = new Date()
+                    set2['status'] = 'new'
+                    set2['modified_date'] = new Date()
+                    update2['$set'] = set2
                     let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
                 }
 
