@@ -8225,16 +8225,30 @@ router.post('/remove_error', async (req, resp) => {
 
                 //skip buy status update if error only exist in sell order 
                 if (update_buy_status != 'skip'){
+
+
+                    let update = {}
+
+                    //Calculate initial trail price
+                    var tt_purchased_price = parseFloat(buy_order['purchased_price'])
+                    if (!isNaN(tt_purchased_price)) {
+                        var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
+                        if (!isNaN(tt_CSLP)) {
+                            var loss_price = (tt_purchased_price * tt_CSLP) / 100;
+                            update['$set']['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
+                            update['$set']['custom_stop_loss_percentage'] = tt_CSLP;
+                            update['$set']['loss_percentage'] = tt_CSLP;
+                            update['$set']['custom_stop_loss_step'] = 0;
+                        }
+                    }
+
                     //remove error from buy_order
                     let where = {
                         '_id': new ObjectID(order_id)
                     }
-                    let update = {
-                        '$set': {
-                            'status': update_buy_status,
-                            'modified_date': new Date()
-                        }
-                    }
+                    update['$set']['status'] = update_buy_status
+                    update['$set']['modified_date'] = new Date()
+
                     let updated = await db.collection(buy_collection).updateOne(where, update)
 
                     if (update_buy_status == 'canceled'){
@@ -8265,15 +8279,27 @@ router.post('/remove_error', async (req, resp) => {
 
                 //remove error from sell_order
                 if (typeof buy_order['sell_order_id'] != 'undefined') {
+
+                    let update2 = {}
+
+                    //Calculate initial trail price
+                    var tt_purchased_price = parseFloat(buy_order['purchased_price'])
+                    if (!isNaN(tt_purchased_price)) {
+                        var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
+                        if (!isNaN(tt_CSLP)) {
+                            var loss_price = (tt_purchased_price * tt_CSLP) / 100;
+                            update2['$set']['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
+                            update2['$set']['custom_stop_loss_percentage'] = tt_CSLP;
+                            update2['$set']['loss_percentage'] = tt_CSLP;
+                            update2['$set']['custom_stop_loss_step'] = 0;
+                        }
+                    }
+
                     let where2 = {
                         '_id': new ObjectID(String(buy_order['sell_order_id']))
                     }
-                    let update2 = {
-                        '$set': {
-                            'status': 'new',
-                            'modified_date': new Date()
-                        }
-                    }
+                    update2['$set']['status'] = 'new'
+                    update2['$set']['modified_date'] = new Date()
                     let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
                 }
 
