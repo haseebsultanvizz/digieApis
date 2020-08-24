@@ -8230,15 +8230,17 @@ router.post('/remove_error', async (req, resp) => {
                     let update = {}
 
                     //Calculate initial trail price
-                    var tt_purchased_price = parseFloat(buy_order['purchased_price'])
-                    if (!isNaN(tt_purchased_price)) {
-                        var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
-                        if (!isNaN(tt_CSLP)) {
-                            var loss_price = (tt_purchased_price * tt_CSLP) / 100;
-                            update['$set']['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
-                            update['$set']['custom_stop_loss_percentage'] = tt_CSLP;
-                            update['$set']['loss_percentage'] = tt_CSLP;
-                            update['$set']['custom_stop_loss_step'] = 0;
+                    if (typeof buy_order['purchased_price'] != 'undefined' && buy_order['purchased_price'] != '' && typeof buy_order['custom_stop_loss_percentage'] != 'undefined' && buy_order['custom_stop_loss_percentage'] != ''){
+                        var tt_purchased_price = parseFloat(buy_order['purchased_price'])
+                        if (!isNaN(tt_purchased_price)) {
+                            var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
+                            if (!isNaN(tt_CSLP)) {
+                                var loss_price = (tt_purchased_price * tt_CSLP) / 100;
+                                update['$set']['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
+                                update['$set']['custom_stop_loss_percentage'] = tt_CSLP;
+                                update['$set']['loss_percentage'] = tt_CSLP;
+                                update['$set']['custom_stop_loss_step'] = 0;
+                            }
                         }
                     }
 
@@ -8283,15 +8285,17 @@ router.post('/remove_error', async (req, resp) => {
                     let update2 = {}
 
                     //Calculate initial trail price
-                    var tt_purchased_price = parseFloat(buy_order['purchased_price'])
-                    if (!isNaN(tt_purchased_price)) {
-                        var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
-                        if (!isNaN(tt_CSLP)) {
-                            var loss_price = (tt_purchased_price * tt_CSLP) / 100;
-                            update2['$set']['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
-                            update2['$set']['custom_stop_loss_percentage'] = tt_CSLP;
-                            update2['$set']['loss_percentage'] = tt_CSLP;
-                            update2['$set']['custom_stop_loss_step'] = 0;
+                    if (typeof buy_order['purchased_price'] != 'undefined' && buy_order['purchased_price'] != '' && typeof buy_order['custom_stop_loss_percentage'] != 'undefined' && buy_order['custom_stop_loss_percentage'] != '') {
+                        var tt_purchased_price = parseFloat(buy_order['purchased_price'])
+                        if (!isNaN(tt_purchased_price)) {
+                            var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
+                            if (!isNaN(tt_CSLP)) {
+                                var loss_price = (tt_purchased_price * tt_CSLP) / 100;
+                                update2['$set']['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
+                                update2['$set']['custom_stop_loss_percentage'] = tt_CSLP;
+                                update2['$set']['loss_percentage'] = tt_CSLP;
+                                update2['$set']['custom_stop_loss_step'] = 0;
+                            }
                         }
                     }
 
