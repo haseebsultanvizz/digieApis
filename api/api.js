@@ -3125,9 +3125,9 @@ async function listOrderListing(postDAta, dbConnection) {
             { 'resume_status': 'completed', 'trading_status': 'complete' }, 
             { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
         ];
-        if (!digie_admin_ids.includes(postDAta.admin_id)){
+        // if (!digie_admin_ids.includes(postDAta.admin_id)){
             filter['$or'][0]['show_order'] = 'yes'
-        }
+        // }
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
 
