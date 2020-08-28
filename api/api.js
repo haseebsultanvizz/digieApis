@@ -15340,4 +15340,34 @@ router.post('/get_user_id', async (req, res) => {
     }
 })
 
+router.post('/getAvailableTradingPoints', async (req, res) => {
+    var user_id = req.body.user_id;
+    var exchange = req.body.exchange;
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' ) {
+        var db = await conn
+        var where = {
+            '_id': new ObjectID(user_id)
+        }
+
+        let points_key = exchange == 'binance' ? 'current_trading_points' : 'current_trading_points_'+exchange;
+        let project = {}
+        project[points_key] = 1
+        let user = await db.collection('users').find(where).project(project).toArray();
+        if(user.length > 0){
+            res.send({
+                "status": true,
+                "availableTradingPoints": user[0][points_key]
+            })
+        }else{
+            res.send({
+                "status": false,
+            })
+        }
+    } else {
+        res.send({
+            "status": false,
+        })
+    }
+})
+
 module.exports = router;
