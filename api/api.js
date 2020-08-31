@@ -7773,6 +7773,9 @@ router.post('/saveBamCredentials', (req, resp) => {
     var api_key = req.body.api_key;
     var api_secret = req.body.api_secret;
 
+    api_key = api_key.trim()
+    api_secret = api_secret.trim()
+
     conn.then((db) => {
         let insertArr = {};
         insertArr['user_id'] = user_id;
@@ -7808,6 +7811,9 @@ router.post('/saveKrakenCredentials', (req, resp) => {
     var user_id = req.body.user_id;
     var api_key = req.body.api_key;
     var api_secret = req.body.api_secret;
+
+    api_key = api_key.trim()
+    api_secret = api_secret.trim()
 
     conn.then((db) => {
         let insertArr = {};
@@ -7985,6 +7991,10 @@ router.post('/validate_bam_credentials', async (req, resp) => {
 
 
 function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
+
+    APIKEY = APIKEY.trim()
+    APISECRET = APISECRET.trim()
+
     return new Promise((resolve, reject) => {
         binance = require('node-binance-api')().options({
             APIKEY: APIKEY,
@@ -8058,6 +8068,9 @@ router.post('/validate_kraken_credentials', async (req, resp) => {
 
 function validate_kraken_credentials(APIKEY, APISECRET, user_id = '') {
     return new Promise((resolve, reject) => {
+
+        APIKEY = APIKEY.trim()
+        APISECRET = APISECRET.trim()
 
         var options = {
             method: 'POST',
