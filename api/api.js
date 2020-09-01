@@ -7285,7 +7285,19 @@ router.post('/get_user_info', function (req, res, next) {
                     if (data != undefined || data != null) {
                         if (Object.keys(data).length > 0) {
 
-                            let fieldsArr = ['api_key', 'api_secret', 'pass_phrase']
+                            let fieldsArr = [
+                                'api_key', 
+                                'api_secret', 
+                                'pass_phrase',
+                                'first_name',
+                                'last_name',
+                                'username',
+                                'email_address',
+                                'phone_number',
+                                'password',
+                                'timezone',
+                            ]
+                            
                             for (let [key, value] of Object.entries(data)) {
                                 if (!fieldsArr.includes(key)) {
                                     delete data[key]
