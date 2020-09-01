@@ -14272,20 +14272,20 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
 
 router.post('/updateDailyTradeSettings_digie', async (req, res) => {
     
-    let myIp = req.headers['x-forwarded-for']
-    console.log('============================================================== Request Ip ::: ', JSON.stringify(req.headers))
+    // let myIp = req.headers['x-forwarded-for']
+    // console.log('============================================================== Request Ip ::: ', JSON.stringify(req.headers))
     
     var user_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : 'live'
 
 
-    console.log('11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111     ', exchange, application_mode, typeof user_id)
-    console.log('22222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222     ', exchange, application_mode, user_id)
-    console.log('33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333     ', exchange, application_mode, JSON.stringify(user_id))
+    // console.log('11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111     ', exchange, application_mode, typeof user_id)
+    // console.log('22222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222     ', exchange, application_mode, user_id)
+    // console.log('33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333     ', exchange, application_mode, JSON.stringify(user_id))
 
-    // if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && typeof user_id != 'object' && (user_id != '' || user_id != null || user_id != 'null')) {
-    if (false) {
+    if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && typeof user_id != 'object' && (user_id != '' || user_id != null || user_id != 'null')) {
+    // if (false) {
 
         //get all users with auto trade settings
         conn.then(async(db) => {
@@ -14309,9 +14309,9 @@ router.post('/updateDailyTradeSettings_digie', async (req, res) => {
                 // 'step_4.perUsdtTradeUsdVal': { '$exists': true },
             }
 
-            if(typeof user_id != 'undefined' && user_id != ''){
+            // if(typeof user_id != 'undefined' && user_id != ''){
                 where['user_id'] = user_id
-            }
+            // }
             let users = await db.collection(collectionName).find(where).project({'user_id':1}).toArray()
 
             if(users.length > 0){
