@@ -9808,6 +9808,10 @@ router.post('/resume_already_paused_test', (req, res) => {
                             }
                         }
 
+                        if (typeof tempOrder['direct_resume'] != 'undefined' && tempOrder['direct_resume'] == 'yes') {
+                            updArr['order_level'] = 'direct_resume'
+                        }
+
                         updArr['status'] = 'FILLED'
                         updArr['modified_date'] = new Date()
 
