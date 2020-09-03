@@ -3565,6 +3565,84 @@ router.post('/deleteOrder', async (req, resp) => {
     });
 
 }) //End of deleteOrder
+
+//post call from component for deleting orders permanently
+router.post('/deleteOrderPermanently', async (req, resp) => {
+
+    let order_id = req.body.orderId
+    let exchange = req.body.exchange
+
+    if (typeof order_id != 'undefined' && order_id != '' && typeof exchange != 'undefined' && exchange != ''){
+
+        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+        delete_order_history_logs(order_id, exchange);
+        
+        resp.status(200).send({
+            status: true
+        });
+
+    }else{
+        resp.status(200).send({
+            status: false
+        });
+    }
+
+}) //End of deleteOrderPermanently
+
+function delete_order_history_logs(order_id, exchange) {
+    return new Promise(async (resolve, reject) => {
+
+        const db = await conn
+
+        //get order 
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        let sell_collection = exchange == 'binance' ? 'orders' : 'orders_' + exchange
+        let resume_collection = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
+        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+
+        let order = await db.collection(buy_collection).find({ '_id': new ObjectID(order_id) }).toArray()
+
+        if (order.length > 0) {
+            order = order[0]
+
+            let order_created_date = order['created_date']
+            let order_mode = order['application_mode']
+
+            var created_date = new Date(order_created_date);
+            var current_date = new Date('2019-12-27T11:04:21.912Z');
+            if (created_date > current_date) {
+                var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
+                var d = new Date(order_created_date);
+                //create collection name on the base of date and mode
+                var date_mode_string = '_' + order_mode + '_' + d.getFullYear() + '_' + d.getMonth();
+                //create full name of collection
+                var full_collection_name = collectionName + date_mode_string;
+            } else {
+                var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
+            }
+
+            // (async () => { console.log('full_collection_name ::::::', full_collection_name) })();
+
+            // //Count Logs
+            // let logs_count = await db.collection(full_collection_name).find({ 'order_id': { '$in': [order_id, new ObjectID(order_id)] } }).count()
+            // console.log('logs_count ::::', logs_count)
+            
+            //Delete Logs
+            db.collection(full_collection_name).deleteMany({ 'order_id': { '$in': [order_id, new ObjectID(order_id)] } })
+            // let res = await db.collection(full_collection_name).deleteMany({ 'order_id': { '$in': [order_id, new ObjectID(order_id)] } })
+            // console.log(res)
+            
+            //Delete order
+            db.collection(buy_collection).deleteOne({ '_id': new ObjectID(order_id) })
+            // let res2 = await db.collection(buy_collection).deleteOne({ '_id': new ObjectID(order_id) })
+            // console.log(res2)
+            
+        }
+
+        resolve(true)
+    })
+}
+
 //delete order on the base of orderid
 function deleteOrder(orderId, exchange) {
     return new Promise((resolve) => {
