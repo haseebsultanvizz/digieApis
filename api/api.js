@@ -9646,6 +9646,9 @@ router.post('/resume_order_test', (req, res) => {
                         updArr['is_sell_order'] = 'resume_pause'
                         updArr['modified_date'] = new Date()
 
+                        if (typeof tempOrder['direct_resume'] != 'undefined' && tempOrder['direct_resume'] == 'yes') {
+                            updArr['order_level'] = 'direct_resume'
+                        }
 
                         set['$set'] = updArr
                         var update = db.collection(sold_collection).updateOne(filter, set)
