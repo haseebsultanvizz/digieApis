@@ -13511,7 +13511,10 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
             for (var i = 0; i < parentArrLen; i++) {
                 let item = parent_orders[i]
                 
-                console.log('================================= ', collectionName, item['_id']['symbol'], ' total orders : ', item.orders.length)
+                if (exchange == 'kraken' && item['_id']['symbol'] == 'EOSUSDT'){
+                    continue;
+                }
+                // console.log('================================= ', collectionName, item['_id']['symbol'], ' total orders : ', item.orders.length)
                 // console.log(item.orders)
 
                 let promise1 = listmarketPriceMinNotation('BTCUSDT', exchange)
