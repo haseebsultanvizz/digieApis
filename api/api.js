@@ -13483,6 +13483,7 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                 'pause_status': 'play',
                 'status': {'$in': ['new', 'takingOrder']},
                 'usd_worth': {'$exists': true},
+                'auto_trade_generator': { '$exists': false},
                 'modified_date': { '$lte': orders_modified_date }
             }
             if (typeof symbol != 'undefined' && symbol != ''){
