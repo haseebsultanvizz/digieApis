@@ -14374,7 +14374,7 @@ router.post('/updateDailyTradeSettings_digie', async (req, res) => {
     
     // let myIp = req.headers['x-forwarded-for']
     // console.log(req.body.user_id, '============================================================== Request Ip ::: ', JSON.stringify(req.headers))
-    console.log(req.body.user_id, '==============================================================')
+    // console.log(req.body.user_id, '==============================================================')
     
     var user_id = req.body.user_id
     let exchange = req.body.exchange
