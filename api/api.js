@@ -2859,6 +2859,11 @@ router.post('/listOrderListing', async (req, resp) => {
             htmlStatusArr.push('Resume Completed')
         }
 
+        if (postDAta.status == 'parent' && typeof orderListing[index].auto_trade_generator != 'undefined' && orderListing[index].auto_trade_generator == 'yes') {
+            htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">ATG</span> ';
+            htmlStatusArr.push('ATG')
+        }
+
         if (postDAta.status == 'sold') {
 
             if (typeof orderListing[index].resume_order_arr != 'undefined' && orderListing[index].resume_order_arr != null && orderListing[index].resume_order_arr.length > 0) {

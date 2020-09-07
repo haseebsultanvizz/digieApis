@@ -238,3 +238,9 @@ Content-Type: application/json
 { 
     "username": "admin"
 }
+
+
+###
+
+GET http://localhost:3010/apiEndPoint/myTest2
+# GET http://34.205.124.51:3010/apiEndPoint/myTest2
