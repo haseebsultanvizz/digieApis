@@ -487,7 +487,8 @@ router.post('/resetPassword', async function (req, resp) {
         password = password.trim();
         if (Object.keys(post_data).length > 0) {
             if ("user_id" in post_data && "password" in post_data) {
-                let md5Password = md5(password);
+                // let md5Password = md5(password);
+                let md5Password = password;
                 let where = {
                     "_id": new ObjectID(user_id)
                 };
