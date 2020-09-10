@@ -2998,6 +2998,11 @@ router.post('/listOrderListing', async (req, resp) => {
             order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"> <b>' + resumePL.toFixed(2) + '%</b></span>'
         }
 
+        if (postDAta.status == 'LTH' && orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no' && orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes') {
+            htmlStatus += ' <span class="badge badge-warning">Cost Avg</span> ';
+            htmlStatusArr.push('Cost Avg')
+        }
+
         order['childProfitLossPercentageHtml'] = childProfitLossPercentageHtml
 
 
