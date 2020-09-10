@@ -531,8 +531,114 @@ router.post('/resetPassword', async function (req, resp) {
 
 
 router.get('/myTest2', async (req,res)=>{
-    console.log(await getClientInfo(req))
-    res.send({ data: await getClientInfo(req) })
+    // console.log(await getClientInfo(req))
+
+    const db = await conn
+    let data = {
+        "5eb5a5a628914a45246bacc6": " 0.05008 / -69.32",
+        "5ec57e02c1cbe0619950c9c2": " -0.002376 / 0",
+        "5ce5c30efc9aadb43a5107b2": " 0.030237 / -33.06",
+        "5c09153bfc9aadaac61dd17b": " 0.050081 / -105.52",
+        "5c091362fc9aadaac61dd0a4": " -0.001594 / 14.34",
+        "5c46069ffc9aad5c5562aa42": " 0.105183 / -220.47",
+        "5ec4ddc3c1cbe0619950c9a4": " 0.100457 / -47.86",
+        "5ec92c6cedd71054ad6dbfb8": " 0.047987 / -29.36",
+        "5c886871fc9aad24d27efdd2": " -0.021224 / 12.93",
+        "5e8a7b78c700bb29166b6501": " 0.0232 / -93.46",
+        "5c0915c8fc9aadaac61dd1bd": " 0.078314 / -5.29",
+        "5c09143ffc9aadaac61dd106": " -0.001075 / -27.17",
+        "5c091383fc9aadaac61dd0b1": " 0.007517 / -34.54",
+        "5c09147cfc9aadaac61dd122": " 0.008622 / -54.16",
+        "5c091403fc9aadaac61dd0eb": " 0.03187 / -115.2",
+        "5ec93fb76fd73267427af9e5": " 0.192855 / -135.75",
+        "5c09145cfc9aadaac61dd114": " 0.108796 / -84.69",
+        "5c09151bfc9aadaac61dd16c": " 0.174102 / -45.93",
+        "5e4ec6f98334a705c918e553": " 0.093274 / -141.5",
+        "5c6f2c69fc9aad694e443eb2": " 0.079099 / -48.15",
+        "5c0913eefc9aadaac61dd0e1": " 0.044464 / -99.78",
+        "5d8478db915fc72bc6436092": " 0.032972 / -47.85",
+        "5deee943558d576acd79c993": " 0.103826 / -182.7",
+        "5c091427fc9aadaac61dd0fc": " 0.186773 / -166.96",
+        "5c8482e1fc9aad8d69397c32": " -0.002128 / -127.63",
+        "5c091479fc9aadaac61dd121": " 0.071205 / -28.3",
+        "5c83ec7afc9aad5db6248922": " 0.25102 / -16.03",
+        "5eda6b3997ccb815cd66b358": " 0.000926 / -33.99",
+        "5c885834fc9aad5b7709f062": " 0.023102 / -21.57",
+        "5ea7fa4fc9eee72524636b90": " 0.033036 / -116.44",
+        "5efc83f3c86d125dbe20ecb2": " -0.002828 / 93.73",
+        "5eb153b156459800a05b3751": " 0.004754 / -57.04",
+        "5c86a5fafc9aada17869ad02": " -0.000457 / 51.01",
+        "5c091531fc9aadaac61dd176": " 0.017309 / -33.49",
+        "5c091459fc9aadaac61dd112": " 0.049611 / -91.54",
+        "5c0914b9fc9aadaac61dd13e": " 0.251003 / -182.66",
+        "5c09155efc9aadaac61dd18b": " 0.251036 / -124.57",
+        "5c09159afc9aadaac61dd1a7": " 0.155806 / -139.67",
+        "5c0f2c8ffc9aad58f2674532": " 0.196198 / -78.56",
+        "5c09151dfc9aadaac61dd16d": " 0.020242 / -10.77",
+        "5e9177fe797b90326e273224": " -0.002803 / 16.3",
+        "5c86f33bfc9aad989b4ca8d2": " 0.350187 / -199.92",
+        "5de6ab154e992851b37f5d22": " 0.05735 / -58.55",
+        "5c0913a0fc9aadaac61dd0be": " 0.300326 / -167.3",
+        "5c091493fc9aadaac61dd12d": " 0.04857 / -19.14",
+        "5d88ee3da70abd1fcb4ae7f2": " 0.216131 / -86.46",
+        "5c091470fc9aadaac61dd11d": " 0.021428 / -149.7",
+        "5e63edd816b0646960785112": " 0.204396 / -50.52",
+        "5ebeb388b00c472074346682": " 0.077254 / -18.59",
+        "5eac53ff3db2132d636b6af9": " 0.048964 / -53.13",
+        "5c091397fc9aadaac61dd0ba": " -0.071961 / 116.54",
+        "5c091397fc9aadaac61dd0ba": " -0.071961 / 116.54",
+        "5c091482fc9aadaac61dd125": " 0.020792 / -90.54",
+        "5c091395fc9aadaac61dd0b9": " 0.160075 / -193.99",
+        "5c09137bfc9aadaac61dd0ae": " 0.042275 / -39.49",
+        "5c0913b4fc9aadaac61dd0c7": " 0.030594 / -38.7",
+        "5c0913d2fc9aadaac61dd0d4": " 0.102773 / -48.65",
+        "5c091537fc9aadaac61dd179": " 0.034216 / -31.42",
+        "5c09142cfc9aadaac61dd0fe": " 0.059385 / -208.51",
+        "5eacb7127e3d9a5d907991f6": " -0.021219 / 54.25",
+        "5f2d22f81c3e4f53354112b6": " 0.059542 / -16.73",
+        "5c0913fffc9aadaac61dd0e9": " 0.137665 / -358.51",
+        "5ed90b3ab3ac1c5d0a73c808": " -0.000691 / -44.72",
+        "5f2d19466afb25083142d9e4": " 0 / -73",
+        "5c09148afc9aadaac61dd129": " 0.006742 / -51.48",
+        "5c091522fc9aadaac61dd16f": " 0.041419 / -32.65",
+        "5c0913c9fc9aadaac61dd0d0": " 0.000478 / -65.15",
+        "5c091515fc9aadaac61dd169": " 0.169452 / -104.22",
+        "5eedffd67f41172065155854": " -0.00039 / 0.01",
+        "5c09146afc9aadaac61dd11a": " -0.02125 / 460.94",
+        "5c0914a0fc9aadaac61dd133": " 0.145334 / -35.2",
+        "5e506386f4c44d53de5d14c3": " 0.10339 / -115.03",
+        "5e927b63dc1fd9252e5747eb": " 0.018552 / -80.11",
+        "5c091443fc9aadaac61dd108": " 0.100464 / -88.64",
+        "5c0915e2fc9aadaac61dd1c9": " 0.016453 / -100.17",
+        "5c09134cfc9aadaac61dd09c": " 1.377235 / -1719.39",
+        "5c0913dcfc9aadaac61dd0d9": " 0.303345 / -22.07",
+        "5c091311fc9aadaac61dd095": " 0.056131 / -40.93",
+        "5ed78752c8cd2c411566e694": " 0.023961 / -7.9",
+        "5ec3ba2bbfd7a444ab1a1da8": " 0.077366 / -117.88",
+        "5c091555fc9aadaac61dd187": " 0.058494 / -174.93"
+    }
+
+    let arr = []
+    for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+            // console.log(key + " -> " + data[key]);
+
+            let user = await db.collection('users').find({ '_id': new ObjectID(key)}).project({username:1,_id:0}).toArray() 
+
+            let splitArr = data[key].split('/')
+            let obj = {
+                'username': user[0]['username'],
+                'BTC': parseFloat(splitArr[0].trim()),
+                'USDT': parseFloat(splitArr[1].trim()),
+            }
+            arr.push(obj)
+        }
+    }
+
+    console.log(arr)
+
+    res.send({ data: '' })
+    // res.send({ data: await getClientInfo(req) })
 })
 
 async function getClientInfo(req){
@@ -3588,6 +3694,46 @@ router.post('/deleteOrderPermanently', async (req, resp) => {
     }
 
 }) //End of deleteOrderPermanently
+
+
+//post call from component for makeCostAvg
+router.post('/makeCostAvg', async (req, resp) => {
+
+    let order_id = req.body.orderId
+    let exchange = req.body.exchange
+
+    if (typeof order_id != 'undefined' && order_id != '' && typeof exchange != 'undefined' && exchange != ''){
+
+        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+
+        let db = await conn
+
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+        await db.collection(buy_collection).updateOne({'_id': new ObjectID(String(order_id))}, { '$set': {'cost_avg':'yes'}})
+
+        //insert log
+        var getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
+        if (getBuyOrder.length > 0){
+            let show_hide_log = 'yes';
+            let type = 'cost_avg';
+            let log_msg = "Process order by cost average set to yes " + interfaceType;
+            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+            var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+            create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
+        }
+        
+        resp.status(200).send({
+            status: true
+        });
+
+    }else{
+        resp.status(200).send({
+            status: false
+        });
+    }
+
+}) //End of deleteOrderPermanently
+
 
 function delete_order_history_logs(order_id, exchange) {
     return new Promise(async (resolve, reject) => {
@@ -14747,13 +14893,6 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
             }
 
             console.log('user_id: ', settings.user_id, '/', actualTradeableBTC, '/', actualTradeableUSDT)
-
-            // let updateSettings = await db.collection(collectionName).updateOne(where, set)
-
-            // let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT + ")]"
-            // saveATGLog(user_id, exchange, 'daily_actual_tradeable_cron', 'update Daily Actual Trade Able Auto Trade Gen ' + msg, application_mode)
-
-            // let upd = updateDailyTradeSettings(user_id, exchange, application_mode = 'live')
 
         }
         resolve(true)
