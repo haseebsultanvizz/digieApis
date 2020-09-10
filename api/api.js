@@ -1780,6 +1780,7 @@ router.post('/createAutoOrder', async (req, resp) => {
 
     order['created_date'] = new Date()
     order['modified_date'] = new Date()
+    order['randomize_sort'] = Math.floor(Math.random() * (1000 - 0 + 1)) + 0; 
     let orderResp = await createAutoOrder(order);
     resp.status(200).send({
         message: orderResp
@@ -11815,6 +11816,7 @@ async function createAutoTradeParents(settings){
                             'modified_date': new Date(),
                             'is_sell_order': 'no',
                             'sell_price': '',
+                            'randomize_sort': (Math.floor(Math.random() * (1000 - 0 + 1)) + 0),
                         }
                     }
                     let upsert1 = {
@@ -11905,6 +11907,7 @@ async function createAutoTradeParents(settings){
                             'modified_date': new Date(),
                             'is_sell_order': 'no',
                             'sell_price': '',
+                            'randomize_sort': (Math.floor(Math.random() * (1000 - 0 + 1)) + 0),
                         }
                     }
                     let upsert1 = {
