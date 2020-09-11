@@ -3001,10 +3001,10 @@ router.post('/listOrderListing', async (req, resp) => {
 
         if ((postDAta.status == 'LTH' || postDAta.status == 'open') && orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
             if (orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes'){
-                htmlStatus += ' <span class="badge badge-warning text-white">Cost Avg</span> ';
+                htmlStatus += ' <span class="badge badge-warning text-primary">Cost Avg</span> ';
                 htmlStatusArr.push('Cost Avg')
             } else if (orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'taking_child') {
-                htmlStatus += ' <span class="badge badge-warning text-white">Take child cost avg</span> ';
+                htmlStatus += ' <span class="badge badge-warning text-primary">Take child cost avg</span> ';
                 htmlStatusArr.push('Take child cost avg')
             }
         }
