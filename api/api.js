@@ -4110,6 +4110,7 @@ router.post('/sellOrderManually', async (req, resp) => {
             let quantity = (typeof buyOrderArr['quantity'] == undefined) ? '' : buyOrderArr['quantity'];
             let coin_symbol = (typeof buyOrderArr['symbol'] == undefined) ? '' : buyOrderArr['symbol'];
             let admin_id = (typeof buyOrderArr['admin_id'] == undefined) ? '' : buyOrderArr['admin_id'];
+            let trigger_type = (typeof buyOrderArr['trigger_type'] == undefined) ? '' : buyOrderArr['trigger_type'];
             //getting user ip for trading
             var trading_ip = await listUsrIp(admin_id);
 
@@ -4161,7 +4162,7 @@ router.post('/sellOrderManually', async (req, resp) => {
 
                 logPromise_1.then((resp) => {})
                 //send order for sell on specific ip
-                var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, 'barrier_percentile_trigger', 'sell_market_order', exchange);
+                var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, trigger_type, 'sell_market_order', exchange);
                 // console.log("SellOrderResolve ", SellOrderResolve)
 
                 SellOrderResolve.then((resp) => {})
@@ -4248,8 +4249,11 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
             let collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange;
 
             // console.log('insert_arr', insert_arr);
-
-            db.collection(collection).insertOne(insert_arr, (err, result) => {
+            let where = {
+                'order_id': { '$in': [new ObjectID(String(order_id)), String(order_id)]},
+                'buy_orders_id': { '$in': [new ObjectID(String(buy_orders_id)), String(buy_orders_id)]}, 
+            }
+            db.collection(collection).updateOne(where, insert_arr, {'upsert':true}, (err, result) => {
 
                 // console.log('result', result);
 
@@ -4765,7 +4769,11 @@ function orderReadyForBuy(buy_order_id, buy_quantity, market_value, coin_symbol,
             let collection = (exchange == 'binance') ? 'ready_orders_for_buy_ip_based' : 'ready_orders_for_buy_ip_based_' + exchange;
 
 
-            db.collection(collection).insertOne(insert_arr, (err, result) => {
+            let where = { 
+                'buy_order_id': { '$in': [new ObjectID(String(buy_order_id)), String(buy_order_id)] } 
+            }
+
+            db.collection(collection).updateOne(where, insert_arr, {'upsert':true}, (err, result) => {
                 if (err) {
                     resolve(err)
                 } else {
