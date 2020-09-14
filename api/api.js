@@ -4153,7 +4153,8 @@ router.post('/sellOrderManually', async (req, resp) => {
             // update_1['status'] = 'FILLED';
 
             //By Ali to avoid showing in open tab [16-1-20]
-            update_1['status'] = buyOrderStatus + '_submitted_for_sell';
+            // update_1['status'] = buyOrderStatus + '_submitted_for_sell';
+            update_1['status'] = 'submitted_for_sell';
 
             var updatePromise_2 = updateOne(filter_1, update_1, collectionName_2);
             var resolvePromise = Promise.all([updatePromise_1, updatePromise_2, logPromise, logPromise_2]);
@@ -4258,8 +4259,9 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
                 'order_id': { '$in': [new ObjectID(String(order_id)), String(order_id)]},
                 'buy_orders_id': { '$in': [new ObjectID(String(buy_orders_id)), String(buy_orders_id)]}, 
             }
-            db.collection(collection).updateOne(where, insert_arr, {'upsert':true}, (err, result) => {
+            db.collection(collection).updateOne(where, {'$set':insert_arr}, {'upsert':true}, (err, result) => {
 
+                // console.log('error', err);
                 // console.log('result', result);
 
                 if (err) {
@@ -4778,7 +4780,7 @@ function orderReadyForBuy(buy_order_id, buy_quantity, market_value, coin_symbol,
                 'buy_order_id': { '$in': [new ObjectID(String(buy_order_id)), String(buy_order_id)] } 
             }
 
-            db.collection(collection).updateOne(where, insert_arr, {'upsert':true}, (err, result) => {
+            db.collection(collection).updateOne(where, {'$set':insert_arr}, {'upsert':true}, (err, result) => {
                 if (err) {
                     resolve(err)
                 } else {
