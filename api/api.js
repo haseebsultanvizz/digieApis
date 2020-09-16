@@ -12418,7 +12418,7 @@ async function calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBT
                             coinsCategoryWorth.push({
                                 'coin': coin['coin'],
                                 'worth': cat[0]['upper_limit'],
-                                'cat': cat[0]
+                                // 'cat': cat[0]
                             })
                         }
                         break
@@ -12435,7 +12435,7 @@ async function calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBT
                         coinsCategoryWorth.push({
                             'coin': coin['coin'],
                             'worth': cat[0]['upper_limit'],
-                            'cat': cat[0]
+                            // 'cat': cat[0]
                         })
                     }
                 }
@@ -14763,6 +14763,25 @@ async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, applica
             availableBTC = parseFloat((availableBTC + openBalanceArr['onlyBtc']).toFixed(6))
             availableUSDT = parseFloat((availableUSDT + openBalanceArr['onlyUsdt']).toFixed(6))
 
+
+            //TODO: Get LTH balance
+            let lthBalanceArr = await getLTHBalance(user_id, exchange)
+            if (Object.keys(lthBalanceArr).length > 0 && lthBalanceArr.constructor === Object) {
+                //Do nothing
+            } else {
+                lthBalanceArr = {
+                    'onlyBtc': 0,
+                    'onlyUsdt': 0,
+                    'LthBtcWorth': 0,
+                    'LthUsdWorth': 0,
+                }
+            }
+            availableBTC = parseFloat(((availableBTC + openBalanceArr['onlyBtc']) - lthBalanceArr['onlyBtc']).toFixed(6))
+            availableUSDT = parseFloat(((availableUSDT + openBalanceArr['onlyUsdt']) - lthBalanceArr['onlyUsdt']).toFixed(6))
+            availableBTC = (isNaN(availableBTC) || availableBTC < 0) ? 0 : availableBTC
+            availableUSDT = (isNaN(availableUSDT) || availableUSDT < 0) ? 0 : availableUSDT
+
+
             //TODO: find it's actual tradeable
             let coinData = await listmarketPriceMinNotationCoinArr({ '$in': ['BTCUSDT'] }, exchange)
             let BTCUSDTPrice = coinData['BTCUSDT']['currentmarketPrice']
@@ -14877,6 +14896,10 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
             }
             availableBTC = parseFloat(((availableBTC + openBalanceArr['onlyBtc']) - lthBalanceArr['onlyBtc']).toFixed(6))
             availableUSDT = parseFloat(((availableUSDT + openBalanceArr['onlyUsdt']) - lthBalanceArr['onlyUsdt']).toFixed(6))
+            
+            availableBTC = (isNaN(availableBTC) || availableBTC < 0) ? 0 : availableBTC
+            availableUSDT = (isNaN(availableUSDT) || availableUSDT < 0) ? 0 : availableUSDT
+            
 
             //TODO: find it's actual tradeable
             let coinData = await listmarketPriceMinNotationCoinArr({ '$in': ['BTCUSDT'] }, exchange)
@@ -14917,6 +14940,38 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
             }
 
             console.log('user_id: ', settings.user_id, '/', actualTradeableBTC, '/', actualTradeableUSDT)
+
+            // delete settings
+            // delete balanceArr
+            // delete tempBalanceObj
+            // delete lthBalanceArr
+            // delete lthBalanceArr
+            // delete OldactualTradeableBTC 
+            // delete OldactualTradeableUSDT
+            // delete totalTradeAbleInUSD 
+            // delete btcInvestPercentage 
+            // delete usdtInvestPercentage
+            // delete dailTradeAbleBalancePercentage
+            // delete balanceArr 
+            // delete tempBalanceObj
+            // delete availableBTC 
+            // delete availableUSDT
+            // delete openBalanceArr
+            // delete lthBalanceArr
+            // delete coinData
+            // delete BTCUSDTPrice
+            // delete btcUSdworth
+            // delete btcPercentTradeableValue
+            // delete usdtPercentTradeableValue
+            // delete tradeAbleUsdWorth
+            // delete tradeAbleBtc
+            // delete actualTradeableBTC
+            // delete tradeAbleUsd             
+            // delete actualTradeableUSDT
+            // delete dailyTradeableBTC
+            // delete dailyTradeableUSDT
+            // delete where
+            // delete set
 
         }
         resolve(true)
