@@ -1780,7 +1780,13 @@ router.post('/createAutoOrder', async (req, resp) => {
 
     order['created_date'] = new Date()
     order['modified_date'] = new Date()
+
     order['randomize_sort'] = Math.floor(Math.random() * (1000 - 0 + 1)) + 0; 
+
+    if (typeof order['admin_id'] != 'undefined' && digie_admin_ids.includes(order['admin_id'])){
+        order['pick_parent'] = 'yes'; 
+    }
+
     let orderResp = await createAutoOrder(order);
     resp.status(200).send({
         message: orderResp
@@ -11834,6 +11840,11 @@ async function createAutoTradeParents(settings){
                             'randomize_sort': (Math.floor(Math.random() * (1000 - 0 + 1)) + 0),
                         }
                     }
+
+                    if (typeof user_id != 'undefined' && digie_admin_ids.includes(user_id)) {
+                        set1['$set']['pick_parent'] = 'yes';
+                    }
+
                     let upsert1 = {
                         'upsert': true
                     }
@@ -11925,6 +11936,11 @@ async function createAutoTradeParents(settings){
                             'randomize_sort': (Math.floor(Math.random() * (1000 - 0 + 1)) + 0),
                         }
                     }
+
+                    if (typeof user_id != 'undefined' && digie_admin_ids.includes(user_id)) {
+                        set1['$set']['pick_parent'] = 'yes';
+                    }
+
                     let upsert1 = {
                         'upsert': true
                     }
