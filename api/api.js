@@ -535,110 +535,120 @@ router.get('/myTest2', async (req,res)=>{
     // console.log(await getClientInfo(req))
 
     const db = await conn
-    let data = {
-        "5eb5a5a628914a45246bacc6": " 0.05008 / -69.32",
-        "5ec57e02c1cbe0619950c9c2": " -0.002376 / 0",
-        "5ce5c30efc9aadb43a5107b2": " 0.030237 / -33.06",
-        "5c09153bfc9aadaac61dd17b": " 0.050081 / -105.52",
-        "5c091362fc9aadaac61dd0a4": " -0.001594 / 14.34",
-        "5c46069ffc9aad5c5562aa42": " 0.105183 / -220.47",
-        "5ec4ddc3c1cbe0619950c9a4": " 0.100457 / -47.86",
-        "5ec92c6cedd71054ad6dbfb8": " 0.047987 / -29.36",
-        "5c886871fc9aad24d27efdd2": " -0.021224 / 12.93",
-        "5e8a7b78c700bb29166b6501": " 0.0232 / -93.46",
-        "5c0915c8fc9aadaac61dd1bd": " 0.078314 / -5.29",
-        "5c09143ffc9aadaac61dd106": " -0.001075 / -27.17",
-        "5c091383fc9aadaac61dd0b1": " 0.007517 / -34.54",
-        "5c09147cfc9aadaac61dd122": " 0.008622 / -54.16",
-        "5c091403fc9aadaac61dd0eb": " 0.03187 / -115.2",
-        "5ec93fb76fd73267427af9e5": " 0.192855 / -135.75",
-        "5c09145cfc9aadaac61dd114": " 0.108796 / -84.69",
-        "5c09151bfc9aadaac61dd16c": " 0.174102 / -45.93",
-        "5e4ec6f98334a705c918e553": " 0.093274 / -141.5",
-        "5c6f2c69fc9aad694e443eb2": " 0.079099 / -48.15",
-        "5c0913eefc9aadaac61dd0e1": " 0.044464 / -99.78",
-        "5d8478db915fc72bc6436092": " 0.032972 / -47.85",
-        "5deee943558d576acd79c993": " 0.103826 / -182.7",
-        "5c091427fc9aadaac61dd0fc": " 0.186773 / -166.96",
-        "5c8482e1fc9aad8d69397c32": " -0.002128 / -127.63",
-        "5c091479fc9aadaac61dd121": " 0.071205 / -28.3",
-        "5c83ec7afc9aad5db6248922": " 0.25102 / -16.03",
-        "5eda6b3997ccb815cd66b358": " 0.000926 / -33.99",
-        "5c885834fc9aad5b7709f062": " 0.023102 / -21.57",
-        "5ea7fa4fc9eee72524636b90": " 0.033036 / -116.44",
-        "5efc83f3c86d125dbe20ecb2": " -0.002828 / 93.73",
-        "5eb153b156459800a05b3751": " 0.004754 / -57.04",
-        "5c86a5fafc9aada17869ad02": " -0.000457 / 51.01",
-        "5c091531fc9aadaac61dd176": " 0.017309 / -33.49",
-        "5c091459fc9aadaac61dd112": " 0.049611 / -91.54",
-        "5c0914b9fc9aadaac61dd13e": " 0.251003 / -182.66",
-        "5c09155efc9aadaac61dd18b": " 0.251036 / -124.57",
-        "5c09159afc9aadaac61dd1a7": " 0.155806 / -139.67",
-        "5c0f2c8ffc9aad58f2674532": " 0.196198 / -78.56",
-        "5c09151dfc9aadaac61dd16d": " 0.020242 / -10.77",
-        "5e9177fe797b90326e273224": " -0.002803 / 16.3",
-        "5c86f33bfc9aad989b4ca8d2": " 0.350187 / -199.92",
-        "5de6ab154e992851b37f5d22": " 0.05735 / -58.55",
-        "5c0913a0fc9aadaac61dd0be": " 0.300326 / -167.3",
-        "5c091493fc9aadaac61dd12d": " 0.04857 / -19.14",
-        "5d88ee3da70abd1fcb4ae7f2": " 0.216131 / -86.46",
-        "5c091470fc9aadaac61dd11d": " 0.021428 / -149.7",
-        "5e63edd816b0646960785112": " 0.204396 / -50.52",
-        "5ebeb388b00c472074346682": " 0.077254 / -18.59",
-        "5eac53ff3db2132d636b6af9": " 0.048964 / -53.13",
-        "5c091397fc9aadaac61dd0ba": " -0.071961 / 116.54",
-        "5c091397fc9aadaac61dd0ba": " -0.071961 / 116.54",
-        "5c091482fc9aadaac61dd125": " 0.020792 / -90.54",
-        "5c091395fc9aadaac61dd0b9": " 0.160075 / -193.99",
-        "5c09137bfc9aadaac61dd0ae": " 0.042275 / -39.49",
-        "5c0913b4fc9aadaac61dd0c7": " 0.030594 / -38.7",
-        "5c0913d2fc9aadaac61dd0d4": " 0.102773 / -48.65",
-        "5c091537fc9aadaac61dd179": " 0.034216 / -31.42",
-        "5c09142cfc9aadaac61dd0fe": " 0.059385 / -208.51",
-        "5eacb7127e3d9a5d907991f6": " -0.021219 / 54.25",
-        "5f2d22f81c3e4f53354112b6": " 0.059542 / -16.73",
-        "5c0913fffc9aadaac61dd0e9": " 0.137665 / -358.51",
-        "5ed90b3ab3ac1c5d0a73c808": " -0.000691 / -44.72",
-        "5f2d19466afb25083142d9e4": " 0 / -73",
-        "5c09148afc9aadaac61dd129": " 0.006742 / -51.48",
-        "5c091522fc9aadaac61dd16f": " 0.041419 / -32.65",
-        "5c0913c9fc9aadaac61dd0d0": " 0.000478 / -65.15",
-        "5c091515fc9aadaac61dd169": " 0.169452 / -104.22",
-        "5eedffd67f41172065155854": " -0.00039 / 0.01",
-        "5c09146afc9aadaac61dd11a": " -0.02125 / 460.94",
-        "5c0914a0fc9aadaac61dd133": " 0.145334 / -35.2",
-        "5e506386f4c44d53de5d14c3": " 0.10339 / -115.03",
-        "5e927b63dc1fd9252e5747eb": " 0.018552 / -80.11",
-        "5c091443fc9aadaac61dd108": " 0.100464 / -88.64",
-        "5c0915e2fc9aadaac61dd1c9": " 0.016453 / -100.17",
-        "5c09134cfc9aadaac61dd09c": " 1.377235 / -1719.39",
-        "5c0913dcfc9aadaac61dd0d9": " 0.303345 / -22.07",
-        "5c091311fc9aadaac61dd095": " 0.056131 / -40.93",
-        "5ed78752c8cd2c411566e694": " 0.023961 / -7.9",
-        "5ec3ba2bbfd7a444ab1a1da8": " 0.077366 / -117.88",
-        "5c091555fc9aadaac61dd187": " 0.058494 / -174.93"
-    }
 
-    let arr = []
-    for (var key in data) {
-        if (data.hasOwnProperty(key)) {
-            // console.log(key + " -> " + data[key]);
+    // let arr = await db.collection('daily_trade_buy_limit').aggregate([
+    //     { "$addFields": { "limit_diff": 99 } }, 
+    //     { 
+    //         "$lookup": { 
+    //             "from": "buy_orders", 
+    //             "let": { "diff": "$limit_diff", "user_id": "$user_id" }, 
+    //             "pipeline": [
+    //                 { 
+    //                     "$match": { 
+    //                         "parent_status": "parent", 
+    //                         "application_mode": "live", 
+    //                         "pick_parent": "yes", 
+    //                         "status": { "$ne": "canceled" }, 
+    //                         "usd_worth": { "$gt": "$$diff" }, 
+    //                         "$expr": { "$eq": ["$admin_id", "$$user_id"] } 
+    //                     } 
+    //                 }, 
+    //                 { "$limit": 5 }
+    //             ], 
+    //             "as": "parent_orders" 
+    //         } 
+    //     }, 
+    //     { "$limit": 20 }
+    // ]).toArray()
+    
+    // let arr = await db.collection('daily_trade_buy_limit').aggregate([
+    //     // {
+    //     //     $match: {
+    //     //         user_id: '5c0912effc9aadaac61dd089',
+    //     //     },
+    //     // },
+    //     {
+    //         $addFields: {
+    //             diff: {$subtract: [
+    //                 '$daily_buy_usd_limit',
+    //                 '$daily_buy_usd_worth'
+    //             ]}
+    //         }
+    //     }, {
+    //         $lookup: {
+    //             from: 'buy_orders',
+    //             'let': {
+    //                 diff: '$diff',
+    //                 user_id: '$user_id'
+    //             },
+    //             pipeline: [
+    //                 {
+    //                     $match: {
+    //                         parent_status: 'parent',
+    //                         application_mode: 'live',
+    //                         pick_parent: 'yes',
+    //                         $expr: {
+    //                             $eq: ['$admin_id', '$$user_id'],
+    //                         }
+    //                     }
+    //                 },
+    //                 {
+    //                     $match: {
+    //                         $expr: {
+    //                             $gt: ['$usd_worth', '$$diff']
+    //                         }
+    //                     }
+    //                 },
+    //                 {
+    //                     $group: {
+    //                         _id: null,
+    //                         ids: {
+    //                             $push: '$_id'
+    //                         }
+    //                     }
+    //                 },
+    //                 {
+    //                     $addFields:{
+    //                         'count': { '$size': '$ids' }
+    //                     }
+    //                 },
+    //                 {
+    //                     '$redact': {
+    //                         '$cond': { if: { $gt: ['$count', 1] }, then: '$$KEEP', else: '$$PRUNE' }
+    //                     }
+    //                 },
+    //                 {
+    //                     $project: {
+    //                         _id: 0,
+    //                         ids: 1,
+    //                     }
+    //                 }
+    //             ],
+    //             as: 'recordArr'
+    //         }
+    //     },
+    //     {
+    //         $project: {
+    //             _id: 0,
+    //             'recordArr': 1,
+    //         }
+    //     },
+    //     {
+    //         '$out': 'pick_parent_temp_db'
+    //     }
+    // ]).toArray()
+    // // console.log(arr)
 
-            let user = await db.collection('users').find({ '_id': new ObjectID(key)}).project({username:1,_id:0}).toArray() 
+    // await db.collection('pick_parent_temp_db').deleteMany({ recordArr: { $size: 0 } })
 
-            let splitArr = data[key].split('/')
-            let obj = {
-                'username': user[0]['username'],
-                'BTC': parseFloat(splitArr[0].trim()),
-                'USDT': parseFloat(splitArr[1].trim()),
-            }
-            arr.push(obj)
-        }
-    }
+    // let data = await db.collection('pick_parent_temp_db').find({}, { _id:0, recordArr:1}).toArray()
 
-    console.log(arr)
+    // let total = 0;
+    // data.map(item => { total += item['recordArr'][0]['ids'].length })
+    // console.log(total)
+    res.send({ 'data': '' })
 
-    res.send({ data: '' })
+    // res.send({ 'data': arr[0]['recordArr'][0]['ids'] })
     // res.send({ data: await getClientInfo(req) })
 })
 
@@ -2496,6 +2506,38 @@ router.post('/listOrderListing', async (req, resp) => {
     //Promise for count all sold orders 
     var soldCountPromise = countCollection(collectionName, filter_8);
 
+
+    //::::::::::::: filter_12 for count all costAvgTab order :::::::::::::::::::
+    var filter_12 = {};
+    filter_12['admin_id'] = admin_id;
+    filter_12['application_mode'] = application_mode;
+    filter_12['is_sell_order'] = 'sold'  
+    filter_12['cost_avg'] = { '$exists': true } 
+    // if (!digie_admin_ids.includes(admin_id)) {
+    //     filter_12['$or'][0]['show_order'] = 'yes'
+    // }
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter_12['created_date'] = obj;
+    }
+
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_12[key] = value;
+        }
+    }
+    //::::::::::::: End of filter_12 for count all costAvgTab order :::::::::::::::::::
+    //Promise for count all costAvgTab orders 
+    var costAvgTabCountPromise = countCollection(collectionName, filter_12);
+
+
     //::::::::::::: filter_9 for count all lth_pause order :::::::::::::::::::
     var filter_9 = {};
     filter_9['admin_id'] = admin_id;
@@ -2569,7 +2611,7 @@ router.post('/listOrderListing', async (req, resp) => {
 
 
     //Resolve promised for count order for all tabs
-    var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise, errorsCountPromise]);
+    var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise, errorsCountPromise, costAvgTabCountPromise]);
 
     var parentCount = PromiseResponse[0];
     var newCount = PromiseResponse[1];
@@ -2584,6 +2626,7 @@ router.post('/listOrderListing', async (req, resp) => {
     var all1Count = PromiseResponse[10];
     var all2Count = PromiseResponse[11];
     var errorsCount = PromiseResponse[12];
+    var costAvgTabCount = PromiseResponse[13];
 
     // var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
 
@@ -2604,6 +2647,7 @@ router.post('/listOrderListing', async (req, resp) => {
     countArr['lthPauseCount'] = lthPauseCount;
     countArr['totalBuyCount'] = all2Count;
     countArr['totalSoldCount'] = all1Count;
+    countArr['costAvgTabCount'] = costAvgTabCount;
     //get user balance for listing on list-order page
 
     // countArr = await getOrderStats(postDAta)
@@ -3005,6 +3049,13 @@ router.post('/listOrderListing', async (req, resp) => {
             order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"> <b>' + resumePL.toFixed(2) + '%</b></span>'
         }
 
+
+        /* *******      Cost average code     ******  */
+        if (typeof orderListing[index]['avg_orders_ids'] != 'undefined') {
+            htmlStatus += ' <span class="badge badge-primary">Cost Avg Parent</span> ';
+            htmlStatusArr.push('Cost Avg Parent')
+        }
+
         if ((postDAta.status == 'LTH' || postDAta.status == 'open') && orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
             if (orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes'){
                 htmlStatus += ' <span class="badge badge-primary">Cost Avg</span> ';
@@ -3013,7 +3064,15 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatus += ' <span class="badge badge-primary">Take child cost avg</span> ';
                 htmlStatusArr.push('Take child cost avg')
             }
+        } else if (postDAta.status == 'costAvgTab' && orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
+
+            if (orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'completed') {
+                htmlStatus += ' <span class="badge badge-success">Cost Avg Completed</span> ';
+                htmlStatusArr.push('Cost Avg Completed')
+            }
         }
+        /* *******   End Cost average code    ******  */
+
 
         order['childProfitLossPercentageHtml'] = childProfitLossPercentageHtml
 
@@ -3252,6 +3311,15 @@ async function listOrderListing(postDAta, dbConnection) {
         if (!digie_admin_ids.includes(postDAta.admin_id)){
             filter['$or'][0]['show_order'] = 'yes'
         }
+        var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+    }
+    
+    if (postDAta.status == 'costAvgTab') {
+        filter['is_sell_order'] = 'sold'
+        filter['cost_avg'] = { '$exists': true }
+        // if (!digie_admin_ids.includes(postDAta.admin_id)){
+        //     filter['$or'][0]['show_order'] = 'yes'
+        // }
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
 
@@ -10641,6 +10709,62 @@ router.post('/resumeAlreadyPausedOrder', (req, res) => {
 
 // ******************* End Resume / Pause APIs **************** //  
 
+
+// ******************* Cost Avg APIs ******************** //  
+
+router.post('/getCostAvgOrders', async (req, res) => {
+
+    let order_ids = req.body.ids
+    let exchange = req.body.exchange
+
+    if (typeof order_ids != 'undefined' && order_ids.length > 0 && typeof exchange != 'undefined' && exchange != '') {
+
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange 
+        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange 
+
+        let ids_arr = []
+        await Promise.all(order_ids.map(item => { ids_arr.push(new ObjectID(item)) }))
+        let where = {
+            '_id': {'$in':ids_arr}
+        }
+
+        let db = await conn
+        let p1 = db.collection(buy_collection).find(where).toArray()
+        let p2 = db.collection(sold_collection).find(where).toArray()
+        
+        let promiseResult = await Promise.all([p1, p2]) 
+
+        let buy_orders = promiseResult[0]
+        let sold_orders = promiseResult[1]
+        
+
+        let ordersArr = buy_orders.concat(sold_orders);
+        delete buy_orders
+        delete sold_orders
+        delete promiseResult
+        delete p1
+        delete p2
+        
+        
+        // var ordersArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
+
+
+        res.send({
+            status: true,
+            orders: ordersArr,
+            message: 'data found',
+        })
+
+    } else {
+        res.send({
+            status: false,
+            message: 'ids and exchange is required.'
+        });
+    }
+
+})//end getCostAvgOrders
+
+// ******************* End Cost Avg APIs **************** //  
 
 
 
