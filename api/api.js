@@ -3056,17 +3056,17 @@ router.post('/listOrderListing', async (req, resp) => {
             htmlStatusArr.push('Cost Avg Parent')
         }
 
-        if ((postDAta.status == 'LTH' || postDAta.status == 'open') && orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
-            if (orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes'){
+        if ((postDAta.status == 'LTH' || postDAta.status == 'open') && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
+            if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes'){
                 htmlStatus += ' <span class="badge badge-primary">Cost Avg</span> ';
                 htmlStatusArr.push('Cost Avg')
-            } else if (orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'taking_child') {
+            } else if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'taking_child') {
                 htmlStatus += ' <span class="badge badge-primary">Take child cost avg</span> ';
                 htmlStatusArr.push('Take child cost avg')
             }
-        } else if (postDAta.status == 'costAvgTab' && orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
+        } else if (postDAta.status == 'costAvgTab' && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
 
-            if (orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'completed') {
+            if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'completed') {
                 htmlStatus += ' <span class="badge badge-success">Cost Avg Completed</span> ';
                 htmlStatusArr.push('Cost Avg Completed')
             }
