@@ -535,121 +535,35 @@ router.get('/myTest2', async (req,res)=>{
     // console.log(await getClientInfo(req))
 
     const db = await conn
+    // '$expr' => ['$gt' => ['$daily_buy_usd_worth', '$daily_buy_usd_limit']]
 
-    // let arr = await db.collection('daily_trade_buy_limit').aggregate([
-    //     { "$addFields": { "limit_diff": 99 } }, 
-    //     { 
-    //         "$lookup": { 
-    //             "from": "buy_orders", 
-    //             "let": { "diff": "$limit_diff", "user_id": "$user_id" }, 
-    //             "pipeline": [
-    //                 { 
-    //                     "$match": { 
-    //                         "parent_status": "parent", 
-    //                         "application_mode": "live", 
-    //                         "pick_parent": "yes", 
-    //                         "status": { "$ne": "canceled" }, 
-    //                         "usd_worth": { "$gt": "$$diff" }, 
-    //                         "$expr": { "$eq": ["$admin_id", "$$user_id"] } 
-    //                     } 
-    //                 }, 
-    //                 { "$limit": 5 }
-    //             ], 
-    //             "as": "parent_orders" 
-    //         } 
-    //     }, 
-    //     { "$limit": 20 }
-    // ]).toArray()
+    let arr = await db.collection('daily_trade_buy_limit').find({ $expr: { $lt: ['$daily_buy_usd_worth', '$daily_buy_usd_limit'] } }).project().toArray()
+
+    let total = arr.length 
     
-    // let arr = await db.collection('daily_trade_buy_limit').aggregate([
-    //     // {
-    //     //     $match: {
-    //     //         user_id: '5c0912effc9aadaac61dd089',
-    //     //     },
-    //     // },
-    //     {
-    //         $addFields: {
-    //             diff: {$subtract: [
-    //                 '$daily_buy_usd_limit',
-    //                 '$daily_buy_usd_worth'
-    //             ]}
-    //         }
-    //     }, {
-    //         $lookup: {
-    //             from: 'buy_orders',
-    //             'let': {
-    //                 diff: '$diff',
-    //                 user_id: '$user_id'
-    //             },
-    //             pipeline: [
-    //                 {
-    //                     $match: {
-    //                         parent_status: 'parent',
-    //                         application_mode: 'live',
-    //                         pick_parent: 'yes',
-    //                         $expr: {
-    //                             $eq: ['$admin_id', '$$user_id'],
-    //                         }
-    //                     }
-    //                 },
-    //                 {
-    //                     $match: {
-    //                         $expr: {
-    //                             $gt: ['$usd_worth', '$$diff']
-    //                         }
-    //                     }
-    //                 },
-    //                 {
-    //                     $group: {
-    //                         _id: null,
-    //                         ids: {
-    //                             $push: '$_id'
-    //                         }
-    //                     }
-    //                 },
-    //                 {
-    //                     $addFields:{
-    //                         'count': { '$size': '$ids' }
-    //                     }
-    //                 },
-    //                 {
-    //                     '$redact': {
-    //                         '$cond': { if: { $gt: ['$count', 1] }, then: '$$KEEP', else: '$$PRUNE' }
-    //                     }
-    //                 },
-    //                 {
-    //                     $project: {
-    //                         _id: 0,
-    //                         ids: 1,
-    //                     }
-    //                 }
-    //             ],
-    //             as: 'recordArr'
-    //         }
-    //     },
-    //     {
-    //         $project: {
-    //             _id: 0,
-    //             'recordArr': 1,
-    //         }
-    //     },
-    //     {
-    //         '$out': 'pick_parent_temp_db'
-    //     }
-    // ]).toArray()
-    // // console.log(arr)
+    await db.collection('parents_that_should_be_yes_user_ids').deleteMany({});
 
-    // await db.collection('pick_parent_temp_db').deleteMany({ recordArr: { $size: 0 } })
+    for(let i=0; i<total; i++){
+        let check_usd_worth = arr[i]['daily_buy_usd_limit'] - arr[i]['daily_buy_usd_worth']
 
-    // let data = await db.collection('pick_parent_temp_db').find({}, { _id:0, recordArr:1}).toArray()
+        let where = {
+            'admin_id': arr[i]['user_id'],
+            'application_mode': 'live',
+            'parent_status': 'parent',
+            'status': {'$ne': 'canceled'},
+            'pick_parent': 'no',
+            '$expr': { '$lt': ['$usd_worth', check_usd_worth] }, 
+        } 
+        let arr22 = await db.collection('buy_orders').find(where).project({ _id:0, admin_id: 1, usd_worth: 1}).toArray()
+        if(arr22.length > 0){
+            db.collection('parents_that_should_be_yes_user_ids').insertMany(arr22);
+        }
+    }
 
     // let total = 0;
     // data.map(item => { total += item['recordArr'][0]['ids'].length })
     // console.log(total)
-    res.send({ 'data': '' })
-
-    // res.send({ 'data': arr[0]['recordArr'][0]['ids'] })
-    // res.send({ data: await getClientInfo(req) })
+    res.send({ 'data': 'gggg' })
 })
 
 async function getClientInfo(req){
@@ -15079,7 +14993,7 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
                 }
             }
 
-            console.log('user_id: ', settings.user_id, '/', actualTradeableBTC, '/', actualTradeableUSDT)
+            console.log('user_id: ', settings.user_id, ' actualTradeable', actualTradeableBTC, '/', actualTradeableUSDT, ' :::::::  dailyTradeable ', dailyTradeableBTC, '/', dailyTradeableUSDT)
 
             // delete settings
             // delete balanceArr
@@ -15916,6 +15830,32 @@ router.post('/get_user_id', async (req, res) => {
             res.send({
                 "status": true,
                 "user_id": String(user[0]['_id'])
+            })
+        }else{
+            res.send({
+                "status": false,
+            })
+        }
+    } else {
+        res.send({
+            "status": false,
+        })
+    }
+})
+
+router.post('/get_username', async (req, res) => {
+    var id = req.body.id;
+    if (typeof id != 'undefined' && id != '') {
+        var db = await conn
+        var where = {}
+        where['_id'] = new ObjectID(id);
+        where['status'] = '0';
+        where['user_soft_delete'] = '0';
+        let user = await db.collection('users').find(where).project({'username':1, _id:0}).toArray();
+        if(user.length > 0){
+            res.send({
+                "status": true,
+                "username": String(user[0]['username'])
             })
         }else{
             res.send({
