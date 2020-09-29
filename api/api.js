@@ -2968,8 +2968,10 @@ router.post('/listOrderListing', async (req, resp) => {
             resumePL = parseFloat(resumePL) + parseFloat(pl)
             resumePlClass = resumePL > 0 ? 'success' : 'danger'
             order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"> <b>' + resumePL.toFixed(2) + '%</b></span>'
-        }else if(postDAta.stats == 'new'){
-            htmlStatus += '<span class="badge badge-info">Deep buy price</span>';
+        }else if(postDAta.status == 'new'){
+            if (typeof orderListing[index].deep_price_on_off != 'undefined' && orderListing[index].deep_price_on_off == 'yes'){
+                htmlStatus += '<span class="badge badge-info">Deep buy price</span>';
+            }
         }
 
 
