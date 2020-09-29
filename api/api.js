@@ -1414,6 +1414,13 @@ router.post('/createManualOrder', (req, resp) => {
             orders['lth_profit'] = ''
         }
 
+        //cancel_hour 
+        if (typeof orders['cancel_hour'] != 'undefined' && orders['cancel_hour'] != '' && orders['cancel_hour'] > 0) {
+            let currTime = new Date()
+            orders['cancel_hour_time'] = new Date(currTime.setTime(currTime.getTime() + (orders['cancel_hour'] * 60 * 60 * 1000)))
+        }else{
+            delete orders['cancel_hour']
+        }
 
         //add these fields in kraken order array
         if(exchange == 'kraken'){
@@ -6806,6 +6813,16 @@ router.post('/updateManualOrder', async (req, resp) => {
         'upsert': true
     };
 
+
+    //cancel_hour 
+    if (typeof buyorderArr['update_cancel_hour'] != 'undefined' && buyorderArr['update_cancel_hour'] == 'yes' && typeof buyorderArr['cancel_hour'] != 'undefined' && buyorderArr['cancel_hour'] != '' && buyorderArr['cancel_hour'] > 0) {
+        let currTime = new Date()
+        buyorderArr['cancel_hour_time'] = new Date(currTime.setTime(currTime.getTime() + (buyorderArr['cancel_hour'] * 60 * 60 * 1000)))
+    } else {
+        delete buyorderArr['update_cancel_hour']
+        delete buyorderArr['cancel_hour_time']
+        delete buyorderArr['cancel_hour']
+    }
 
     //add these fields in kraken order array
     if (exchange == 'kraken') {
