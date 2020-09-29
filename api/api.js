@@ -2971,6 +2971,7 @@ router.post('/listOrderListing', async (req, resp) => {
         }else if(postDAta.status == 'new'){
             if (typeof orderListing[index].deep_price_on_off != 'undefined' && orderListing[index].deep_price_on_off == 'yes'){
                 htmlStatus += '<span class="badge badge-info">Deep buy price</span>';
+                htmlStatusArr.push('Deep buy price')
             }
         }
 
