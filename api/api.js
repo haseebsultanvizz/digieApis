@@ -15945,7 +15945,7 @@ router.post('/getAvailableTradingPoints', async (req, res) => {
 // ********************** Dashboard setting APIs ****************************/
 router.post('/save_dashboard_settings', async (req, res) => {
     var user_id = req.body.user_id;
-    var settings = req.body.settings;
+    var settings = req.body.settingsArr;
     var exchange = req.body.exchange;
     if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && user_id != '') {
         var db = await conn
@@ -15966,7 +15966,7 @@ router.post('/save_dashboard_settings', async (req, res) => {
         if (result.upsertedCount > 0 || result.modifiedCount > 0){
             res.send({
                 "status": true,
-                "data": insertData,
+                "data": insertData['$set']['settings'],
                 "message": "Settings saved successfully" 
             })
         }else{
@@ -15999,7 +15999,7 @@ router.post('/get_dashboard_settings', async (req, res) => {
         if (result.length > 0) {
             res.send({
                 "status": true,
-                "data": result[0],
+                "data": result[0]['settings'],
                 "message": "Settings found successfully" 
             })
         } else {
