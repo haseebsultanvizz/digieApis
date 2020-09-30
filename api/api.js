@@ -15941,4 +15941,81 @@ router.post('/getAvailableTradingPoints', async (req, res) => {
     }
 })
 
+
+// ********************** Dashboard setting APIs ****************************/
+router.post('/save_dashboard_settings', async (req, res) => {
+    var user_id = req.body.user_id;
+    var settings = req.body.settings;
+    var exchange = req.body.exchange;
+    if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && user_id != '') {
+        var db = await conn
+        var where = {}
+        where['user_id'] = user_id;
+        let dashboard_settings_collection = exchange == 'binance' ? 'dashboard_settings' : 'dashboard_settings'+exchange 
+
+        let insertData = {
+            '$set': {
+                'user_id': user_id,
+                'settings': settings,
+            }
+        }
+
+        let result = await db.collection(dashboard_settings_collection).updateOne(where, insertData, {upsert:true});
+        console.log(result)
+
+        if (result.upsertedCount > 0 || result.modifiedCount > 0){
+            res.send({
+                "status": true,
+                "data": insertData,
+                "message": "Settings saved successfully" 
+            })
+        }else{
+            res.send({
+                "status": false,
+                "message": "An error occured" 
+            })
+        }
+    } else {
+        res.send({
+            "status": false,
+            "message":"Exchange and user_id is required",
+        })
+    }
+})
+
+router.post('/get_dashboard_settings', async (req, res) => {
+    var user_id = req.body.user_id;
+    var exchange = req.body.exchange;
+    if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && user_id != '') {
+        
+        var db = await conn
+
+        var where = {
+            'user_id': user_id
+        }
+        let dashboard_settings_collection = exchange == 'binance' ? 'dashboard_settings' : 'dashboard_settings'+exchange
+
+        let result = await db.collection(dashboard_settings_collection).find(where).toArray();
+        if (result.length > 0) {
+            res.send({
+                "status": true,
+                "data": result[0],
+                "message": "Settings found successfully" 
+            })
+        } else {
+            res.send({
+                "status": false,
+                "message": "An error occured",
+            })
+        }
+    } else {
+        res.send({
+            "status": false,
+            "message":"Exchange and user_id is required",
+        })
+    }
+})
+
+// ********************** End Dashboard setting APIs ****************************/
+
 module.exports = router;
