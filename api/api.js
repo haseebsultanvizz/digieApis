@@ -2196,13 +2196,29 @@ router.post('/listOrderListing', async (req, resp) => {
 
     //:::::::::::::::: filter_3 for count open order :::::::::::::::::
     var filter_3 = {};
-    filter_3['status'] = {
-        '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
-    }
-    filter_3['is_sell_order'] = 'yes';
-    filter_3['is_lth_order'] = {
-        $ne: 'yes'
-    };
+    // filter_3['status'] = {
+    //     '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
+    // }
+    // filter_3['is_sell_order'] = 'yes';
+    // filter_3['is_lth_order'] = {
+    //     $ne: 'yes'
+    // };
+    filter_3['$or'] = [
+        {
+            'status': {'$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
+            'is_sell_order': 'yes',
+            'is_lth_order': {'$ne': 'yes'}
+        },
+        {
+            'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+            'is_sell_order': 'yes',
+            'is_lth_order': { '$ne': 'yes' },
+            // 'cost_avg': { '$exists': true },
+            'cost_avg': { '$ne': '' },
+            'show_order': 'yes'
+            // 'avg_orders_ids': { '$exists': true }
+        },
+    ]
     filter_3['admin_id'] = admin_id;
     filter_3['application_mode'] = application_mode;
 
@@ -2434,6 +2450,9 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_12['application_mode'] = application_mode;
     filter_12['is_sell_order'] = 'sold'  
     filter_12['cost_avg'] = { '$exists': true } 
+    // filter_12['cost_avg'] = { '$ne': '' } 
+    filter_12['show_order'] = 'yes'
+    // filter_12['avg_orders_ids'] = { '$exists': true } 
     // if (!digie_admin_ids.includes(admin_id)) {
     //     filter_12['$or'][0]['show_order'] = 'yes'
     // }
@@ -2968,19 +2987,21 @@ router.post('/listOrderListing', async (req, resp) => {
             resumePL = parseFloat(resumePL) + parseFloat(pl)
             resumePlClass = resumePL > 0 ? 'success' : 'danger'
             order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"> <b>' + resumePL.toFixed(2) + '%</b></span>'
-        }else if(postDAta.status == 'new'){
-            if (typeof orderListing[index].deep_price_on_off != 'undefined' && orderListing[index].deep_price_on_off == 'yes'){
-                htmlStatus += '<span class="badge badge-info">Deep buy price</span>';
-                htmlStatusArr.push('Deep buy price')
-            }
         }
+        
+        // if(postDAta.status == 'new'){
+        //     if (typeof orderListing[index].deep_price_on_off != 'undefined' && orderListing[index].deep_price_on_off == 'yes'){
+        //         htmlStatus += '<span class="badge badge-info">Deep buy price</span>';
+        //         htmlStatusArr.push('Deep buy price')
+        //     }
+        // }
 
 
         /* *******      Cost average code     ******  */
-        if (typeof orderListing[index]['avg_orders_ids'] != 'undefined') {
-            htmlStatus += ' <span class="badge badge-primary">Cost Avg Parent</span> ';
-            htmlStatusArr.push('Cost Avg Parent')
-        }
+        // if (typeof orderListing[index]['avg_orders_ids'] != 'undefined') {
+        //     htmlStatus += ' <span class="badge badge-primary">Cost Avg Parent</span> ';
+        //     htmlStatusArr.push('Cost Avg Parent')
+        // }
 
         if ((postDAta.status == 'LTH' || postDAta.status == 'open') && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
             if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes'){
@@ -2991,6 +3012,11 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatusArr.push('Take child cost avg')
             }
         } else if (postDAta.status == 'costAvgTab' && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
+
+            if (typeof orderListing[index].cost_avg != 'undefined'){
+                htmlStatus += ' <span class="badge badge-primary">Cost Avg</span> ';
+                htmlStatusArr.push('Cost Avg')
+            }
 
             if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'completed') {
                 htmlStatus += ' <span class="badge badge-success">Cost Avg Completed</span> ';
@@ -3214,13 +3240,30 @@ async function listOrderListing(postDAta, dbConnection) {
     }
 
     if (postDAta.status == 'open') {
-        filter['status'] = {
-            '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
-        }
-        filter['is_sell_order'] = 'yes';
-        filter['is_lth_order'] = {
-            $ne: 'yes'
-        };
+        // filter['status'] = {
+        //     '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
+        // }
+        // filter['is_sell_order'] = 'yes';
+        // filter['is_lth_order'] = {
+        //     $ne: 'yes'
+        // };
+
+        filter['$or'] = [
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' }
+            },
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': { '$exists': true },
+                'show_order': 'yes'
+                // 'avg_orders_ids': { '$exists': true }
+            },
+        ]
+
     }
 
     if (postDAta.status == 'filled') {
@@ -3243,6 +3286,9 @@ async function listOrderListing(postDAta, dbConnection) {
     if (postDAta.status == 'costAvgTab') {
         filter['is_sell_order'] = 'sold'
         filter['cost_avg'] = { '$exists': true }
+        // filter['cost_avg'] = { '$ne': '' }
+        filter['show_order'] = 'yes'
+        // filter['avg_orders_ids'] = { '$exists': true }
         // if (!digie_admin_ids.includes(postDAta.admin_id)){
         //     filter['$or'][0]['show_order'] = 'yes'
         // }
@@ -15961,7 +16007,7 @@ router.post('/save_dashboard_settings', async (req, res) => {
         }
 
         let result = await db.collection(dashboard_settings_collection).updateOne(where, insertData, {upsert:true});
-        console.log(result)
+        // console.log(result)
 
         if (result.upsertedCount > 0 || result.modifiedCount > 0){
             res.send({
