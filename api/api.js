@@ -3011,7 +3011,7 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatus += ' <span class="badge badge-primary">Take child cost avg</span> ';
                 htmlStatusArr.push('Take child cost avg')
             }
-        } else if (postDAta.status == 'costAvgTab' && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
+        } else if ((postDAta.status == 'parent' || postDAta.status == 'costAvgTab') && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
 
             if (typeof orderListing[index].cost_avg != 'undefined'){
                 htmlStatus += ' <span class="badge badge-primary">Cost Avg</span> ';
@@ -4136,6 +4136,130 @@ async function listOrderLog(orderId, exchange, order_mode, order_created_date) {
         })
     })
 } //End of listOrderLog
+
+
+//post call for getting order by id
+router.post('/costAvgChildLogs', async (req, resp) => {
+    let orderIds = req.body.orderIds;
+    let exchange = req.body.exchange;
+    var timezone = req.body.timezone;
+
+    if (typeof orderIds != 'undefined' && orderIds.length > 0 && typeof exchange != 'undefined' && exchange != ''){
+        // var ordeArr = await listOrderById(orderId, exchange);
+        let promiseArr = []
+        orderIds.map(item => { promiseArr.push(listOrderById(item, exchange)) })
+        
+        let promiseResponseArr = await Promise.all(promiseArr)
+        
+        let promiseArr2 = []
+        promiseResponseArr.map(item => { 
+            let itemObj = item[0]
+            let order_created_date = itemObj['created_date']
+            let order_mode = (typeof itemObj['order_mode'] == 'undefined') ? itemObj['application_mode'] : itemObj['order_mode']
+            
+            promiseArr2.push(costAvgChildLogs(itemObj['_id'], exchange, order_mode, order_created_date))
+        })
+    
+        let childOrderLogsArr = []
+        let promiseResponseArr2 = await Promise.all(promiseArr2)
+        
+        promiseResponseArr2 = promiseResponseArr2.map(item =>{
+            childOrderLogsArr = childOrderLogsArr.concat(item)
+        })
+        
+        let childOrderLogs = {}
+
+        if (childOrderLogsArr.length > 0) {
+            for (let row in childOrderLogsArr) {
+    
+                let child_order_id = String(childOrderLogsArr[row].order_id)
+    
+                if (child_order_id in childOrderLogs) {
+                    childOrderLogs[child_order_id].push(childOrderLogsArr[row])
+                } else {
+                    childOrderLogs[child_order_id] = []
+                    childOrderLogs[child_order_id].push(childOrderLogsArr[row])
+                }
+    
+            }
+    
+        }
+    
+        resp.status(200).send({
+            'status': true,
+            'data': childOrderLogs,
+            'message': 'logs found'
+        });
+
+    }else{
+        resp.status(200).send({
+            'status': false,
+            'data': {},
+            'message': 'orderIds array and exchange is required'
+        });
+    }
+
+}) //End of listOrderById
+
+//get costAvgChildLogs 
+async function costAvgChildLogs(orderId, exchange, order_mode, order_created_date) {
+    return new Promise(async (resolve) => {
+        let db = await conn
+
+        var where = {};
+        where['order_id'] = {
+            $in: [orderId, new ObjectID(orderId)],
+        }
+        where['type'] = {
+            $in: [
+                'buy_price_filled',
+                // 'buy_commission',
+                'sell_qty',
+                'sell_commission',
+                'sell_submitted',
+            ],
+        }
+        var created_date = new Date(order_created_date);
+        var current_date = new Date('2019-12-27T11:04:21.912Z');
+
+        if (created_date > current_date) {
+
+            var collectionName = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
+
+            var d = new Date(order_created_date);
+            //create collection name on the base of date and mode
+            var date_mode_string = '_' + order_mode + '_' + d.getFullYear() + '_' + d.getMonth();
+            //create full name of collection
+            var full_collection_name = collectionName + date_mode_string;
+
+        } else {
+            var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
+        }
+
+        var pipeline = [
+            {
+                $match: where
+            },
+            {
+                $sort: {'created_date': -1}
+            },
+            {
+                '$limit': 100
+            }
+        ];
+
+        if (full_collection_name == 'orders_history_log') {
+
+            var new_logs = await db.collection(full_collection_name).aggregate(pipeline).toArray();
+            resolve(new_logs)
+
+        } else {
+
+            var new_logs = await db.collection(full_collection_name).aggregate(pipeline).toArray();
+            resolve(new_logs)
+        }
+    })
+} //End of costAvgChildLogs
 
 //post call for sell order manually from order listing page 
 router.post('/sellOrderManually', async (req, resp) => {
@@ -9110,14 +9234,19 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
                             var date_index = {
                                 'created_date': -1
                             };
-                            var dateIndexPromise = create_index(full_collection_name, date_index);
-                            dateIndexPromise.then((resolve) => {});
+                            create_index(full_collection_name, date_index);
 
                             var order_index = {
-                                'order_id': 1
+                                'order_id': 1,
                             };
-                            var orderIndexPromise = create_index(full_collection_name, order_index);
-                            orderIndexPromise.then((resolve) => {});
+                            create_index(full_collection_name, order_index);
+                            
+                            var order_index = {
+                                'order_id': 1,
+                                'type': 1,
+                            };
+                            create_index(full_collection_name, order_index);
+                            
                             resolve(true);
                         } else {
                             resolve(success.result)
