@@ -4366,8 +4366,8 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
     
                 var options = {
                     method: 'POST',
-                    url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
-                    // url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                    // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                    url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
                     headers: {
                         'cache-control': 'no-cache',
                         'Connection': 'keep-alive',
@@ -4397,8 +4397,8 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
                 for (let i = 0; i < childsCount; i++){
                     var options = {
                         method: 'POST',
-                        url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
-                        // url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                        // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                        url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
                         headers: {
                             'cache-control': 'no-cache',
                             'Connection': 'keep-alive',
