@@ -2178,7 +2178,7 @@ router.post('/listOrderListing', async (req, resp) => {
     };
     // filter_3['cost_avg'] = { '$exists': false }
     filter_3['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
-    
+
     // filter_3['$or'] = [
     //     {
     //         'status': {'$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
@@ -2226,7 +2226,8 @@ router.post('/listOrderListing', async (req, resp) => {
     }
     filter_33['admin_id'] = admin_id;
     filter_33['application_mode'] = application_mode;
-    filter_33['cost_avg'] = { '$exists': false }
+    // filter_33['cost_avg'] = { '$exists': false }
+    filter_33['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -3262,6 +3263,7 @@ async function listOrderListing(postDAta, dbConnection) {
             '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
         }
         // filter['cost_avg'] = { '$exists': false }
+        filter['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
     }
 
     if (postDAta.status == 'sold') {
