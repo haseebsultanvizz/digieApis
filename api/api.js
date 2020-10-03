@@ -2224,6 +2224,7 @@ router.post('/listOrderListing', async (req, resp) => {
     }
     filter_33['admin_id'] = admin_id;
     filter_33['application_mode'] = application_mode;
+    filter_33['cost_avg'] = { '$exists': false }
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -2424,7 +2425,7 @@ router.post('/listOrderListing', async (req, resp) => {
     var filter_12 = {};
     filter_12['admin_id'] = admin_id;
     filter_12['application_mode'] = application_mode;
-    filter_12['is_sell_order'] = 'sold'  
+    // filter_12['is_sell_order'] = 'sold'  
     filter_12['cost_avg'] = { '$exists': true } 
     // filter_12['cost_avg'] = { '$ne': '' } 
     filter_12['show_order'] = 'yes'
@@ -2451,7 +2452,12 @@ router.post('/listOrderListing', async (req, resp) => {
     }
     //::::::::::::: End of filter_12 for count all costAvgTab order :::::::::::::::::::
     //Promise for count all costAvgTab orders 
-    var costAvgTabCountPromise = countCollection(collectionName, filter_12);
+    var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    let costAvgTabCountPromise1 = countCollection(buyOrdercollection, filter_12);
+    
+    var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+    let costAvgTabCountPromise2 = countCollection(soldOrdercollection, filter_12);
+    // var costAvgTabCountPromise1 = countCollection(collectionName, filter_12);
 
 
     //::::::::::::: filter_9 for count all lth_pause order :::::::::::::::::::
@@ -2518,16 +2524,16 @@ router.post('/listOrderListing', async (req, resp) => {
             filter_all[key] = value;
         }
     }
-    let soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+    var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     let all1Promise = countCollection(soldOrdercollection, filter_all);
     // filter_all['parent_status'] = {'$exists': false}
-    let buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
     let all2Promise = countCollection(buyOrdercollection, filter_all);
     //End count All tab
 
 
     //Resolve promised for count order for all tabs
-    var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise, errorsCountPromise, costAvgTabCountPromise]);
+    var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise, errorsCountPromise, costAvgTabCountPromise1, costAvgTabCountPromise2]);
 
     var parentCount = PromiseResponse[0];
     var newCount = PromiseResponse[1];
@@ -2542,11 +2548,14 @@ router.post('/listOrderListing', async (req, resp) => {
     var all1Count = PromiseResponse[10];
     var all2Count = PromiseResponse[11];
     var errorsCount = PromiseResponse[12];
-    var costAvgTabCount = PromiseResponse[13];
+    var costAvgTabBuyCount = PromiseResponse[13];
+    var costAvgTabSoldCount = PromiseResponse[14];
 
     // var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
 
     var totalCount = parseFloat(all1Count) + parseFloat(all2Count);
+
+    var totalCostAvgCount = parseFloat(costAvgTabBuyCount) + parseFloat(costAvgTabSoldCount);
 
     var countArr = {};
     countArr['totalCount'] = totalCount;
@@ -2563,7 +2572,7 @@ router.post('/listOrderListing', async (req, resp) => {
     countArr['lthPauseCount'] = lthPauseCount;
     countArr['totalBuyCount'] = all2Count;
     countArr['totalSoldCount'] = all1Count;
-    countArr['costAvgTabCount'] = costAvgTabCount;
+    countArr['costAvgTabCount'] = totalCostAvgCount;
     //get user balance for listing on list-order page
 
     // countArr = await getOrderStats(postDAta)
@@ -3247,6 +3256,7 @@ async function listOrderListing(postDAta, dbConnection) {
         filter['status'] = {
             '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
         }
+        filter['cost_avg'] = { '$exists': false }
     }
 
     if (postDAta.status == 'sold') {
@@ -3261,7 +3271,7 @@ async function listOrderListing(postDAta, dbConnection) {
     }
     
     if (postDAta.status == 'costAvgTab') {
-        filter['is_sell_order'] = 'sold'
+        // filter['is_sell_order'] = 'sold'
         filter['cost_avg'] = { '$exists': true }
         // filter['cost_avg'] = { '$ne': '' }
         filter['show_order'] = 'yes'
@@ -3343,6 +3353,17 @@ async function listOrderListing(postDAta, dbConnection) {
         // var returnArr = mergeOrdersArrays(SoldOrderArr, buyOrderArr);
         var returnArr = SoldOrderArr.concat(buyOrderArr);
         var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
+    } else if (postDAta.status == 'costAvgTab') {
+        
+        var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+        var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter, pagination, limit, skip);
+        var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter, pagination, limit, skip);
+        
+        // console.log(SoldOrderArr.length, buyOrderArr.length)
+        var returnArr = SoldOrderArr.concat(buyOrderArr);
+        var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
+
     } else {
         var orderArr = await list_orders_by_filter(collectionName, filter, pagination, limit, skip);
     }
