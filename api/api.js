@@ -2176,7 +2176,9 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_3['is_lth_order'] = {
         $ne: 'yes'
     };
-    filter_3['cost_avg'] = { '$exists': false }
+    // filter_3['cost_avg'] = { '$exists': false }
+    filter_3['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+    
     // filter_3['$or'] = [
     //     {
     //         'status': {'$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
@@ -2334,7 +2336,9 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_6['admin_id'] = admin_id;
     filter_6['application_mode'] = application_mode;
     filter_6['is_sell_order'] = 'yes';
-    filter_6['cost_avg'] = { '$exists': false }
+    // filter_6['cost_avg'] = { '$exists': false }
+    filter_6['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+
     
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
