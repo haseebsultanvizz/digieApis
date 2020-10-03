@@ -3232,7 +3232,8 @@ async function listOrderListing(postDAta, dbConnection) {
         filter['is_lth_order'] = {
             $ne: 'yes'
         };
-        filter['cost_avg'] = { '$exists': false }
+        // filter['cost_avg'] = { '$exists': false }
+        filter['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
 
         // filter['$or'] = [
         //     {
@@ -3256,7 +3257,7 @@ async function listOrderListing(postDAta, dbConnection) {
         filter['status'] = {
             '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
         }
-        filter['cost_avg'] = { '$exists': false }
+        // filter['cost_avg'] = { '$exists': false }
     }
 
     if (postDAta.status == 'sold') {
@@ -3306,7 +3307,8 @@ async function listOrderListing(postDAta, dbConnection) {
             '$in': ['LTH', 'LTH_ERROR']
         };
         filter['is_sell_order'] = 'yes';
-        filter['cost_avg'] = { '$exists': false }
+        // filter['cost_avg'] = { '$exists': false }
+        filter['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
     }
 
     if (postDAta.status == 'new') {
