@@ -535,34 +535,7 @@ router.get('/myTest2', async (req,res)=>{
     // console.log(await getClientInfo(req))
 
     const db = await conn
-    // '$expr' => ['$gt' => ['$daily_buy_usd_worth', '$daily_buy_usd_limit']]
 
-    let arr = await db.collection('daily_trade_buy_limit').find({ $expr: { $lt: ['$daily_buy_usd_worth', '$daily_buy_usd_limit'] } }).project().toArray()
-
-    let total = arr.length 
-    
-    await db.collection('parents_that_should_be_yes_user_ids').deleteMany({});
-
-    for(let i=0; i<total; i++){
-        let check_usd_worth = arr[i]['daily_buy_usd_limit'] - arr[i]['daily_buy_usd_worth']
-
-        let where = {
-            'admin_id': arr[i]['user_id'],
-            'application_mode': 'live',
-            'parent_status': 'parent',
-            'status': {'$ne': 'canceled'},
-            'pick_parent': 'no',
-            '$expr': { '$lt': ['$usd_worth', check_usd_worth] }, 
-        } 
-        let arr22 = await db.collection('buy_orders').find(where).project({ _id:0, admin_id: 1, usd_worth: 1}).toArray()
-        if(arr22.length > 0){
-            db.collection('parents_that_should_be_yes_user_ids').insertMany(arr22);
-        }
-    }
-
-    // let total = 0;
-    // data.map(item => { total += item['recordArr'][0]['ids'].length })
-    // console.log(total)
     res.send({ 'data': 'gggg' })
 })
 
@@ -2196,29 +2169,30 @@ router.post('/listOrderListing', async (req, resp) => {
 
     //:::::::::::::::: filter_3 for count open order :::::::::::::::::
     var filter_3 = {};
-    // filter_3['status'] = {
-    //     '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
-    // }
-    // filter_3['is_sell_order'] = 'yes';
-    // filter_3['is_lth_order'] = {
-    //     $ne: 'yes'
-    // };
-    filter_3['$or'] = [
-        {
-            'status': {'$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
-            'is_sell_order': 'yes',
-            'is_lth_order': {'$ne': 'yes'}
-        },
-        {
-            'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-            'is_sell_order': 'yes',
-            'is_lth_order': { '$ne': 'yes' },
-            // 'cost_avg': { '$exists': true },
-            'cost_avg': { '$ne': '' },
-            'show_order': 'yes'
-            // 'avg_orders_ids': { '$exists': true }
-        },
-    ]
+    filter_3['status'] = {
+        '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
+    }
+    filter_3['is_sell_order'] = 'yes';
+    filter_3['is_lth_order'] = {
+        $ne: 'yes'
+    };
+    filter_3['cost_avg'] = { '$exists': false }
+    // filter_3['$or'] = [
+    //     {
+    //         'status': {'$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
+    //         'is_sell_order': 'yes',
+    //         'is_lth_order': {'$ne': 'yes'}
+    //     },
+    //     {
+    //         'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+    //         'is_sell_order': 'yes',
+    //         'is_lth_order': { '$ne': 'yes' },
+    //         // 'cost_avg': { '$exists': true },
+    //         'cost_avg': { '$ne': '' },
+    //         'show_order': 'yes'
+    //         // 'avg_orders_ids': { '$exists': true }
+    //     },
+    // ]
     filter_3['admin_id'] = admin_id;
     filter_3['application_mode'] = application_mode;
 
@@ -2359,6 +2333,8 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_6['admin_id'] = admin_id;
     filter_6['application_mode'] = application_mode;
     filter_6['is_sell_order'] = 'yes';
+    filter_6['cost_avg'] = { '$exists': false }
+    
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -3240,29 +3216,30 @@ async function listOrderListing(postDAta, dbConnection) {
     }
 
     if (postDAta.status == 'open') {
-        // filter['status'] = {
-        //     '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
-        // }
-        // filter['is_sell_order'] = 'yes';
-        // filter['is_lth_order'] = {
-        //     $ne: 'yes'
-        // };
+        filter['status'] = {
+            '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
+        }
+        filter['is_sell_order'] = 'yes';
+        filter['is_lth_order'] = {
+            $ne: 'yes'
+        };
+        filter['cost_avg'] = { '$exists': false }
 
-        filter['$or'] = [
-            {
-                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
-                'is_lth_order': { '$ne': 'yes' }
-            },
-            {
-                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
-                'is_lth_order': { '$ne': 'yes' },
-                'cost_avg': { '$exists': true },
-                'show_order': 'yes'
-                // 'avg_orders_ids': { '$exists': true }
-            },
-        ]
+        // filter['$or'] = [
+        //     {
+        //         'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+        //         'is_sell_order': 'yes',
+        //         'is_lth_order': { '$ne': 'yes' }
+        //     },
+        //     {
+        //         'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+        //         'is_sell_order': 'yes',
+        //         'is_lth_order': { '$ne': 'yes' },
+        //         'cost_avg': { '$exists': true },
+        //         'show_order': 'yes'
+        //         // 'avg_orders_ids': { '$exists': true }
+        //     },
+        // ]
 
     }
 
@@ -3319,6 +3296,7 @@ async function listOrderListing(postDAta, dbConnection) {
             '$in': ['LTH', 'LTH_ERROR']
         };
         filter['is_sell_order'] = 'yes';
+        filter['cost_avg'] = { '$exists': false }
     }
 
     if (postDAta.status == 'new') {
@@ -4362,6 +4340,103 @@ router.post('/sellOrderManually', async (req, resp) => {
     });
 
 }) //End of sellOrderManually
+
+
+//sellCostAvgOrder 
+router.post('/sellCostAvgOrder', async (req, resp) => {
+
+    let orderType = req.body.OrderType
+    let exchange = req.body.exchange
+    let order_id = req.body.order_id
+
+    if (typeof orderType != 'undefined' && orderType != '' && typeof exchange != 'undefined' && exchange != '' && typeof order_id != 'undefined' && order_id != ''){
+
+        //get order
+        let order = await listOrderById(order_id, exchange);
+        if (ordeArr.length > 0) {
+
+            order = order[0]
+            let symbol = order['symbol']
+            //get currentMarket price
+            let coinData = await listmarketPriceMinNotationCoinArr(symbol, exchange)
+            let currentmarketPrice = coinData[symbol]['currentmarketPrice']
+
+            //send sell request if costAvg child order
+            if (orderType == 'costAvgChild'){
+    
+                var options = {
+                    method: 'POST',
+                    url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                    // url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                    headers: {
+                        'cache-control': 'no-cache',
+                        'Connection': 'keep-alive',
+                        'Accept-Encoding': 'gzip, deflate',
+                        'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                        'Cache-Control': 'no-cache',
+                        'Accept': '*/*',
+                        'User-Agent': 'PostmanRuntime/7.20.1',
+                        'Content-Type': 'application/json'
+                    },
+                    json: {
+                        'orderId': order_id,
+                        'exchange': exchange,
+                        'currentMarketPriceByCoin': currentmarketPrice,
+                    }
+                };
+                request(options, function (error, response, body) {});
+    
+            } else if (orderType == 'costAvgParent'){
+    
+                //loop all childs and send sell API call
+                let ids = []
+                ids.push(order_id)
+                ids = ids.concat(order['avg_orders_ids'])
+                let childsCount = ids.length
+
+                for (let i = 0; i < childsCount; i++){
+                    var options = {
+                        method: 'POST',
+                        url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                        // url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                        headers: {
+                            'cache-control': 'no-cache',
+                            'Connection': 'keep-alive',
+                            'Accept-Encoding': 'gzip, deflate',
+                            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                            'Cache-Control': 'no-cache',
+                            'Accept': '*/*',
+                            'User-Agent': 'PostmanRuntime/7.20.1',
+                            'Content-Type': 'application/json'
+                        },
+                        json: {
+                            'orderId': String(ids[i]),
+                            'exchange': exchange,
+                            'currentMarketPriceByCoin': currentmarketPrice,
+                        }
+                    };
+                    request(options, function (error, response, body) { });
+                }
+            }
+
+            resp.status(200).send({
+                status: true,
+                message: 'Sell request sent successfully'
+            })
+        }else{
+            resp.status(200).send({
+                status: false,
+                message: 'An error occured'
+            })
+        }
+    }else{
+        resp.status(200).send({
+            status: false,
+            message: 'orderType, exchange, order_id is required'
+        })
+    }
+
+}) //End of sellCostAvgOrder
 
 
 //function for updating any collection the base of collection and filtes
