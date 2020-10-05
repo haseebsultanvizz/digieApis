@@ -3047,7 +3047,12 @@ router.post('/listOrderListing', async (req, resp) => {
                         order['targetPrice'] = costAvgData['target_avg_profit']
                     }
                 }
-                
+
+                if (typeof orderListing[index]['is_sell_order'] != 'undefined' && orderListing[index]['is_sell_order'] == 'sold'){
+                    order['actualSoldPrice'] = parseFloat(isNaN(market_sold_price) ? '---' : market_sold_price).toFixed(8);
+                }else{
+                    order['actualSoldPrice'] = '---'
+                }
 
             }
 
