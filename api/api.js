@@ -3026,6 +3026,8 @@ router.post('/listOrderListing', async (req, resp) => {
                     cost_avg_order_ids.push(String(orderListing[index]['_id']))
     
                     let costAvgData = await getCostAvgPLandUsdWorth(cost_avg_order_ids, exchange)
+
+                    // console.log(costAvgData)
     
                     // resolve({
                     //     'cost_avg_profit': cost_avg_profit,
@@ -3040,8 +3042,8 @@ router.post('/listOrderListing', async (req, resp) => {
                     // })
     
                     if (Object.keys(costAvgData).length >0){
-                        order['profitLossPercentageHtml'] = '<span class="text-' + costAvgData['cost_avg_profit'] + '"><b>' + costAvgData['cost_avg_profit'] + '%</b> (' + cost_avg_order_ids_count + ')</span>';
-                        order['coinPriceInBtc'] = costAvgData['totalUsdWorth']
+                        order['profitLossPercentageHtml'] = '<span class="text-' + costAvgData['cost_avg_profit_color'] + '"><b>' + costAvgData['cost_avg_profit'] + '%</b> (' + cost_avg_order_ids_count + ')</span>';
+                        order['coinPriceInBtc'] = costAvgData['total_usd_worth']
                         order['targetPrice'] = costAvgData['target_avg_profit']
                     }
                 }
@@ -11019,7 +11021,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 costAvgObj['statusHtml'] = statusHtml
                 costAvgObj['usd_worth'] = usd_worth.toFixed(2)
                 costAvgObj['profitLoss'] = profitLoss
-                costAvgObj['plColor'] = (profitLoss > 0 ? 'green' : 'red')
+                costAvgObj['plColor'] = (profitLoss > 0 ? 'success' : 'danger')
 
                 costAvgArr.push(costAvgObj)
             }
@@ -11056,16 +11058,16 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 avgProfit = parseFloat((avgProfit / costAvgArr.length).toFixed(1))
                 
                 cost_avg_profit = avgProfit
-                cost_avg_profit_color = (avgProfit > 0 ? 'green' : 'red')
+                cost_avg_profit_color = (avgProfit > 0 ? 'success' : 'danger')
                 
                 sold_avg_profit = !isNaN(parseFloat((soldProfit / soldCount).toFixed(1))) ? parseFloat((soldProfit / soldCount).toFixed(1)) : 0
-                sold_avg_profit_color = (soldProfit > 0 ? 'green' : 'red')
+                sold_avg_profit_color = (soldProfit > 0 ? 'success' : 'danger')
                 
                 curr_avg_profit = !isNaN(parseFloat((currProfit / currCount).toFixed(1))) ? parseFloat((currProfit / currCount).toFixed(1)) : 0
-                curr_avg_profit_color = (currProfit > 0 ? 'green' : 'red')
+                curr_avg_profit_color = (currProfit > 0 ? 'success' : 'danger')
                 
                 target_avg_profit = !isNaN(parseFloat((targetProfit / targetProfitCount).toFixed(1))) ? parseFloat((targetProfit / targetProfitCount).toFixed(1)) : 0
-                target_avg_profit_color = (targetProfit > 0 ? 'green' : 'red')
+                target_avg_profit_color = (targetProfit > 0 ? 'success' : 'danger')
 
                 totalUsdWorth = parseFloat(parseFloat(totalUsdWorth).toFixed(2))
             }
