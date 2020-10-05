@@ -3405,8 +3405,9 @@ async function listOrderListing(postDAta, dbConnection) {
             filter['resume_status'] = { '$ne': 'complete' }
             filter['resume_order_id'] = { '$exists': false };
             filter['resumed_parent_buy_order_id'] = { '$exists': false }
-            filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
         }
+        
+        filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
