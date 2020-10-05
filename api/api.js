@@ -3012,6 +3012,39 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatus += ' <span class="badge badge-success">Cost Avg Completed</span> ';
                 htmlStatusArr.push('Cost Avg Completed')
             }
+
+            if (postDAta.status == 'costAvgTab'){
+
+                if (typeof orderListing[index]['avg_orders_ids'] != 'undefined' && orderListing[index]['avg_orders_ids'].length > 0){
+                    let cost_avg_order_ids = orderListing[index]['avg_orders_ids']
+                    let cost_avg_order_ids_count = cost_avg_order_ids.length
+                    for (let i = 0; i < cost_avg_order_ids_count; i++){cost_avg_order_ids[i] = String(cost_avg_order_ids[i])}
+                    cost_avg_order_ids.push(String(orderListing[index]['_id']))
+    
+                    let costAvgData = await getCostAvgPLandUsdWorth(order_ids, exchange)
+    
+                    // resolve({
+                    //     'cost_avg_profit': cost_avg_profit,
+                    //     'cost_avg_profit_color': cost_avg_profit_color,
+                    //     'sold_avg_profit': sold_avg_profit,
+                    //     'sold_avg_profit_color': sold_avg_profit_color,
+                    //     'curr_avg_profit': curr_avg_profit,
+                    //     'curr_avg_profit_color': curr_avg_profit_color,
+                    //     'target_avg_profit': target_avg_profit,
+                    //     'target_avg_profit_color': target_avg_profit_color,
+                    //     'total_usd_worth': totalUsdWorth,
+                    // })
+    
+                    if (Object.keys(costAvgData).length >0){
+                        order['profitLossPercentageHtml'] = '<span class="text-' + costAvgData['cost_avg_profit'] + '"><b>' + costAvgData['cost_avg_profit'] + '%</b> (' + cost_avg_order_ids_count + ')</span>';
+                        order['coinPriceInBtc'] = costAvgData['totalUsdWorth']
+                        order['targetPrice'] = costAvgData['target_avg_profit']
+                    }
+                }
+                
+
+            }
+
         }
         /* *******   End Cost average code    ******  */
 
@@ -4369,103 +4402,6 @@ router.post('/sellOrderManually', async (req, resp) => {
     });
 
 }) //End of sellOrderManually
-
-
-//sellCostAvgOrder 
-router.post('/sellCostAvgOrder', async (req, resp) => {
-
-    let orderType = req.body.OrderType
-    let exchange = req.body.exchange
-    let order_id = req.body.order_id
-
-    if (typeof orderType != 'undefined' && orderType != '' && typeof exchange != 'undefined' && exchange != '' && typeof order_id != 'undefined' && order_id != ''){
-
-        //get order
-        let order = await listOrderById(order_id, exchange);
-        if (ordeArr.length > 0) {
-
-            order = order[0]
-            let symbol = order['symbol']
-            //get currentMarket price
-            let coinData = await listmarketPriceMinNotationCoinArr(symbol, exchange)
-            let currentmarketPrice = coinData[symbol]['currentmarketPrice']
-
-            //send sell request if costAvg child order
-            if (orderType == 'costAvgChild'){
-    
-                var options = {
-                    method: 'POST',
-                    // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
-                    url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
-                    headers: {
-                        'cache-control': 'no-cache',
-                        'Connection': 'keep-alive',
-                        'Accept-Encoding': 'gzip, deflate',
-                        'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-                        'Cache-Control': 'no-cache',
-                        'Accept': '*/*',
-                        'User-Agent': 'PostmanRuntime/7.20.1',
-                        'Content-Type': 'application/json'
-                    },
-                    json: {
-                        'orderId': order_id,
-                        'exchange': exchange,
-                        'currentMarketPriceByCoin': currentmarketPrice,
-                    }
-                };
-                request(options, function (error, response, body) {});
-    
-            } else if (orderType == 'costAvgParent'){
-    
-                //loop all childs and send sell API call
-                let ids = []
-                ids.push(order_id)
-                ids = ids.concat(order['avg_orders_ids'])
-                let childsCount = ids.length
-
-                for (let i = 0; i < childsCount; i++){
-                    var options = {
-                        method: 'POST',
-                        // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
-                        url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
-                        headers: {
-                            'cache-control': 'no-cache',
-                            'Connection': 'keep-alive',
-                            'Accept-Encoding': 'gzip, deflate',
-                            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-                            'Cache-Control': 'no-cache',
-                            'Accept': '*/*',
-                            'User-Agent': 'PostmanRuntime/7.20.1',
-                            'Content-Type': 'application/json'
-                        },
-                        json: {
-                            'orderId': String(ids[i]),
-                            'exchange': exchange,
-                            'currentMarketPriceByCoin': currentmarketPrice,
-                        }
-                    };
-                    request(options, function (error, response, body) { });
-                }
-            }
-
-            resp.status(200).send({
-                status: true,
-                message: 'Sell request sent successfully'
-            })
-        }else{
-            resp.status(200).send({
-                status: false,
-                message: 'An error occured'
-            })
-        }
-    }else{
-        resp.status(200).send({
-            status: false,
-            message: 'orderType, exchange, order_id is required'
-        })
-    }
-
-}) //End of sellCostAvgOrder
 
 
 //function for updating any collection the base of collection and filtes
@@ -10934,35 +10870,9 @@ router.post('/getCostAvgOrders', async (req, res) => {
 
     if (typeof order_ids != 'undefined' && order_ids.length > 0 && typeof exchange != 'undefined' && exchange != '') {
 
-        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange 
-        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange 
-
-        let ids_arr = []
-        await Promise.all(order_ids.map(item => { ids_arr.push(new ObjectID(item)) }))
-        let where = {
-            '_id': {'$in':ids_arr}
-        }
-
-        let db = await conn
-        let p1 = db.collection(buy_collection).find(where).toArray()
-        let p2 = db.collection(sold_collection).find(where).toArray()
-        
-        let promiseResult = await Promise.all([p1, p2]) 
-
-        let buy_orders = promiseResult[0]
-        let sold_orders = promiseResult[1]
-        
-
-        let ordersArr = buy_orders.concat(sold_orders);
-        delete buy_orders
-        delete sold_orders
-        delete promiseResult
-        delete p1
-        delete p2
-        
+        let ordersArr = await getCostAvgOrders(order_ids, exchange)
         
         // var ordersArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
-
 
         res.send({
             status: true,
@@ -10978,6 +10888,309 @@ router.post('/getCostAvgOrders', async (req, res) => {
     }
 
 })//end getCostAvgOrders
+
+
+async function getCostAvgOrders(order_ids, exchange){
+
+    return new Promise( async (resolve) =>{
+        if (typeof order_ids != 'undefined' && order_ids.length > 0 && typeof exchange != 'undefined' && exchange != '') {
+    
+            let db = await conn
+
+            let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+            let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+    
+            let ids_arr = []
+            let totalItems = order_ids.length
+            
+            for (let i = 0; i < totalItems; i++){
+                ids_arr.push(new ObjectID(order_ids[i]))
+            }
+    
+            let where = {
+                '_id': { '$in': ids_arr }
+            }
+    
+            let p1 = db.collection(buy_collection).find(where).toArray()
+            let p2 = db.collection(sold_collection).find(where).toArray()
+    
+            let promiseResult = await Promise.all([p1, p2])
+    
+            let buy_orders = promiseResult[0]
+            let sold_orders = promiseResult[1]
+    
+            let ordersArr = buy_orders.concat(sold_orders);
+            delete buy_orders
+            delete sold_orders
+            delete promiseResult
+            delete p1
+            delete p2
+    
+            // var ordersArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
+            resolve(ordersArr)
+    
+        } else {
+            resolve ([])
+        }
+    })
+}
+
+async function getCostAvgPLandUsdWorth(order_ids, exchange) {
+
+    return new Promise(async (resolve) => {
+        
+        let totalUsdWorth = 0
+        let sold_avg_order_count = 0
+        let remaining_avg_order_count = 0
+        let cost_avg_profit = 0
+        let cost_avg_profit_color = 'red'
+        let sold_avg_profit = 0
+        let sold_avg_profit_color = 'red'
+        let curr_avg_profit = 0
+        let curr_avg_profit_color = 'red'
+        let target_avg_profit = 0
+        let target_avg_profit_color = 'red'
+        let orders = await getCostAvgOrders(order_ids, exchange)
+        if (orders.length > 0) {
+
+            //Create Cost AVG ledger
+            let totalOrders = orders.length
+            let costAvgArr = []
+
+            let splitArr = orders[0]['symbol'].split('USDT');
+            let symbol = orders[0]['symbol'];
+
+            let coinData = await listmarketPriceMinNotationCoinArr({ '$in': [symbol, 'BTCUSDT']}, exchange)
+            let currPrice = coinData[symbol]['currentmarketPrice']
+            let BTCUSDTPrice = coinData['BTCUSDT']['currentmarketPrice']
+
+            // console.log('totalCount: ',orders.length , currPrice, BTCUSDTPrice)
+
+            for (let i = 0; i < totalOrders; i++) {
+
+                let obj = orders[i]
+                let costAvgObj = {}
+                // let profitLoss = obj['is_sell_order'] == 'sold' ? obj['cost_avg_profit'] : getPercentageDiff(currPrice, obj['purchased_price'])
+                let profitLoss = obj['is_sell_order'] == 'sold' ? getPercentageDiff(obj['market_sold_price'], obj['purchased_price']) : getPercentageDiff(currPrice, obj['purchased_price'])
+                let usd_worth = (splitArr[1] == '' ? obj['quantity'] * currPrice : obj['quantity'] * currPrice * BTCUSDTPrice)
+
+                let statusHtml = ''
+                let type = ''
+                let target11Profit = 0
+                if (obj['is_sell_order'] == 'sold') {
+                    statusHtml = '<span class="badge badge-success">Sold</span>'
+                    type = 'sold'
+                    target11Profit += (typeof obj['is_lth_order'] != 'undefined' && obj['is_lth_order'] != '' ? parseFloat(obj['is_lth_order']) : parseFloat(obj['defined_sell_percentage']))
+                } else if (obj['status'] == 'canceled') {
+                    statusHtml = '<span class="badge badge-danger">Canceled</span>'
+                    type = 'canceled'
+                } else if (obj['is_sell_order'] == 'yes' && (obj['status'] == 'FILLED' || obj['status'] == 'LTH')) {
+                    statusHtml = '<span class="badge badge-primary">Buy</span>'
+                    type = 'buy'
+
+                    if (obj['status'] == 'LTH') {
+                        target11Profit += (typeof obj['lth_profit'] != 'undefined' && obj['lth_profit'] != '' ? parseFloat(obj['lth_profit']) : parseFloat(obj['defined_sell_percentage']))
+                    } else {
+                        target11Profit += (typeof obj['defined_sell_percentage'] != 'undefined' && obj['defined_sell_percentage'] != '' ? parseFloat(obj['defined_sell_percentage']) : 0)
+                    }
+
+                } else {
+                    statusHtml = '<span class="badge badge-info">' + obj['status'] + '</span>'
+                }
+
+                let childObjId = obj['_id']
+
+                costAvgObj['_id'] = childObjId
+                // costAvgObj['orderType'] = childObjId == parent_id ? 'costAvgParent' : 'costAvgChild'
+                costAvgObj['buy_price'] = obj['purchased_price'].toFixed(8)
+                costAvgObj['sell_price'] = obj['is_sell_order'] == 'sold' ? obj['market_sold_price'].toFixed(8) : obj['sell_price'].toFixed(8)
+                costAvgObj['type'] = type
+                costAvgObj['targetProfit'] = target11Profit
+                costAvgObj['status'] = obj['status']
+                costAvgObj['statusHtml'] = statusHtml
+                costAvgObj['usd_worth'] = usd_worth.toFixed(2)
+                costAvgObj['profitLoss'] = profitLoss
+                costAvgObj['plColor'] = (profitLoss > 0 ? 'green' : 'red')
+
+                costAvgArr.push(costAvgObj)
+            }
+
+            sold_avg_order_count = orders.filter(x => (x['is_sell_order'] == 'sold')).length
+            remaining_avg_order_count = orders.filter(x => (x['is_sell_order'] == 'yes' && (x['status'] == 'FILLED' || x['status'] == 'LTH'))).length
+
+            let avgProfit = 0
+            let soldProfit = 0
+            let soldCount = 0
+            let currProfit = 0
+            let currCount = 0
+            let targetProfit = 0
+            let targetProfitCount = 0
+
+            let totalItems = costAvgArr.length
+            for(let i=0; i<totalItems; i++){
+                avgProfit += parseFloat(costAvgArr[i].profitLoss)
+                if (costAvgArr[i].type == 'sold') {
+                    soldCount++
+                    soldProfit += parseFloat(costAvgArr[i].profitLoss)
+                    targetProfitCount++
+                    targetProfit += parseFloat(costAvgArr[i].targetProfit)
+                } else if (costAvgArr[i].type == 'buy') {
+                    targetProfitCount++
+                    targetProfit += parseFloat(costAvgArr[i].targetProfit)
+                }
+                currCount++
+                currProfit += parseFloat(costAvgArr[i].profitLoss)
+                totalUsdWorth += parseFloat(costAvgArr[i].usd_worth)
+            }
+
+            if (costAvgArr.length > 0) {
+                avgProfit = parseFloat((avgProfit / costAvgArr.length).toFixed(1))
+                
+                cost_avg_profit = avgProfit
+                cost_avg_profit_color = (avgProfit > 0 ? 'green' : 'red')
+                
+                sold_avg_profit = !isNaN(parseFloat((soldProfit / soldCount).toFixed(1))) ? parseFloat((soldProfit / soldCount).toFixed(1)) : 0
+                sold_avg_profit_color = (soldProfit > 0 ? 'green' : 'red')
+                
+                curr_avg_profit = !isNaN(parseFloat((currProfit / currCount).toFixed(1))) ? parseFloat((currProfit / currCount).toFixed(1)) : 0
+                curr_avg_profit_color = (currProfit > 0 ? 'green' : 'red')
+                
+                target_avg_profit = !isNaN(parseFloat((targetProfit / targetProfitCount).toFixed(1))) ? parseFloat((targetProfit / targetProfitCount).toFixed(1)) : 0
+                target_avg_profit_color = (targetProfit > 0 ? 'green' : 'red')
+
+                totalUsdWorth = parseFloat(parseFloat(totalUsdWorth).toFixed(2))
+            }
+
+            // console.log('sold_avg_order_count ', this.sold_avg_order_count)
+            // console.log('remaining_avg_order_count ', this.remaining_avg_order_count)
+            
+            // this.costAvgLedgerExists = true;
+            // this.costAvgLedger = costAvgArr;
+
+            resolve({
+                'cost_avg_profit': cost_avg_profit,
+                'cost_avg_profit_color': cost_avg_profit_color,
+                'sold_avg_profit': sold_avg_profit,
+                'sold_avg_profit_color': sold_avg_profit_color,
+                'curr_avg_profit': curr_avg_profit,
+                'curr_avg_profit_color': curr_avg_profit_color,
+                'target_avg_profit': target_avg_profit,
+                'target_avg_profit_color': target_avg_profit_color,
+                'total_usd_worth': totalUsdWorth,
+            })
+
+        } else {
+            resolve({})
+        }
+
+    })
+}
+
+
+function getPercentageDiff(currentMarketPrice, purchased_price) {
+    if (purchased_price == 0) {
+        return 0
+    } else {
+        return parseFloat((((currentMarketPrice - purchased_price) / purchased_price) * 100).toFixed(1))
+    }
+}
+
+
+//sellCostAvgOrder 
+router.post('/sellCostAvgOrder', async (req, resp) => {
+
+    let orderType = req.body.OrderType
+    let exchange = req.body.exchange
+    let order_id = req.body.order_id
+
+    if (typeof orderType != 'undefined' && orderType != '' && typeof exchange != 'undefined' && exchange != '' && typeof order_id != 'undefined' && order_id != '') {
+
+        //get order
+        let order = await listOrderById(order_id, exchange);
+        if (ordeArr.length > 0) {
+
+            order = order[0]
+            let symbol = order['symbol']
+            //get currentMarket price
+            let coinData = await listmarketPriceMinNotationCoinArr(symbol, exchange)
+            let currentmarketPrice = coinData[symbol]['currentmarketPrice']
+
+            //send sell request if costAvg child order
+            if (orderType == 'costAvgChild') {
+
+                var options = {
+                    method: 'POST',
+                    // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                    url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                    headers: {
+                        'cache-control': 'no-cache',
+                        'Connection': 'keep-alive',
+                        'Accept-Encoding': 'gzip, deflate',
+                        'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                        'Cache-Control': 'no-cache',
+                        'Accept': '*/*',
+                        'User-Agent': 'PostmanRuntime/7.20.1',
+                        'Content-Type': 'application/json'
+                    },
+                    json: {
+                        'orderId': order_id,
+                        'exchange': exchange,
+                        'currentMarketPriceByCoin': currentmarketPrice,
+                    }
+                };
+                request(options, function (error, response, body) { });
+
+            } else if (orderType == 'costAvgParent') {
+
+                //loop all childs and send sell API call
+                let ids = []
+                ids.push(order_id)
+                ids = ids.concat(order['avg_orders_ids'])
+                let childsCount = ids.length
+
+                for (let i = 0; i < childsCount; i++) {
+                    var options = {
+                        method: 'POST',
+                        // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                        url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                        headers: {
+                            'cache-control': 'no-cache',
+                            'Connection': 'keep-alive',
+                            'Accept-Encoding': 'gzip, deflate',
+                            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                            'Cache-Control': 'no-cache',
+                            'Accept': '*/*',
+                            'User-Agent': 'PostmanRuntime/7.20.1',
+                            'Content-Type': 'application/json'
+                        },
+                        json: {
+                            'orderId': String(ids[i]),
+                            'exchange': exchange,
+                            'currentMarketPriceByCoin': currentmarketPrice,
+                        }
+                    };
+                    request(options, function (error, response, body) { });
+                }
+            }
+
+            resp.status(200).send({
+                status: true,
+                message: 'Sell request sent successfully'
+            })
+        } else {
+            resp.status(200).send({
+                status: false,
+                message: 'An error occured'
+            })
+        }
+    } else {
+        resp.status(200).send({
+            status: false,
+            message: 'orderType, exchange, order_id is required'
+        })
+    }
+
+}) //End of sellCostAvgOrder
 
 // ******************* End Cost Avg APIs **************** //  
 
