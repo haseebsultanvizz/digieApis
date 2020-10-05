@@ -2177,7 +2177,7 @@ router.post('/listOrderListing', async (req, resp) => {
         $ne: 'yes'
     };
     // filter_3['cost_avg'] = { '$exists': false }
-    filter_3['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+    filter_3['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
     // filter_3['$or'] = [
     //     {
@@ -2227,7 +2227,7 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_33['admin_id'] = admin_id;
     filter_33['application_mode'] = application_mode;
     // filter_33['cost_avg'] = { '$exists': false }
-    filter_33['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+    filter_33['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -2338,7 +2338,7 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_6['application_mode'] = application_mode;
     filter_6['is_sell_order'] = 'yes';
     // filter_6['cost_avg'] = { '$exists': false }
-    filter_6['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+    filter_6['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
     
 
@@ -2439,9 +2439,9 @@ router.post('/listOrderListing', async (req, resp) => {
     //     filter_12['$or'][0]['show_order'] = 'yes'
     // }
     
-    if (admin_id != '5c0912b7fc9aadaac61dd072') {
-        filter_12['avg_orders_ids'] = { '$exists': true }
-    }
+    // if (admin_id != '5c0912b7fc9aadaac61dd072') {
+    //     filter_12['avg_orders_ids'] = { '$exists': true }
+    // }
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -2506,7 +2506,7 @@ router.post('/listOrderListing', async (req, resp) => {
     let filter_all = {};
     filter_all['application_mode'] = postDAta.application_mode
     filter_all['admin_id'] = postDAta.admin_id
-    filter_all['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+    filter_all['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -3283,7 +3283,7 @@ async function listOrderListing(postDAta, dbConnection) {
             $ne: 'yes'
         };
         // filter['cost_avg'] = { '$exists': false }
-        filter['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+        filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
         // filter['$or'] = [
         //     {
@@ -3308,7 +3308,7 @@ async function listOrderListing(postDAta, dbConnection) {
             '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
         }
         // filter['cost_avg'] = { '$exists': false }
-        filter['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+        filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
     }
 
     if (postDAta.status == 'sold') {
@@ -3332,9 +3332,9 @@ async function listOrderListing(postDAta, dbConnection) {
         //     filter['$or'][0]['show_order'] = 'yes'
         // }
 
-        if (postDAta.admin_id != '5c0912b7fc9aadaac61dd072') {
-            filter['avg_orders_ids'] = { '$exists': true }
-        }
+        // if (postDAta.admin_id != '5c0912b7fc9aadaac61dd072') {
+        //     filter['avg_orders_ids'] = { '$exists': true }
+        // }
 
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
@@ -3364,7 +3364,7 @@ async function listOrderListing(postDAta, dbConnection) {
         };
         filter['is_sell_order'] = 'yes';
         // filter['cost_avg'] = { '$exists': false }
-        filter['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+        filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
     }
 
     if (postDAta.status == 'new') {
@@ -3402,7 +3402,7 @@ async function listOrderListing(postDAta, dbConnection) {
             filter['resume_status'] = { '$ne': 'complete' }
             filter['resume_order_id'] = { '$exists': false };
             filter['resumed_parent_buy_order_id'] = { '$exists': false }
-            filter['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+            filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
         }
 
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
