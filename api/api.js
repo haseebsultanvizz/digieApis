@@ -11129,7 +11129,7 @@ function getPercentageDiff(currentMarketPrice, purchased_price) {
 //sellCostAvgOrder 
 router.post('/sellCostAvgOrder', async (req, resp) => {
 
-    let orderType = req.body.OrderType
+    let orderType = req.body.orderType
     let exchange = req.body.exchange
     let order_id = req.body.order_id
 
@@ -11137,7 +11137,7 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
 
         //get order
         let order = await listOrderById(order_id, exchange);
-        if (ordeArr.length > 0) {
+        if (order.length > 0) {
 
             order = order[0]
             let symbol = order['symbol']
