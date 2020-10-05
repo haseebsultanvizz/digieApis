@@ -1709,6 +1709,11 @@ router.post('/editAutoOrder', async (req, resp) => {
     var defined_sell_percentage = order['defined_sell_percentage'];
     //get order detail which you want to update
     var buyOrderArr = await listOrderById(orderId, exchange);
+
+    if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
+        await updateCostAvgChildOrders(orderId, order, exchange)
+    }
+
     var ttt_is_custom_stop_loss_possitive = typeof order['stop_loss_type'] != 'undefined' && order['stop_loss_type'] == 'positive' ? true : false
 
     var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0]['purchased_price'] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
@@ -1940,6 +1945,137 @@ function createAutoOrder(OrderArr) {
         })
     })
 } //End of createAutoOrder
+
+
+function getCostAvgChildOrderNotSoldIds(ids, exchange){
+
+    return new Promise(async (resolve)=>{
+        const db = await conn
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+        let result = await db.collection(buy_collection).find({ _id: {$in: ids}}).project({_id:1}).toArray()
+    
+        if (result.length > 0){
+            ids = result.map(item=>item['_id'])
+        }
+        resolve(ids)
+    })
+}
+
+async function updateCostAvgChildOrders(order_id, order, exchange) {
+
+    var ids = []
+
+    var buyOrderArr = await listOrderById(order_id, exchange);
+
+    if (buyOrderArr.length > 0){
+
+        ids = typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'].length > 0 ? buyOrderArr[0]['avg_orders_ids'] : [] 
+
+        if (ids.length >0){
+            ids = await getCostAvgChildOrderNotSoldIds(ids, exchange)
+        }
+
+
+        let totalChilds = ids.length 
+
+        if (totalChilds > 0){
+
+            for(let i=0; i< totalChilds; i++){
+
+                let orderId = String(ids[i])
+
+                let interfaceType = ''
+                // let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+                order['modified_date'] = new Date()
+                // let orderId = order['orderId'];
+                var exchange = order['exchange'];
+                var lth_profit = order['lth_profit'];
+                var defined_sell_percentage = order['defined_sell_percentage'];
+                //get order detail which you want to update
+                var buyOrderArr = await listOrderById(orderId, exchange);
+    
+                var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0]['purchased_price'] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
+                var status = buyOrderArr[0]['status'];
+                //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
+                if (status == 'LTH') {
+                    var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
+                    order['sell_price'] = sell_price;
+                } else {
+    
+                    if (typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent') {
+                        //Do nothing
+                    } else {
+                        var sell_price = ((parseFloat(purchased_price) * defined_sell_percentage) / 100) + parseFloat(purchased_price);
+                        order['sell_price'] = sell_price;
+                    }
+                }
+    
+                //set sell profit percentage 
+                if (order['defined_sell_percentage'] != 'undefined' || typeof order['sell_profit_percent'] != 'undefined') {
+    
+                    let sell_profit_percent = parseFloat(parseFloat(order['sell_profit_percent']).toFixed(1))
+                    let defined_sell_percentage = parseFloat(parseFloat(order['defined_sell_percentage']).toFixed(1))
+    
+                    sell_profit_percent = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+                    defined_sell_percentage = !isNaN(defined_sell_percentage) ? Math.abs(defined_sell_percentage) : ''
+    
+                    order['sell_profit_percent'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent
+                    order['defined_sell_percentage'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent
+                    order['is_sell_order'] = 'yes';
+                }
+    
+                order['modified_date'] = new Date();
+    
+                var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                delete order['orderId'];
+    
+                var where = {};
+                where['_id'] = new ObjectID(orderId);
+                updateOne(where, order, collection);
+    
+                //Update sell_price in Sell Order
+                if (typeof buyOrderArr[0]['sell_order_id'] != 'undefined') {
+                    let sell_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+                    var where = {};
+                    let sell_order = {
+                        'sell_price': order['sell_price']
+                    }
+    
+                    where['_id'] = new ObjectID(String(buyOrderArr[0]['sell_order_id']));
+                    updateOne(where, sell_order, sell_collection);
+                }
+    
+                //TODO: create detail update log Umer Abbas [13-12-19]
+                let obj = buyOrderArr[0];
+                let new_obj = order;
+                let obj_keys = Object.keys(obj);
+                let new_obj_keys = Object.keys(order);
+                let update_keys = new_obj_keys.filter(x => obj_keys.includes(x));
+                let log_message = "Order Was <b style='color:yellow'>Updated</b> " + interfaceType + " ";
+                for (let i in update_keys) {
+                    let upd_key = update_keys[i];
+                    if (new_obj[upd_key] != obj[upd_key]) {
+                        if (upd_key == 'iniatial_trail_stop' || upd_key == 'iniatial_trail_stop_copy' || upd_key == 'sell_price') {
+                            log_message += ' ' + upd_key + ' updated from ' + obj[upd_key].toFixed(8) + ' to ' + new_obj[upd_key].toFixed(8) + ', ';
+                        } else {
+                            log_message += ' ' + upd_key + ' updated from ' + obj[upd_key] + ' to ' + new_obj[upd_key] + ', ';
+                        }
+                    }
+                }
+                var log_msg = log_message.replace(/,\s*$/, "."); // to remove the last comma 
+    
+                let show_hide_log = 'yes';
+                let type = 'order_updated'
+                var getBuyOrder = await listOrderById(orderId, exchange);
+                var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+            }
+        }
+
+    }
+    
+}
 
 //function which have all prerequisite for buying or selling any order 
 function marketMinNotation(symbol) {
@@ -2256,6 +2392,7 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_4['status'] = 'canceled';
     filter_4['admin_id'] = admin_id;
     filter_4['application_mode'] = application_mode;
+    filter_4['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -2370,6 +2507,7 @@ router.post('/listOrderListing', async (req, resp) => {
     }
     filter_7['admin_id'] = admin_id;
     filter_7['application_mode'] = application_mode;
+    filter_7['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };;
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -3381,6 +3519,7 @@ async function listOrderListing(postDAta, dbConnection) {
 
     if (postDAta.status == 'canceled') {
         filter['status'] = 'canceled';
+        filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };;
     }
     
     if (postDAta.status == 'errors') {
@@ -3392,6 +3531,7 @@ async function listOrderListing(postDAta, dbConnection) {
         filter['status'] = {
             '$in': ['submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'submitted_ERROR']
         }
+        filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };
     }
 
     //if status is all the get from both buy_orders and sold_buy_orders 
@@ -3406,7 +3546,7 @@ async function listOrderListing(postDAta, dbConnection) {
             filter['resume_order_id'] = { '$exists': false };
             filter['resumed_parent_buy_order_id'] = { '$exists': false }
         }
-        
+
         filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
