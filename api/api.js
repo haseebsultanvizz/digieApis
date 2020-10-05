@@ -2401,6 +2401,7 @@ router.post('/listOrderListing', async (req, resp) => {
         { 'resume_status': 'completed', 'trading_status': 'complete' },
         { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false } }
     ];
+    filter_8['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
     if (!digie_admin_ids.includes(admin_id)) {
         filter_8['$or'][0]['show_order'] = 'yes'
     }
@@ -3319,6 +3320,8 @@ async function listOrderListing(postDAta, dbConnection) {
         if (!digie_admin_ids.includes(postDAta.admin_id)){
             filter['$or'][0]['show_order'] = 'yes'
         }
+        filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
     
