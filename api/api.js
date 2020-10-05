@@ -3025,7 +3025,7 @@ router.post('/listOrderListing', async (req, resp) => {
                     for (let i = 0; i < cost_avg_order_ids_count; i++){cost_avg_order_ids[i] = String(cost_avg_order_ids[i])}
                     cost_avg_order_ids.push(String(orderListing[index]['_id']))
     
-                    let costAvgData = await getCostAvgPLandUsdWorth(order_ids, exchange)
+                    let costAvgData = await getCostAvgPLandUsdWorth(cost_avg_order_ids, exchange)
     
                     // resolve({
                     //     'cost_avg_profit': cost_avg_profit,
