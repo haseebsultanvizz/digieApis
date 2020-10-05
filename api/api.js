@@ -2440,9 +2440,9 @@ router.post('/listOrderListing', async (req, resp) => {
     //     filter_12['$or'][0]['show_order'] = 'yes'
     // }
     
-    // if (admin_id != '5c0912b7fc9aadaac61dd072') {
-    //     filter_12['avg_orders_ids'] = { '$exists': true }
-    // }
+    if (admin_id != '5c0912b7fc9aadaac61dd072') {
+        filter_12['avg_orders_ids'] = { '$exists': true }
+    }
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -3335,9 +3335,9 @@ async function listOrderListing(postDAta, dbConnection) {
         //     filter['$or'][0]['show_order'] = 'yes'
         // }
 
-        // if (postDAta.admin_id != '5c0912b7fc9aadaac61dd072') {
-        //     filter['avg_orders_ids'] = { '$exists': true }
-        // }
+        if (postDAta.admin_id != '5c0912b7fc9aadaac61dd072') {
+            filter['avg_orders_ids'] = { '$exists': true }
+        }
 
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
