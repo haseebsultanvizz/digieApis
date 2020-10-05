@@ -2506,6 +2506,7 @@ router.post('/listOrderListing', async (req, resp) => {
     let filter_all = {};
     filter_all['application_mode'] = postDAta.application_mode
     filter_all['admin_id'] = postDAta.admin_id
+    filter_all['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
@@ -3401,6 +3402,7 @@ async function listOrderListing(postDAta, dbConnection) {
             filter['resume_status'] = { '$ne': 'complete' }
             filter['resume_order_id'] = { '$exists': false };
             filter['resumed_parent_buy_order_id'] = { '$exists': false }
+            filter['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
         }
 
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
