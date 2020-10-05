@@ -11066,7 +11066,6 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
             
             // this.costAvgLedgerExists = true;
             // this.costAvgLedger = costAvgArr;
-
             resolve({
                 'cost_avg_profit': cost_avg_profit,
                 'cost_avg_profit_color': cost_avg_profit_color,
@@ -11078,6 +11077,26 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 'target_avg_profit_color': target_avg_profit_color,
                 'total_usd_worth': totalUsdWorth,
             })
+
+            // (async() => {
+            //     resolve({
+            //         'cost_avg_profit': cost_avg_profit,
+            //         'cost_avg_profit_color': cost_avg_profit_color,
+            //         'sold_avg_profit': sold_avg_profit,
+            //         'sold_avg_profit_color': sold_avg_profit_color,
+            //         'curr_avg_profit': curr_avg_profit,
+            //         'curr_avg_profit_color': curr_avg_profit_color,
+            //         'target_avg_profit': target_avg_profit,
+            //         'target_avg_profit_color': target_avg_profit_color,
+            //         'total_usd_worth': totalUsdWorth,
+            //     })
+            // })
+
+            // (async() => {
+            //     delete costAvgArr
+            //     delete orders
+            // })
+            
 
         } else {
             resolve({})
