@@ -11146,7 +11146,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 } else if (obj['status'] == 'canceled') {
                     statusHtml = '<span class="badge badge-danger">Canceled</span>'
                     type = 'canceled'
-                } else if (obj['is_sell_order'] == 'yes' && (obj['status'] == 'FILLED' || obj['status'] == 'LTH')) {
+                } else if (obj['is_sell_order'] == 'yes' && (obj['status'] != 'new' || obj['status'] != 'new_ERROR' && obj['status'] != 'canceled')) {
                     statusHtml = '<span class="badge badge-primary">Buy</span>'
                     type = 'buy'
 
@@ -11194,8 +11194,8 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 if (costAvgArr[i].type == 'sold') {
                     soldCount++
                     soldProfit += parseFloat(costAvgArr[i].profitLoss)
-                    targetProfitCount++
-                    targetProfit += parseFloat(costAvgArr[i].targetProfit)
+                    // targetProfitCount++
+                    // targetProfit += parseFloat(costAvgArr[i].targetProfit)
                 } else if (costAvgArr[i].type == 'buy') {
                     targetProfitCount++
                     targetProfit += parseFloat(costAvgArr[i].targetProfit)
