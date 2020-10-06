@@ -2573,15 +2573,15 @@ router.post('/listOrderListing', async (req, resp) => {
     filter_12['cost_avg'] = { '$exists': true } 
     // filter_12['cost_avg'] = { '$ne': '' } 
     filter_12['show_order'] = 'yes'
-    filter_12['cavg_parent'] = 'yes'
     // filter_12['avg_orders_ids'] = { '$exists': true } 
     // if (!digie_admin_ids.includes(admin_id)) {
-    //     filter_12['$or'][0]['show_order'] = 'yes'
-    // }
-    
-    // if (admin_id != '5c0912b7fc9aadaac61dd072') {
-    //     filter_12['avg_orders_ids'] = { '$exists': true }
-    // }
+        //     filter_12['$or'][0]['show_order'] = 'yes'
+        // }
+        
+    if (admin_id != '5c0912b7fc9aadaac61dd072') {
+        filter_12['cavg_parent'] = 'yes'
+        // filter_12['avg_orders_ids'] = { '$exists': true }
+    }
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
