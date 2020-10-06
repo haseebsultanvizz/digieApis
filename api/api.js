@@ -11223,6 +11223,11 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 target_avg_profit = !isNaN(parseFloat((targetProfit / targetProfitCount).toFixed(1))) ? parseFloat((targetProfit / targetProfitCount).toFixed(1)) : 0
                 target_avg_profit_color = (targetProfit > 0 ? 'success' : 'danger')
 
+                if (target_avg_profit == 0) {
+                    target_avg_profit = sold_avg_profit
+                    target_avg_profit_color = sold_avg_profit_color
+                }
+
                 totalUsdWorth = parseFloat(parseFloat(totalUsdWorth).toFixed(2))
             }
 
