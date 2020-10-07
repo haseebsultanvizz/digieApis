@@ -4426,7 +4426,7 @@ async function costAvgChildLogs(orderId, exchange, order_mode, order_created_dat
                 // 'buy_commission',
                 'sell_qty',
                 'sell_commission',
-                'sell_submitted',
+                // 'sell_submitted',
             ],
         }
         var created_date = new Date(order_created_date);
