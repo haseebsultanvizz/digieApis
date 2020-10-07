@@ -11036,12 +11036,14 @@ router.post('/getCostAvgOrders', async (req, res) => {
     if (typeof order_ids != 'undefined' && order_ids.length > 0 && typeof exchange != 'undefined' && exchange != '') {
 
         let ordersArr = await getCostAvgOrders(order_ids, exchange)
+        let last3ordersArr = await getLast3CostAvgOpenOrders(order_ids, exchange)
         
         // var ordersArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
 
         res.send({
             status: true,
             orders: ordersArr,
+            last3ordersArr: last3ordersArr,
             message: 'data found',
         })
 
@@ -11096,6 +11098,39 @@ async function getCostAvgOrders(order_ids, exchange){
     
         } else {
             resolve ([])
+        }
+    })
+}
+
+async function getLast3CostAvgOpenOrders(order_ids, exchange) {
+
+    return new Promise(async (resolve) => {
+        if (typeof order_ids != 'undefined' && order_ids.length > 0 && typeof exchange != 'undefined' && exchange != '') {
+
+            let db = await conn
+
+            let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+            let ids_arr = []
+            let totalItems = order_ids.length
+
+            for (let i = 0; i < totalItems; i++) {
+                ids_arr.push(new ObjectID(order_ids[i]))
+            }
+
+            let where = {
+                '_id': { '$in': ids_arr }
+            }
+
+            let p1 = await db.collection(buy_collection).find(where).sort({'created_date':-1}).limit(3).toArray()
+            
+            let buy_orders = p1
+
+            let ordersArr = buy_orders
+            
+            resolve(ordersArr)
+
+        } else {
+            resolve([])
         }
     })
 }
