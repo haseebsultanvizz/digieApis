@@ -1689,6 +1689,9 @@ router.post('/createAutoOrder', async (req, resp) => {
 
     if (typeof order['admin_id'] != 'undefined' && digie_admin_ids.includes(order['admin_id'])){
         order['pick_parent'] = 'yes'; 
+    }else{
+        const user_remaining_usd_limit = await getUserRemainingLimit(user_id, exchange)
+        order['pick_parent'] (user_remaining_usd_limit > usd_worth ? 'yes' : 'no')
     }
 
     let orderResp = await createAutoOrder(order);
@@ -1930,6 +1933,8 @@ function createAutoOrder(OrderArr) {
         OrderArr['lth_functionality'] = 'no'
         OrderArr['lth_profit'] = ''
     }
+
+
 
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -12449,7 +12454,44 @@ async function saveATGLog(user_id, exchange, log_type, log_message, application_
     })
 }
 
+
+async function getUserRemainingLimit(user_id, exchange){
+    return new Promise(async (resolve)=>{
+        let db = await conn
+        let daily_limit_collection = exchange == 'binance' ? 'daily_trade_buy_limit' : 'daily_trade_buy_limit_'+exchange;
+
+        let result = await db.collection(daily_limit_collection).aggregate([
+            {
+                '$match' : {
+                    'user_id': user_id
+                }
+            },
+            {
+                '$addFields':{
+                    'remaining_usd_limit': {
+                        '$subtract': ['$daily_buy_usd_limit', '$daily_buy_usd_worth']
+                    }
+                }
+            },
+            {
+                '$project':{
+                    'remaining_usd_limit': 1,
+                    '_id': 0
+                }
+            }
+        ]).toArray()
+        
+        let remaining_usd_limit = !isNaN(result[0]['remaining_usd_limit']) ? result[0]['remaining_usd_limit'] : 0
+
+        resolve(remaining_usd_limit)
+
+    })
+}
+
 router.get('/mytest', async(req, res)=>{
+
+    // await getUserRemainingLimit('5c0915befc9aadaac61dd1b8', 'binance')
+
     let coinData = await listmarketPriceMinNotationCoinArr('XRPBTC', 'binance')
     res.send({ 'status': true, 'data': coinData})
 })
@@ -12523,6 +12565,8 @@ async function createAutoTradeParents(settings){
         var db = await conn
         var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         var level = ''
+
+        const user_remaining_usd_limit = await getUserRemainingLimit(user_id, exchange)
 
         for(let i=0; i<coninsCount; i++){
 
@@ -12599,6 +12643,7 @@ async function createAutoTradeParents(settings){
                             'price': '',
                             'quantity': minReqQty,
                             'usd_worth': usd_worth,
+                            'pick_parent': (digie_admin_ids.includes(user_id) || (user_remaining_usd_limit > usd_worth) ? 'yes' : 'no'),
                             'defined_sell_percentage': profit_percentage,
                             'sell_profit_percent': profit_percentage,
                             'current_market_price': currentMarketPrice,
@@ -12695,6 +12740,7 @@ async function createAutoTradeParents(settings){
                             'price': '',
                             'quantity': quantity,
                             'usd_worth': usd_worth,
+                            'pick_parent': (digie_admin_ids.includes(user_id) || (user_remaining_usd_limit > usd_worth) ? 'yes' : 'no'),
                             'defined_sell_percentage': profit_percentage,
                             'sell_profit_percent': profit_percentage,
                             'current_market_price': currentMarketPrice,
@@ -12790,6 +12836,7 @@ async function createAutoTradeParents(settings){
             set['$set'] = {
                 'status': 'canceled',
                 'pause_status': 'pause',
+                'pick_parent': 'no',
                 'pause_by_script': 'no',
                 'modified_date': new Date()
             };
@@ -12861,6 +12908,7 @@ async function removeDuplicateParentsOtherThanThese(user_id, exchange, applicati
                 'status': 'canceled',
                 'pause_status': 'pause',
                 'pause_by_script': 'no',
+                'pick_parent': 'no',
                 'modified_date': new Date()
             };
             let parents = await db.collection(collectionName).find(filter).project({ '_id': 1, 'application_mode': 1, 'created_date': 1 }).toArray()
