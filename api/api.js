@@ -3190,7 +3190,8 @@ router.post('/listOrderListing', async (req, resp) => {
                     if (Object.keys(costAvgData).length >0){
                         order['profitLossPercentageHtml'] = '<span class="text-' + costAvgData['cost_avg_profit_color'] + '"><b>' + costAvgData['cost_avg_profit'] + '%</b> (' + cost_avg_order_ids.length + ')</span>';
                         order['coinPriceInBtc'] = costAvgData['total_usd_worth']
-                        order['targetPrice'] = orderListing[index]['defined_sell_percentage']
+                        order['targetPrice'] = costAvgData['target_avg_profit']
+                        // order['targetPrice'] = orderListing[index]['defined_sell_percentage']
                     }
                 }
 
