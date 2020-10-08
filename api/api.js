@@ -3196,7 +3196,6 @@ router.post('/listOrderListing', async (req, resp) => {
     
                     let costAvgData = await getCostAvgPLandUsdWorth(cost_avg_order_ids, exchange)
 
-                    // console.log(costAvgData)
     
                     // resolve({
                     //     'cost_avg_profit': cost_avg_profit,
@@ -12516,7 +12515,7 @@ async function getUserRemainingLimit(user_id, exchange){
             }
         ]).toArray()
         
-        let remaining_usd_limit = !isNaN(result[0]['remaining_usd_limit']) ? result[0]['remaining_usd_limit'] : 0
+        let remaining_usd_limit = (result.length > 0 && !isNaN(result[0]['remaining_usd_limit'])) ? result[0]['remaining_usd_limit'] : 0
 
         resolve(remaining_usd_limit)
 
