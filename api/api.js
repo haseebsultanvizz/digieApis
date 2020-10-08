@@ -3978,7 +3978,7 @@ router.post('/makeCostAvg', async (req, resp) => {
         let db = await conn
 
         let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
-        await db.collection(buy_collection).updateOne({'_id': new ObjectID(String(order_id))}, { '$set': {'cost_avg':'yes'}})
+        await db.collection(buy_collection).updateOne({'_id': new ObjectID(String(order_id))}, { '$set': {'cost_avg':'yes', 'show_order':'yes'}})
 
         //insert log
         var getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
