@@ -11219,7 +11219,8 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 if (obj['is_sell_order'] == 'sold') {
                     statusHtml = '<span class="badge badge-success">Sold</span>'
                     type = 'sold'
-                    target11Profit += (typeof obj['is_lth_order'] != 'undefined' && obj['is_lth_order'] != '' ? parseFloat(obj['is_lth_order']) : parseFloat(obj['defined_sell_percentage']))
+                    // target11Profit += (typeof obj['is_lth_order'] != 'undefined' && obj['is_lth_order'] != '' ? parseFloat(obj['is_lth_order']) : parseFloat(obj['defined_sell_percentage']))
+                    target11Profit += parseFloat(obj['defined_sell_percentage'])
                 } else if (obj['status'] == 'canceled') {
                     statusHtml = '<span class="badge badge-danger">Canceled</span>'
                     type = 'canceled'
@@ -11227,11 +11228,13 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                     statusHtml = '<span class="badge badge-primary">Buy</span>'
                     type = 'buy'
 
-                    if (obj['status'] == 'LTH') {
-                        target11Profit += (typeof obj['lth_profit'] != 'undefined' && obj['lth_profit'] != '' ? parseFloat(obj['lth_profit']) : parseFloat(obj['defined_sell_percentage']))
-                    } else {
-                        target11Profit += (typeof obj['defined_sell_percentage'] != 'undefined' && obj['defined_sell_percentage'] != '' ? parseFloat(obj['defined_sell_percentage']) : 0)
-                    }
+                    // if (obj['status'] == 'LTH') {
+                    //     target11Profit += (typeof obj['lth_profit'] != 'undefined' && obj['lth_profit'] != '' ? parseFloat(obj['lth_profit']) : parseFloat(obj['defined_sell_percentage']))
+                    // } else {
+                    //     target11Profit += (typeof obj['defined_sell_percentage'] != 'undefined' && obj['defined_sell_percentage'] != '' ? parseFloat(obj['defined_sell_percentage']) : 0)
+                    // }
+
+                    target11Profit += (typeof obj['defined_sell_percentage'] != 'undefined' && obj['defined_sell_percentage'] != '' ? parseFloat(obj['defined_sell_percentage']) : 0)
 
                 } else {
                     statusHtml = '<span class="badge badge-info">' + obj['status'] + '</span>'
