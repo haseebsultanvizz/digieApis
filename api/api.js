@@ -1713,7 +1713,13 @@ router.post('/editAutoOrder', async (req, resp) => {
     //get order detail which you want to update
     var buyOrderArr = await listOrderById(orderId, exchange);
 
-    if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
+    if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent' && order['cost_avg'] != 'undefined' && order['cost_avg'] != '') {
+
+        await unsetCostAvgParent(orderId, exchange)
+        delete buyOrderArr[0]['cost_avg']
+        delete order['cost_avg']
+
+    }else if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
         await updateCostAvgChildOrders(orderId, order, exchange)
     }
 
@@ -2080,6 +2086,23 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
 
     }
     
+}
+
+async function unsetCostAvgParent(order_id, exchange) {
+    return new Promise(async (resolve)=>{
+        const db = await conn
+        let collection_name = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        let where = {
+            '_id': new ObjectID(order_id)
+        }
+        let set = {
+            '$unset':{
+                'cost_avg': ''
+            }
+        }
+        await db.collection(collection_name).updateOne(where, set)
+        resolve(true)
+    })
 }
 
 //function which have all prerequisite for buying or selling any order 
