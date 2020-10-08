@@ -3999,23 +3999,34 @@ router.post('/makeCostAvg', async (req, resp) => {
 
         let db = await conn
 
-        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
-        let where = { 
-            '_id': new ObjectID(String(order_id))
-        }
-        let update = {
-            '$set': { 
-                'cost_avg': 'yes', 
-                'show_order': 'yes',
-                'cavg_parent': 'yes',
-                'modified_date': new Date()
-            }
-        }
-        await db.collection(buy_collection).updateOne(where, update)
-
         //insert log
-        var getBuyOrder = await listOrderById(req.body.orderId, req.body.exchange);
+        var getBuyOrder = await listOrderById(order_id, exchange);
+        
         if (getBuyOrder.length > 0){
+
+            var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
+    
+            let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+            let where = { 
+                '_id': new ObjectID(String(order_id))
+            }
+            let update = {
+                '$set': { 
+                    'cost_avg': 'yes', 
+                    'show_order': 'yes',
+                    'cavg_parent': 'yes',
+                    'modified_date': new Date()
+                }
+            }
+
+            if (!isNaN(parseFloat(sell_price))){
+                update['$set']['sell_price'] = parseFloat(sell_price)
+                update['$set']['status'] = 'FILLED'
+                update['$set']['is_lth_order'] = ''
+            }
+
+            await db.collection(buy_collection).updateOne(where, update)
+
             let show_hide_log = 'yes';
             let type = 'cost_avg';
             let log_msg = "Process order by cost average set to yes " + interfaceType;
