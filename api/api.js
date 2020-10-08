@@ -3985,6 +3985,7 @@ router.post('/makeCostAvg', async (req, resp) => {
             '$set': { 
                 'cost_avg': 'yes', 
                 'show_order': 'yes',
+                'cavg_parent': 'yes',
                 'modified_date': new Date()
             }
         }
