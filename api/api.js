@@ -13192,6 +13192,94 @@ async function getOpenBalance(user_id, exchange) {
         })
     })
 }
+
+async function getOpenLTHBTCUSDTBalance(user_id, exchange) {
+    return new Promise(async (resolve)=>{
+        conn.then(async (db) => {
+            let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+            var where = {
+                'admin_id': user_id,
+                'application_mode': 'live',
+                'symbol': 'BTCUSDT',
+            }
+            
+            where['$or'] = [
+                {
+                    'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
+                    'is_sell_order': 'yes',
+                    'is_lth_order': {
+                        '$ne': 'yes'
+                    }
+                },
+                {
+                    'status': { '$in': ['LTH', 'LTH_ERROR'] },
+                    'is_sell_order': 'yes',
+                }
+            ]
+
+            let lthOrders = await db.collection(collectionName).find(where).toArray();
+            if (lthOrders.length > 0) {
+
+                let totalLth = lthOrders.length
+
+                let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
+                let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+
+                let LthBtc = 0;
+                let LthUsdWorth = 0;
+
+                let onlyBtc = 0;
+                let onlyUsdt = 0;
+
+                for (let i = 0; i < totalLth; i++) {
+
+                    let order = lthOrders[i]
+
+                    let selectedCoin = order['symbol'];
+                    let quantity = order['quantity'];
+                    let purchased_price = order['purchased_price'];
+                    let currUsd = 0
+                    let currBtc = 0
+
+                    let splitArr = selectedCoin.split('USDT');
+                    if (splitArr[1] == '') {
+                        let qtyInUsdt = quantity * purchased_price
+                        currUsd = parseFloat(qtyInUsdt.toFixed(2))
+                        currBtc = quantity * purchased_price * (1 / BTCUSDTPRICE)
+                        onlyUsdt += !isNaN(currUsd) ? currUsd : 0
+                    } else {
+                        let calculateBtc = quantity * purchased_price
+                        currBtc = calculateBtc
+                        let calculateUsd = calculateBtc * BTCUSDTPRICE
+                        currUsd = parseFloat(calculateUsd.toFixed(2))
+                        onlyBtc += !isNaN(currBtc) ? currBtc : 0
+                    }
+
+                    LthBtc += currBtc
+                    LthUsdWorth += currUsd
+
+                }
+
+                LthBtc = parseFloat(LthBtc.toFixed(6))
+                LthUsdWorth = parseFloat(LthUsdWorth.toFixed(2))
+                onlyBtc = parseFloat(onlyBtc.toFixed(6))
+                onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
+
+                // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
+
+                let resObj = {
+                    'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0,
+                    'onlyUsdt': !isNaN(onlyUsdt) ? onlyUsdt : 0,
+                    'OpenLTHBtcWorth': !isNaN(LthBtc) ? LthBtc : 0,
+                    'OpenLTHUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
+                }
+                resolve(resObj)
+            } else {
+                resolve({})
+            }
+        })
+    })
+}
 //getOrderById
 router.post('/getOrderById', async (req, res) => {
 
@@ -15420,8 +15508,9 @@ router.post('/get_dashboard_wallet', async (req, res) => {
         let lthBalance = getLTHBalance(admin_id, exchange)
         let openBalance = getOpenBalance(admin_id, exchange)
         let avaiableBalance = getBtcUsdtBalance(admin_id, exchange)
+        let openLTHBTCUSDTBalance = getOpenLTHBTCUSDTBalance(admin_id, exchange)
 
-        let myPromises = await Promise.all([lthBalance, openBalance, avaiableBalance])
+        let myPromises = await Promise.all([lthBalance, openBalance, avaiableBalance, openLTHBTCUSDTBalance])
         
         if(Object.keys(myPromises[0]).length === 0 && myPromises[0].constructor === Object){
             myPromises[0] = {
@@ -15440,6 +15529,15 @@ router.post('/get_dashboard_wallet', async (req, res) => {
                 'OpenUsdWorth': 0,
             }
         }
+        
+        if(Object.keys(myPromises[3]).length === 0 && myPromises[3].constructor === Object){
+            myPromises[3] = {
+                'onlyBtc': 0,
+                'onlyUsdt': 0,
+                'OpenLTHBtcWorth': 0,
+                'OpenLTHUsdWorth': 0,
+            }
+        }
 
         res.send({
             status: true,
@@ -15447,6 +15545,7 @@ router.post('/get_dashboard_wallet', async (req, res) => {
                 'lthBalance':  myPromises[0],
                 'openBalance': myPromises[1],
                 'avaiableBalance': myPromises[2],
+                'openLthBTCUSDTBalance': myPromises[3],
             },
             message: 'Data found successfully',
         })
