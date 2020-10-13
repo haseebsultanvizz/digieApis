@@ -10755,7 +10755,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                     // targetProfitCount++
                     // targetProfit += parseFloat(costAvgArr[i].targetProfit)
                     soldTargetProfit++
-                    soldTargetProfitCount += parseFloat(item.targetProfit)
+                    soldTargetProfitCount += parseFloat(costAvgArr[i].targetProfit)
                 } else if (costAvgArr[i].type == 'buy') {
                     targetProfitCount++
                     targetProfit += parseFloat(costAvgArr[i].targetProfit)
