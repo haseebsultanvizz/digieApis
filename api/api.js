@@ -10744,7 +10744,8 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
             let currCount = 0
             let targetProfit = 0
             let targetProfitCount = 0
-
+            let soldTargetProfit = 0
+            let soldTargetProfitCount = 0
             let totalItems = costAvgArr.length
             for(let i=0; i<totalItems; i++){
                 avgProfit += parseFloat(costAvgArr[i].profitLoss)
@@ -10753,6 +10754,8 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                     soldProfit += parseFloat(costAvgArr[i].profitLoss)
                     // targetProfitCount++
                     // targetProfit += parseFloat(costAvgArr[i].targetProfit)
+                    soldTargetProfit++
+                    soldTargetProfitCount += parseFloat(item.targetProfit)
                 } else if (costAvgArr[i].type == 'buy') {
                     targetProfitCount++
                     targetProfit += parseFloat(costAvgArr[i].targetProfit)
@@ -10778,8 +10781,8 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 target_avg_profit_color = (targetProfit > 0 ? 'success' : 'danger')
 
                 if (target_avg_profit == 0) {
-                    target_avg_profit = sold_avg_profit
-                    target_avg_profit_color = sold_avg_profit_color
+                    target_avg_profit = !isNaN(parseFloat((soldTargetProfit / soldTargetProfitCount).toFixed(1))) ? parseFloat((soldTargetProfit / soldTargetProfitCount).toFixed(1)) : 0
+                    target_avg_profit_color = (soldTargetProfit > 0 ? 'success' : 'danger')
                 }
 
                 totalUsdWorth = parseFloat(parseFloat(totalUsdWorth).toFixed(2))
