@@ -2243,29 +2243,13 @@ router.post('/listOrderListing', async (req, resp) => {
     // }else{
     //     userBalanceArr = await listUserBalance(admin_id, exchange);
     // }
-    var soldOrderArr = []; //await calculateAverageOrdersProfit(req.body.postData);
-    var total_profit = 0;
-    var total_quantity = 0;
-    for (let index in soldOrderArr) {
-        var market_sold_price = (typeof soldOrderArr[index]['market_sold_price'] == 'undefined') ? 0 : soldOrderArr[index]['market_sold_price'];
-        market_sold_price = parseFloat((isNaN(market_sold_price)) ? 0 : market_sold_price);
-
-        var current_order_price = (typeof soldOrderArr[index]['market_value'] == 'undefined') ? 0 : soldOrderArr[index]['market_value'];
-        current_order_price = parseFloat((isNaN(current_order_price)) ? 0 : current_order_price);
-
-        var quantity = (typeof soldOrderArr[index]['quantity'] == 'undefined') ? 0 : soldOrderArr[index]['quantity'];
-        quantity = parseFloat((isNaN(quantity)) ? 0 : quantity);
-
-        var percentage = calculate_percentage(current_order_price, market_sold_price);
-        var total_btc = quantity * current_order_price;
-        total_profit += total_btc * percentage;
-        total_quantity += total_btc;
-    }
+    // var soldOrderArr = []; //await calculateAverageOrdersProfit(req.body.postData);
 
     var avg_profit = 0; //total_profit / total_quantity;
     //function for listing orders
 
-    var orderListing = await listOrderListing(req.body.postData);
+    var orderListing = await listOrderListing(postDAta);
+
     var customOrderListing = [];
 
     
@@ -15664,6 +15648,9 @@ async function getOrderStats(postData){
         // admin_id = "5c0912b7fc9aadaac61dd072"
         // exchange = "binance"
 
+    if (typeof postData['status'] != 'undefined' && postData['status'] != ''){
+        //use values from the postData filter 
+    }else{
         postData['skip'] = 0
         postData['limit'] = 20
         postData['coins'] = []
@@ -15673,6 +15660,7 @@ async function getOrderStats(postData){
         postData['start_date'] = ""
         postData['end_date'] = ""
         postData['status'] = "open"
+    }
 
         var admin_id = postData.admin_id;
         var application_mode = postData.application_mode;
