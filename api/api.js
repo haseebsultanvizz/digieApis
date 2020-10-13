@@ -15744,13 +15744,13 @@ router.get('/fixUsdWorth', async (req, res) => {
 
 })
 
-async function getOrderStats(postData){
+async function getOrderStats(postData2){
 
     // application_mode = "live"
     // admin_id = "5c0912b7fc9aadaac61dd072"
     // exchange = "binance"
     
-    let postData = Object.assign({}, postData)
+    let postData = Object.assign({}, postData2)
 
     if (typeof postData['status'] != 'undefined' && postData['status'] != ''){
         //use values from the postData filter 
