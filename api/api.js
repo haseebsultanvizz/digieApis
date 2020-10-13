@@ -2233,7 +2233,7 @@ router.post('/listOrderListing', async (req, resp) => {
     var postDAta = req.body.postData;
     var exchange = postDAta.exchange;
 
-    countArr = await getOrderStats(postDAta)
+    var countArr = await getOrderStats(postDAta)
 
     var userBalanceArr = []
     userBalanceArr = await get_user_wallet(admin_id, exchange)
@@ -15746,9 +15746,11 @@ router.get('/fixUsdWorth', async (req, res) => {
 
 async function getOrderStats(postData){
 
-        // application_mode = "live"
-        // admin_id = "5c0912b7fc9aadaac61dd072"
-        // exchange = "binance"
+    // application_mode = "live"
+    // admin_id = "5c0912b7fc9aadaac61dd072"
+    // exchange = "binance"
+    
+    let postData = Object.assign({}, postData)
 
     if (typeof postData['status'] != 'undefined' && postData['status'] != ''){
         //use values from the postData filter 
