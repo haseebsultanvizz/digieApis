@@ -3456,8 +3456,9 @@ router.post('/makeCostAvg', async (req, resp) => {
 
     let order_id = req.body.orderId
     let exchange = req.body.exchange
+    let tab = req.body.tab
 
-    if (typeof order_id != 'undefined' && order_id != '' && typeof exchange != 'undefined' && exchange != ''){
+    if (typeof order_id != 'undefined' && order_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof tab != 'undefined' && tab != ''){
 
         let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
 
@@ -3470,7 +3471,12 @@ router.post('/makeCostAvg', async (req, resp) => {
 
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
     
-            let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+            if(tab == 'lthTab'){
+                var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+            }else if(tab == 'soldTab'){
+                var collectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange
+            }
+
             let where = { 
                 '_id': new ObjectID(String(order_id))
             }
@@ -3491,11 +3497,11 @@ router.post('/makeCostAvg', async (req, resp) => {
                 update['$set']['is_lth_order'] = ''
             }
 
-            await db.collection(buy_collection).updateOne(where, update)
+            await db.collection(collectionName).updateOne(where, update)
 
             let show_hide_log = 'yes';
             let type = 'cost_avg';
-            let log_msg = "Process order by cost average set to yes " + interfaceType;
+            let log_msg = "Process " + (tab == 'lthTab' ? 'LTH' : tab == 'soldTab' ? 'Sold' : '') +" order by cost average set to yes " + interfaceType;
             var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
