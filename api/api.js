@@ -3517,7 +3517,7 @@ router.post('/makeCostAvg', async (req, resp) => {
         });
     }
 
-}) //End of deleteOrderPermanently
+}) //End of makeCostAvg
 
 
 function delete_order_history_logs(order_id, exchange) {
@@ -16294,6 +16294,8 @@ async function getOrderStats(postData2){
         countArr['lthPauseCount'] = lthPauseCount;
         countArr['totalBuyCount'] = all2Count;
         countArr['totalSoldCount'] = all1Count;
+        countArr['costAvgTabBuyCount'] = costAvgTabBuyCount;
+        countArr['costAvgTabSoldCount'] = costAvgTabSoldCount;
         countArr['costAvgTabCount'] = totalCostAvgCount;
         //get user balance for listing on list-order page
         return countArr
