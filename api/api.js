@@ -3489,12 +3489,14 @@ router.post('/makeCostAvg', async (req, resp) => {
                 }
             }
 
-            if (!isNaN(parseFloat(sell_price))){
-                update['$set']['sell_price'] = parseFloat(sell_price)
-                update['$set']['status'] = 'FILLED'
-                update['$set']['lth_functionality'] = 'no'
-                update['$set']['lth_profit'] = ''
-                update['$set']['is_lth_order'] = ''
+            if (tab == 'lthTab') {
+                if (!isNaN(parseFloat(sell_price))){
+                    update['$set']['sell_price'] = parseFloat(sell_price)
+                    update['$set']['status'] = 'FILLED'
+                    update['$set']['lth_functionality'] = 'no'
+                    update['$set']['lth_profit'] = ''
+                    update['$set']['is_lth_order'] = ''
+                }
             }
 
             await db.collection(collectionName).updateOne(where, update)
