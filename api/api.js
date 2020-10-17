@@ -16449,7 +16449,7 @@ router.post('/save_dashboard_settings', async (req, res) => {
         var db = await conn
         var where = {}
         where['user_id'] = user_id;
-        let dashboard_settings_collection = exchange == 'binance' ? 'dashboard_settings' : 'dashboard_settings'+exchange 
+        let dashboard_settings_collection = exchange == 'binance' ? 'dashboard_settings' : 'dashboard_settings_'+exchange 
 
         let insertData = {
             '$set': {
@@ -16491,7 +16491,7 @@ router.post('/get_dashboard_settings', async (req, res) => {
         var where = {
             'user_id': user_id
         }
-        let dashboard_settings_collection = exchange == 'binance' ? 'dashboard_settings' : 'dashboard_settings'+exchange
+        let dashboard_settings_collection = exchange == 'binance' ? 'dashboard_settings' : 'dashboard_settings_'+exchange
 
         let result = await db.collection(dashboard_settings_collection).find(where).toArray();
         if (result.length > 0) {
