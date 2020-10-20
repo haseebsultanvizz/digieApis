@@ -15757,7 +15757,7 @@ router.get('/fixUsdWorth', async (req, res) => {
 
 async function getOrderStats(postData2){
 
-    return new Promise(async (resolve) => {
+    // return new Promise(async (resolve) => {
 
         // application_mode = "live"
         // admin_id = "5c0912b7fc9aadaac61dd072"
@@ -16305,10 +16305,10 @@ async function getOrderStats(postData2){
         countArr['costAvgTabSoldCount'] = costAvgTabSoldCount;
         countArr['costAvgTabCount'] = totalCostAvgCount;
         //get user balance for listing on list-order page
-        // return countArr
-        resolve(countArr)
+        return countArr
+        // resolve(countArr)
 
-    })
+    // })
 
 }
 
