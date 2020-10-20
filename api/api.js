@@ -2233,50 +2233,47 @@ router.post('/listOrderListing', async (req, resp) => {
     var postDAta = req.body.postData;
     var exchange = postDAta.exchange;
 
-    // var countArr = await getOrderStats(postDAta)
     var countArr = getOrderStats(postDAta)
-
-    // var userBalanceArr = []
-    // userBalanceArr = await get_user_wallet(admin_id, exchange)
     var userBalanceArr = get_user_wallet(admin_id, exchange)
-
-    // if(exchange == 'binance'){
-    //     userBalanceArr = await get_user_wallet(admin_id, exchange)
-    // }else{
-    //     userBalanceArr = await listUserBalance(admin_id, exchange);
-    // }
-    // var soldOrderArr = []; //await calculateAverageOrdersProfit(req.body.postData);
-
     var avg_profit = 0; //total_profit / total_quantity;
     //function for listing orders
+
+
+
+    // //get market price on the base of exchange 
+    // if (exchange == 'bam') {
+    //     var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
+    //     //get price of global coins
+    //     var BTCUSDTPRICE = await listBamCurrentMarketPrice('BTCUSDT');
+
+    // } else {
+
+    //     let currentMarketPricePromise = listCurrentMarketPrice(orderListing[index].symbol, exchange);
+    //     let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
+    //     //get price for global coins
+    //     var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin, exchange);
+    //     var responsePromise = await Promise.all([currentMarketPricePromise, BTCUSDTPRICEPromise]);
+    //     var currentMarketPriceArr = (typeof responsePromise[0][0] == 'undefined') ? [] : responsePromise[0][0];
+    //     var currentMarketPrice = (typeof (currentMarketPriceArr.price) == 'undefined') ? 0 : currentMarketPriceArr.price;
+    //     var btcPriceArr = (typeof responsePromise[1][0] == 'undefined') ? [] : responsePromise[1][0];
+    //     var BTCUSDTPRICE = (typeof btcPriceArr.market_value == 'undefined') ? btcPriceArr.price : btcPriceArr.market_value;
+    // }
+
+    let pricesObj = await get_current_market_prices(exchange, [])
+
+    var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
 
     var orderListing = await listOrderListing(postDAta);
 
     var customOrderListing = [];
 
+    var currentMarketPrice = 0;
     
     for (let index in orderListing) {
-        //get market price on the base of exchange 
-        if (exchange == 'bam') {
-            var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
-            //get price of global coins
-            var BTCUSDTPRICE = await listBamCurrentMarketPrice('BTCUSDT');
 
-        } else {
-
-            let currentMarketPricePromise = listCurrentMarketPrice(orderListing[index].symbol, exchange);
-            let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
-            //get price for global coins
-            var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin, exchange);
-            var responsePromise = await Promise.all([currentMarketPricePromise, BTCUSDTPRICEPromise]);
-            var currentMarketPriceArr = (typeof responsePromise[0][0] == 'undefined') ? [] : responsePromise[0][0];
-            var currentMarketPrice = (typeof (currentMarketPriceArr.price) == 'undefined') ? 0 : currentMarketPriceArr.price;
-            var btcPriceArr = (typeof responsePromise[1][0] == 'undefined') ? [] : responsePromise[1][0];
-            var BTCUSDTPRICE = (typeof btcPriceArr.market_value == 'undefined') ? btcPriceArr.price : btcPriceArr.market_value;
-        }
-
-
-
+        let currSymbol = orderListing[index].symbol 
+        currentMarketPrice = pricesObj[currSymbol]
+        
         if (orderListing[index].status == 'new') {
             var convertToBtc = orderListing[index].quantity * currentMarketPrice;
             let splitArr = orderListing[index].symbol.split('USDT');
@@ -16518,5 +16515,67 @@ router.post('/get_dashboard_settings', async (req, res) => {
 })
 
 // ********************** End Dashboard setting APIs ****************************/
+
+
+/* ******************** Get current market prices ***************************** */
+
+async function get_current_market_prices(exchange, coins=[]) {
+    return new Promise(async (resolve) => {
+        const db = await conn
+        coins = []
+    
+        if (coins.length == 0) {
+            let coins_collection = (exchange == 'binance') ? 'coins' : 'coins_'+exchange;
+            let where = {
+                'user_id': 'global',
+            }
+            if (exchange == 'binance') {
+                where['exchange_type'] = 'binance';
+            }
+    
+            coins = await db.collection(coins_collection).find(where).toArray();
+
+            if (coins.length > 0) {
+                coins = coins.map(item=>item.symbol);
+            }
+        }
+    
+        let prices_collection = (exchange == 'binance') ? 'market_prices' : 'market_prices_'+exchange;
+    
+        let pipeline = [
+            {
+                '$match': {
+                    'coin': {'$in': coins},
+                },
+            },
+            {
+                '$sort': {
+                    'created_date': -1,
+                },
+            },
+            {
+                '$group': {
+                    '_id': '$coin',
+                    'price': {'$first': '$price'},
+                },
+            },
+        ];
+    
+        let prices_arr = await db.collection(prices_collection).aggregate(pipeline).toArray();
+
+        let pricesObj = {}
+        let pricesCount = prices_arr.length
+        if (pricesCount >0) {
+            for (let i = 0; i < pricesCount; i++){
+                let obj = prices_arr[i];
+                pricesObj[obj._id] = obj.price
+            }
+        }
+        resolve(pricesObj);
+    })
+}
+
+/* ******************** End Get current market prices ************************* */
+
 
 module.exports = router;
