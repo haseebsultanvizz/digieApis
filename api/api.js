@@ -2233,10 +2233,12 @@ router.post('/listOrderListing', async (req, resp) => {
     var postDAta = req.body.postData;
     var exchange = postDAta.exchange;
 
-    var countArr = await getOrderStats(postDAta)
+    // var countArr = await getOrderStats(postDAta)
+    var countArr = getOrderStats(postDAta)
 
-    var userBalanceArr = []
-    userBalanceArr = await get_user_wallet(admin_id, exchange)
+    // var userBalanceArr = []
+    // userBalanceArr = await get_user_wallet(admin_id, exchange)
+    var userBalanceArr = get_user_wallet(admin_id, exchange)
 
     // if(exchange == 'binance'){
     //     userBalanceArr = await get_user_wallet(admin_id, exchange)
@@ -2705,8 +2707,8 @@ router.post('/listOrderListing', async (req, resp) => {
 
     var response = {};
     response['customOrderListing'] = customOrderListing;
-    response['countArr'] = countArr;
-    response['userBalanceArr'] = userBalanceArr;
+    response['countArr'] = await countArr;
+    response['userBalanceArr'] = await userBalanceArr;
     response['avg_profit'] = avg_profit;
     resp.status(200).send({
         message: response
@@ -2867,8 +2869,9 @@ function calculateAverageOrdersProfit(postDAta) {
 } //End of calculateAverageOrdersProfit
 
 //function for getting all order on the base of filters
-async function listOrderListing(postDAta, dbConnection) {
+async function listOrderListing(postDAta3, dbConnection) {
 
+    let postDAta = Object.assign({}, postDAta3)
     var filter = {};
     var pagination = {};
     var limit = postDAta.limit;
@@ -15754,25 +15757,27 @@ router.get('/fixUsdWorth', async (req, res) => {
 
 async function getOrderStats(postData2){
 
-    // application_mode = "live"
-    // admin_id = "5c0912b7fc9aadaac61dd072"
-    // exchange = "binance"
-    
-    let postData = Object.assign({}, postData2)
+    return new Promise(async (resolve) => {
 
-    if (typeof postData['status'] != 'undefined' && postData['status'] != ''){
-        //use values from the postData filter 
-    }else{
-        postData['skip'] = 0
-        postData['limit'] = 20
-        postData['coins'] = []
-        postData['order_type'] = ""
-        postData['trigger_type'] = ""
-        postData['order_level'] = ""
-        postData['start_date'] = ""
-        postData['end_date'] = ""
-        postData['status'] = "open"
-    }
+        // application_mode = "live"
+        // admin_id = "5c0912b7fc9aadaac61dd072"
+        // exchange = "binance"
+        
+        let postData = Object.assign({}, postData2)
+
+        if (typeof postData['status'] != 'undefined' && postData['status'] != ''){
+            //use values from the postData filter 
+        }else{
+            postData['skip'] = 0
+            postData['limit'] = 20
+            postData['coins'] = []
+            postData['order_type'] = ""
+            postData['trigger_type'] = ""
+            postData['order_level'] = ""
+            postData['start_date'] = ""
+            postData['end_date'] = ""
+            postData['status'] = "open"
+        }
 
         var admin_id = postData.admin_id;
         var application_mode = postData.application_mode;
@@ -16300,8 +16305,11 @@ async function getOrderStats(postData2){
         countArr['costAvgTabSoldCount'] = costAvgTabSoldCount;
         countArr['costAvgTabCount'] = totalCostAvgCount;
         //get user balance for listing on list-order page
-        return countArr
-    
+        // return countArr
+        resolve(countArr)
+
+    })
+
 }
 
 //getOrderStats
