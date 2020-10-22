@@ -2238,27 +2238,6 @@ router.post('/listOrderListing', async (req, resp) => {
     var avg_profit = 0; //total_profit / total_quantity;
     //function for listing orders
 
-
-
-    // //get market price on the base of exchange 
-    // if (exchange == 'bam') {
-    //     var currentMarketPrice = await listBamCurrentMarketPrice(orderListing[index].symbol);
-    //     //get price of global coins
-    //     var BTCUSDTPRICE = await listBamCurrentMarketPrice('BTCUSDT');
-
-    // } else {
-
-    //     let currentMarketPricePromise = listCurrentMarketPrice(orderListing[index].symbol, exchange);
-    //     let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
-    //     //get price for global coins
-    //     var BTCUSDTPRICEPromise = listCurrentMarketPrice(globalCoin, exchange);
-    //     var responsePromise = await Promise.all([currentMarketPricePromise, BTCUSDTPRICEPromise]);
-    //     var currentMarketPriceArr = (typeof responsePromise[0][0] == 'undefined') ? [] : responsePromise[0][0];
-    //     var currentMarketPrice = (typeof (currentMarketPriceArr.price) == 'undefined') ? 0 : currentMarketPriceArr.price;
-    //     var btcPriceArr = (typeof responsePromise[1][0] == 'undefined') ? [] : responsePromise[1][0];
-    //     var BTCUSDTPRICE = (typeof btcPriceArr.market_value == 'undefined') ? btcPriceArr.price : btcPriceArr.market_value;
-    // }
-
     let pricesObj = await get_current_market_prices(exchange, [])
 
     var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
@@ -2463,7 +2442,7 @@ router.post('/listOrderListing', async (req, resp) => {
                     }
 
                 }
-            } else if (is_lth_order == 'yes') {
+            } else if (is_lth_order == 'yes' || (typeof orderListing[index].cavg_parent != 'undefined' && orderListing[index].cavg_parent == 'yes' && typeof orderListing[index].move_to_cost_avg != 'undefined' && orderListing[index].move_to_cost_avg == 'yes' && (typeof orderListing[index].avg_orders_ids == 'undefined' || orderListing[index].avg_orders_ids.length == 0))) {
                 htmlStatus += '<span class="badge badge-warning">LTH</span><span class="badge badge-success">Sold</span>';
                 htmlStatusArr.push('LTH')
                 htmlStatusArr.push('Sold')
@@ -2907,31 +2886,34 @@ async function listOrderListing(postDAta3, dbConnection) {
     }
 
     if (postDAta.status == 'open') {
-        filter['status'] = {
-            '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
-        }
-        filter['is_sell_order'] = 'yes';
-        filter['is_lth_order'] = {
-            $ne: 'yes'
-        };
-        // filter['cost_avg'] = { '$exists': false }
-        filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+        // filter['status'] = {
+        //     '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
+        // }
+        // filter['is_sell_order'] = 'yes';
+        // filter['is_lth_order'] = {
+        //     $ne: 'yes'
+        // };
+        // // filter['cost_avg'] = { '$exists': false }
+        // filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
-        // filter['$or'] = [
-        //     {
-        //         'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-        //         'is_sell_order': 'yes',
-        //         'is_lth_order': { '$ne': 'yes' }
-        //     },
-        //     {
-        //         'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-        //         'is_sell_order': 'yes',
-        //         'is_lth_order': { '$ne': 'yes' },
-        //         'cost_avg': { '$exists': true },
-        //         'show_order': 'yes'
-        //         // 'avg_orders_ids': { '$exists': true }
-        //     },
-        // ]
+        filter['$or'] = [
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': 'yes',
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': false },
+                'move_to_cost_avg': { '$ne': 'yes' },
+            },
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
+            },
+        ]
 
     }
 
@@ -2944,32 +2926,64 @@ async function listOrderListing(postDAta3, dbConnection) {
     }
 
     if (postDAta.status == 'sold') {
+        // filter['$or'] = [
+        //     { 'resume_status': 'completed', 'trading_status': 'complete' }, 
+        //     { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
+        // ];
+        // filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+
         filter['$or'] = [
-            { 'resume_status': 'completed', 'trading_status': 'complete' }, 
-            { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
+            { 'resume_status': 'completed', 'trading_status': 'complete' },
+            { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false } },
+            { 'cost_avg': 'completed', 'cavg_parent': 'yes', 'show_order': 'yes' },
         ];
+        filter['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+
         if (!digie_admin_ids.includes(postDAta.admin_id)){
             filter['$or'][0]['show_order'] = 'yes'
         }
-        filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
     
     if (postDAta.status == 'costAvgTab') {
-        // filter['is_sell_order'] = 'sold'
-        filter['cost_avg'] = { '$exists': true }
-        // filter['cost_avg'] = { '$ne': '' }
-        filter['show_order'] = 'yes'
-        // filter['cavg_parent'] = 'yes'
-        // filter['avg_orders_ids'] = { '$exists': true }
-        // if (!digie_admin_ids.includes(postDAta.admin_id)){
-        //     filter['$or'][0]['show_order'] = 'yes'
+        // // filter['is_sell_order'] = 'sold'
+        // filter['cost_avg'] = { '$exists': true }
+        // // filter['cost_avg'] = { '$ne': '' }
+        // filter['show_order'] = 'yes'
+        // // filter['cavg_parent'] = 'yes'
+        // // filter['avg_orders_ids'] = { '$exists': true }
+        // // if (!digie_admin_ids.includes(postDAta.admin_id)){
+        // //     filter['$or'][0]['show_order'] = 'yes'
+        // // }
+
+        // if (postDAta.admin_id != '5c0912b7fc9aadaac61dd072') {
+        //     filter['cavg_parent'] = 'yes'
+        //     // filter['avg_orders_ids'] = { '$exists': true }
         // }
 
-        if (postDAta.admin_id != '5c0912b7fc9aadaac61dd072') {
-            filter['cavg_parent'] = 'yes'
-            // filter['avg_orders_ids'] = { '$exists': true }
+
+        filter['$or'] = [
+            {
+                'cost_avg': { '$in': ['taking_child', 'yes'] },
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': false },
+                'move_to_cost_avg': 'yes',
+            },
+            {
+                'cost_avg': { '$in': ['taking_child', 'yes'] },
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': true }
+            },
+        ]
+
+        if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
+            filter['$or'][1] = {
+                'cost_avg': { '$exists': true },
+                'show_order': 'yes'
+            }
         }
 
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
@@ -10856,6 +10870,7 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
     let orderType = req.body.orderType
     let exchange = req.body.exchange
     let order_id = req.body.order_id
+    let tab = req.body.tab
 
     if (typeof orderType != 'undefined' && orderType != '' && typeof exchange != 'undefined' && exchange != '' && typeof order_id != 'undefined' && order_id != '') {
 
@@ -10901,6 +10916,12 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
                 ids.push(order_id)
                 ids = ids.concat(order['avg_orders_ids'])
                 let childsCount = ids.length
+
+                if (typeof tab != 'undefined' && tab == 'costAvgTab'){
+                    const db = await conn
+                    let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+ exchange
+                    await db.collection(buyCollection).updateOne({ '_id': ObjectID(order_id) }, { '$set': { 'cost_avg': 'completed', 'move_to_cost_avg':'yes'}})
+                }
 
                 for (let i = 0; i < childsCount; i++) {
                     var options = {
@@ -15879,15 +15900,34 @@ async function getOrderStats(postData2){
 
         //:::::::::::::::: filter_3 for count open order :::::::::::::::::
         var filter_3 = {};
-        filter_3['status'] = {
-            '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
-        }
-        filter_3['is_sell_order'] = 'yes';
-        filter_3['is_lth_order'] = {
-            $ne: 'yes'
-        };
-        // filter_3['cost_avg'] = { '$exists': false }
-        filter_3['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+        // filter_3['status'] = {
+        //     '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
+        // }
+        // filter_3['is_sell_order'] = 'yes';
+        // filter_3['is_lth_order'] = {
+        //     $ne: 'yes'
+        // };
+        // // filter_3['cost_avg'] = { '$exists': false }
+        // filter_3['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+
+        filter_3['$or'] = [
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': 'yes',
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': {'$exists': false},
+                'move_to_cost_avg': {'$ne': 'yes'},
+            },
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': {'$nin': ['yes', 'taking_child', 'completed']}
+            },
+        ]
 
         // filter_3['$or'] = [
         //     {
@@ -16109,11 +16149,18 @@ async function getOrderStats(postData2){
         var filter_8 = {};
         filter_8['admin_id'] = admin_id;
         filter_8['application_mode'] = application_mode;
+        // filter_8['$or'] = [
+        //     { 'resume_status': 'completed', 'trading_status': 'complete' }, 
+        //     { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
+        // ];
+        // filter_8['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+
         filter_8['$or'] = [
             { 'resume_status': 'completed', 'trading_status': 'complete' },
-            { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false } }
+            { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false } },
+            { 'cost_avg': 'completed', 'cavg_parent': 'yes', 'show_order': 'yes' },
         ];
-        filter_8['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+        filter_8['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
         if (!digie_admin_ids.includes(admin_id)) {
             filter_8['$or'][0]['show_order'] = 'yes'
         }
@@ -16143,19 +16190,46 @@ async function getOrderStats(postData2){
         var filter_12 = {};
         filter_12['admin_id'] = admin_id;
         filter_12['application_mode'] = application_mode;
-        // filter_12['is_sell_order'] = 'sold'  
-        filter_12['cost_avg'] = { '$exists': true }
-        // filter_12['cost_avg'] = { '$ne': '' } 
-        filter_12['show_order'] = 'yes'
-        // filter_12['avg_orders_ids'] = { '$exists': true } 
-        // if (!digie_admin_ids.includes(admin_id)) {
-        //     filter_12['$or'][0]['show_order'] = 'yes'
+
+        // // filter_12['is_sell_order'] = 'sold'  
+        // filter_12['cost_avg'] = { '$exists': true }
+        // // filter_12['cost_avg'] = { '$ne': '' } 
+        // filter_12['show_order'] = 'yes'
+        // // filter_12['avg_orders_ids'] = { '$exists': true } 
+        // // if (!digie_admin_ids.includes(admin_id)) {
+        // //     filter_12['$or'][0]['show_order'] = 'yes'
+        // // }
+
+        // if (admin_id != '5c0912b7fc9aadaac61dd072') {
+        //     filter_12['cavg_parent'] = 'yes'
+        //     // filter_12['avg_orders_ids'] = { '$exists': true }
         // }
 
-        if (admin_id != '5c0912b7fc9aadaac61dd072') {
-            filter_12['cavg_parent'] = 'yes'
-            // filter_12['avg_orders_ids'] = { '$exists': true }
+
+        filter_12['$or'] = [
+            {
+                'cost_avg': { '$in': ['taking_child', 'yes'] },
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': false },
+                'move_to_cost_avg': 'yes',
+            },
+            {
+                'cost_avg': { '$in': ['taking_child', 'yes'] },
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': true }
+            },
+        ]
+
+        if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
+            filter_12['$or'][1] = {
+                'cost_avg': { '$exists': true },
+                'show_order': 'yes'
+            }
         }
+
+
 
         if (postDAta.start_date != '' || postDAta.end_date != '') {
             let obj = {}
