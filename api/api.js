@@ -2616,7 +2616,7 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatus += ' <span class="badge badge-primary">Take child cost avg</span> ';
                 htmlStatusArr.push('Take child cost avg')
             }
-        } else if ((postDAta.status == 'parent' || postDAta.status == 'costAvgTab') && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
+        } else if ((postDAta.status == 'parent' || postDAta.status == 'sold' || postDAta.status == 'costAvgTab') && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
 
             if (typeof orderListing[index].cost_avg != 'undefined'){
                 htmlStatus += ' <span class="badge badge-primary">Cost Avg</span> ';
@@ -2628,7 +2628,7 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatusArr.push('Cost Avg Completed')
             }
 
-            if (postDAta.status == 'costAvgTab'){
+            if (postDAta.status == 'costAvgTab' || postDAta.status == 'sold'){
 
                 if (typeof orderListing[index]['avg_orders_ids'] != 'undefined' && orderListing[index]['avg_orders_ids'].length > 0){
                     let cost_avg_order_ids = orderListing[index]['avg_orders_ids']
@@ -2637,19 +2637,6 @@ router.post('/listOrderListing', async (req, resp) => {
                     cost_avg_order_ids.push(String(orderListing[index]['_id']))
     
                     let costAvgData = await getCostAvgPLandUsdWorth(cost_avg_order_ids, exchange)
-
-    
-                    // resolve({
-                    //     'cost_avg_profit': cost_avg_profit,
-                    //     'cost_avg_profit_color': cost_avg_profit_color,
-                    //     'sold_avg_profit': sold_avg_profit,
-                    //     'sold_avg_profit_color': sold_avg_profit_color,
-                    //     'curr_avg_profit': curr_avg_profit,
-                    //     'curr_avg_profit_color': curr_avg_profit_color,
-                    //     'target_avg_profit': target_avg_profit,
-                    //     'target_avg_profit_color': target_avg_profit_color,
-                    //     'total_usd_worth': totalUsdWorth,
-                    // })
     
                     if (Object.keys(costAvgData).length >0){
                         order['profitLossPercentageHtml'] = '<span class="text-' + costAvgData['cost_avg_profit_color'] + '"><b>' + costAvgData['cost_avg_profit'] + '%</b> (' + cost_avg_order_ids.length + ')</span>';

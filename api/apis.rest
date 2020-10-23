@@ -244,3 +244,7 @@ Content-Type: application/json
 
 GET http://localhost:3010/apiEndPoint/myTest2
 # GET http://34.205.124.51:3010/apiEndPoint/myTest2
+###
+
+GET http://localhost:3010/apiEndPoint/test_code
+# GET http://34.205.124.51:3010/apiEndPoint/test_code
