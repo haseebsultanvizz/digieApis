@@ -3510,6 +3510,7 @@ router.post('/makeCostAvg', async (req, resp) => {
                     update['$set']['lth_functionality'] = 'no'
                     update['$set']['lth_profit'] = ''
                     update['$set']['is_lth_order'] = ''
+                    update['$set']['move_to_cost_avg'] = 'yes'
                 }
             }
 
