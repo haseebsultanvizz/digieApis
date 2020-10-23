@@ -11143,7 +11143,7 @@ async function update_user_balance(user_id) {
     //Update Bam Balance
     var options = {
         method: 'POST',
-        url: 'http://34.205.124.51:2607/apiEndPoint/updateBalance',
+        url: 'http://52.22.53.12:2607/apiEndPoint/updateBalance',
         headers: {
             'cache-control'   : 'no-cache',
             'Connection'      : 'keep-alive',
@@ -11163,7 +11163,7 @@ async function update_user_balance(user_id) {
     //Update Kraken Balance
     var options = {
         method: 'POST',
-        // url: 'http://34.205.124.51:3100/updateUserBalanceKraken',
+        // url: 'http://52.22.53.12:3100/updateUserBalanceKraken',
         url: 'http://34.199.235.34:3200/updateUserBalance',
         headers: {
             'cache-control'   : 'no-cache',
@@ -13683,7 +13683,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
             // console.log(exchange)
             var options = {
                 method: 'POST',
-                url: 'http://34.205.124.51:3600/buyBNBPost',
+                url: 'http://52.22.53.12:3600/buyBNBPost',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -13721,7 +13721,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
         } else if (exchange == 'bam'){
             var options = {
                 method: 'POST',
-                url: 'http://34.205.124.51:2607/buyBNBPost',
+                url: 'http://52.22.53.12:2607/buyBNBPost',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -14074,7 +14074,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
             if (exchange == 'binance') {
                 var options = {
                     method: 'POST',
-                    url: 'http://34.205.124.51:3600/buySellPost',
+                    url: 'http://52.22.53.12:3600/buySellPost',
                     headers: {
                         'Content-Type': 'application/json'
                     },
