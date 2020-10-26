@@ -13083,8 +13083,11 @@ async function getOpenBalance(user_id, exchange) {
 
                 let totalLth = lthOrders.length
 
-                let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
-                let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+                // let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
+                // let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+                
+                let pricesObj = await get_current_market_prices(exchange, [])
+                var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
 
                 let LthBtc = 0;
                 let LthUsdWorth = 0;
@@ -13099,6 +13102,7 @@ async function getOpenBalance(user_id, exchange) {
                     let selectedCoin = order['symbol'];
                     let quantity = order['quantity'];
                     let purchased_price = order['purchased_price'];
+                    // purchased_price = pricesObj[selectedCoin]
                     let currUsd = 0
                     let currBtc = 0
 
@@ -13202,8 +13206,12 @@ async function getCostAvgBalance(user_id, exchange) {
 
             let totalLth = lthOrders.length
 
-            let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
-            let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+            // let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
+            // let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+
+            let pricesObj = await get_current_market_prices(exchange, [])
+            var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
+
 
             let LthBtc = 0;
             let LthUsdWorth = 0;
@@ -13218,6 +13226,7 @@ async function getCostAvgBalance(user_id, exchange) {
                 let selectedCoin = order['symbol'];
                 let quantity = order['quantity'];
                 let purchased_price = order['purchased_price'];
+                // purchased_price = pricesObj[selectedCoin]
                 let currUsd = 0
                 let currBtc = 0
 
@@ -13302,8 +13311,11 @@ async function getLTHBalance(user_id, exchange) {
 
                 let totalLth = lthOrders.length
 
-                let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
-                let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+                // let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
+                // let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+
+                let pricesObj = await get_current_market_prices(exchange, [])
+                var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
 
                 let LthBtc = 0;
                 let LthUsdWorth = 0;
@@ -13318,6 +13330,7 @@ async function getLTHBalance(user_id, exchange) {
                     let selectedCoin = order['symbol'];
                     let quantity = order['quantity'];
                     let purchased_price = order['purchased_price'];
+                    // purchased_price = pricesObj[selectedCoin]
                     let currUsd = 0
                     let currBtc = 0
 
@@ -13413,8 +13426,11 @@ async function getOpenLTHBTCUSDTBalance(user_id, exchange) {
 
                 let totalLth = lthOrders.length
 
-                let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
-                let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+                // let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
+                // let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+
+                let pricesObj = await get_current_market_prices(exchange, [])
+                var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
 
                 let LthBtc = 0;
                 let LthUsdWorth = 0;
@@ -13429,6 +13445,7 @@ async function getOpenLTHBTCUSDTBalance(user_id, exchange) {
                     let selectedCoin = order['symbol'];
                     let quantity = order['quantity'];
                     let purchased_price = order['purchased_price'];
+                    // purchased_price = pricesObj[selectedCoin]
                     let currUsd = 0
                     let currBtc = 0
 
