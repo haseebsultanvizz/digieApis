@@ -2618,7 +2618,7 @@ router.post('/listOrderListing', async (req, resp) => {
             }
         } else if ((postDAta.status == 'parent' || postDAta.status == 'sold' || postDAta.status == 'costAvgTab') && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
 
-            if (postDAta.status != 'sold'){
+            if (postDAta.status != 'sold' && typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg != ''){
                 htmlStatus += ' <span class="badge badge-primary">Cost Avg</span> ';
                 htmlStatusArr.push('Cost Avg')
             }
