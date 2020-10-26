@@ -2922,7 +2922,8 @@ async function listOrderListing(postDAta3, dbConnection) {
         filter['$or'] = [
             { 'resume_status': 'completed', 'trading_status': 'complete' },
             { 'cost_avg': 'completed', 'cavg_parent': 'yes', 'show_order': 'yes' },
-            { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false }, 'cost_avg': { '$exists': false } },
+            // { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false }, 'cost_avg': { '$exists': false } },
+            { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false }, 'cost_avg': { '$nin': ['', 'yes', 'taking_child', 'completed'] } },
         ];
         filter['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
 
@@ -16345,7 +16346,8 @@ async function getOrderStats(postData2){
         filter_8['$or'] = [
             { 'resume_status': 'completed', 'trading_status': 'complete' },
             { 'cost_avg': 'completed', 'cavg_parent': 'yes', 'show_order': 'yes' },
-            { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false }, 'cost_avg': { '$exists': false } },
+            // { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false }, 'cost_avg': { '$exists': false } },
+            { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false }, 'cost_avg': { '$nin': ['', 'yes', 'taking_child', 'completed'] } },
         ];
         filter_8['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
         if (!digie_admin_ids.includes(admin_id)) {
