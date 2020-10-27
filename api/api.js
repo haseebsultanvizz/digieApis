@@ -1019,46 +1019,22 @@ router.post('/listCurrentmarketPrice', async (req, resp) => {
 
 //function for getting current market price 
 function listCurrentMarketPrice(coin, exchange) {
-    //get market price on the base of exchange 
-    if (exchange == 'bam') {
-        return new Promise(function (resolve, reject) {
-            conn.then((db) => {
-                let where = {};
-                where['coin'] = coin;
-                db.collection('market_prices_bam').find(where).toArray((err, result) => {
-                    if (err) {
-                        resolve(err);
-                    } else {
-                        if (result.length > 0) {
-                            resolve(result);
-                        } else {
-                            resolve(000);
-                        }
-                    }
-                })
+    return new Promise((resolve) => {
+        let where = {};
+        where.coin = coin;
+        conn.then((db) => {
+            let collectionName = (exchange == 'binance') ? 'market_prices' : 'market_prices_' + exchange;
+            db.collection(collectionName).find(where).sort({
+                "created_date": -1
+            }).limit(1).toArray((err, result) => {
+                if (err) {
+                    resolve(err)
+                } else {
+                    resolve(result)
+                }
             })
         })
-    } else {
-        //****************************8 */
-        return new Promise((resolve) => {
-            let where = {};
-            where.coin = coin;
-            conn.then((db) => {
-                let collectionName = (exchange == 'binance') ? 'market_prices' : 'market_prices_' + exchange;
-                db.collection(collectionName).find(where).sort({
-                    "created_date": -1
-                }).limit(1).toArray((err, result) => {
-                    if (err) {
-                        resolve(err)
-                    } else {
-                        resolve(result)
-                    }
-                })
-            })
-        })
-        //************************** */
-    }
-
+    })
 } //End of listCurrentMarketPrice
 //get Ask prices for Dash-board
 function listAskPrices(coin, currentMarketPrice) {
