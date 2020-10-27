@@ -3472,7 +3472,7 @@ router.post('/makeCostAvg', async (req, resp) => {
 
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
     
-            if(tab == 'lthTab'){
+            if (tab == 'lthTab' || tab == 'openTab'){
                 var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
             }else if(tab == 'soldTab'){
                 var collectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange
@@ -3494,7 +3494,7 @@ router.post('/makeCostAvg', async (req, resp) => {
                 update['$set']['cost_avg_buy'] = 'yes'
             }
 
-            if (tab == 'lthTab') {
+            if (tab == 'lthTab' || tab == 'openTab') {
                 if (!isNaN(parseFloat(sell_price))){
                     update['$set']['sell_price'] = parseFloat(sell_price)
                     update['$set']['status'] = 'FILLED'
@@ -3507,9 +3507,18 @@ router.post('/makeCostAvg', async (req, resp) => {
 
             await db.collection(collectionName).updateOne(where, update)
 
+            let tabName = ''
+            if (tab == 'openTab'){
+                tabName = 'Open '
+            } else if (tab == 'lthTab'){
+                tabName = 'LTH '
+            } else if (tab == 'soldTab'){
+                tabName = 'Sold '
+            }
+
             let show_hide_log = 'yes';
             let type = 'cost_avg';
-            let log_msg = "Process " + (tab == 'lthTab' ? 'LTH' : tab == 'soldTab' ? 'Sold' : '') +" order by cost average set to yes " + interfaceType;
+            let log_msg = "Process " + tabName +"order by cost average set to yes " + interfaceType;
             var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
