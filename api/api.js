@@ -2584,7 +2584,10 @@ router.post('/listOrderListing', async (req, resp) => {
         //     htmlStatusArr.push('Cost Avg Parent')
         // }
 
-        if ((postDAta.status == 'LTH' || postDAta.status == 'open') && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
+        if (postDAta.status == 'filled' && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no' && typeof orderListing[index].cost_avg != 'undefined' && (orderListing[index].cost_avg == 'yes' || orderListing[index].cost_avg == 'taking_child')) {
+            htmlStatus += ' <span class="badge badge-primary">Cost Avg</span> ';
+            htmlStatusArr.push('Cost Avg')
+        }else if ((postDAta.status == 'LTH' || postDAta.status == 'open') && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
             if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes'){
                 htmlStatus += ' <span class="badge badge-primary">Cost Avg</span> ';
                 htmlStatusArr.push('Cost Avg')
@@ -2599,7 +2602,7 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatusArr.push('Cost Avg')
             }
 
-            if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'completed') {
+            if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'completed' && typeof orderListing[index]['avg_orders_ids'] != 'undefined' && orderListing[index]['avg_orders_ids'].length > 0) {
                 htmlStatus += ' <span class="badge badge-success">Cost Avg Completed</span> ';
                 htmlStatusArr.push('Cost Avg Completed')
             }
@@ -2881,11 +2884,31 @@ async function listOrderListing(postDAta3, dbConnection) {
     }
 
     if (postDAta.status == 'filled') {
-        filter['status'] = {
-            '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
-        }
-        // filter['cost_avg'] = { '$exists': false }
-        filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+        // filter['status'] = {
+        //     '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
+        // }
+        // // filter['cost_avg'] = { '$exists': false }
+        // filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+
+        filter['$or'] = [
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': 'yes',
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': false },
+                'move_to_cost_avg': { '$ne': 'yes' },
+            },
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
+            },
+        ]
+
     }
 
     if (postDAta.status == 'sold') {
@@ -3465,6 +3488,10 @@ router.post('/makeCostAvg', async (req, resp) => {
                     'cavg_parent': 'yes',
                     'modified_date': new Date()
                 }
+            }
+            
+            if (tab == 'soldTab') {
+                update['$set']['cost_avg_buy'] = 'yes'
             }
 
             if (tab == 'lthTab') {
@@ -16590,13 +16617,32 @@ async function getOrderStats(postData2){
 
         //::::::::::::::: filter_33 for count filled orders :::::::::::::
         var filter_33 = {};
-        filter_33['status'] = {
-            '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
-        }
+        // filter_33['status'] = {
+        //     '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
+        // }
+        // // filter_33['cost_avg'] = { '$exists': false }
+        // filter_33['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+        
+        filter_33['$or'] = [
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': 'yes',
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': false },
+                'move_to_cost_avg': { '$ne': 'yes' },
+            },
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
+            },
+        ]
         filter_33['admin_id'] = admin_id;
         filter_33['application_mode'] = application_mode;
-        // filter_33['cost_avg'] = { '$exists': false }
-        filter_33['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
         if (postDAta.start_date != '' || postDAta.end_date != '') {
             let obj = {}
