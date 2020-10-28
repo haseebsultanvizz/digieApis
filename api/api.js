@@ -3492,6 +3492,7 @@ router.post('/makeCostAvg', async (req, resp) => {
             
             if (tab == 'soldTab') {
                 update['$set']['cost_avg_buy'] = 'yes'
+                update['$set']['move_to_cost_avg'] = 'yes'
             }
 
             if (tab == 'lthTab' || tab == 'openTab') {
