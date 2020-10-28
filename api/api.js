@@ -10800,7 +10800,12 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                     targetProfitCount++
                     targetProfit += parseFloat(costAvgArr[i].targetProfit)
                 }
+                
                 currCount++
+                // if (costAvgArr[i].profitLoss != 0) {
+                //     currCount++
+                // }
+
                 currProfit += parseFloat(costAvgArr[i].profitLoss)
                 totalUsdWorth += parseFloat(costAvgArr[i].usd_worth)
             }
@@ -12857,6 +12862,12 @@ async function calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBT
                             coinsCategoryWorth.push({
                                 'coin': coin['coin'],
                                 'worth': cat[0]['upper_limit'],
+                                // 'cat': cat[0]
+                            })
+                        }else{
+                            coinsCategoryWorth.push({
+                                'coin': coin['coin'],
+                                'worth': tradeCategory[(tradeCategory.length - 1)]['upper_limit'],
                                 // 'cat': cat[0]
                             })
                         }
