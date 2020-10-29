@@ -2423,7 +2423,7 @@ router.post('/listOrderListing', async (req, resp) => {
                 //if order is sold and no child is buy
                 if (postDAta.status == 'costAvgTab' && typeof orderListing[index].cavg_parent != 'undefined' && orderListing[index].cavg_parent == 'yes' && typeof orderListing[index].move_to_cost_avg != 'undefined' && orderListing[index].move_to_cost_avg == 'yes' && (typeof orderListing[index].avg_orders_ids == 'undefined' || orderListing[index].avg_orders_ids.length == 0)){
 
-                    htmlStatus += '<span class="badge badge-info">WAITING FOR BUY</span>';
+                    htmlStatus += '<span class="badge badge-warning">WAITING FOR BUY</span>';
                     htmlStatusArr.push('WAITING FOR BUY')
 
                     //if order is sold and child exists
