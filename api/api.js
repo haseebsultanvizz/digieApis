@@ -3522,7 +3522,13 @@ router.post('/makeCostAvg', async (req, resp) => {
                 }
             }
 
-            await db.collection(collectionName).updateOne(where, update)
+            let result = await db.collection(collectionName).updateOne(where, update)
+            
+            if (tab == 'openTab' && result.modifiedCount > 0){
+                //Revert CA parent
+                let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+                db.collection(buy_collection).updateOne({ '_id': getBuyOrder[0]['buy_parent_id'], 'status': {'$ne':'canceled'} },{'$set':{'status':'new'}})
+            }
 
             let tabName = ''
             if (tab == 'openTab'){
