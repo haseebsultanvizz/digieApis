@@ -2981,6 +2981,7 @@ async function listOrderListing(postDAta3, dbConnection) {
                 'avg_orders_ids.0': { '$exists': true }
             },
         ]
+        filter['status'] = { '$ne': 'canceled' }
 
         if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
             filter['$or'][1] = {
@@ -3031,7 +3032,7 @@ async function listOrderListing(postDAta3, dbConnection) {
 
     if (postDAta.status == 'canceled') {
         filter['status'] = 'canceled';
-        filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };;
+        // filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };
     }
     
     if (postDAta.status == 'errors') {
@@ -16714,7 +16715,7 @@ async function getOrderStats(postData2){
         filter_4['status'] = 'canceled';
         filter_4['admin_id'] = admin_id;
         filter_4['application_mode'] = application_mode;
-        filter_4['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };
+        // filter_4['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };
 
         if (postDAta.start_date != '' || postDAta.end_date != '') {
             let obj = {}
@@ -16930,7 +16931,8 @@ async function getOrderStats(postData2){
                 'avg_orders_ids.0': { '$exists': true }
             },
         ]
-
+        filter_12['status'] = {'$ne': 'canceled'}
+        
         if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
             filter_12['$or'][1] = {
                 'cost_avg': { '$exists': true },
