@@ -1841,7 +1841,7 @@ router.post('/editAutoOrder', async (req, resp) => {
                 }
 
                 if (typeof order['stop_loss_type'] != 'undefined'){
-                    tttOrder['sell_price'] = order['stop_loss_type']  
+                    tttOrder['stop_loss_type'] = order['stop_loss_type']  
                 }
                 tttOrder['sell_price'] =  order['sell_price'] 
                 tttOrder['sell_profit_percent'] = order['sell_profit_percent']
