@@ -1278,6 +1278,44 @@ router.post('/listmarketPriceMinNotation', async (req, resp) => {
     });
 }) //End of listmarketPriceMinNotation
 
+router.post('/getPricesArr', async (req, resp) => {
+
+    const db = await conn
+    let coinArr = req.body.coinArr;
+    let exchange = req.body.exchange;
+
+    if (coinArr.length == 0) {
+        let coins_collection = (exchange == 'binance') ? 'coins' : 'coins_' + exchange;
+        let where = {
+            'user_id': 'global',
+        }
+        if (exchange == 'binance') {
+            where['exchange_type'] = 'binance';
+        }
+
+        coinArr = await db.collection(coins_collection).find(where).toArray();
+
+        if (coinArr.length > 0) {
+            coinArr = coinArr.map(item => item.symbol);
+        }
+        coinArr.push('BTCUSDT')
+    }
+    
+    let result = await listmarketPriceMinNotationCoinArr({ '$in': coinArr }, exchange)
+    
+    if (result){
+        resp.status(200).send({
+            status: true,
+            data: result
+        });
+    }else{
+        resp.status(200).send({
+            status: false
+        });
+    }
+    
+}) //End of getPricesArr
+
 async function listmarketPriceMinNotation(coin, exchange){
     //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
     // var marketMinNotationPromise = marketMinNotation(req.body.coin);
@@ -1666,7 +1704,7 @@ router.post('/createAutoOrder', async (req, resp) => {
     if (typeof order['admin_id'] != 'undefined' && digie_admin_ids.includes(order['admin_id'])){
         order['pick_parent'] = 'yes'; 
     }else{
-        const user_remaining_usd_limit = await getUserRemainingLimit(user_id, exchange)
+        const user_remaining_usd_limit = await getUserRemainingLimit(order['admin_id'], order['exchange'])
         order['pick_parent'] (user_remaining_usd_limit > usd_worth ? 'yes' : 'no')
     }
 
@@ -16255,6 +16293,44 @@ router.post('/get_dashboard_wallet', async (req, res) => {
             }
         }
 
+        // current price calculations
+        if(Object.keys(myPromises11[0]).length === 0 && myPromises11[0].constructor === Object){
+            myPromises11[0] = {
+                'onlyBtc': 0,
+                'onlyUsdt': 0,
+                'LthBtcWorth': 0,
+                'LthUsdWorth': 0,
+            }
+        }
+
+        if(Object.keys(myPromises11[1]).length === 0 && myPromises11[1].constructor === Object){
+            myPromises11[1] = {
+                'onlyBtc': 0,
+                'onlyUsdt': 0,
+                'OpenBtcWorth': 0,
+                'OpenUsdWorth': 0,
+            }
+        }
+        
+        if(Object.keys(myPromises11[2]).length === 0 && myPromises11[2].constructor === Object){
+            myPromises11[2] = {
+                'onlyBtc': 0,
+                'onlyUsdt': 0,
+                'OpenLTHBtcWorth': 0,
+                'OpenLTHUsdWorth': 0,
+            }
+        }
+        
+        if(Object.keys(myPromises11[3]).length === 0 && myPromises11[3].constructor === Object){
+            myPromises11[3] = {
+                'onlyBtc': 0,
+                'onlyUsdt': 0,
+                'costAvgBtcWorth': 0,
+                'costAvgUsdWorth': 0,
+            }
+        }
+        // end current price calculations
+
         res.send({
             status: true,
             data: {
@@ -17135,6 +17211,47 @@ router.post('/get_user_id', async (req, res) => {
             res.send({
                 "status": true,
                 "user_id": String(user[0]['_id'])
+            })
+        }else{
+            res.send({
+                "status": false,
+            })
+        }
+    } else {
+        res.send({
+            "status": false,
+        })
+    }
+})
+
+router.post('/check_parent_exists', async (req, res) => {
+
+    let orderArr = req.body.orderArr
+    let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : '' 
+    let admin_id = typeof orderArr['admin_id'] != 'undefined' && orderArr['admin_id'] != '' ? orderArr['admin_id'] : '' 
+    let application_mode = typeof orderArr['application_mode'] != 'undefined' && orderArr['application_mode'] != '' ? orderArr['application_mode'] : '' 
+    let symbol = typeof orderArr['symbol'] != 'undefined' && orderArr['symbol'] != '' ? orderArr['symbol'] : '' 
+    let order_level = typeof orderArr['order_level'] != 'undefined' && orderArr['order_level'] != '' ? orderArr['order_level'] : '' 
+
+    if (typeof orderArr != 'undefined' && exchange != '' && admin_id != '' && application_mode != '' && symbol != '' && order_level != '') {
+
+        var db = await conn
+        var where = {
+            'admin_id': admin_id,
+            'symbol': symbol,
+            'application_mode': application_mode,
+            'parent_status': 'parent',
+            'status': {
+                '$in': ['new', 'takingOrder']
+            }
+        }
+
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange     
+
+        let parentsArr = await db.collection(buy_collection).find(where).toArray();
+        if (parentsArr.length > 0){
+            res.send({
+                "status": true,
             })
         }else{
             res.send({
