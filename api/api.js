@@ -10911,8 +10911,9 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 sold_avg_profit = !isNaN(parseFloat((soldProfit / soldCount).toFixed(1))) ? parseFloat((soldProfit / soldCount).toFixed(1)) : 0
                 sold_avg_profit_color = (soldProfit > 0 ? 'success' : 'danger')
                 
-                curr_avg_profit = !isNaN(parseFloat((currProfit / currCount).toFixed(1))) ? parseFloat((currProfit / currCount).toFixed(1)) : 0
-                curr_avg_profit_color = (currProfit > 0 ? 'success' : 'danger')
+                // curr_avg_profit = !isNaN(parseFloat((currProfit / currCount).toFixed(1))) ? parseFloat((currProfit / currCount).toFixed(1)) : 0
+                curr_avg_profit = !isNaN(parseFloat((currProfit / (currCount - (currCount == soldCount ? 0 : soldCount))).toFixed(1))) ? parseFloat((currProfit / (currCount - (currCount == soldCount ? 0 : soldCount))).toFixed(1)) : 0
+                curr_avg_profit_color = (curr_avg_profit > 0 ? 'success' : 'danger')
                 
                 target_avg_profit = !isNaN(parseFloat((targetProfit / targetProfitCount).toFixed(1))) ? parseFloat((targetProfit / targetProfitCount).toFixed(1)) : 0
                 target_avg_profit_color = (targetProfit > 0 ? 'success' : 'danger')
