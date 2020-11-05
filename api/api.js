@@ -536,7 +536,54 @@ router.get('/myTest2', async (req,res)=>{
 
     const db = await conn
 
-    res.send({ 'data': 'gggg' })
+    // let result = await db.collection('buy_orders').aggregate([
+    //     { '$match': { 'application_mode': 'live', 'parent_status': 'parent', 'status': { '$ne': 'canceled' } } }, 
+    //     { '$sort': { 'created_date': -1 } }, 
+    //     { '$group': { '_id': { 'admin_id': '$admin_id', 'coin': '$symbol', 'level': '$order_level' }, 'data': { '$push': '$$ROOT' }, 'sum': { '$sum': 1 } } }, 
+    //     { '$match': { 'sum': { '$gt': 1 } } }, 
+    //     { '$project': { '_id': 0, 'data': { '$slice': ["$data", 1, { '$subtract': [{ '$size': "$data" }, 1] }] } } }, 
+    //     { '$unwind': '$data' }, 
+    //     { '$project': { '_id': '$data._id' } },
+    //     {'$group': { '_id': null, 'parent_ids':{'$push':'$_id'} } }, 
+    //     // { '$count': 'total' }
+    // ]).toArray()
+
+    // console.log(result)
+
+    // await db.collection('buy_orders').updateMany({ '_id': { '$in': result[0]['parent_ids']}}, {'$set':{'status':'canceled', 'cancel_reason':'duplicate_parents_for_same_coin_and_level'}})
+
+    // let parentOrders = await db.collection('buy_orders').find({ 'application_mode':'live', 'parent_status':'parent', 'status': 'canceled', 'cancel_reason': 'duplicate_parents_for_same_coin_and_level'}).toArray()
+
+    // let count = parentOrders.length
+    // for(let i=0; i<count; i++){
+
+    //     // console.log(parentOrders[i]['_id'])
+    //     if(i > 2){
+    //         // await create_orders_history_log(parentOrders[i]['_id'], 'Duplicate parent exists', 'cancel_parent_reason', 'yes', 'binance', parentOrders[i]['application_mode'], parentOrders[i]['created_date'])
+    //     }
+
+    // }
+
+
+    //To improve logs collections
+    let result = await db.collection('orders_history_log_live_2020_7').aggregate([
+        // { '$match': { 'type': { '$in': ['auto_trade_usd_worth_update', 'usd_worth_qty_update', 'canceled_by_auto_trade_generator', 'parent_updated_by_ATG_manually'] } } },
+        { '$sort': { 'created_date': -1 } },
+        { '$group': { '_id': { 'type': '$type', 'order_id': '$order_id' }, 'data': { '$push': '$$ROOT' }, 'sum': { '$sum': 1 } } },
+        { '$match': { 'sum': { '$gt': 1 } } },
+        { '$project': { '_id': 0, 'data': { '$slice': ["$data", 1, { '$subtract': [{ '$size': "$data" }, 1] }] } } },
+        { '$unwind': '$data' },
+        { '$project': { '_id': '$data._id' } },
+        {'$group': { '_id': null, 'log_ids':{'$push':'$_id'} } },
+        // { '$count': 'total' }
+    ], {allowDiskUse: true}).toArray()
+
+    // res.send({ 'count': result[0]['log_ids'].length, 'data': result[0]['log_ids'] })
+    
+    console.log(result[0]['log_ids'].length)
+
+    res.send({ 'count': result[0]['log_ids'].length })
+
 })
 
 async function getClientInfo(req){
@@ -16250,7 +16297,7 @@ router.post('/get_dashboard_wallet', async (req, res) => {
         
         let lthBalance_current_market = getLTHBalance_current_market(admin_id, exchange)
         let openBalance_current_market = getOpenBalance_current_market(admin_id, exchange)
-        let openLTHBTCUSDTBalance_current_market = getOpenLTHBTCUSDTBalance(admin_id, exchange)
+        let openLTHBTCUSDTBalance_current_market = getOpenLTHBTCUSDTBalance_current_market(admin_id, exchange)
         let costAvgBalance_current_market = getCostAvgBalance_current_market(admin_id, exchange)
 
         let myPromises = await Promise.all([lthBalance, openBalance, avaiableBalance, openLTHBTCUSDTBalance, costAvgBalance])
