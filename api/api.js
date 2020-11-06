@@ -2047,6 +2047,30 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
             ids = await getCostAvgChildOrderNotSoldIds(ids, exchange)
         }
 
+        const db = await conn
+        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+        let market_sold_prices_arr = await db.collection(sold_collection).find({ '_id': { $in: ids } }).project({market_sold_price: 1}).toArray()
+
+        let market_sold_price_sum = 0;
+        let sell_price_sum = 0;
+        if (market_sold_prices_arr.length > 0){
+            let soldCount = market_sold_prices_arr.length
+            for (let i = 0; i < soldCount; i++){
+                market_sold_price_sum += market_sold_prices_arr[i]['market_sold_price']
+            }
+        }
+
+        //parent sell_price
+        var lth_profit = order['lth_profit'];
+        var defined_sell_percentage = order['defined_sell_percentage'];
+        var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0]['purchased_price'] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
+        var status = buyOrderArr[0]['status'];
+        //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
+        if (status == 'LTH') {
+            sell_price_sum += ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
+        } else {
+            sell_price_sum += ((parseFloat(purchased_price) * defined_sell_percentage) / 100) + parseFloat(purchased_price);
+        }
 
         let totalChilds = ids.length 
 
@@ -2104,6 +2128,8 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                 var where = {};
                 where['_id'] = new ObjectID(orderId);
                 updateOne(where, order, collection);
+
+                sell_price_sum += order['sell_price']
     
                 //Update sell_price in Sell Order
                 if (typeof buyOrderArr[0]['sell_order_id'] != 'undefined') {
@@ -2143,6 +2169,14 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                 var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
                 create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
             }
+
+            var collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+            let avg_sell_price = (market_sold_price_sum + sell_price_sum) / (totalChilds+1)
+            
+            // console.log(market_sold_price_sum, ' + ', sell_price_sum, ' / ', totalChilds, ' + ', 1)
+            // console.log('avg_sell_price ', avg_sell_price)
+            await db.collection(collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price}})
+
         }
 
     }
