@@ -1987,6 +1987,73 @@ router.post('/editAutoOrder', async (req, resp) => {
     });
 }) //End of editAutoOrder
 
+//post call from angular to edit editCostAvgOrder orders
+router.post('/editCostAvgOrder', async (req, resp) => {
+
+    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+    let order = req.body.orderArr;
+    order['modified_date'] = new Date()
+    let orderId = order['orderId'];
+    var exchange = order['exchange'];
+    var lth_profit = order['lth_profit'];
+    var defined_sell_percentage = order['defined_sell_percentage'];
+    //get order detail which you want to update
+    var buyOrderArr = await listOrderById(orderId, exchange);
+    
+    if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
+        
+        await updateCostAvgChildOrders(orderId, order, exchange)
+    }
+
+    order = {}
+    order['cost_avg_updated'] = 'admin';
+    order['modified_date'] = new Date();
+
+    var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    delete order['orderId'];
+    
+    var where = {};
+    where['_id'] = new ObjectID(orderId);
+    var updPrmise = updateOne(where, order, collection);
+
+
+
+    /*
+    //TODO: create detail update log Umer Abbas [13-12-19]
+    let obj = buyOrderArr[0];
+    let new_obj = order;
+    let obj_keys = Object.keys(obj);
+    let new_obj_keys = Object.keys(order);
+    let update_keys = new_obj_keys.filter(x => obj_keys.includes(x));
+    let log_message = "Order Was <b style='color:yellow'>Updated</b> " + interfaceType + " ";
+    let notification_msg = log_message;
+    for (let i in update_keys) {
+        let upd_key = update_keys[i];
+        if (new_obj[upd_key] != obj[upd_key]) {
+            if (upd_key == 'iniatial_trail_stop' || upd_key == 'iniatial_trail_stop_copy' || upd_key == 'sell_price') {
+                log_message += ' ' + upd_key + ' updated from ' + obj[upd_key].toFixed(8) + ' to ' + new_obj[upd_key].toFixed(8) + ', ';
+            } else {
+                log_message += ' ' + upd_key + ' updated from ' + obj[upd_key] + ' to ' + new_obj[upd_key] + ', ';
+            }
+        }
+    }
+    var log_msg = log_message.replace(/,\s*$/, "."); // to remove the last comma 
+
+    // var log_msg = "Order Was <b style='color:yellow'>Updated</b>";
+    let show_hide_log = 'yes';
+    let type = 'order_updated';
+    // var promiseLog = recordOrderLog(orderId, log_msg, type, show_hide_log, exchange)
+    var getBuyOrder = await listOrderById(orderId, exchange);
+    var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+    var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+    var promiseLog = create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+    */
+
+    resp.status(200).send({
+        message: 'updated'
+    });
+}) //End of editCostAvgOrder
+
 //Function for creating parent order
 function createAutoOrder(OrderArr) {
 
@@ -2050,8 +2117,9 @@ function getCostAvgChildOrderNotSoldIds(ids, exchange){
     
         if (result.length > 0){
             ids = result.map(item=>item['_id'])
+        }else{
+            resolve([])
         }
-        resolve(ids)
     })
 }
 
@@ -2061,31 +2129,38 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
 
     var buyOrderArr = await listOrderById(order_id, exchange);
 
-    if (buyOrderArr.length > 0){
+    if (buyOrderArr.length > 0) {
 
-        let allIds = typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'].length > 0 ? buyOrderArr[0]['avg_orders_ids'] : [] 
-        
-        ids = typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'].length > 0 ? buyOrderArr[0]['avg_orders_ids'] : [] 
+        let allIds = typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'].length > 0 ? buyOrderArr[0]['avg_orders_ids'] : []
 
-        if (ids.length >0){
+        ids = typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'].length > 0 ? buyOrderArr[0]['avg_orders_ids'] : []
+
+        if (ids.length > 0) {
             ids = await getCostAvgChildOrderNotSoldIds(ids, exchange)
         }
+        
+        // console.log(ids)
+        // console.log('+++++++++++++++++++++++++++++++++++++++++')
 
         const db = await conn
         let sold_orders_purchased_price_arr = []
 
         let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-        let market_sold_prices_arr = await db.collection(sold_collection).find({ '_id': { $in: allIds } }).project({market_sold_price: 1, purchased_price:1}).toArray()
+        let market_sold_prices_arr = await db.collection(sold_collection).find({ '_id': { $in: allIds } }).project({ market_sold_price: 1, purchased_price: 1 }).toArray()
+
+        // console.log('sold arr', market_sold_prices_arr)
 
         let market_sold_price_sum = 0;
         let sell_price_sum = 0;
-        if (market_sold_prices_arr.length > 0){
+        if (market_sold_prices_arr.length > 0) {
             let soldCount = market_sold_prices_arr.length
-            for (let i = 0; i < soldCount; i++){
+            for (let i = 0; i < soldCount; i++) {
                 market_sold_price_sum += market_sold_prices_arr[i]['market_sold_price']
                 sold_orders_purchased_price_arr.push({ 'purchased_price': market_sold_prices_arr[i]['purchased_price'] })
             }
         }
+
+        // console.log('sold_orders_purchased_price_arr ',sold_orders_purchased_price_arr)
 
         //parent purchased price array
         let avg_purchase_price = []
@@ -2107,11 +2182,11 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
             sell_price_sum += ((parseFloat(purchased_price) * defined_sell_percentage) / 100) + parseFloat(purchased_price);
         }
 
-        let totalChilds = ids.length 
+        let totalChilds = ids.length
 
-        if (totalChilds > 0){
+        if (totalChilds > 0) {
 
-            for(let i=0; i< totalChilds; i++){
+            for (let i = 0; i < totalChilds; i++) {
 
                 let orderId = String(ids[i])
 
@@ -2124,10 +2199,10 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                 var defined_sell_percentage = order['defined_sell_percentage'];
                 //get order detail which you want to update
                 var buyOrderArr = await listOrderById(orderId, exchange);
-    
+
                 var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0]['purchased_price'] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
 
-                avg_purchase_price.push({'purchased_price': purchased_price})
+                avg_purchase_price.push({ 'purchased_price': purchased_price })
 
                 var status = buyOrderArr[0]['status'];
                 //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
@@ -2135,7 +2210,7 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                     var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
                     order['sell_price'] = sell_price;
                 } else {
-    
+
                     if (typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent') {
                         //Do nothing
                     } else {
@@ -2143,32 +2218,32 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                         order['sell_price'] = sell_price;
                     }
                 }
-    
+
                 //set sell profit percentage 
                 if (order['defined_sell_percentage'] != 'undefined' || typeof order['sell_profit_percent'] != 'undefined') {
-    
+
                     let sell_profit_percent = parseFloat(parseFloat(order['sell_profit_percent']).toFixed(1))
                     let defined_sell_percentage = parseFloat(parseFloat(order['defined_sell_percentage']).toFixed(1))
-    
+
                     sell_profit_percent = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
                     defined_sell_percentage = !isNaN(defined_sell_percentage) ? Math.abs(defined_sell_percentage) : ''
-    
+
                     order['sell_profit_percent'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent
                     order['defined_sell_percentage'] = defined_sell_percentage != '' ? defined_sell_percentage : sell_profit_percent
                     order['is_sell_order'] = 'yes';
                 }
-    
+
                 order['modified_date'] = new Date();
-    
+
                 var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
                 delete order['orderId'];
-    
+
                 var where = {};
                 where['_id'] = new ObjectID(orderId);
                 updateOne(where, order, collection);
 
                 sell_price_sum += order['sell_price']
-    
+
                 //Update sell_price in Sell Order
                 if (typeof buyOrderArr[0]['sell_order_id'] != 'undefined') {
                     let sell_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
@@ -2176,11 +2251,11 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                     let sell_order = {
                         'sell_price': order['sell_price']
                     }
-    
+
                     where['_id'] = new ObjectID(String(buyOrderArr[0]['sell_order_id']));
                     updateOne(where, sell_order, sell_collection);
                 }
-    
+
                 //TODO: create detail update log Umer Abbas [13-12-19]
                 let obj = buyOrderArr[0];
                 let new_obj = order;
@@ -2199,7 +2274,7 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                     }
                 }
                 var log_msg = log_message.replace(/,\s*$/, "."); // to remove the last comma 
-    
+
                 let show_hide_log = 'yes';
                 let type = 'order_updated'
                 var getBuyOrder = await listOrderById(orderId, exchange);
@@ -2207,18 +2282,19 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                 var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
                 create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
             }
-
-            var collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-            let avg_sell_price = (market_sold_price_sum + sell_price_sum) / (totalChilds+1)
-            
-            // console.log(market_sold_price_sum, ' + ', sell_price_sum, ' / ', totalChilds, ' + ', 1)
-            // console.log('avg_sell_price ', avg_sell_price)
-            await db.collection(collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price}})
-
+        
         }
 
+        var collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        let avg_sell_price = (market_sold_price_sum + sell_price_sum) / (totalChilds + 1)
+
+        // console.log(market_sold_price_sum, ' + ', sell_price_sum, ' / ', totalChilds, ' + ', 1)
+        // console.log('avg_sell_price ', avg_sell_price)
+
+        await db.collection(collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price } })
+
     }
-    
+
 }
 
 async function unsetCostAvgParent(order_id, exchange) {
@@ -11554,9 +11630,6 @@ async function getSubscription(user_id){
             if (error) {
                 resolve(package_limit)
             } else {
-
-                console.log(body)
-
                 if (body.trade_limit != null && body.trade_limit != 0 && body.trade_limit != '0') {
                     package_limit = parseFloat(parseFloat(body.trade_limit).toFixed(2))
                 }
@@ -16039,6 +16112,9 @@ router.post('/updateDailyActualTradeAbleAutoTradeGen', async (req, res) => {
                 for (let i = 0; i < totalUsers; i++) {
                     user_id = users[i]['user_id']
                     await updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, application_mode)
+                
+                    // await updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, application_mode)
+
                     // await findLimitExceedUsers(user_id, exchange, application_mode)
                 }
             }
