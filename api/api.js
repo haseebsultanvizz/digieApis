@@ -586,6 +586,14 @@ router.get('/myTest2', async (req,res)=>{
 
 })
 
+router.get('/test_test', async (req,res)=>{
+
+    let result = await getSubscription('5c09134cfc9aadaac61dd01c')
+
+    res.send({result})
+
+})
+
 async function getClientInfo(req){
     return new Promise(resolve=>{
         let data = Bowser.parse(req.headers['user-agent'])
@@ -1327,28 +1335,10 @@ router.post('/listmarketPriceMinNotation', async (req, resp) => {
 
 router.post('/getPricesArr', async (req, resp) => {
 
-    const db = await conn
     let coinArr = req.body.coinArr;
     let exchange = req.body.exchange;
 
-    if (coinArr.length == 0) {
-        let coins_collection = (exchange == 'binance') ? 'coins' : 'coins_' + exchange;
-        let where = {
-            'user_id': 'global',
-        }
-        if (exchange == 'binance') {
-            where['exchange_type'] = 'binance';
-        }
-
-        coinArr = await db.collection(coins_collection).find(where).toArray();
-
-        if (coinArr.length > 0) {
-            coinArr = coinArr.map(item => item.symbol);
-        }
-        coinArr.push('BTCUSDT')
-    }
-    
-    let result = await listmarketPriceMinNotationCoinArr({ '$in': coinArr }, exchange)
+    let result = await getPricesArr(exchange, coinArr)
     
     if (result){
         resp.status(200).send({
@@ -1362,6 +1352,38 @@ router.post('/getPricesArr', async (req, resp) => {
     }
     
 }) //End of getPricesArr
+
+async function getPricesArr(exchange, coinArr=[]){
+    return new Promise(async resolve => {
+
+        const db = await conn
+
+        if (coinArr.length == 0) {
+            let coins_collection = (exchange == 'binance') ? 'coins' : 'coins_' + exchange;
+            let where = {
+                'user_id': 'global',
+            }
+            if (exchange == 'binance') {
+                where['exchange_type'] = 'binance';
+            }
+
+            coinArr = await db.collection(coins_collection).find(where).toArray();
+
+            if (coinArr.length > 0) {
+                coinArr = coinArr.map(item => item.symbol);
+            }
+            coinArr.push('BTCUSDT')
+        }
+
+        let result = await listmarketPriceMinNotationCoinArr({ '$in': coinArr }, exchange)
+
+        if (result){
+            resolve(result)
+        }else{
+            resolve(false)
+        }
+    })
+}
 
 async function listmarketPriceMinNotation(coin, exchange){
     //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
@@ -2041,6 +2063,8 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
 
     if (buyOrderArr.length > 0){
 
+        let allIds = typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'].length > 0 ? buyOrderArr[0]['avg_orders_ids'] : [] 
+        
         ids = typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'].length > 0 ? buyOrderArr[0]['avg_orders_ids'] : [] 
 
         if (ids.length >0){
@@ -2048,8 +2072,10 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
         }
 
         const db = await conn
+        let sold_orders_purchased_price_arr = []
+
         let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-        let market_sold_prices_arr = await db.collection(sold_collection).find({ '_id': { $in: ids } }).project({market_sold_price: 1}).toArray()
+        let market_sold_prices_arr = await db.collection(sold_collection).find({ '_id': { $in: allIds } }).project({market_sold_price: 1, purchased_price:1}).toArray()
 
         let market_sold_price_sum = 0;
         let sell_price_sum = 0;
@@ -2057,13 +2083,22 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
             let soldCount = market_sold_prices_arr.length
             for (let i = 0; i < soldCount; i++){
                 market_sold_price_sum += market_sold_prices_arr[i]['market_sold_price']
+                sold_orders_purchased_price_arr.push({ 'purchased_price': market_sold_prices_arr[i]['purchased_price'] })
             }
         }
 
+        //parent purchased price array
+        let avg_purchase_price = []
         //parent sell_price
         var lth_profit = order['lth_profit'];
         var defined_sell_percentage = order['defined_sell_percentage'];
-        var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0]['purchased_price'] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
+        var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0][''] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
+
+        avg_purchase_price.push({ 'purchased_price': purchased_price })
+        avg_purchase_price = avg_purchase_price.concat(sold_orders_purchased_price_arr)
+
+
+
         var status = buyOrderArr[0]['status'];
         //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
         if (status == 'LTH') {
@@ -2091,6 +2126,9 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                 var buyOrderArr = await listOrderById(orderId, exchange);
     
                 var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0]['purchased_price'] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
+
+                avg_purchase_price.push({'purchased_price': purchased_price})
+
                 var status = buyOrderArr[0]['status'];
                 //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
                 if (status == 'LTH') {
@@ -2175,7 +2213,7 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
             
             // console.log(market_sold_price_sum, ' + ', sell_price_sum, ' / ', totalChilds, ' + ', 1)
             // console.log('avg_sell_price ', avg_sell_price)
-            await db.collection(collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price}})
+            await db.collection(collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price}})
 
         }
 
@@ -11485,6 +11523,50 @@ router.post('/getSubscription', async (req, res) => {
     }
 })
 
+async function getSubscription(user_id){
+    
+    return new Promise(async resolve=>{
+
+        let token = await get_temp_req_token('users')
+    
+        var options = {
+            method: 'POST',
+            url: 'https://users.digiebot.com/cronjob/GetUserSubscriptionDetails/',
+            headers: {
+                'cache-control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Accept-Encoding': 'gzip, deflate',
+                'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                'Cache-Control': 'no-cache',
+                'Accept': '*/*',
+                'User-Agent': 'PostmanRuntime/7.20.1',
+                'Content-Type': 'application/json'
+            },
+            json: {
+                'user_id': String(user_id),
+                'handshake': token,
+            }
+        };
+
+        let package_limit = 1000
+    
+        request(options, function (error, response, body) {
+            if (error) {
+                resolve(package_limit)
+            } else {
+
+                console.log(body)
+
+                if (body.trade_limit != null && body.trade_limit != 0 && body.trade_limit != '0') {
+                    package_limit = parseFloat(parseFloat(body.trade_limit).toFixed(2))
+                }
+                resolve(package_limit)
+            }
+        })
+
+    })
+}
+
 /* ************** temp request token ************ */
 async function get_temp_req_token(type){
 
@@ -15988,15 +16070,15 @@ async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, applica
         }
         let settings = await db.collection(collectionName).find(where).limit(1).toArray()
 
-        if (settings.length > 0){
+        if (settings.length > 0) {
 
             settings = settings[0]
 
-            let OldactualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' ? settings.step_4.actualTradeableBTC : 0 
-            let OldactualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' ? settings.step_4.actualTradeableUSDT : 0 
+            let OldactualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' ? settings.step_4.actualTradeableBTC : 0
+            let OldactualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' ? settings.step_4.actualTradeableUSDT : 0
 
-            let totalTradeAbleInUSD = typeof settings.step_4.totalTradeAbleInUSD != 'undefined' ? settings.step_4.totalTradeAbleInUSD : 0 
-            let btcInvestPercentage = typeof settings.step_4.btcInvestPercentage != 'undefined' ? settings.step_4.btcInvestPercentage : 0 
+            let totalTradeAbleInUSD = typeof settings.step_4.totalTradeAbleInUSD != 'undefined' ? settings.step_4.totalTradeAbleInUSD : 0
+            let btcInvestPercentage = typeof settings.step_4.btcInvestPercentage != 'undefined' ? settings.step_4.btcInvestPercentage : 0
             let usdtInvestPercentage = typeof settings.step_4.usdtInvestPercentage != 'undefined' ? settings.step_4.usdtInvestPercentage : 0
             let dailTradeAbleBalancePercentage = typeof settings.step_4.dailTradeAbleBalancePercentage != 'undefined' ? settings.step_4.dailTradeAbleBalancePercentage : 0
 
@@ -16004,11 +16086,11 @@ async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, applica
             let balanceArr = await getBtcUsdtBalance(user_id, exchange)
             let tempBalanceObj = {}
             balanceArr.map(item => { tempBalanceObj[item.coin_symbol] = item.coin_balance })
-        
+
             let availableBTC = parseFloat(parseFloat(tempBalanceObj['BTC']).toFixed(6))
             let availableUSDT = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
             // let availableBNB = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
-            
+
             //TODO: Get open balance
             let openBalanceArr = await getOpenBalance(user_id, exchange)
             if (Object.keys(openBalanceArr).length > 0 && openBalanceArr.constructor === Object) {
@@ -16046,7 +16128,7 @@ async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, applica
             //TODO: find it's actual tradeable
             let coinData = await listmarketPriceMinNotationCoinArr({ '$in': ['BTCUSDT'] }, exchange)
             let BTCUSDTPrice = coinData['BTCUSDT']['currentmarketPrice']
-            
+
 
             let btcUSdworth = availableBTC * BTCUSDTPrice
             let btcPercentTradeableValue = (btcInvestPercentage * totalTradeAbleInUSD) / 100
@@ -16085,10 +16167,207 @@ async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, applica
 
             let updateSettings = await db.collection(collectionName).updateOne(where, set)
 
-            let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT+")]"
+            let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT + ")]"
             saveATGLog(user_id, exchange, 'daily_actual_tradeable_cron', 'update Daily Actual Trade Able Auto Trade Gen ' + msg, application_mode)
 
             // let upd = updateDailyTradeSettings(user_id, exchange, application_mode = 'live')
+
+        }
+        resolve(true)
+
+    })
+}
+
+async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, application_mode = 'live') {
+    return new Promise(async (resolve) => {
+
+        // console.log('************** Cron Testing ****************')
+
+        var db = await conn
+
+        var collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+        var where = {
+            'application_mode': application_mode,
+            'user_id': user_id,
+        }
+        let settings = await db.collection(collectionName).find(where).limit(1).toArray()
+
+        if (settings.length > 0){
+
+            settings = settings[0]
+
+            let OldactualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' ? settings.step_4.actualTradeableBTC : 0 
+            let OldactualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' ? settings.step_4.actualTradeableUSDT : 0 
+
+            let totalTradeAbleInUSD = typeof settings.step_4.totalTradeAbleInUSD != 'undefined' ? settings.step_4.totalTradeAbleInUSD : 0 
+            let btcInvestPercentage = typeof settings.step_4.btcInvestPercentage != 'undefined' ? settings.step_4.btcInvestPercentage : 0 
+            let usdtInvestPercentage = typeof settings.step_4.usdtInvestPercentage != 'undefined' ? settings.step_4.usdtInvestPercentage : 0
+            let dailTradeAbleBalancePercentage = typeof settings.step_4.dailTradeAbleBalancePercentage != 'undefined' ? settings.step_4.dailTradeAbleBalancePercentage : 0
+
+        
+            let availableBTC = 0
+            let availableUSDT = 0
+            // let availableBNB = 0
+
+            let btcUSdworth = 0
+            let btcPercentTradeableValue = 0
+            let usdtPercentTradeableValue = 0
+
+            // Actual Tradeable BTC
+            let tradeAbleUsdWorth = 0
+            let tradeAbleBtc = 0
+            let actualTradeableBTC = 0
+
+            // Actual Tradeable USDT
+            let tradeAbleUsd = 0
+            let actualTradeableUSDT = 0
+
+            //find daily tradeable % of actual tradeable in both balance
+            let dailyTradeableBTC = 0
+            let dailyTradeableUSDT = 0
+
+            let tradeLimit = await getSubscription(user_id)
+            totalTradeAbleInUSD = tradeLimit
+
+            //TODO: find it's actual tradeable
+            let marketPricesArr = await getPricesArr(exchange, [])
+            let BTCUSDTPrice = marketPricesArr['BTCUSDT']['currentmarketPrice']
+
+            let myWallet = await get_dashboard_wallet(user_id, exchange)
+
+
+            if (myWallet.status) {
+                let balanceArr = myWallet.data
+
+                let walletBalanceArr = balanceArr['avaiableBalance']
+
+                let tempBalanceObj = {}
+                walletBalanceArr.map(item => { tempBalanceObj[item.coin_symbol] = item.coin_balance })
+
+                // console.log('balance ', tempBalanceObj)
+                availableBTC = parseFloat(parseFloat(tempBalanceObj['BTC']).toFixed(6))
+                availableUSDT = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
+                // availableBNB = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
+
+                let totalAvailableBalanceForPackageSelection = ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT']) + balanceArr['openBalance']['OpenUsdWorth'] + balanceArr['lthBalance']['LthUsdWorth'] + balanceArr['costAvgBalance']['costAvgUsdWorth']) - balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
+
+
+                // let btcInTrades = (balanceArr['openBalance']['onlyBtc'] + balanceArr['lthBalance']['onlyBtc'] + balanceArr['costAvgBalance']['onlyBtc']) - balanceArr['openLthBTCUSDTBalance']['onlyBtc']
+                // let usdtInTrades = (balanceArr['openBalance']['onlyUsdt'] + balanceArr['lthBalance']['onlyUsdt'] + balanceArr['costAvgBalance']['onlyUsdt']) - balanceArr['openLthBTCUSDTBalance']['onlyUsdt']
+
+
+                let usedUsdWorthInTrades = balanceArr['openBalance']['OpenUsdWorth'] + balanceArr['lthBalance']['LthUsdWorth'] + balanceArr['costAvgBalance']['costAvgUsdWorth'] + balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
+
+                let remainaingUsdWorthForTrading = ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])) - balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
+
+                // console.log('wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
+
+                // if (user_id == '5c0912b7fc9aadaac61dd072' && application_mode == 'test') {
+                //     // availableBTC = 0.5
+                //     // availableUSDT = 2000
+                // }
+
+                if (tradeLimit <= totalAvailableBalanceForPackageSelection) {
+
+                    // totalTradeAbleInUSD = (btcInTrades * marketPricesArr['BTCUSDT']['currentmarketPrice']) >= tradeLimit ? 0 : ((tradeLimit / marketPricesArr['BTCUSDT']['currentmarketPrice']) - btcInTrades) * marketPricesArr['BTCUSDT']['currentmarketPrice']
+
+                    let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
+
+                    // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
+
+                    availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
+
+                    availableBTC = parseFloat(availableBTC.toFixed(6))
+
+                    availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble
+
+                    availableUSDT = parseFloat(availableUSDT.toFixed(2))
+
+                    // totalTradeAbleInUSD = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
+
+                    // if (remainingTradddeeAble <= 0) {
+                    //     this.toastr.error('Your package has been exceed please upgrade to a bigger package', 'ERROR');
+                    // }
+
+                } else {
+
+                    let trraadeable = remainaingUsdWorthForTrading >= tradeLimit ? tradeLimit : remainaingUsdWorthForTrading
+
+                    let remainingTradddeeAble = trraadeable - usedUsdWorthInTrades > 0 ? trraadeable - usedUsdWorthInTrades : 0
+
+                    // console.log('222222222 remainingTradddeeAble ', remainingTradddeeAble)
+
+                    // availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
+
+                    // console.log('------------------------ ', availableBTC)
+
+                    // availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble 
+
+                    // totalTradeAbleInUSD =  
+                }
+
+
+                btcUSdworth = availableBTC * BTCUSDTPrice
+                btcPercentTradeableValue = (btcInvestPercentage * totalTradeAbleInUSD) / 100
+                usdtPercentTradeableValue = Math.abs(totalTradeAbleInUSD - btcPercentTradeableValue)
+
+                // Actual Tradeable BTC
+                tradeAbleUsdWorth = btcUSdworth <= btcPercentTradeableValue ? btcUSdworth : btcPercentTradeableValue
+                tradeAbleBtc = ((1 / BTCUSDTPrice) * tradeAbleUsdWorth)
+                actualTradeableBTC = parseFloat(tradeAbleBtc.toFixed(6))
+
+                // Actual Tradeable USDT
+                tradeAbleUsd = availableUSDT <= usdtPercentTradeableValue ? availableUSDT : usdtPercentTradeableValue
+                actualTradeableUSDT = tradeAbleUsd
+                actualTradeableUSDT = parseFloat(tradeAbleUsd.toFixed(2))
+
+                //find daily tradeable % of actual tradeable in both balance
+                dailyTradeableBTC = (actualTradeableBTC * dailTradeAbleBalancePercentage) / 100
+                dailyTradeableUSDT = (actualTradeableUSDT * dailTradeAbleBalancePercentage) / 100
+                dailyTradeableBTC = parseFloat(dailyTradeableBTC.toFixed(6))
+                dailyTradeableUSDT = parseFloat(dailyTradeableUSDT.toFixed(2))
+
+
+                // this.walletBalance['BTC'] = parseFloat(parseFloat(tempBalanceObj['BTC']).toFixed(6))
+                // this.walletBalance['USDT'] = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
+                // this.walletBalance['BNB'] = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
+
+                // console.log('wallet availableBTC ', availableBTC)
+                // console.log('wallet availableUSDT ', availableUSDT)
+
+                //TODO: update actual tradeable
+                var where = {
+                    '_id': settings['_id']
+                }
+                var set = {
+                    '$set': {
+                        'step_4.actualTradeableBTC': actualTradeableBTC,
+                        'step_4.actualTradeableUSDT': actualTradeableUSDT,
+                        'step_4.dailyTradeableBTC': dailyTradeableBTC,
+                        'step_4.dailyTradeableUSDT': dailyTradeableUSDT,
+                        
+                        // new fields,
+    
+                        'step_4.availableBTC': availableBTC,
+                        'step_4.availableUSDT': availableUSDT,
+    
+                        'step_4.openOnlyBtc': balanceArr['openBalance']['onlyBtc'],
+                        'step_4.openOnlyUsdt': balanceArr['openBalance']['onlyUsdt'],
+    
+                        'step_4.lthOnlyBtc': balanceArr['lthBalance']['onlyBtc'],
+                        'step_4.lthOnlyUsdt': balanceArr['lthBalance']['onlyUsdt'],
+                    }
+                }
+    
+                // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
+    
+                let updateSettings = await db.collection(collectionName).updateOne(where, set)
+    
+                let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT+")]"
+                saveATGLog(user_id, exchange, 'daily_actual_tradeable_cron', 'update Daily Actual Trade Able Auto Trade Gen ' + msg, application_mode)
+    
+                // let upd = updateDailyTradeSettings(user_id, exchange, application_mode = 'live')
+            }
             
         }
         resolve(true)
