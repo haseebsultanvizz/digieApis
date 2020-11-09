@@ -16324,22 +16324,37 @@ router.post('/get_dashboard_wallet', async (req, res) => {
     let admin_id = req.body.user_id
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
 
+        let result = await get_dashboard_wallet(admin_id, exchange) 
+
+        res.send(result)
+        
+    } else {
+        res.send({
+            status: false,
+            message: 'exchange and user_id are required',
+        })
+    }
+})//end get_dashboard_wallet
+
+async function get_dashboard_wallet(admin_id, exchange){
+    return new Promise(async resolve =>{
+
         let lthBalance = getLTHBalance(admin_id, exchange)
         let openBalance = getOpenBalance(admin_id, exchange)
         let avaiableBalance = getBtcUsdtBalance(admin_id, exchange)
         let openLTHBTCUSDTBalance = getOpenLTHBTCUSDTBalance(admin_id, exchange)
         let costAvgBalance = getCostAvgBalance(admin_id, exchange)
-        
+
         let lthBalance_current_market = getLTHBalance_current_market(admin_id, exchange)
         let openBalance_current_market = getOpenBalance_current_market(admin_id, exchange)
         let openLTHBTCUSDTBalance_current_market = getOpenLTHBTCUSDTBalance_current_market(admin_id, exchange)
         let costAvgBalance_current_market = getCostAvgBalance_current_market(admin_id, exchange)
 
         let myPromises = await Promise.all([lthBalance, openBalance, avaiableBalance, openLTHBTCUSDTBalance, costAvgBalance])
-        
+
         let myPromises11 = await Promise.all([lthBalance_current_market, openBalance_current_market, openLTHBTCUSDTBalance_current_market, costAvgBalance_current_market])
-        
-        if(Object.keys(myPromises[0]).length === 0 && myPromises[0].constructor === Object){
+
+        if (Object.keys(myPromises[0]).length === 0 && myPromises[0].constructor === Object) {
             myPromises[0] = {
                 'onlyBtc': 0,
                 'onlyUsdt': 0,
@@ -16348,7 +16363,7 @@ router.post('/get_dashboard_wallet', async (req, res) => {
             }
         }
 
-        if(Object.keys(myPromises[1]).length === 0 && myPromises[1].constructor === Object){
+        if (Object.keys(myPromises[1]).length === 0 && myPromises[1].constructor === Object) {
             myPromises[1] = {
                 'onlyBtc': 0,
                 'onlyUsdt': 0,
@@ -16356,8 +16371,8 @@ router.post('/get_dashboard_wallet', async (req, res) => {
                 'OpenUsdWorth': 0,
             }
         }
-        
-        if(Object.keys(myPromises[3]).length === 0 && myPromises[3].constructor === Object){
+
+        if (Object.keys(myPromises[3]).length === 0 && myPromises[3].constructor === Object) {
             myPromises[3] = {
                 'onlyBtc': 0,
                 'onlyUsdt': 0,
@@ -16365,8 +16380,8 @@ router.post('/get_dashboard_wallet', async (req, res) => {
                 'OpenLTHUsdWorth': 0,
             }
         }
-        
-        if(Object.keys(myPromises[4]).length === 0 && myPromises[4].constructor === Object){
+
+        if (Object.keys(myPromises[4]).length === 0 && myPromises[4].constructor === Object) {
             myPromises[4] = {
                 'onlyBtc': 0,
                 'onlyUsdt': 0,
@@ -16376,7 +16391,7 @@ router.post('/get_dashboard_wallet', async (req, res) => {
         }
 
         // current price calculations
-        if(Object.keys(myPromises11[0]).length === 0 && myPromises11[0].constructor === Object){
+        if (Object.keys(myPromises11[0]).length === 0 && myPromises11[0].constructor === Object) {
             myPromises11[0] = {
                 'onlyBtc': 0,
                 'onlyUsdt': 0,
@@ -16385,7 +16400,7 @@ router.post('/get_dashboard_wallet', async (req, res) => {
             }
         }
 
-        if(Object.keys(myPromises11[1]).length === 0 && myPromises11[1].constructor === Object){
+        if (Object.keys(myPromises11[1]).length === 0 && myPromises11[1].constructor === Object) {
             myPromises11[1] = {
                 'onlyBtc': 0,
                 'onlyUsdt': 0,
@@ -16393,8 +16408,8 @@ router.post('/get_dashboard_wallet', async (req, res) => {
                 'OpenUsdWorth': 0,
             }
         }
-        
-        if(Object.keys(myPromises11[2]).length === 0 && myPromises11[2].constructor === Object){
+
+        if (Object.keys(myPromises11[2]).length === 0 && myPromises11[2].constructor === Object) {
             myPromises11[2] = {
                 'onlyBtc': 0,
                 'onlyUsdt': 0,
@@ -16402,8 +16417,8 @@ router.post('/get_dashboard_wallet', async (req, res) => {
                 'OpenLTHUsdWorth': 0,
             }
         }
-        
-        if(Object.keys(myPromises11[3]).length === 0 && myPromises11[3].constructor === Object){
+
+        if (Object.keys(myPromises11[3]).length === 0 && myPromises11[3].constructor === Object) {
             myPromises11[3] = {
                 'onlyBtc': 0,
                 'onlyUsdt': 0,
@@ -16413,30 +16428,25 @@ router.post('/get_dashboard_wallet', async (req, res) => {
         }
         // end current price calculations
 
-        res.send({
+        resolve({
             status: true,
             data: {
-                'lthBalance':  myPromises[0],
+                'lthBalance': myPromises[0],
                 'openBalance': myPromises[1],
                 'avaiableBalance': myPromises[2],
                 'openLthBTCUSDTBalance': myPromises[3],
                 'costAvgBalance': myPromises[4],
-                
-                'lthBalance_current_market':  myPromises11[0],
+
+                'lthBalance_current_market': myPromises11[0],
                 'openBalance_current_market': myPromises11[1],
                 'openLthBTCUSDTBalance_current_market': myPromises11[2],
                 'costAvgBalance_current_market': myPromises11[3],
             },
             message: 'Data found successfully',
         })
-        
-    } else {
-        res.send({
-            status: false,
-            message: 'exchange and user_id are required',
-        })
-    }
-})//end get_dashboard_wallet
+
+    })
+} 
 
 //getParentsGridData
 router.post('/getParentsGridData', async (req, res) => {
