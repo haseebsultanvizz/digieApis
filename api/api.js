@@ -16336,6 +16336,7 @@ router.post('/get_dashboard_wallet', async (req, res) => {
     }
 })//end get_dashboard_wallet
 
+//this function is being used on multiple places
 async function get_dashboard_wallet(admin_id, exchange){
     return new Promise(async resolve =>{
 
