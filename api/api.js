@@ -2000,9 +2000,30 @@ router.post('/editCostAvgOrder', async (req, resp) => {
     //get order detail which you want to update
     var buyOrderArr = await listOrderById(orderId, exchange);
     
-    if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
-        
+    if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
+
         await updateCostAvgChildOrders(orderId, order, exchange)
+    
+    } else if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && typeof buyOrderArr[0]['cavg_parent'] != 'undefined' && buyOrderArr[0]['cavg_parent'] == 'yes'){
+        
+        const db = await conn
+
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+        
+        let buyOrder = await db.collection(buy_collection).find({ '_id': new ObjectID(String(orderId))}).toArray() 
+        let soldOrder = await db.collection(sold_collection).find({ '_id': new ObjectID(String(orderId))}).toArray() 
+
+        if (buyOrder.length > 0){
+            //Do nothing for now
+            
+        } else if (soldOrder.length > 0){
+            //update avg sell price and purchased prices array
+
+            await db.collection(sold_collection).updateOne({ '_id': new ObjectID(String(orderId)) }, { '$set': { 'avg_sell_price': soldOrder[0]['market_sold_price'], 'avg_purchase_price': [{ 'purchased_price': soldOrder[0]['purchased_price'] }], 'cost_avg_updated': 'admin' } })
+
+        }
+
     }
 
     order = {}
