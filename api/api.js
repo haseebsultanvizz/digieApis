@@ -586,6 +586,36 @@ router.get('/myTest2', async (req,res)=>{
 
 })
 
+router.get('/deleteLogsTest', async (req,res)=>{
+    // console.log(await getClientInfo(req))
+
+    const db = await conn
+
+    //To improve logs collections
+    let result = await db.collection('orders_history_log_kraken_live_2020_10').aggregate([
+        // { '$match': { 'type': { '$in': ['auto_trade_usd_worth_update', 'usd_worth_qty_update', 'canceled_by_auto_trade_generator', 'parent_updated_by_ATG_manually'] } } },
+        { '$match': { 'type': 'system_auto_stoploss' } },
+        { '$sort': { 'created_date': -1 } },
+        { '$group': { '_id': { 'type': '$type', 'order_id': '$order_id' }, 'data': { '$push': '$$ROOT' }, 'sum': { '$sum': 1 } } },
+        { '$match': { 'sum': { '$gt': 1 } } },
+        { '$project': { '_id': 0, 'data': { '$slice': ["$data", 1, { '$subtract': [{ '$size': "$data" }, 1] }] } } },
+        { '$unwind': '$data' },
+        { '$project': { '_id': '$data._id' } },
+        {'$group': { '_id': null, 'log_ids':{'$push':'$_id'} } },
+        // { '$count': 'total' }
+    ], {allowDiskUse: true}).toArray()
+
+    // res.send({ 'count': result[0]['log_ids'].length, 'data': result[0]['log_ids'] })
+    
+    console.log(result[0]['log_ids'].length)
+
+    // let result111 = await db.collection('orders_history_log_kraken_live_2020_10').deleteMany({ '_id': { '$in': result[0]['log_ids']}})
+    // console.log(result111)
+
+    res.send({ 'count': result[0]['log_ids'].length })
+
+})
+
 router.get('/test_test', async (req,res)=>{
 
     let result = await getSubscription('5c09134cfc9aadaac61dd01c')
@@ -2021,11 +2051,11 @@ router.post('/editCostAvgOrder', async (req, resp) => {
         //update avg sell price and purchased prices array
         if (buyOrder.length > 0){
         
-            await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(orderId)) }, { '$set': { 'avg_sell_price': buyOrder[0]['sell_price'], 'avg_purchase_price': [{ 'purchased_price': buyOrder[0]['purchased_price'] }], 'cost_avg_updated': 'admin' } })
+            await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(orderId)) }, { '$set': { 'avg_sell_price': buyOrder[0]['sell_price'], 'avg_purchase_price': [{ 'purchased_price': buyOrder[0]['purchased_price'] }], 'cost_avg_updated': 'admin', 'modified_date': new Date() } })
             
         } else if (soldOrder.length > 0){
 
-            await db.collection(sold_collection).updateOne({ '_id': new ObjectID(String(orderId)) }, { '$set': { 'avg_sell_price': soldOrder[0]['market_sold_price'], 'avg_purchase_price': [{ 'purchased_price': soldOrder[0]['purchased_price'] }], 'cost_avg_updated': 'admin' } })
+            await db.collection(sold_collection).updateOne({ '_id': new ObjectID(String(orderId)) }, { '$set': { 'avg_sell_price': soldOrder[0]['market_sold_price'], 'avg_purchase_price': [{ 'purchased_price': soldOrder[0]['purchased_price'] }], 'cost_avg_updated': 'admin', 'modified_date': new Date() } })
 
         }
 
@@ -2327,11 +2357,11 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
         //update avg sell price and purchased prices array
         if (buyOrder11.length > 0) {
 
-            await db.collection(buy_collection11).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price, 'cost_avg_updated': 'admin' } })
+            await db.collection(buy_collection11).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price, 'cost_avg_updated': 'admin', 'modified_date': new Date() } })
 
         } else if (soldOrder11.length > 0) {
 
-            await db.collection(sold_collection11).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price, 'cost_avg_updated': 'admin' } })
+            await db.collection(sold_collection11).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price, 'cost_avg_updated': 'admin', 'modified_date': new Date() } })
             
         }
 
