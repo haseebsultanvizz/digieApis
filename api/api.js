@@ -2014,11 +2014,12 @@ router.post('/editCostAvgOrder', async (req, resp) => {
         let buyOrder = await db.collection(buy_collection).find({ '_id': new ObjectID(String(orderId))}).toArray() 
         let soldOrder = await db.collection(sold_collection).find({ '_id': new ObjectID(String(orderId))}).toArray() 
 
+        //update avg sell price and purchased prices array
         if (buyOrder.length > 0){
-            //Do nothing for now
+        
+            await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(orderId)) }, { '$set': { 'avg_sell_price': buyOrder[0]['sell_price'], 'avg_purchase_price': [{ 'purchased_price': buyOrder[0]['purchased_price'] }], 'cost_avg_updated': 'admin' } })
             
         } else if (soldOrder.length > 0){
-            //update avg sell price and purchased prices array
 
             await db.collection(sold_collection).updateOne({ '_id': new ObjectID(String(orderId)) }, { '$set': { 'avg_sell_price': soldOrder[0]['market_sold_price'], 'avg_purchase_price': [{ 'purchased_price': soldOrder[0]['purchased_price'] }], 'cost_avg_updated': 'admin' } })
 
