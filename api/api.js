@@ -2002,10 +2002,14 @@ router.post('/editCostAvgOrder', async (req, resp) => {
     
     if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
 
+        // console.log('11111111111111111111111')
+
         await updateCostAvgChildOrders(orderId, order, exchange)
     
     } else if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && typeof buyOrderArr[0]['cavg_parent'] != 'undefined' && buyOrderArr[0]['cavg_parent'] == 'yes'){
         
+        // console.log('2222222222222222222')
+
         const db = await conn
 
         let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
@@ -2312,8 +2316,25 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
 
         // console.log(market_sold_price_sum, ' + ', sell_price_sum, ' / ', totalChilds, ' + ', 1)
         // console.log('avg_sell_price ', avg_sell_price)
+        // console.log('avg_purchase_price ', avg_purchase_price)
 
-        await db.collection(collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price } })
+        let buy_collection11 = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        let sold_collection11 = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+
+        let buyOrder11 = await db.collection(buy_collection11).find({ '_id': new ObjectID(String(order_id)) }).toArray()
+        let soldOrder11 = await db.collection(sold_collection11).find({ '_id': new ObjectID(String(order_id)) }).toArray()
+
+        //update avg sell price and purchased prices array
+        if (buyOrder11.length > 0) {
+
+            await db.collection(buy_collection11).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price, 'cost_avg_updated': 'admin' } })
+
+        } else if (soldOrder11.length > 0) {
+
+            await db.collection(sold_collection11).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price, 'cost_avg_updated': 'admin' } })
+            
+        }
+
 
     }
 
