@@ -4282,7 +4282,7 @@ async function costAvgChildLogs(orderId, exchange, order_mode, order_created_dat
 
         var where = {};
         where['order_id'] = {
-            $in: [orderId, new ObjectID(orderId)],
+            $in: [String(orderId), new ObjectID(String(orderId))],
         }
         where['type'] = {
             $in: [
