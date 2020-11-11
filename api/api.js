@@ -16184,9 +16184,9 @@ router.post('/updateDailyActualTradeAbleAutoTradeGen', async (req, res) => {
                 totalUsers = users.length
                 for (let i = 0; i < totalUsers; i++) {
                     user_id = users[i]['user_id']
-                    await updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, application_mode)
+                    // await updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, application_mode)
                 
-                    // await updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, application_mode)
+                    await updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, application_mode)
 
                     // await findLimitExceedUsers(user_id, exchange, application_mode)
                 }
