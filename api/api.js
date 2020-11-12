@@ -2175,6 +2175,7 @@ function getCostAvgChildOrderNotSoldIds(ids, exchange){
     
         if (result.length > 0){
             ids = result.map(item=>item['_id'])
+            resolve(ids)
         }else{
             resolve([])
         }
