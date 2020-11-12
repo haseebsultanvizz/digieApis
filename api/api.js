@@ -624,6 +624,36 @@ router.get('/test_test', async (req,res)=>{
 
 })
 
+
+router.get('/test_internal_function', async (req,res)=>{
+
+    let coins = [
+        'ADABTC',
+        'BTCUSDT',
+        'DASHBTC',
+        'EOSBTC',
+        'EOSUSDT',
+        'ETCBTC',
+        'ETHBTC',
+        'LINKBTC',
+        'LTCUSDT',
+        'NEOBTC',
+        'NEOUSDT',
+        'QTUMBTC',
+        'QTUMUSDT',
+        'XEMBTC',
+        'XLMBTC',
+        'XMRBTC',
+        'XRPUSDT',
+        'XRPBTC',
+    ]
+
+    let coinsWorthArr = await findCoinsTradeWorth(20000, 0.091508, 456.14, coins, 'binance')
+
+    console.log(coinsWorthArr)
+
+}) 
+
 async function getClientInfo(req){
     return new Promise(resolve=>{
         let data = Bowser.parse(req.headers['user-agent'])
@@ -16280,8 +16310,8 @@ router.post('/updateDailyTradeSettings_digie', async (req, res) => {
     // console.log('33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333     ', exchange, application_mode, JSON.stringify(user_id))
 
     if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && typeof user_id != 'object' && (user_id != '' || user_id != null || user_id != 'null')) {
-    // if (false) {
-
+    // if (false) { 
+        // test
         //get all users with auto trade settings
         conn.then(async(db) => {
             let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange

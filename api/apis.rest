@@ -269,6 +269,11 @@ GET http://localhost:3010/apiEndPoint/test_test
 GET http://localhost:3010/apiEndPoint/deleteLogsTest
 # GET http://34.205.124.51:3010/apiEndPoint/deleteLogsTest
 
+###
+
+GET http://localhost:3010/apiEndPoint/test_internal_function
+# GET http://34.205.124.51:3010/apiEndPoint/test_internal_function
+
 
 
 ###
@@ -280,6 +285,20 @@ Content-Type: application/json
 { 
     "user_id": "5c0912b7fc9aadaac61dd072",
     "exchange": "bam"
+}
+
+###
+
+###
+
+POST http://localhost:3010/apiEndPoint/updateDailyTradeSettings_digie
+# POST http://34.205.124.51:3010/apiEndPoint/updateDailyTradeSettings_digie
+Content-Type: application/json
+
+{ 
+    "user_id": "5c0913a0fc9aadaac61dd0be",
+    "exchange": "binance",
+    "application_mode": "live"
 }
 
 ###
