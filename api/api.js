@@ -589,6 +589,8 @@ router.get('/myTest2', async (req,res)=>{
 router.get('/deleteLogsTest', async (req,res)=>{
     // console.log(await getClientInfo(req))
 
+    //testing pull/push
+    
     const db = await conn
 
     //To improve logs collections
