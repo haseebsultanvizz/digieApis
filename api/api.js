@@ -4082,19 +4082,14 @@ router.post('/makeCostAvg', async (req, resp) => {
             if (tab == 'soldTab') {
                 update['$set']['cost_avg_buy'] = 'yes'
                 update['$set']['move_to_cost_avg'] = 'yes'
-
-                //unset following fields
-                let unsetFields = {
-                    '$unset': {
-                        'direct_child_order_id': '',
-                        'direct_parent_child_id': '',
-                        'ist_parent_child_buy_id': '',
-                        'cost_avg_percentage': '',
-                        'avg_purchase_price': '',
-                        'avg_sell_price': '',
-                    }
-                }
-                await db.collection(collectionName).updateOne(where, unsetFields)
+                
+                //Unset Fields
+                update['$unset'] = {};
+                update['$unset']['direct_child_order_id'] = '';
+                update['$unset']['direct_parent_child_id'] = '';
+                update['$unset']['ist_parent_child_buy_id'] = '';
+                update['$unset']['cost_avg_percentage'] = '';
+                update['$unset']['avg_sell_price'] = '';
             }
 
             if (tab == 'lthTab' || tab == 'openTab') {
