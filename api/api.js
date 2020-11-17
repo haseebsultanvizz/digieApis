@@ -620,11 +620,76 @@ router.get('/deleteLogsTest', async (req,res)=>{
 
 router.get('/test_test', async (req,res)=>{
 
-    let result = await getSubscription('5c09134cfc9aadaac61dd01c')
+    // let result = await getSubscription('5c09134cfc9aadaac61dd01c')
+    
+    // let result = await get_all_users_current_trading_points()
 
-    res.send({result})
+    let abc = '<div>Waleed Bhai ki frmaish!</div>'
+    res.write("<!DOCTYPE HTML><html><head>city</head><body>"+abc+"</body></html>")
 
 })
+
+async function get_all_users_current_trading_points(){
+
+    let arr = []
+    return new Promise(async resolve=>{
+
+        const db = await conn
+
+        let users = await db.collection('users').find({ 'application_mode': 'both'}).project({'_id':1}).toArray()
+
+        let total_users = users.length 
+        if (total_users > 0){
+            let obj = {}
+
+            for (let i = 0; i < total_users; i++){
+
+                let user_id = String(users[i]['_id'])
+                obj['user_id'] = user_id 
+
+                var options = {
+                    method: 'POST',
+                    url: 'https://app.digiebot.com/admin/Api_calls/get_user_current_trading_points',
+                    headers: {
+                        'cache-control': 'no-cache',
+                        'Connection': 'keep-alive',
+                        'Accept-Encoding': 'gzip, deflate',
+                        'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                        'Cache-Control': 'no-cache',
+                        'Accept': '*/*',
+                        'User-Agent': 'PostmanRuntime/7.20.1',
+                        'Content-Type': 'application/json'
+                    },
+                    json: {
+                        'user_id': user_id,
+                    },
+                };
+                request(options, function (error, response, body) {
+                    if (error) {
+                        arr.push(obj)
+                    } else {
+                        if (body.status) {
+                            console.log(user_id ,' ------------ ', body.current_trading_points)
+                            obj['current_trading_points'] = body.current_trading_points
+                            arr.push(obj)
+                        }else{
+                            arr.push(obj)
+                        }
+                    }
+                })
+
+                break;
+
+                //sleep 2 seconds before sending call next
+                await new Promise(r => setTimeout(r, 2000));
+
+            }
+
+        }
+        resolve(arr)
+    })
+
+}
 
 
 router.get('/test_internal_function', async (req,res)=>{
@@ -1985,7 +2050,7 @@ router.post('/editAutoOrder', async (req, resp) => {
 
     var where = {};
     where['_id'] = new ObjectID(orderId);
-    // var updPrmise = updateOne(where, order, collection);
+    var updPrmise = updateOne(where, order, collection);
     // updPrmise.then((callback) => {})
 
 
