@@ -2581,27 +2581,44 @@ async function update_cost_avg_fields(order_id, order, exchange){
 
 }
 
+/*
 async function update_cost_avg_fields_shahzad(order_id, order, exchange){
 
     const db = await conn
 
     let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
     let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-
-    var parentActiveOrderArr = await db.collection(buy_collection).find({ '_id': new ObjectID(String(order_id))}).toArray()
+    var parentActiveOrderArr = await db.collection(sold_collection).find({ '_id': new ObjectID(String(order_id)) }).toArray();
+  
+    let parent_sold = false
+    let objPurchArr = []
+    var byyOrderArrsIdToSell = [];
+    // Update in sold_buy_orders collection 
+    if (parentActiveOrderArr.length > 0) {
+        parent_sold = true
+        var ObjPurch = { 'purchased_price': parseFloat(parentActiveOrderArr[0]['purchased_price']) };
+        objPurchArr.push(ObjPurch)     
+        await db.collection(sold_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
+        
+    } else {
+       // Update in buy_orders collection 
+        var parentActiveOrderArr = await db.collection(buy_collection).find({ '_id': new ObjectID(String(order_id)) }).toArray();
+        var ObjPurch = { 'purchased_price': parseFloat(parentActiveOrderArr[0]['purchased_price']) };
+        objPurchArr.push(ObjPurch)  
+        await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
+        var parentActiveOrderArr = await db.collection(buy_collection).find({ '_id': new ObjectID(String(order_id)) }).toArray();
+         byyOrderArrsIdToSell.push(order_id)
+    }
 
     if (parentActiveOrderArr.length > 0) {
 
         var countOrderBuy = 1;
         var OverAllSellPrice = 0
-        var byyOrderArrsIdToSell = [];
+       
         var overAllBuyPercentage = 0;
         var overAllpurchasedPrice = 0;
         var overAllSoldPercentage = 0;
         var overAllSellPercentage = 0
-        var quantity = parentActiveOrderArr[0]['quantity'];// Get quantity
-        var admin_id = parentActiveOrderArr[0]['admin_id'];// Get admin_id
-        var trading_ip = parentActiveOrderArr[0]['trading_ip'];// Get Trading Ip
         var purchasePrice = parentActiveOrderArr[0]['purchased_price'];// Get purchasePrice
         var avg_orders_ids = parentActiveOrderArr[0]['avg_orders_ids'];// Get avg_orders_ids 
         var definedSellPercentage = parentActiveOrderArr[0]['defined_sell_percentage'];// Get Defined Sell Percentage
@@ -2626,6 +2643,9 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange){
                 overAllBuyPercentage += profitPercentage;
                 // *overAllpurchasedPrice* used to sum overall buy purchased price from buy order collection  
                 overAllpurchasedPrice += purchasedPrice;
+
+                objPurchArr.push({ 'purchased_price': parseFloat(childOrderArr[0]['purchased_price']) })
+
             } else {
                 // ELSE we get the orders from sold_buy_order collectio 
                 var childOrderArr = await db.collection(sold_collection).find({ '_id': childBuyOrderId }).toArray()
@@ -2646,9 +2666,17 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange){
                     let profitPercentage = (differenceBetwn * 100) / purchasedPrice;
                     // *overAllSoldPercentage* Sum overall the percentages  from sold_buy_orders collection 
                     overAllSoldPercentage += profitPercentage;
+
+                    objPurchArr.push({ 'purchased_price': parseFloat(childOrderArr[0]['purchased_price']) })
                 }
             }// END of else
         }
+
+        console.log("overAllSellPercentage :::", overAllSellPercentage)
+        console.log("overAllSoldPercentage :::", overAllSoldPercentage)
+
+        console.log("overAllBuyPercentage :::", overAllBuyPercentage)
+        console.log("countOrderBuy :::", countOrderBuy)
         // Now here variable ( overAllSellPercentage ) have percentages that mean by default percentage e-g 1.2 from parent 
         // Now here variable ( overAllSoldPercentage ) have percentages that how much a trade take the profit when they are sold  
         var finalSoldPercentage = -1 * overAllSellPercentage + (1 * overAllSoldPercentage)
@@ -2660,9 +2688,17 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange){
         // E-g 
         // 1.2 default and take the profit postive 1% profit from (Market sold price - Purchase Price)  = 1% 
         // So it become -1.2 +1  = -0.2 so it is negative so it goes in if condition 
+
+
+        console.log('finalSoldPercentage ', finalSoldPercentage, ' --------- ', 'buyAvgpercentage ', buyAvgpercentage)
+
+
         if (finalSoldPercentage < 0) {
             // *soldProfitAndLoss* Its mean that we can distribute the sold order profit and loss on current open orders  
             var soldProfitAndLoss = finalSoldPercentage / countOrderBuy;
+
+            console.log('finalSoldPercentage < 0     :::::: soldProfitAndLoss ', soldProfitAndLoss)
+
             // *eachOrderNeedPerc* Its mean that now the current open orders profit and loss need to be sold of each order  
             var eachOrderNeedPerc = (-1 * soldProfitAndLoss) + buyAvgpercentage;
             // Break Even Here it means profit and loss zero 0
@@ -2674,6 +2710,9 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange){
         } else if (finalSoldPercentage > 0) { // When the sold order percentage are greate than 0 so we distrubit thte profit and loss on current ordrs 
             // *soldProfitAndLoss* Its mean that we can distribute the sold order profit and loss on current open orders   
             var soldProfitAndLoss = finalSoldPercentage / countOrderBuy;
+
+            console.log('finalSoldPercentage > 0   :::::: soldProfitAndLoss', soldProfitAndLoss)
+
             // *eachOrderNeedPerc* Its mean that now the current open orders profit and loss need to be sold of each order  
             var eachOrderNeedPerc = buyAvgpercentage - soldProfitAndLoss;
             // Break Even Here it smean profit and loss zero 0
@@ -2692,11 +2731,231 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange){
             // *OverAllSellPrice* So its the requiered price that we need to sold the over all ledger on this price   
             OverAllSellPrice = TargetSellPriceOrder;
         }
+
+        console.log('OverAllSellPrice ', OverAllSellPrice)
+
+        // END Here we need new code to be update avg_sell_price in parent order 
+        if (parentActiveOrderArr.length > 0 && parent_sold) {
+            // console.log("Else condition update line number 1346", OverAllSellPrice)
+            
+            await db.collection(sold_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'avg_sell_price': OverAllSellPrice, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
+
+        } else {
+            // console.log("if condition update line number 1336", OverAllSellPrice)
+            
+            await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'avg_sell_price': OverAllSellPrice, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
+
+        }
+
+        console.log('objPurchArr ', objPurchArr)
      
         // console.log('OverAllSellPrice ', OverAllSellPrice)
-
-        await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': OverAllSellPrice, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
+        // await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': OverAllSellPrice, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
         
+    }
+
+}
+*/
+
+
+
+
+
+async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
+
+    const db = await conn
+
+    let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+    let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+
+    var parentActiveOrderArr = await db.collection(sold_collection).find({ '_id': new ObjectID(String(order_id)) }).toArray();
+    let parent_sold = false
+    let objPurchArr = []
+
+  
+    var OverAllSellPrice = 0
+    countOrderBuy = 0
+    var byyOrderArrsIdToSell = [];
+    var overAllBuyPercentage = 0;
+    var overAllpurchasedPrice = 0;
+    var overAllSoldPercentage = 0;
+    var overAllSellPercentage = 0
+
+
+    if (parentActiveOrderArr.length > 0) {
+
+        parent_sold = true
+        var ObjPurch = { 'purchased_price': parseFloat(parentActiveOrderArr[0]['purchased_price']) };
+        objPurchArr.push(ObjPurch)
+        await db.collection(sold_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
+
+        var purchasePrice = parentActiveOrderArr[0]['purchased_price'];// Get purchasePrice
+        var definedSellPercentageSold = parentActiveOrderArr[0]['defined_sell_percentage'];// Get Defined Sell Percentage
+
+        var avg_orders_ids = parentActiveOrderArr[0]['avg_orders_ids'];// Get avg_orders_ids
+
+        var marketSoldPriceSold = parentActiveOrderArr[0]['market_sold_price'];
+        var differenceBetwnSold = marketSoldPriceSold - purchasePrice;
+        var definedSellPercentage = (differenceBetwnSold * 100) / purchasePrice;
+        overAllSoldPercentage += definedSellPercentage;
+
+        // console.log('definedSellPercentageSold ', definedSellPercentageSold)
+        // console.log('definedSellPercentage ', definedSellPercentage)
+        overAllSoldPercentage += (-1)*definedSellPercentageSold;
+        // console.log('overAllSoldPercentage ', overAllSoldPercentage)
+        // console.log('parent sold P/L ', definedSellPercentage)
+        
+    } else {
+         countOrderBuy = 1;
+        var parentActiveOrderArr = await db.collection(buy_collection).find({ '_id': new ObjectID(String(order_id)) }).toArray();
+        var ObjPurch = { 'purchased_price': parseFloat(parentActiveOrderArr[0]['purchased_price']) };
+        objPurchArr.push(ObjPurch)
+        await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
+        var parentActiveOrderArr = await db.collection(buy_collection).find({ '_id': new ObjectID(String(order_id)) }).toArray();
+        
+
+        var purchasePrice = parentActiveOrderArr[0]['purchased_price'];// Get purchasePrice
+        var definedSellPercentage = parentActiveOrderArr[0]['defined_sell_percentage'];// Get Defined Sell Percentage
+        var avg_orders_ids = parentActiveOrderArr[0]['avg_orders_ids'];// Get avg_orders_ids
+        overAllpurchasedPrice += purchasePrice;
+        // For parent Order we have
+        overAllBuyPercentage += definedSellPercentage;
+        
+        // console.log('parent buy P/L ', definedSellPercentage)
+
+    }
+
+    if (parentActiveOrderArr.length > 0) {
+
+        for (let avgIndex in avg_orders_ids) {
+            var childBuyOrderId = avg_orders_ids[avgIndex];
+            // Here we Get the orders from Buy order collection
+
+            var childOrderArr = await db.collection(buy_collection).find({ '_id': childBuyOrderId }).toArray()
+
+            if (typeof childOrderArr !== 'undefined' && childOrderArr.length > 0) {
+                // *countOrderBuy* used for to count the buy orders
+                countOrderBuy++;
+                // *profitPercentage* used for to get the default profit percentage from buy order collection like i-e 1.2
+                var profitPercentage = childOrderArr[0]['sell_profit_percent'];
+                // *purchasedPrice* used for to get the purchased price from buy order collection
+                var purchasedPrice = childOrderArr[0]['purchased_price'];
+                // console.log('purchasedPrice ', purchasedPrice)
+                // *overAllBuyPercentage* used to sum overall buy percentage from buy order collection
+                overAllBuyPercentage += profitPercentage;
+                // console.log('overAllBuyPercentage ', overAllBuyPercentage)
+                // *overAllpurchasedPrice* used to sum overall buy purchased price from buy order collection
+                overAllpurchasedPrice += purchasedPrice;
+
+                // console.log('overAllpurchasedPrice ', overAllpurchasedPrice)
+
+                objPurchArr.push({ 'purchased_price': parseFloat(childOrderArr[0]['purchased_price']) })
+
+            } else {
+                // ELSE we get the orders from sold_buy_order collectio
+                var childOrderArr = await db.collection(sold_collection).find({ '_id': childBuyOrderId }).toArray()
+
+                if (typeof childOrderArr !== 'undefined' && childOrderArr.length > 0) {
+
+                    // *SoldprofitPerc* used for to get the default profit percentage from sold_buy_orders collection like i-e 1.2
+                    var SoldprofitPerc = childOrderArr[0]['sell_profit_percent'];
+                    // *overAllSellPercentage* used for to SUM overall sold percentage from sold_buy_orders collection
+                    overAllSellPercentage += SoldprofitPerc;
+                    // *purchasedPrice* To get purchsed price from sold_buy_orders collection
+                    var purchasedPrice = childOrderArr[0]['purchased_price'];
+                    // *marketSoldPrice* To get market sold price from sold_buy_orders collection
+                    var marketSoldPrice = childOrderArr[0]['market_sold_price'];
+                    // *differenceBetwn* To calucalte percentage first we take differnce from sold_buy_orders collection
+                    var differenceBetwn = marketSoldPrice - purchasedPrice;
+                    // *profitPercentage* Get single order percentage from sold_buy_orders collection
+                    let profitPercentage = (differenceBetwn * 100) / purchasedPrice;
+
+                    // console.log('profitPercentage ', profitPercentage)
+
+                    // *overAllSoldPercentage* Sum overall the percentages from sold_buy_orders collection
+                    overAllSoldPercentage += profitPercentage;
+
+                    // console.log('overAllSoldPercentage ', overAllSoldPercentage)
+
+                    objPurchArr.push({ 'purchased_price': parseFloat(childOrderArr[0]['purchased_price']) })
+                }
+            }// END of else
+        }
+        // Now here variable ( overAllSellPercentage ) have percentages that mean by default percentage e-g 1.2 from parent
+        // Now here variable ( overAllSoldPercentage ) have percentages that how much a trade take the profit when they are sold
+        var finalSoldPercentage = -1 * overAllSellPercentage + (1 * overAllSoldPercentage)
+        // Checck where Sold order are in Profit Are In Loss
+        // *buyAvgpercentage* To get single average purchased price percentage Mean ( Break Even )
+        var buyAvgpercentage = overAllBuyPercentage / countOrderBuy;
+        // *finalSoldPercentage* ITs mean that when there is sold order and the sold order are also in loss Its
+        // When we get the over all sold order sum e-g
+        // E-g
+        // 1.2 default and take the profit postive 1% profit from (Market sold price - Purchase Price) = 1%
+        // So it become -1.2 +1 = -0.2 so it is negative so it goes in if condition
+
+
+        // console.log('finalSoldPercentage ', finalSoldPercentage, ' --------- ', 'buyAvgpercentage ', buyAvgpercentage)
+
+
+        if (finalSoldPercentage < 0) {
+            // *soldProfitAndLoss* Its mean that we can distribute the sold order profit and loss on current open orders
+            var soldProfitAndLoss = finalSoldPercentage / countOrderBuy;
+
+            // console.log('finalSoldPercentage < 0 :::::: soldProfitAndLoss ', soldProfitAndLoss)
+
+            // *eachOrderNeedPerc* Its mean that now the current open orders profit and loss need to be sold of each order
+            var eachOrderNeedPerc = (-1 * soldProfitAndLoss) + buyAvgpercentage;
+            // Break Even Here it means profit and loss zero 0
+            var avgPurchasedPrice = overAllpurchasedPrice / countOrderBuy
+            // *TargetSellPriceOrder* Calculate the needed profit and loss perrcentage on current open orders
+            var TargetSellPriceOrder = avgPurchasedPrice + (avgPurchasedPrice * eachOrderNeedPerc / 100)
+            // *OverAllSellPrice* So its the requiered price that we need to sold the over all ledger on this price
+            OverAllSellPrice = TargetSellPriceOrder;
+        } else if (finalSoldPercentage > 0) { // When the sold order percentage are greate than 0 so we distrubit thte profit and loss on current ordrs
+            // *soldProfitAndLoss* Its mean that we can distribute the sold order profit and loss on current open orders
+            var soldProfitAndLoss = finalSoldPercentage / countOrderBuy;
+
+            // console.log('finalSoldPercentage > 0 :::::: soldProfitAndLoss', soldProfitAndLoss)
+
+            // *eachOrderNeedPerc* Its mean that now the current open orders profit and loss need to be sold of each order
+            var eachOrderNeedPerc = buyAvgpercentage - soldProfitAndLoss;
+            // Break Even Here it smean profit and loss zero 0
+            var avgPurchasedPrice = overAllpurchasedPrice / countOrderBuy
+            // *TargetSellPriceOrder* Calculate the needed profit and loss perrcentage on current open orders
+            var TargetSellPriceOrder = avgPurchasedPrice + (avgPurchasedPrice * eachOrderNeedPerc / 100)
+            // *OverAllSellPrice* So its the requiered price that we need to sold the over all ledger on this price
+            OverAllSellPrice = TargetSellPriceOrder;
+        } else {// When the ledger have no sold orders so then else condition become true
+            // *eachOrderNeedPerc* Its mean that we can take the percentage profit from sinlge order i-e take from parent order .
+            var eachOrderNeedPerc = definedSellPercentage;
+            // Break Even Here it smean profit and loss zero 0
+            var avgPurchasedPrice = overAllpurchasedPrice / countOrderBuy
+            // *TargetSellPriceOrder* Calculate the needed profit and loss perrcentage on current open orders
+            var TargetSellPriceOrder = avgPurchasedPrice + (avgPurchasedPrice * eachOrderNeedPerc / 100)
+            // *OverAllSellPrice* So its the requiered price that we need to sold the over all ledger on this price
+            OverAllSellPrice = TargetSellPriceOrder;
+        }
+
+        // console.log('OverAllSellPrice ', OverAllSellPrice)
+
+        // END Here we need new code to be update avg_sell_price in parent order
+        if (parentActiveOrderArr.length > 0 && parent_sold) {
+            // console.log("Else condition update line number 1346", OverAllSellPrice)
+
+            await db.collection(sold_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'avg_sell_price': OverAllSellPrice, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
+
+        } else {
+            // console.log("if condition update line number 1336", OverAllSellPrice)
+
+            await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'avg_sell_price': OverAllSellPrice, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
+
+        }
+
+        // console.log('objPurchArr ', objPurchArr)
+
+        // console.log('OverAllSellPrice ', OverAllSellPrice)
+        // await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': OverAllSellPrice, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
+
     }
 
 }
