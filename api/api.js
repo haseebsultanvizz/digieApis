@@ -16784,7 +16784,9 @@ router.post('/updateDailyActualTradeAbleAutoTradeGen', async (req, res) => {
                     user_id = users[i]['user_id']
                     // await updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, application_mode)
                 
-                    await updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, application_mode)
+                    // await updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, application_mode)
+
+                    await updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, application_mode)
 
                     // await findLimitExceedUsers(user_id, exchange, application_mode)
                 }
@@ -17105,6 +17107,443 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
                         'step_4.lthOnlyUsdt': balanceArr['lthBalance']['onlyUsdt'],
                     }
                 }
+    
+                // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
+    
+                let updateSettings = await db.collection(collectionName).updateOne(where, set)
+    
+                let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT+")]"
+                saveATGLog(user_id, exchange, 'daily_actual_tradeable_cron', 'update Daily Actual Trade Able Auto Trade Gen ' + msg, application_mode)
+    
+                // let upd = updateDailyTradeSettings(user_id, exchange, application_mode = 'live')
+            }
+            
+        }
+        resolve(true)
+
+    })
+}
+
+async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, application_mode = 'live') {
+    return new Promise(async (resolve) => {
+
+        // console.log('************** Cron Testing ****************')
+
+        var db = await conn
+
+        var collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+        var where = {
+            'application_mode': application_mode,
+            'user_id': user_id,
+        }
+        let settings = await db.collection(collectionName).find(where).limit(1).toArray()
+
+        if (settings.length > 0){
+
+            settings = settings[0]
+
+            let OldactualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' ? settings.step_4.actualTradeableBTC : 0 
+            let OldactualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' ? settings.step_4.actualTradeableUSDT : 0 
+
+            let totalTradeAbleInUSD = typeof settings.step_4.totalTradeAbleInUSD != 'undefined' ? settings.step_4.totalTradeAbleInUSD : 0 
+            let btcInvestPercentage = typeof settings.step_4.btcInvestPercentage != 'undefined' ? settings.step_4.btcInvestPercentage : 0 
+            let usdtInvestPercentage = typeof settings.step_4.usdtInvestPercentage != 'undefined' ? settings.step_4.usdtInvestPercentage : 0
+            let dailTradeAbleBalancePercentage = typeof settings.step_4.dailTradeAbleBalancePercentage != 'undefined' ? settings.step_4.dailTradeAbleBalancePercentage : 0
+            let baseCurrencyArr = typeof settings.step_4.baseCurrencyArr != 'undefined' ? settings.step_4.baseCurrencyArr : ['BTC', 'USDT']
+
+        
+            let availableBTC = 0
+            let availableUSDT = 0
+            // let availableBNB = 0
+
+            let btcUSdworth = 0
+            let btcPercentTradeableValue = 0
+            let usdtPercentTradeableValue = 0
+
+            // Actual Tradeable BTC
+            let tradeAbleUsdWorth = 0
+            let tradeAbleBtc = 0
+            let actualTradeableBTC = 0
+
+            // Actual Tradeable USDT
+            let tradeAbleUsd = 0
+            let actualTradeableUSDT = 0
+
+            //find daily tradeable % of actual tradeable in both balance
+            let dailyTradeableBTC = 0
+            let dailyTradeableUSDT = 0
+
+            let btcPercentage = 50
+            let usdtPercentage = 50
+            let tradeableBtc = 0
+            let tradeableusdt = 0
+
+            let tradeLimit = await getSubscription(user_id)
+            totalTradeAbleInUSD = tradeLimit
+
+            //TODO: find it's actual tradeable
+            let marketPricesArr = await getPricesArr(exchange, [])
+            let BTCUSDTPrice = marketPricesArr['BTCUSDT']['currentmarketPrice']
+
+            let myWallet = await get_dashboard_wallet(user_id, exchange)
+
+
+            if (myWallet.status) {
+                let balanceArr = myWallet.data
+
+                let walletBalanceArr = balanceArr['avaiableBalance']
+
+                let tempBalanceObj = {}
+                walletBalanceArr.map(item => { tempBalanceObj[item.coin_symbol] = item.coin_balance })
+
+                // console.log('balance ', tempBalanceObj)
+                availableBTC = parseFloat(parseFloat(tempBalanceObj['BTC']).toFixed(6))
+                availableUSDT = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
+                // availableBNB = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
+
+                let totalAvailableBalanceForPackageSelection = ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT']) + balanceArr['openBalance']['OpenUsdWorth'] + balanceArr['lthBalance']['LthUsdWorth'] + balanceArr['costAvgBalance']['costAvgUsdWorth']) - balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
+
+
+                // let btcInTrades = (balanceArr['openBalance']['onlyBtc'] + balanceArr['lthBalance']['onlyBtc'] + balanceArr['costAvgBalance']['onlyBtc']) - balanceArr['openLthBTCUSDTBalance']['onlyBtc']
+                // let usdtInTrades = (balanceArr['openBalance']['onlyUsdt'] + balanceArr['lthBalance']['onlyUsdt'] + balanceArr['costAvgBalance']['onlyUsdt']) - balanceArr['openLthBTCUSDTBalance']['onlyUsdt']
+
+
+                let usedUsdWorthInTrades = balanceArr['openBalance']['OpenUsdWorth'] + balanceArr['lthBalance']['LthUsdWorth'] + balanceArr['costAvgBalance']['costAvgUsdWorth'] + balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
+
+                let remainaingUsdWorthForTrading = ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])) - balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
+
+                // console.log('wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
+
+                // if (user_id == '5c0912b7fc9aadaac61dd072' && application_mode == 'test') {
+                //     // availableBTC = 0.5
+                //     // availableUSDT = 2000
+                // }
+
+                if (tradeLimit <= totalAvailableBalanceForPackageSelection) {
+
+                    // totalTradeAbleInUSD = (btcInTrades * marketPricesArr['BTCUSDT']['currentmarketPrice']) >= tradeLimit ? 0 : ((tradeLimit / marketPricesArr['BTCUSDT']['currentmarketPrice']) - btcInTrades) * marketPricesArr['BTCUSDT']['currentmarketPrice']
+
+                    let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
+
+                    // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
+
+                    availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
+
+                    availableBTC = parseFloat(availableBTC.toFixed(6))
+
+                    availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble
+
+                    availableUSDT = parseFloat(availableUSDT.toFixed(2))
+
+                    // totalTradeAbleInUSD = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
+
+                    // if (remainingTradddeeAble <= 0) {
+                    //     this.toastr.error('Your package has been exceed please upgrade to a bigger package', 'ERROR');
+                    // }
+
+                } else {
+
+                    let trraadeable = remainaingUsdWorthForTrading >= tradeLimit ? tradeLimit : remainaingUsdWorthForTrading
+
+                    let remainingTradddeeAble = trraadeable - usedUsdWorthInTrades > 0 ? trraadeable - usedUsdWorthInTrades : 0
+
+                    // console.log('222222222 remainingTradddeeAble ', remainingTradddeeAble)
+
+                    // availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
+
+                    // console.log('------------------------ ', availableBTC)
+
+                    // availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble 
+
+                    // totalTradeAbleInUSD =  
+                }
+
+                //*************** dynamic BTC/USDT percentages *************** *//
+                let walletBalance = {}
+                walletBalance['BTC'] = parseFloat(parseFloat(tempBalanceObj['BTC']).toFixed(6))
+                walletBalance['USDT'] = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
+                walletBalance['BNB'] = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
+
+                // console.log('wallet availableBTC ', walletBalance['BTC'])
+                // console.log('wallet availableUSDT ', walletBalance['USDT'])
+
+                // console.log('111 available BTC :: ', availableBTC, '  -------  available USDT :: ', availableUSDT)
+
+
+                //package exceed check for BTC
+                if ((availableBTC * marketPricesArr['BTCUSDT']['currentmarketPrice']) > totalTradeAbleInUSD) {
+                    availableBTC = totalTradeAbleInUSD * (1 / marketPricesArr['BTCUSDT']['currentmarketPrice'])
+                }
+
+                //package exceed check for USDT
+                if (availableUSDT > totalTradeAbleInUSD) {
+                    availableUSDT = totalTradeAbleInUSD
+                }
+
+                //check currency selection
+                if (!baseCurrencyArr.includes('BTC') && !baseCurrencyArr.includes('USDT')) {
+                    return false
+                } else if (!baseCurrencyArr.includes('BTC') || !baseCurrencyArr.includes('USDT')) {
+                    if (!baseCurrencyArr.includes('BTC')) {
+                        availableBTC = 0
+                    }
+                    if (!baseCurrencyArr.includes('USDT')) {
+                        availableUSDT = 0
+                    }
+                }
+
+                let availableBtcUsdWorth = availableBTC * marketPricesArr['BTCUSDT']['currentmarketPrice']
+                availableUsdtUsdWorth = availableUSDT
+
+                // console.log('available BTC :: ', availableBTC, '  -------  available USDT :: ', availableUSDT)
+
+                // console.log('availableBtcUsdWorth :: ', availableBtcUsdWorth, '  -------  availableUsdtUsdWorth :: ', availableUsdtUsdWorth)
+
+                // when both BTC and USDT is greater or equal to package
+                if (availableBtcUsdWorth >= totalTradeAbleInUSD && availableUsdtUsdWorth >= totalTradeAbleInUSD) {
+                    // console.log('// when both BTC and USDT is greater or equal to package')
+
+                    btcPercentage = 50
+                    usdtPercentage = 50
+
+                    tradeableBtc = (totalTradeAbleInUSD / 2) * (1 / marketPricesArr['BTCUSDT']['currentmarketPrice'])
+                    tradeableUsdt = (totalTradeAbleInUSD / 2)
+
+                    // when combined BTC and USDT balance are greater than package 
+                } else if ((availableBtcUsdWorth + availableUsdtUsdWorth) >= totalTradeAbleInUSD) {
+                    // console.log('// when combined BTC and USDT balance are greater than package')
+
+                    // BTC alone is greater than package
+                    if (availableBtcUsdWorth >= totalTradeAbleInUSD) {
+                        // console.log('// BTC alone is greater than package')
+
+                        //if smaller balance is greater than 50% then use 50 / 50 
+                        if (((availableUsdtUsdWorth / totalTradeAbleInUSD) * 100) >= 50) {
+                            // console.log('//if smaller balance is greater than 50% then use 50 / 50')
+
+                            btcPercentage = 50
+                            usdtPercentage = 50
+
+                            tradeableBtc = (btcPercentage * availableBTC) / 100
+                            tradeableUsdt = (usdtPercentage * availableUSDT) / 100
+
+                            // find smaller percentage and assign that to that currency and assig the menaing to the other currency
+                        } else {
+                            // console.log('// find smaller percentage and assign that to that currency and assig the menaing to the other currency')
+
+                            usdtPercentage = ((availableUsdtUsdWorth / totalTradeAbleInUSD) * 100)
+                            btcPercentage = 100 - usdtPercentage
+
+                            tradeableBtc = (btcPercentage * availableBTC) / 100
+                            tradeableUsdt = (usdtPercentage * availableUSDT) / 100
+
+                        }
+
+                        // USDT alone is greater than package
+                    } else if (availableUsdtUsdWorth >= totalTradeAbleInUSD) {
+                        // console.log('// USDT alone is greater than package')
+
+                        //if smaller balance is greater than 50% then use 50 / 50 
+                        if (((availableBtcUsdWorth / totalTradeAbleInUSD) * 100) >= 50) {
+                            // console.log('//if smaller balance is greater than 50% then use 50 / 50')
+
+                            btcPercentage = 50
+                            usdtPercentage = 50
+
+                            tradeableBtc = (btcPercentage * availableBTC) / 100
+                            tradeableUsdt = (usdtPercentage * availableUSDT) / 100
+
+                            // find smaller percentage and assign that to that currency and assig the menaing to the other currency
+                        } else {
+                            // console.log('// find smaller percentage and assign that to that currency and assig the menaing to the other currency')
+
+                            btcPercentage = ((availableBtcUsdWorth / totalTradeAbleInUSD) * 100)
+
+                            // console.log('-----========', btcPercentage)
+                            usdtPercentage = 100 - btcPercentage
+
+                            tradeableBtc = (btcPercentage * availableBTC) / 100
+                            tradeableUsdt = (usdtPercentage * availableUSDT) / 100
+
+                        }
+
+                        // BTC and USDT combined is greater than package
+                    } else {
+                        // console.log('// BTC and USDT combined is greater than package')
+                        //get percentage of one and assign the remaing percentage to the other
+                        btcPercentage = ((availableBtcUsdWorth / totalTradeAbleInUSD) * 100)
+                        usdtPercentage = 100 - btcPercentage
+
+                        tradeableBtc = (btcPercentage * availableBTC) / 100
+                        tradeableUsdt = (usdtPercentage * availableUSDT) / 100
+
+                    }
+
+                } else { // when combined BTC and USDT balance are less than package
+                    // console.log('// when combined BTC and USDT balance are less than package')
+
+                    // availableBtcUsdWorth
+                    // availableUsdtUsdWorth
+
+                    if (false && availableBtcUsdWorth <= (totalTradeAbleInUSD / 2) && availableUsdtUsdWorth <= (totalTradeAbleInUSD / 2)) {
+                        // console.log('// when both BTC and USDT are less than or equal to 50% of the package')
+                        //assign the percentage of the balances avalable for both BTC and USDT 
+                        btcPercentage = 100
+                        usdtPercentage = 100
+                        tradeableBtc = availableBTC
+                        tradeableUsdt = availableUSDT
+                    } else {
+                        // console.log('// when both BTC and/or USDT are greater than 50% of the package')
+ 
+                        //when BTC is greater than USDT balance
+                        if (availableBtcUsdWorth > availableUsdtUsdWorth) {
+                            // console.log('//when BTC is greater than USDT balance')
+
+                            usdtPercentage = parseFloat((((availableUsdtUsdWorth / totalTradeAbleInUSD) * 100)).toFixed(2))
+                            btcPercentage = parseFloat((100 - usdtPercentage).toFixed(2))
+
+                            tradeableBtc = (btcPercentage * availableBTC) / 100
+                            tradeableUsdt = (usdtPercentage * availableUSDT) / 100
+
+
+                        } else if (availableBtcUsdWorth < availableUsdtUsdWorth) {
+                            // console.log('//when BTC is greater than USDT balance')
+
+                            btcPercentage = parseFloat((((availableBtcUsdWorth / totalTradeAbleInUSD) * 100)).toFixed(2))
+                            usdtPercentage = parseFloat((100 - btcPercentage).toFixed(2))
+
+                            tradeableBtc = (btcPercentage * availableBTC) / 100
+                            tradeableUsdt = (usdtPercentage * availableUSDT) / 100
+
+                        } else {
+                            // console.log('//when BTC == USDT balance (usd worth)')
+
+                            btcPercentage = 100
+                            usdtPercentage = 100
+
+                            tradeableBtc = availableBTC
+                            tradeableUsdt = availableUSDT
+                        }
+
+                    }
+
+                }
+
+                //check currency selection to set percentages
+                if (!baseCurrencyArr.includes('BTC') || !baseCurrencyArr.includes('USDT')) {
+                    if (!baseCurrencyArr.includes('BTC')) {
+                        btcPercentage = 0
+                    }
+                    if (!baseCurrencyArr.includes('USDT')) {
+                        usdtPercentage = 0
+                    }
+                }
+
+                // console.log('btcPercentage ', btcPercentage, ' ------- usdtPercentage ', usdtPercentage)
+                // console.log('tradeableBtc ', tradeableBtc, ' ------- tradeableUsdt ', tradeableUsdt)
+
+                //set btc/usdt wrt daily percentage
+                dailyBtc = (dailTradeAbleBalancePercentage * tradeableBtc) / 100
+                dailyUsdt = (dailTradeAbleBalancePercentage * tradeableUsdt) / 100
+
+                dailyBtcUsdWorth = dailyBtc * marketPricesArr['BTCUSDT']['currentmarketPrice']
+                dailyUsdtUsdWorth = dailyUsdt
+
+                dailyBtcUsdWorth = parseFloat(dailyBtcUsdWorth.toFixed(2))
+                dailyUsdtUsdWorth = parseFloat(dailyUsdtUsdWorth.toFixed(2))
+
+                // console.log('dailTradeAbleBalancePercentage ', dailTradeAbleBalancePercentage)
+                // console.log('dailyBtc ', dailyBtc, ' ------- dailyUsdt ', dailyUsdt)
+                // console.log('dailyBtcUsdWorth ', dailyBtcUsdWorth, ' ------- dailyUsdtUsdWorth ', dailyUsdtUsdWorth)
+
+                //set old ATG fields
+                btcInvestPercentage = btcPercentage == 100 && usdtPercentage == 100 ? btcPercentage / 2 : btcPercentage
+                tradeableBTC = btcPercentage == 100 && usdtPercentage == 100 ? (totalTradeAbleInUSD / 2) / marketPricesArr['BTCUSDT']['currentmarketPrice'] : ((totalTradeAbleInUSD * btcPercentage) / 100) / marketPricesArr['BTCUSDT']['currentmarketPrice']
+                actualTradeableBTC = tradeableBtc
+                dailyTradeableBTC = dailyBtc
+
+                usdtInvestPercentage = usdtPercentage == 100 && btcPercentage == 100 ? usdtPercentage / 2 : usdtPercentage
+                tradeableUSDT = usdtPercentage == 100 && btcPercentage == 100 ? totalTradeAbleInUSD / 2 : ((totalTradeAbleInUSD * usdtPercentage) / 100)
+                actualTradeableUSDT = tradeableUsdt
+                dailyTradeableUSDT = dailyUsdt
+
+
+                //set floating points
+                btcInvestPercentage = parseFloat(btcInvestPercentage.toFixed(6))
+                tradeableBTC = parseFloat(tradeableBTC.toFixed(6))
+                availableBTC = parseFloat(availableBTC.toFixed(6))
+                actualTradeableBTC = parseFloat(actualTradeableBTC.toFixed(6))
+                dailyTradeableBTC = parseFloat(dailyTradeableBTC.toFixed(6))
+
+                usdtInvestPercentage = parseFloat(usdtInvestPercentage.toFixed(2))
+                tradeableUSDT = parseFloat(tradeableUSDT.toFixed(2))
+                availableUSDT = parseFloat(availableUSDT.toFixed(2))
+                actualTradeableUSDT = parseFloat(actualTradeableUSDT.toFixed(2))
+                dailyTradeableUSDT = parseFloat(dailyTradeableUSDT.toFixed(2))
+
+
+                //*************** End dynamic BTC/USDT percentages *************** *//
+
+                btcUSdworth = availableBTC * BTCUSDTPrice
+                btcPercentTradeableValue = (btcInvestPercentage * totalTradeAbleInUSD) / 100
+                usdtPercentTradeableValue = Math.abs(totalTradeAbleInUSD - btcPercentTradeableValue)
+
+                // Actual Tradeable BTC
+                tradeAbleUsdWorth = btcUSdworth <= btcPercentTradeableValue ? btcUSdworth : btcPercentTradeableValue
+                tradeAbleBtc = ((1 / BTCUSDTPrice) * tradeAbleUsdWorth)
+                actualTradeableBTC = parseFloat(tradeAbleBtc.toFixed(6))
+
+                // Actual Tradeable USDT
+                tradeAbleUsd = availableUSDT <= usdtPercentTradeableValue ? availableUSDT : usdtPercentTradeableValue
+                actualTradeableUSDT = tradeAbleUsd
+                actualTradeableUSDT = parseFloat(tradeAbleUsd.toFixed(2))
+
+                //find daily tradeable % of actual tradeable in both balance
+                dailyTradeableBTC = (actualTradeableBTC * dailTradeAbleBalancePercentage) / 100
+                dailyTradeableUSDT = (actualTradeableUSDT * dailTradeAbleBalancePercentage) / 100
+                dailyTradeableBTC = parseFloat(dailyTradeableBTC.toFixed(6))
+                dailyTradeableUSDT = parseFloat(dailyTradeableUSDT.toFixed(2))
+
+
+                // walletBalance['BTC'] = parseFloat(parseFloat(tempBalanceObj['BTC']).toFixed(6))
+                // walletBalance['USDT'] = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
+                // walletBalance['BNB'] = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
+
+                // console.log('wallet availableBTC ', availableBTC)
+                // console.log('wallet availableUSDT ', availableUSDT)
+
+                //TODO: update actual tradeable
+                var where = {
+                    '_id': settings['_id']
+                }
+                var set = {
+                    '$set': {
+                        'step_4.actualTradeableBTC': actualTradeableBTC,
+                        'step_4.actualTradeableUSDT': actualTradeableUSDT,
+                        'step_4.dailyTradeableBTC': dailyTradeableBTC,
+                        'step_4.dailyTradeableUSDT': dailyTradeableUSDT,
+                        
+                        // new fields,
+                        'step_4.availableBTC': availableBTC,
+                        'step_4.availableUSDT': availableUSDT,
+    
+                        'step_4.openOnlyBtc': balanceArr['openBalance']['onlyBtc'],
+                        'step_4.openOnlyUsdt': balanceArr['openBalance']['onlyUsdt'],
+    
+                        'step_4.lthOnlyBtc': balanceArr['lthBalance']['onlyBtc'],
+                        'step_4.lthOnlyUsdt': balanceArr['lthBalance']['onlyUsdt'],
+                        
+                        //new1 fields
+                        'step_4.baseCurrencyArr': baseCurrencyArr,
+                        'step_4.btcInvestPercentage': btcInvestPercentage,
+                        'step_4.usdtInvestPercentage': usdtInvestPercentage,
+
+                    }
+                }
+
+                // console.log("resultttttttttttttt ------------------------------------------------------------- ")
+                // console.log(set)
+                // console.log(settings['user_id'] + " dailyTradeableBTC: " + dailyTradeableBTC + " dailyTradeableUSDT: " + dailyTradeableUSDT)
     
                 // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
     
