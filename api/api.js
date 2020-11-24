@@ -12615,19 +12615,22 @@ async function getUserExchangesWithAPISet(user_id){
                 let collectionName = exchange == 'binance' ? 'users' : exchange + '_credentials'
                 if (exchange == 'binance') {
                     var where = {
-                        '_id': new ObjectID(user_id)
+                        '_id': new ObjectID(user_id),
+                        'api_key': { '$ne': null },
+                        'api_secret': { '$ne': null },
                     }
                     settingsArr[exchange] = db.collection(collectionName).find(where).project().toArray();
                 } else {
                     var where = {
-                        'user_id': user_id
+                        'user_id': user_id,
+                        'api_key': {'$ne': null },
+                        'api_secret': {'$ne': null },
                     }
                     settingsArr[exchange] = db.collection(collectionName).find(where).project().toArray();
                 }
             })
             let myPromises = await Promise.all([settingsArr.binance, settingsArr.bam, settingsArr.kraken])
-    
-            if (myPromises[0].length == 0 && myPromises[1].length == 0) {
+            if (myPromises[0].length == 0 && myPromises[1].length == 0 && myPromises[2].length == 0) {
                 resolve([])
             } else {
                 let available_exchanges = []
