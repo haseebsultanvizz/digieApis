@@ -12086,26 +12086,44 @@ async function update_user_balance(user_id) {
         json: {}
     };
     request(options, function (error, response, body) { });
-
-    //Update Bam Balance
+    
+    //Update Binance Bam
     var options = {
-        method: 'POST',
-        url: 'http://52.22.53.12:2607/apiEndPoint/updateBalance',
+        method: 'GET',
+        url: 'https://app.digiebot.com/admin/Updatebalance_bam/update_user_vallet_bam/' + user_id,
         headers: {
-            'cache-control'   : 'no-cache',
-            'Connection'      : 'keep-alive',
-            'Accept-Encoding' : 'gzip, deflate',
-            'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-            'Cache-Control'   : 'no-cache',
-            'Accept'          : '*/*',
-            'User-Agent'      : 'PostmanRuntime/7.20.1',
-            'Content-Type'    : 'application/json'
+            'cache-control'  : 'no-cache',
+            'Connection'     : 'keep-alive',
+            'Accept-Encoding': 'gzip, deflate',
+            'Postman-Token'  : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control'  : 'no-cache',
+            'Accept'         : '*/*',
+            'User-Agent'     : 'PostmanRuntime/7.20.1',
+            'Content-Type'   : 'application/json'
         },
-        json: {
-            'user_id': user_id
-        }
+        json: {}
     };
     request(options, function (error, response, body) { });
+
+    // //Update Bam Balance
+    // var options = {
+    //     method: 'POST',
+    //     url: 'http://52.22.53.12:2607/apiEndPoint/updateBalance',
+    //     headers: {
+    //         'cache-control'   : 'no-cache',
+    //         'Connection'      : 'keep-alive',
+    //         'Accept-Encoding' : 'gzip, deflate',
+    //         'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+    //         'Cache-Control'   : 'no-cache',
+    //         'Accept'          : '*/*',
+    //         'User-Agent'      : 'PostmanRuntime/7.20.1',
+    //         'Content-Type'    : 'application/json'
+    //     },
+    //     json: {
+    //         'user_id': user_id
+    //     }
+    // };
+    // request(options, function (error, response, body) { });
     
     //Update Kraken Balance
     var options = {
