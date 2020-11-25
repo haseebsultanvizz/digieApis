@@ -2789,12 +2789,12 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
         objPurchArr.push(ObjPurch)
         await db.collection(sold_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
 
-        var purchasePrice = parentActiveOrderArr[0]['purchased_price'];// Get purchasePrice
-        var definedSellPercentageSold = parentActiveOrderArr[0]['defined_sell_percentage'];// Get Defined Sell Percentage
+        var purchasePrice = parseFloat(parentActiveOrderArr[0]['purchased_price']);// Get purchasePrice
+        var definedSellPercentageSold = parseFloat(parentActiveOrderArr[0]['defined_sell_percentage']);// Get Defined Sell Percentage
 
         var avg_orders_ids = parentActiveOrderArr[0]['avg_orders_ids'];// Get avg_orders_ids
 
-        var marketSoldPriceSold = parentActiveOrderArr[0]['market_sold_price'];
+        var marketSoldPriceSold = parseFloat(parentActiveOrderArr[0]['market_sold_price']);
         var differenceBetwnSold = marketSoldPriceSold - purchasePrice;
         var definedSellPercentage = (differenceBetwnSold * 100) / purchasePrice;
         overAllSoldPercentage += definedSellPercentage;
@@ -2814,8 +2814,8 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
         var parentActiveOrderArr = await db.collection(buy_collection).find({ '_id': new ObjectID(String(order_id)) }).toArray();
         
 
-        var purchasePrice = parentActiveOrderArr[0]['purchased_price'];// Get purchasePrice
-        var definedSellPercentage = parentActiveOrderArr[0]['defined_sell_percentage'];// Get Defined Sell Percentage
+        var purchasePrice = parseFloat(parentActiveOrderArr[0]['purchased_price']);// Get purchasePrice
+        var definedSellPercentage = parseFloat(parentActiveOrderArr[0]['defined_sell_percentage']);// Get Defined Sell Percentage
         var avg_orders_ids = parentActiveOrderArr[0]['avg_orders_ids'];// Get avg_orders_ids
         overAllpurchasedPrice += purchasePrice;
         // For parent Order we have
@@ -2837,9 +2837,9 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
                 // *countOrderBuy* used for to count the buy orders
                 countOrderBuy++;
                 // *profitPercentage* used for to get the default profit percentage from buy order collection like i-e 1.2
-                var profitPercentage = childOrderArr[0]['sell_profit_percent'];
+                var profitPercentage = parseFloat(childOrderArr[0]['sell_profit_percent']);
                 // *purchasedPrice* used for to get the purchased price from buy order collection
-                var purchasedPrice = childOrderArr[0]['purchased_price'];
+                var purchasedPrice = parseFloat(childOrderArr[0]['purchased_price']);
                 // console.log('purchasedPrice ', purchasedPrice)
                 // *overAllBuyPercentage* used to sum overall buy percentage from buy order collection
                 overAllBuyPercentage += profitPercentage;
@@ -2858,13 +2858,13 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
                 if (typeof childOrderArr !== 'undefined' && childOrderArr.length > 0) {
 
                     // *SoldprofitPerc* used for to get the default profit percentage from sold_buy_orders collection like i-e 1.2
-                    var SoldprofitPerc = childOrderArr[0]['sell_profit_percent'];
+                    var SoldprofitPerc = parseFloat(childOrderArr[0]['sell_profit_percent']);
                     // *overAllSellPercentage* used for to SUM overall sold percentage from sold_buy_orders collection
                     overAllSellPercentage += SoldprofitPerc;
                     // *purchasedPrice* To get purchsed price from sold_buy_orders collection
-                    var purchasedPrice = childOrderArr[0]['purchased_price'];
+                    var purchasedPrice = parseFloat(childOrderArr[0]['purchased_price']);
                     // *marketSoldPrice* To get market sold price from sold_buy_orders collection
-                    var marketSoldPrice = childOrderArr[0]['market_sold_price'];
+                    var marketSoldPrice = parseFloat(childOrderArr[0]['market_sold_price']);
                     // *differenceBetwn* To calucalte percentage first we take differnce from sold_buy_orders collection
                     var differenceBetwn = marketSoldPrice - purchasedPrice;
                     // *profitPercentage* Get single order percentage from sold_buy_orders collection
