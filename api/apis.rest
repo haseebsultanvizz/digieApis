@@ -283,7 +283,7 @@ POST http://localhost:3010/apiEndPoint/updateDailyActualTradeAbleAutoTradeGen
 Content-Type: application/json
 
 { 
-    "user_id": "zxvxzv",
+    "user_id": "asdfasdf",
     "exchange": "binance"
 }
 
