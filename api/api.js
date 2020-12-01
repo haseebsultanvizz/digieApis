@@ -8218,6 +8218,7 @@ router.post('/get_user_info', function (req, res, next) {
                                 'phone_number',
                                 'password',
                                 'timezone',
+                                'default_exchange',
                             ]
                             
                             for (let [key, value] of Object.entries(data)) {
@@ -12488,6 +12489,23 @@ async function getUserExchangesWithAPISet(user_id){
         })
     })
 }
+
+router.post('/get_user_exchanges', async (req,res) => {
+    let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''
+    if(user_id != ''){
+        let result =  await getUserExchangesWithAPISet(user_id)
+        res.send({
+            'status': true,
+            'data': result,
+            'message': 'Data found',
+        })
+    }else{
+        res.send({
+            'status':false,
+            'message': 'user_id is required',
+        })
+    }
+})
 
 //getAutoTradeSettings
 router.post('/getAutoTradeSettings', async (req, res) => {
