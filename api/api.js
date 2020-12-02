@@ -357,6 +357,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.trigger_enable = userArr['trigger_enable'];
                             respObj.is_global_user = 'yes';
                             respObj.exchangesArr = exchangesArr;
+                            respObj.default_exchange = typeof userArr['trigger_enable'] != 'undefined' && userArr['trigger_enable'] != '' ? userArr['trigger_enable'] : (exchangesArr.length > 0 ? exchangesArr[0] : 'binance');
 
                             resp.send(respObj);
 
@@ -442,6 +443,7 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.trigger_enable = userArr['trigger_enable'];
                                 respObj.is_global_user = 'no';
                                 respObj.exchangesArr = exchangesArr;
+                                respObj.default_exchange = typeof userArr['trigger_enable'] != 'undefined' && userArr['trigger_enable'] != '' ? userArr['trigger_enable'] : (exchangesArr.length > 0 ? exchangesArr[0] : 'binance');
 
                                 //Update last login time
                                 db.collection('users').updateOne({
