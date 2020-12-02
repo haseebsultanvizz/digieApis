@@ -18903,4 +18903,56 @@ async function get_current_market_prices(exchange, coins=[]) {
 /* ******************** End Get current market prices ************************* */
 
 
+router.post('/disable_exchange_key', async (req, res) => {
+    let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''
+    let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
+    let keyNo = typeof req.body.keyNo != 'undefined' && req.body.keyNo != '' ? req.body.keyNo : ''
+
+    if (user_id != '' && exchange != '') {
+
+        const db = await conn 
+        let actionSuccess = false
+
+        if(exchange == 'binance'){
+            await db.collection('users').updateOne({ _id: new ObjectID(user_id) }, { '$unset': { 'api_key': '', 'api_secret': ''}})
+
+            actionSuccess = true
+        } else if (exchange == 'kraken'){
+            if(keyNo == ''){
+                await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': '' } })
+
+                actionSuccess = true
+            }else if(keyNo == 'key_2'){
+                await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_secondary': '', 'api_secret_secondary': '' } })
+
+                actionSuccess = true
+            }
+        }else{
+            let collection_name = exchange+'_credentials'
+            await db.collection(collection_name).updateOne({ 'user_id': user_id }, { '$unset': { 'api_key': '', 'api_secret': '' } })
+
+            actionSuccess = true
+        }
+
+        if (actionSuccess){
+            res.send({
+                'status': true,
+                'message': 'Trading disabled successfully',
+            })
+        }else{
+            res.send({
+                'status': false,
+                'message': 'Something went wrog',
+            })
+        }
+
+    } else {
+        res.send({
+            'status': false,
+            'message': 'user_id, exchange is required',
+        })
+    }
+})
+
+
 module.exports = router;
