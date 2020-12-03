@@ -2656,6 +2656,11 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
             var childOrderArr = await db.collection(buy_collection).find({ '_id': childBuyOrderId }).toArray()
 
             if (typeof childOrderArr !== 'undefined' && childOrderArr.length > 0) {
+
+                if (childOrderArr[0]['status'] == 'canceled'){
+                    continue;
+                }
+
                 // *countOrderBuy* used for to count the buy orders
                 countOrderBuy++;
                 // *profitPercentage* used for to get the default profit percentage from buy order collection like i-e 1.2
@@ -11539,13 +11544,15 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                     targetProfit += parseFloat(costAvgArr[i].targetProfit)
                 }
                 
-                currCount++
-                // if (costAvgArr[i].profitLoss != 0) {
-                //     currCount++
-                // }
+                if (costAvgArr[i].type != 'canceled') {
+                    // if (costAvgArr[i].profitLoss != 0) {
+                    //     currCount++
+                    // }
+                    currCount++
+                    currProfit += parseFloat(costAvgArr[i].profitLoss)
+                    totalUsdWorth += parseFloat(costAvgArr[i].usd_worth)
+                }
 
-                currProfit += parseFloat(costAvgArr[i].profitLoss)
-                totalUsdWorth += parseFloat(costAvgArr[i].usd_worth)
             }
 
             if (costAvgArr.length > 0) {
