@@ -9782,11 +9782,23 @@ router.post('/is_trading_points_exceeded', async (req, resp) => {
 
     if (user.length > 0 && user[0]['trading_status'] == 'off') {
 
-        resp.status(200).send({
-            'status': true
+        let reqObj = {
+            'type': 'POST',
+            'url': 'https://app.digiebot.com/admin/Api_calls/get_user_current_trading_points',
+            'payload': {
+                'user_id' : admin_id
+            },
+        }
+        let result = await customApiRequest(reqObj)
+        let tradinPoints = result.status && result.body['status'] ? result.body['current_trading_points'] : 0
+
+        resp.send({
+            'status': true,
+            'tradinPoints': tradinPoints 
         });
+
     } else {
-        resp.status(200).send({
+        resp.send({
             'status': false
         });
     }
@@ -18894,6 +18906,50 @@ router.post('/getAvailableTradingPoints', async (req, res) => {
     }
 })
 
+
+async function customApiRequest(reqObj){
+    return new Promise(async resolve => {
+
+        if (typeof reqObj.type == 'undefined' || typeof reqObj.url == 'undefined'){
+            resolve({
+                'status': false,
+                'message': 'Invalid request.'
+            })
+        }
+
+        let default_headers = {
+            'Content-Type': 'application/json'
+        }
+
+        let url = reqObj.url
+        let type = reqObj.type
+        let headers = typeof reqObj.headers != 'undefined' ? reqObj.headers : {} 
+        let payload = typeof reqObj.payload != 'undefined' ? reqObj.payload : {} 
+        
+        headers = Object.assign(default_headers, headers); 
+
+        var options = {
+            method: type,
+            url: url,
+            headers: headers,
+            json: payload,
+        };
+        request(options, function (error, response, body) {
+            if (error) {
+                resolve({
+                    'status': false,
+                    'message': 'Something went wrong.'
+                });
+            } else {
+                resolve({
+                    "status": true,
+                    "body": body
+                })
+            }
+        })
+        
+    })
+}
 
 // ********************** Dashboard setting APIs ****************************/
 router.post('/save_dashboard_settings', async (req, res) => {
