@@ -9790,11 +9790,11 @@ router.post('/is_trading_points_exceeded', async (req, resp) => {
             },
         }
         let result = await customApiRequest(reqObj)
-        let tradinPoints = result.status && result.body['status'] ? result.body['current_trading_points'] : 0
+        let tradingPoints = result.status && result.body['status'] ? result.body['current_trading_points'] : 0
 
         resp.send({
             'status': true,
-            'tradinPoints': tradinPoints 
+            'tradingPoints': tradingPoints 
         });
 
     } else {
