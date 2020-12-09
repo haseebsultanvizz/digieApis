@@ -4909,7 +4909,18 @@ async function migrate_order(order_id, exchange='', action=''){
             var order_mode = ((buy_order.length > 0) ? buy_order[0]['application_mode'] : 'test')
             await create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
             //end save log
-    
+
+
+            let pricesObj = await get_current_market_prices(exchange, [])
+            let currSymbol = buy_order[0]['symbol']
+            let currentMarketPrice = pricesObj[currSymbol]
+            let orderPurchasePrice = buy_order[0]['purchased_price'] 
+            //save pl before migration
+            let pl_before_migration = calculate_percentage(orderPurchasePrice, currentMarketPrice) 
+            let pl_status_before_migration = (currentMarketPrice > orderPurchasePrice) ? 'positive' : 'negative'
+            buy_order[0]['pl_before_migration'] = parseFloat(pl_before_migration)
+            buy_order[0]['pl_status_before_migration'] = pl_status_before_migration
+
             //move buy order to buy_orders_kraken
             await db.collection('buy_orders_kraken').insertOne(buy_order[0])
     
