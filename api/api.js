@@ -9773,6 +9773,25 @@ router.post('/is_bnb_balance_enough', async (req, resp) => {
 })
 
 
+router.post('/is_trading_points_exceeded', async (req, resp) => {
+
+    const db = await conn
+    var admin_id = req.body.user_id;
+
+    var user = await db.collection('users').find({ '_id': new ObjectID(String(admin_id)) }).toArray()
+
+    if (user.length > 0 && user[0]['trading_status'] == 'off') {
+
+        resp.status(200).send({
+            'status': true
+        });
+    } else {
+        resp.status(200).send({
+            'status': false
+        });
+    }
+})
+
 
 function create_orders_history_log(order_id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date) {
     return new Promise((resolve, reject) => {
