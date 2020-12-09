@@ -4771,100 +4771,163 @@ router.post('/sellOrderManually', async (req, resp) => {
     let orderId = req.body.orderId;
     let currentMarketPrice = req.body.currentMarketPriceByCoin;
     let exchange = req.body.exchange;
-    let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-    //get buy order detail by id
-    var ordeResp = await listOrderById(orderId, exchange);
-    if (ordeResp.length > 0) {
+    
+    let action = typeof req.body.action != 'undefined' && req.body.action != '' ? req.body.action : '';
+    let sellNow = true
 
-        let buyOrderArr = ordeResp[0];
-        let sell_order_id = (typeof buyOrderArr['sell_order_id'] == undefined) ? '' : buyOrderArr['sell_order_id'];
-        let buyOrderStatus = (typeof buyOrderArr['status'] == undefined) ? '' : buyOrderArr['status'];
-        var buyParentOrderId = (typeof buyOrderArr['buy_parent_id'] == undefined) ? '' : buyOrderArr['buy_parent_id'];
+    if (action != '') {
+        if (action == 'isResumeExchange') {
+            //only move
+            await migrate_order(String(orderId), exchange, action)
+            sellNow = false
+        } else if (action == 'isResume') {
+            //move then sell
+            await migrate_order(String(orderId), exchange, action)
+        }
+    }
 
-        console.log("sell_order_id ", sell_order_id)
-        if (typeof sell_order_id != 'undefined' && sell_order_id != '') {
-            let application_mode = (typeof buyOrderArr['application_mode'] == undefined) ? '' : buyOrderArr['application_mode'];
-            let buy_order_id = buyOrderArr['_id'];
-            let quantity = (typeof buyOrderArr['quantity'] == undefined) ? '' : buyOrderArr['quantity'];
-            let coin_symbol = (typeof buyOrderArr['symbol'] == undefined) ? '' : buyOrderArr['symbol'];
-            let admin_id = (typeof buyOrderArr['admin_id'] == undefined) ? '' : buyOrderArr['admin_id'];
-            let trigger_type = (typeof buyOrderArr['trigger_type'] == undefined) ? '' : buyOrderArr['trigger_type'];
-            //getting user ip for trading
-            var trading_ip = await listUsrIp(admin_id);
-
-            console.log("trading_ip ", trading_ip)
-
-
-            var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now ' + interfaceType;
-            // var logPromise = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
-            var getBuyOrder = await listOrderById(buy_order_id, exchange);
-            var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-            var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-            var logPromise = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
-
-            //Send Notification
-            send_notification(getBuyOrder[0]['admin_id'], 'sell_alerts', 'medium', log_msg, buy_order_id, exchange, getBuyOrder[0]['symbol'], order_mode, '')
-
-            var log_msg = 'Send Market Orde for sell by Ip: <b>' + trading_ip + '</b> ';
-            // var logPromise_2 = recordOrderLog(buy_order_id, log_msg, 'order_ip', 'no', exchange);
-            var logPromise_2 = create_orders_history_log(buy_order_id, log_msg, 'order_ip', 'no', exchange, order_mode, order_created_date)
-
-            var update_1 = {};
-            update_1['modified_date'] = new Date();
-            update_1['is_manual_sold'] = 'yes';
-            var filter_1 = {};
-            filter_1['_id'] = {
-                $in: [orderId, new ObjectID(orderId)]
-            }
-
-            var collectionName_1 = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-
-
-            var updatePromise_1 = updateOne(filter_1, update_1, collectionName_1);
-
-            var collectionName_2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;;
-            // update_1['status'] = 'FILLED';
-
-            //By Ali to avoid showing in open tab [16-1-20]
-            // update_1['status'] = buyOrderStatus + '_submitted_for_sell';
-            update_1['status'] = 'submitted_for_sell';
-
-            var updatePromise_2 = updateOne(filter_1, update_1, collectionName_2);
-            var resolvePromise = Promise.all([updatePromise_1, updatePromise_2, logPromise, logPromise_2]);
-            //in case of live order move it to specified api for selling
-            if (application_mode == 'live') {
-
-
-                var log_msg = "Market Order Send For Sell On:  " + parseFloat(currentMarketPrice).toFixed(8);
-                // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
-                var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
-
-                logPromise_1.then((resp) => {})
-                //send order for sell on specific ip
-                var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, trigger_type, 'sell_market_order', exchange);
-                // console.log("SellOrderResolve ", SellOrderResolve)
-
-                SellOrderResolve.then((resp) => {})
-            } else {
-                //if test order 
-                var log_msg = "Market Order Send For Sell On **:  " + parseFloat(currentMarketPrice).toFixed(8);
-                // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
-                var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
-
-                logPromise_1.then((resp) => {})
-                //call function for selling orders
-                sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange,buyParentOrderId);
-
-            }
-        } //End of if sell order id not empty	
-    } //Order Arr End 
-
+    if (sellNow){
+        let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        //get buy order detail by id
+        var ordeResp = await listOrderById(orderId, exchange);
+        if (ordeResp.length > 0) {
+    
+            let buyOrderArr = ordeResp[0];
+            let sell_order_id = (typeof buyOrderArr['sell_order_id'] == undefined) ? '' : buyOrderArr['sell_order_id'];
+            let buyOrderStatus = (typeof buyOrderArr['status'] == undefined) ? '' : buyOrderArr['status'];
+            var buyParentOrderId = (typeof buyOrderArr['buy_parent_id'] == undefined) ? '' : buyOrderArr['buy_parent_id'];
+    
+            console.log("sell_order_id ", sell_order_id)
+            if (typeof sell_order_id != 'undefined' && sell_order_id != '') {
+                let application_mode = (typeof buyOrderArr['application_mode'] == undefined) ? '' : buyOrderArr['application_mode'];
+                let buy_order_id = buyOrderArr['_id'];
+                let quantity = (typeof buyOrderArr['quantity'] == undefined) ? '' : buyOrderArr['quantity'];
+                let coin_symbol = (typeof buyOrderArr['symbol'] == undefined) ? '' : buyOrderArr['symbol'];
+                let admin_id = (typeof buyOrderArr['admin_id'] == undefined) ? '' : buyOrderArr['admin_id'];
+                let trigger_type = (typeof buyOrderArr['trigger_type'] == undefined) ? '' : buyOrderArr['trigger_type'];
+                //getting user ip for trading
+                var trading_ip = await listUsrIp(admin_id);
+    
+                console.log("trading_ip ", trading_ip)
+    
+    
+                var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now ' + interfaceType;
+                // var logPromise = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
+                var getBuyOrder = await listOrderById(buy_order_id, exchange);
+                var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+                var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+                var logPromise = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
+    
+                //Send Notification
+                send_notification(getBuyOrder[0]['admin_id'], 'sell_alerts', 'medium', log_msg, buy_order_id, exchange, getBuyOrder[0]['symbol'], order_mode, '')
+    
+                var log_msg = 'Send Market Orde for sell by Ip: <b>' + trading_ip + '</b> ';
+                // var logPromise_2 = recordOrderLog(buy_order_id, log_msg, 'order_ip', 'no', exchange);
+                var logPromise_2 = create_orders_history_log(buy_order_id, log_msg, 'order_ip', 'no', exchange, order_mode, order_created_date)
+    
+                var update_1 = {};
+                update_1['modified_date'] = new Date();
+                update_1['is_manual_sold'] = 'yes';
+                var filter_1 = {};
+                filter_1['_id'] = {
+                    $in: [orderId, new ObjectID(orderId)]
+                }
+    
+                var collectionName_1 = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+    
+    
+                var updatePromise_1 = updateOne(filter_1, update_1, collectionName_1);
+    
+                var collectionName_2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;;
+                // update_1['status'] = 'FILLED';
+    
+                //By Ali to avoid showing in open tab [16-1-20]
+                // update_1['status'] = buyOrderStatus + '_submitted_for_sell';
+                update_1['status'] = 'submitted_for_sell';
+    
+                var updatePromise_2 = updateOne(filter_1, update_1, collectionName_2);
+                var resolvePromise = Promise.all([updatePromise_1, updatePromise_2, logPromise, logPromise_2]);
+                //in case of live order move it to specified api for selling
+                if (application_mode == 'live') {
+    
+    
+                    var log_msg = "Market Order Send For Sell On:  " + parseFloat(currentMarketPrice).toFixed(8);
+                    // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
+                    var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
+    
+                    logPromise_1.then((resp) => {})
+                    //send order for sell on specific ip
+                    var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, trigger_type, 'sell_market_order', exchange);
+                    // console.log("SellOrderResolve ", SellOrderResolve)
+    
+                    SellOrderResolve.then((resp) => {})
+                } else {
+                    //if test order 
+                    var log_msg = "Market Order Send For Sell On **:  " + parseFloat(currentMarketPrice).toFixed(8);
+                    // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
+                    var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
+    
+                    logPromise_1.then((resp) => {})
+                    //call function for selling orders
+                    sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange,buyParentOrderId);
+    
+                }
+            } //End of if sell order id not empty	
+        } //Order Arr End 
+    }
 
     resp.status(200).send({
-        message: ordeResp
+        message: (action == '' ? ordeResp : 'Action successful')
     });
 
 }) //End of sellOrderManually
+
+
+async function migrate_order(order_id, exchange='', action=''){
+
+    return new Promise(async resolve =>{
+        const db = await conn
+    
+        let where = {
+            '_id': new ObjectID(String(order_id))
+        }
+        let buy_order = await db.collection('buy_orders').find(where).toArray()
+    
+        if (buy_order.length > 0){
+
+            //save log
+            var log_msg = 'Order migrated'
+            if (action == 'isResumeExchange'){
+                log_msg = 'Order migrated'
+            }else if(action == 'isResume'){
+                log_msg = 'Order migrated and sold'
+            }
+
+            var type = 'migrated_order'
+            var show_hide_log = 'yes'
+            var order_created_date = ((buy_order.length > 0) ? buy_order[0]['created_date'] : new Date())
+            var order_mode = ((buy_order.length > 0) ? buy_order[0]['application_mode'] : 'test')
+            await create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+            //end save log
+    
+            //move buy order to buy_orders_kraken
+            await db.collection('buy_orders_kraken').insertOne(buy_order[0])
+    
+            if (typeof buy_order[0]['sell_order_id'] != 'undefined' && buy_order[0]['sell_order_id'] != ''){
+                
+                let sell_order = await db.collection('orders').find({ '_id': new ObjectID(String(buy_order[0]['sell_order_id']))}).toArray()
+                
+                if (sell_order.length > 0){
+                    await db.collection('orders_kraken').insertOne(sell_order[0])
+                }
+            }
+    
+        }
+    
+        resolve(true)
+    })
+
+}
 
 
 //function for updating any collection the base of collection and filtes
@@ -11640,6 +11703,9 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
     let exchange = req.body.exchange
     let order_id = req.body.order_id
     let tab = req.body.tab
+    let action = typeof req.body.action != 'undefined' && req.body.action != '' ? req.body.action : '';
+
+    let sellNow = true 
 
     if (typeof orderType != 'undefined' && orderType != '' && typeof exchange != 'undefined' && exchange != '' && typeof order_id != 'undefined' && order_id != '') {
 
@@ -11656,27 +11722,40 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
             //send sell request if costAvg child order
             if (orderType == 'costAvgChild') {
 
-                var options = {
-                    method: 'POST',
-                    // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
-                    url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
-                    headers: {
-                        'cache-control': 'no-cache',
-                        'Connection': 'keep-alive',
-                        'Accept-Encoding': 'gzip, deflate',
-                        'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-                        'Cache-Control': 'no-cache',
-                        'Accept': '*/*',
-                        'User-Agent': 'PostmanRuntime/7.20.1',
-                        'Content-Type': 'application/json'
-                    },
-                    json: {
-                        'orderId': order_id,
-                        'exchange': exchange,
-                        'currentMarketPriceByCoin': currentmarketPrice,
+                if (action != '') {
+                    if (action == 'isResumeExchange') {
+                        //only move
+                        await migrate_order(order_id, exchange, action)
+                        sellNow = false 
+                    } else if (action == 'isResume'){
+                        //move then sell
+                        await migrate_order(order_id, exchange, action)
                     }
-                };
-                request(options, function (error, response, body) { });
+                }
+
+                if (sellNow){
+                    var options = {
+                        method: 'POST',
+                        // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                        url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                        headers: {
+                            'cache-control': 'no-cache',
+                            'Connection': 'keep-alive',
+                            'Accept-Encoding': 'gzip, deflate',
+                            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                            'Cache-Control': 'no-cache',
+                            'Accept': '*/*',
+                            'User-Agent': 'PostmanRuntime/7.20.1',
+                            'Content-Type': 'application/json'
+                        },
+                        json: {
+                            'orderId': order_id,
+                            'exchange': exchange,
+                            'currentMarketPriceByCoin': currentmarketPrice,
+                        }
+                    };
+                    request(options, function (error, response, body) { });                
+                }
 
             } else if (orderType == 'costAvgParent') {
 
@@ -11693,33 +11772,47 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
                 }
 
                 for (let i = 0; i < childsCount; i++) {
-                    var options = {
-                        method: 'POST',
-                        // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
-                        url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
-                        headers: {
-                            'cache-control': 'no-cache',
-                            'Connection': 'keep-alive',
-                            'Accept-Encoding': 'gzip, deflate',
-                            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-                            'Cache-Control': 'no-cache',
-                            'Accept': '*/*',
-                            'User-Agent': 'PostmanRuntime/7.20.1',
-                            'Content-Type': 'application/json'
-                        },
-                        json: {
-                            'orderId': String(ids[i]),
-                            'exchange': exchange,
-                            'currentMarketPriceByCoin': currentmarketPrice,
+
+                    if (action != '') {
+                        if (action == 'isResumeExchange') {
+                            //only move
+                            await migrate_order(String(ids[i]), exchange, action)
+                            sellNow = false
+                        } else if (action == 'isResume') {
+                            //move then sell
+                            await migrate_order(String(ids[i]), exchange, action)
                         }
-                    };
-                    request(options, function (error, response, body) { });
+                    }
+
+                    if (sellNow){
+                        var options = {
+                            method: 'POST',
+                            // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                            url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                            headers: {
+                                'cache-control': 'no-cache',
+                                'Connection': 'keep-alive',
+                                'Accept-Encoding': 'gzip, deflate',
+                                'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                                'Cache-Control': 'no-cache',
+                                'Accept': '*/*',
+                                'User-Agent': 'PostmanRuntime/7.20.1',
+                                'Content-Type': 'application/json'
+                            },
+                            json: {
+                                'orderId': String(ids[i]),
+                                'exchange': exchange,
+                                'currentMarketPriceByCoin': currentmarketPrice,
+                            }
+                        };
+                        request(options, function (error, response, body) { });
+                    }
                 }
             }
 
             resp.status(200).send({
                 status: true,
-                message: 'Sell request sent successfully'
+                message: (action == '' ? 'Sell request sent successfully' : 'Action successful')
             })
         } else {
             resp.status(200).send({
