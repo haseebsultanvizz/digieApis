@@ -4773,6 +4773,7 @@ router.post('/sellOrderManually', async (req, resp) => {
     let exchange = req.body.exchange;
     
     let action = typeof req.body.action != 'undefined' && req.body.action != '' ? req.body.action : '';
+    let tab = typeof req.body.tab != 'undefined' && req.body.tab != '' ? req.body.tab : '';
     let sellNow = true
 
     if (action != '') {
@@ -4783,6 +4784,20 @@ router.post('/sellOrderManually', async (req, resp) => {
         } else if (action == 'isResume') {
             //move then sell
             await migrate_order(String(orderId), exchange, action)
+        } else if (action == 'isSellPaused'){
+
+            if (tab == 'soldTab'){
+                sellNow = false
+                make_migrated_parent(orderId)
+            }else{
+                if (await is_sell_migrate_order_normally(String(orderId))){
+                    make_migrated_parent(orderId)
+                }else{
+                    make_migrated_parent(orderId)
+                    sellNow = false
+                }
+            }
+
         }
     }
 
@@ -4895,6 +4910,10 @@ async function migrate_order(order_id, exchange='', action=''){
     
         if (buy_order.length > 0){
 
+            //insert processed field flag ==> 'trade_migrated': 'yes'
+            buy_orders[0]['trade_migrated'] = 'yes'
+            await db.collection('buy_orders').updateOne({ '_id': buy_order[0]['_id'] }, { '$set': {'trade_migrated': 'yes'}})
+
             //save log
             var log_msg = 'Order migrated'
             if (action == 'isResumeExchange'){
@@ -4918,6 +4937,7 @@ async function migrate_order(order_id, exchange='', action=''){
             //save pl before migration
             let pl_before_migration = calculate_percentage(orderPurchasePrice, currentMarketPrice) 
             let pl_status_before_migration = (currentMarketPrice > orderPurchasePrice) ? 'positive' : 'negative'
+            
             buy_order[0]['pl_before_migration'] = parseFloat(pl_before_migration)
             buy_order[0]['pl_status_before_migration'] = pl_status_before_migration
 
@@ -4939,6 +4959,325 @@ async function migrate_order(order_id, exchange='', action=''){
     })
 
 }
+
+async function make_migrated_parent(order_id, action=''){
+    return new Promise(async resolve=>{
+
+        const db = await conn
+
+        let order_status = ''
+        let buy_order = []
+        //get order and check if it's open or sold
+        buy_order = await db.collection('buy_orders').find({'_id': new ObjectID(String(order_id))}).toArray()
+        if (buy_order.length > 0){
+            order_status = 'open'
+        } else {
+            buy_order = await db.collection('sold_buy_orders').find({'_id': new ObjectID(String(order_id))}).toArray()
+            order_status = 'sold'
+        }
+
+        if (order_status != ''){
+            let notExistingCoinsArr = ['XMRBTC', 'ZENBTC', 'XEMBTC']
+            if (notExistingCoinsArr.includes(buy_order[0]['symbol'])){
+                resolve(false)
+            }
+
+            //set new fields to add in parent
+            var pricesObj = await get_current_market_prices('binance', [])
+            var currSymbol = buy_order[0]['symbol']
+            var currentMarketPrice = order_status == 'open' ? pricesObj[currSymbol] : buy_order[0]['market_sold_price'] 
+            var orderPurchasePrice = buy_order[0]['purchased_price']
+            //save pl before migration
+            var pl_before_migration = calculate_percentage(orderPurchasePrice, currentMarketPrice)
+            var pl_status_before_migration = (currentMarketPrice > orderPurchasePrice) ? 'positive' : 'negative'
+
+            last_trade_buy_price = parseFloat(orderPurchasePrice)
+            last_trade_sell_price = parseFloat(currentMarketPrice)
+            last_trade_pl = parseFloat(pl_before_migration)
+            last_trade_pl_status = pl_status_before_migration
+            
+            //try to get parent of this order
+            let parentOrder = []
+            if (typeof buy_order[0]['buy_parent_id'] != 'undefined' && buy_order[0]['buy_parent_id'] != ''){
+                parentOrder = await db.collection('buy_orders').find({ '_id': { '$in': [new ObjectID(String(buy_order[0]['buy_parent_id'])), String(buy_order[0]['buy_parent_id']) ] } }).toArray()
+            }
+
+            //check if parent of that symbol and level exists, if exists insert the following fields in it else create a new parent
+            var coin = buy_order[0]['symbol']
+            var whereCoins = { '$in': [coin, 'BTCUSDT'] }
+            var coinData = await listmarketPriceMinNotationCoinArr(whereCoins, 'kraken')
+            var BTCUSDTPRICE = parseFloat(coinData['BTCUSDT']['currentmarketPrice'])
+
+            var currentMarketPrice = parseFloat(coinData[coin]['currentmarketPrice'])
+            var marketMinNotation = coinData[coin]['marketMinNotation']
+            var marketMinNotationStepSize = coinData[coin]['marketMinNotationStepSize']
+            var toFixedNum = 6
+
+            //find min required quantity
+            var extra_qty_percentage = 30;
+            var extra_qty_val = 0;
+            extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
+            var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
+            var minReqQty = 0;
+            minReqQty = (calculatedMinNotation / currentMarketPrice);
+
+            if (true) {
+                // if (exchange == 'kraken') {
+                minReqQty = calculatedMinNotation
+                toFixedNum = 6
+            } else {
+                // toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+            }
+
+            minReqQty += marketMinNotationStepSize
+            minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
+
+            //TODO: find one usd worth of quantity
+            let selectedCoin = coin;
+
+            let splitArr = selectedCoin.split('USDT');
+            var quantity = parentOrder.length > 0 ? parentOrder[0]['quantity'] : buy_order[0]['quantity']
+            var usd_worth = splitArr[1] == '' ? quantity * currentMarketPrice : quantity * currentMarketPrice * BTCUSDTPRICE
+            quantity = parseFloat(parseFloat(quantity).toFixed(toFixedNum))
+            usd_worth = parseFloat(usd_worth.toFixed(2))
+
+            //insert extra fields in parent
+            if (parentOrder.length > 0){
+
+                // console.log('parent order exists')
+
+                parentOrder[0]['last_trade_buy_price'] = last_trade_buy_price
+                parentOrder[0]['last_trade_sell_price'] = last_trade_sell_price
+                parentOrder[0]['last_trade_pl'] = last_trade_pl
+                parentOrder[0]['last_trade_pl_status'] = last_trade_pl_status
+
+                if (minReqQty <= quantity) {
+                    // console.log('creating new parent')
+
+                    let where1 = {
+                        'admin_id': parentOrder[0]['admin_id'],
+                        'order_mode': parentOrder[0]['application_mode'],
+                        'application_mode': parentOrder[0]['application_mode'],
+                        'order_level': parentOrder[0]['level'],
+                        'symbol': parentOrder[0]['symbol'],
+                        'parent_status': 'parent',
+                        'status': { '$ne': 'canceled' },
+                    }
+                    let kraken_parent = await db.collection('buy_orders_kraken').find(where1).toArray()
+                    if (kraken_parent.length > 0){
+                        let updateParent = {
+                            'last_trade_buy_price': last_trade_buy_price,
+                            'last_trade_sell_price': last_trade_sell_price,
+                            'last_trade_pl': last_trade_pl,
+                            'last_trade_pl_status': last_trade_pl_status,
+                            'migrated_parent': 'yes',
+                        }
+                        await db.collection('buy_orders_kraken').updateOne({ '_id': kraken_parent[0]['_id'] }, { '$set': updateParent})
+                    }else{
+                        await db.collection('buy_orders_kraken').insertOne(parentOrder[0])
+                    }
+                }else{
+
+                    // console.log(' parent qty issue')
+
+                    //TODO: insert parent error log
+                    let show_hide_log = 'yes'
+                    let type = 'migrated_parent_minQty_error'
+                    let log_msg = 'Parent could not be migrated because of min qty.'
+                    let order_mode = parentOrder[0]['application_mode']
+                    create_orders_history_log(parentOrder[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, parentOrder[0]['created_date'])
+                }
+
+            }else{
+                //create new parent
+
+                // console.log(' creating newww parent ')
+
+                if (minReqQty <= buy_order[0]['quantity']) {
+
+                    // console.log(' newww parent qty ok ')
+
+                    let where1 = {
+                        'admin_id': buy_order[0]['admin_id'],
+                        'application_mode': buy_order[0]['application_mode'],
+                        'order_level': buy_order[0]['level'],
+                        'symbol': buy_order[0]['symbol'],
+                        'parent_status': 'parent',
+                        'status': { '$ne': 'canceled' },
+                    }
+                    let set1 = {
+                        '$set': {
+                            'market_value': '',
+                            'price': '',
+                            'quantity': quantity,
+                            'usd_worth': usd_worth,
+                            'pick_parent': 'yes',
+                            'defined_sell_percentage': buy_order[0]['defined_sell_percentage'],
+                            'sell_profit_percent': buy_order[0]['defined_sell_percentage'],
+                            'current_market_price': currentMarketPrice,
+                            'stop_loss_rule': typeof buy_order[0]['stop_loss'] != 'undefined' && buy_order[0]['stop_loss'] == 'yes' ? 'custom_stop_loss' : '',
+                            'custom_stop_loss_percentage': typeof buy_order[0]['custom_stop_loss_percentage'] != 'undefined' ? buy_order[0]['custom_stop_loss_percentage'] : '',
+                            'loss_percentage': typeof buy_order[0]['custom_stop_loss_percentage'] != 'undefined' ? buy_order[0]['custom_stop_loss_percentage'] : '',
+                            'activate_stop_loss_profit_percentage': 100,
+                            'lth_functionality': typeof buy_order[0]['lth_functionality'] != 'undefined' ? buy_order[0]['lth_functionality'] : '',
+                            'lth_profit': typeof buy_order[0]['lth_profit'] != 'undefined' ? buy_order[0]['lth_profit'] : '',
+                            'stop_loss': typeof buy_order[0]['stop_loss'] != 'undefined' ? buy_order[0]['stop_loss'] : '',
+                            'un_limit_child_orders': 'no',
+                            'modified_date': new Date(),
+                            'is_sell_order': 'no',
+                            'sell_price': '',
+                            'randomize_sort': (Math.floor(Math.random() * (1000 - 0 + 1)) + 0),
+                            'last_trade_buy_price': last_trade_buy_price,
+                            'last_trade_sell_price': last_trade_sell_price,
+                            'last_trade_pl': last_trade_pl,
+                            'last_trade_pl_status': last_trade_pl_status,
+                            'migrated_parent': 'yes',
+                        }
+                    }
+
+                    let upsert1 = {
+                        'upsert': true
+                    }
+                    // continue
+                    db.collection('buy_orders_kraken').updateOne(where1, set1, upsert1, async function (err, result) {
+                        if (err) throw err;
+                        if (result.upsertedCount > 0) {
+                            let remainingFields = {
+                                'market_value': '',
+                                'price': '',
+                                'status': 'new',
+                                'pause_status': 'play',
+                                'created_date': set1['$set']['modified_date'],
+                            }
+                            //get Id and update remaining fields
+                            // console.log('Inserted_id ', result.upsertedId._id)
+                            db.collection('buy_orders_kraken').updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields })
+
+                            // //TODO: insert parent creation log
+                            // let show_hide_log = 'yes'
+                            // let type = 'parent_created_by_ATG'
+                            // let log_msg = 'Parent created from auto trade generator.'
+                            // let order_mode = application_mode
+                            // create_orders_history_log(result.upsertedId._id, log_msg, type, show_hide_log, exchange, order_mode, remainingFields['created_date'])
+
+                        } else if (result.modifiedCount > 0) {
+                            
+
+                            db.collection('buy_orders_kraken').find(where1).limit(1).toArray(async function (err, result2) {
+                                if (err) throw err;
+                                if (result2.length > 0) {
+                                    // console.log('modified_id ', String(result2[0]['_id']))
+
+                                    // //TODO: insert parent creation log
+                                    // let show_hide_log = 'yes'
+                                    // let type = 'parent_updated_by_ATG_manually'
+                                    // let log_msg = 'Parent updated from auto trade generator manually.'
+                                    // let order_mode = application_mode
+                                    // create_orders_history_log(result2[0]['_id'], log_msg, type, show_hide_log, exchange, order_mode, result2[0]['created_date'])
+
+                                }
+                            })
+
+                        }
+                    })
+
+                }else{
+
+                    // console.log(' newww parent qty issue ')
+
+                    //TODO: insert parent error log
+                    let show_hide_log = 'yes'
+                    let type = 'migrated_parent_minQty_error'
+                    let log_msg = 'Parent could not be migrated because of min qty.'
+                    let order_mode = buy_order[0]['application_mode']
+                    create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, buy_order[0]['created_date'])
+                }
+                
+            } 
+
+            
+            buy_order = await db.collection('buy_orders').find({ '_id': new ObjectID(String(order_id)) }).toArray()
+            if (buy_order.length > 0) {
+                //add field so button not show again
+                await db.collection('buy_orders').updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'migrated_parent': 'yes'}}) 
+            } else {
+                buy_order = await db.collection('sold_buy_orders').find({ '_id': new ObjectID(String(order_id)) }).toArray()
+                //add field so button not show again
+                await db.collection('sold_buy_orders').updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'migrated_parent': 'yes' } })
+            }
+
+        }
+
+        resolve(true)
+    })
+}
+
+async function verify_migrate_user_api_key(user_id){
+    let reqObj = {
+        'type': 'POST',
+        'url': 'https://app.digiebot.com/admin/api_calls/verify_api_key_secret',
+        'payload': {
+            'user_id': user_id,
+            'exchange': 'binance'
+        },
+    }
+    let result = await customApiRequest(reqObj)
+    return result.status && result.body['status'] ? true : false
+}
+
+async function is_sell_migrate_order_normally(order_id){
+
+    //get order
+    return new Promise(async resolve => {
+
+        const db = await conn
+
+        let order_status = ''
+        let buy_order = []
+        //get order and check if it's open or sold
+        buy_order = await db.collection('buy_orders').find({ '_id': new ObjectID(String(order_id)) }).toArray()
+        if (buy_order.length > 0) {
+            order_status = 'open'
+         
+            //check this order owner api key if valid then send response true to sell normally else move order to sold collection from here
+            if (await verify_migrate_user_api_key(buy_order[0]['admin_id'])){
+                resolve(true)
+            }else{
+
+                //update fields and move order to sold then delete from buy collection
+                let pricesObj = await get_current_market_prices('binance', [])
+                let symbol = buy_order[0]['symbol']
+                let updObj = {
+                    'is_sell_order': 'sold',
+                    'status': 'FILLED',
+                    'market_sold_price': pricesObj[symbol],
+                    'modified_date': new Date(),
+                }
+
+                //update fields to sell
+                await db.collection('buy_orders').updateOne({ '_id': buy_order[0]['_id'] }, { '$set': updObj})
+
+                //move to sold collection
+                buy_order = await db.collection('buy_orders').find({ '_id': buy_order[0]['_id'] }).toArray()
+                await db.collection('sold_buy_orders').insertOne(buy_order[0])
+                
+                //delete from buy collection
+                // await db.collection('buy_orders').deleteOne({ '_id': buy_order[0]['_id'] })
+
+                resolve(false)
+            }
+        }else{
+            resolve(false)
+        }
+    })
+
+}
+
+
+router.post('/test_user_api_key', async (req, resp)=>{
+    let result = await verify_migrate_user_api_key('5c09134cfc9aadaac61dd09c')
+    resp.send({result:result})
+})
 
 
 //function for updating any collection the base of collection and filtes
