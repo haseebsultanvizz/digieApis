@@ -4791,7 +4791,12 @@ router.post('/sellOrderManually', async (req, resp) => {
                 make_migrated_parent(orderId)
             }else{
                 if (await is_sell_migrate_order_normally(String(orderId))){
-                    make_migrated_parent(orderId)
+                    let tempRes = await make_migrated_parent(orderId)
+                    if (tempRes){
+                        //sell normally
+                    }else{
+                        sellNow = false    
+                    }
                 }else{
                     make_migrated_parent(orderId)
                     sellNow = false
@@ -4965,6 +4970,9 @@ async function make_migrated_parent(order_id, action=''){
 
         const db = await conn
 
+        let successFlag = false
+        let minQtyMigrationIssue = true
+
         let order_status = ''
         let buy_order = []
         //get order and check if it's open or sold
@@ -5076,6 +5084,9 @@ async function make_migrated_parent(order_id, action=''){
                     }else{
                         await db.collection('buy_orders_kraken').insertOne(parentOrder[0])
                     }
+
+                    successFlag = true
+                    minQtyMigrationIssue = false
                 }else{
 
                     // console.log(' parent qty issue')
@@ -5084,8 +5095,9 @@ async function make_migrated_parent(order_id, action=''){
                     let show_hide_log = 'yes'
                     let type = 'migrated_parent_minQty_error'
                     let log_msg = 'Parent could not be migrated because of min qty.'
-                    let order_mode = parentOrder[0]['application_mode']
-                    create_orders_history_log(parentOrder[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, parentOrder[0]['created_date'])
+                    let order_mode = buy_order[0]['application_mode']
+                    // create_orders_history_log(parentOrder[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, parentOrder[0]['created_date'])
+                    create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, buy_order[0]['created_date'])
                 }
 
             }else{
@@ -5181,6 +5193,8 @@ async function make_migrated_parent(order_id, action=''){
                         }
                     })
 
+                    successFlag = true
+                    minQtyMigrationIssue = false
                 }else{
 
                     // console.log(' newww parent qty issue ')
@@ -5196,19 +5210,28 @@ async function make_migrated_parent(order_id, action=''){
             } 
 
             
+            let updddtemp = { 
+                '$set': { 
+                    'migrated_parent': 'yes',
+                } 
+            }
+            if (minQtyMigrationIssue){
+                updddtemp['$set']['minQtyMigrationIssue'] = 'yes'
+            }
+
             buy_order = await db.collection('buy_orders').find({ '_id': new ObjectID(String(order_id)) }).toArray()
             if (buy_order.length > 0) {
                 //add field so button not show again
-                await db.collection('buy_orders').updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'migrated_parent': 'yes'}}) 
+                await db.collection('buy_orders').updateOne({ '_id': new ObjectID(String(order_id)) }, updddtemp) 
             } else {
                 buy_order = await db.collection('sold_buy_orders').find({ '_id': new ObjectID(String(order_id)) }).toArray()
                 //add field so button not show again
-                await db.collection('sold_buy_orders').updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'migrated_parent': 'yes' } })
+                await db.collection('sold_buy_orders').updateOne({ '_id': new ObjectID(String(order_id)) }, updddtemp)
             }
 
         }
 
-        resolve(true)
+        resolve(successFlag)
     })
 }
 

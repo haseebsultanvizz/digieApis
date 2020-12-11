@@ -323,4 +323,14 @@ Content-Type: application/json
     "user_id": "5c09134cfc9aadaac61dd09c"
 }
 
+
+###
+
+POST http://34.199.235.34:3200/updateUserBalance
+Content-Type: application/json
+
+{ 
+    "user_id": "5c09137bfc9aadaac61dd0ae"
+}
+
 ###
