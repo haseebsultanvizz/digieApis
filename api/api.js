@@ -4776,6 +4776,9 @@ router.post('/sellOrderManually', async (req, resp) => {
     let tab = typeof req.body.tab != 'undefined' && req.body.tab != '' ? req.body.tab : '';
     let sellNow = true
 
+
+    let responseMessage = ''
+
     if (action != '') {
         if (action == 'isResumeExchange') {
             //only move
@@ -4794,7 +4797,9 @@ router.post('/sellOrderManually', async (req, resp) => {
                     let tempRes = await make_migrated_parent(orderId)
                     if (tempRes){
                         //sell normally
+                        responseMessage = 'Order migrated successfully'
                     }else{
+                        responseMessage = 'Order could not be migrated Because of min qty issue'
                         sellNow = false    
                     }
                 }else{
@@ -4806,6 +4811,7 @@ router.post('/sellOrderManually', async (req, resp) => {
         }
     }
 
+    var ordeResp = ''
     if (sellNow){
         let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         //get buy order detail by id
@@ -4896,9 +4902,14 @@ router.post('/sellOrderManually', async (req, resp) => {
         } //Order Arr End 
     }
 
-    resp.status(200).send({
-        message: (action == '' ? ordeResp : 'Action successful')
-    });
+
+    let responseObj = {
+        'status': sellNow ? true : false,
+        'message': responseMessage != '' ? responseMessage : (action == '' ? ordeResp : 'Action successful'), 
+        'showAlert': responseMessage != '' ? true : false
+    }
+
+    resp.status(200).send(responseObj);
 
 }) //End of sellOrderManually
 
