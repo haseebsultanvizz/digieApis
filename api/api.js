@@ -4985,7 +4985,7 @@ async function make_migrated_parent(order_id, action=''){
         }
 
         if (order_status != ''){
-            let notExistingCoinsArr = ['XMRBTC', 'ZENBTC', 'XEMBTC']
+            let notExistingCoinsArr = ['XMRBTC', 'ZENBTC', 'XEMBTC', 'QTUMUSDT', 'NEOUSDT', 'NEOBTC', 'EOSUSDT']
             if (notExistingCoinsArr.includes(buy_order[0]['symbol'])){
                 resolve(false)
             }
@@ -5213,6 +5213,7 @@ async function make_migrated_parent(order_id, action=''){
             let updddtemp = { 
                 '$set': { 
                     'migrated_parent': 'yes',
+                    'modified_date': new Date(),
                 } 
             }
             if (minQtyMigrationIssue){
@@ -15832,6 +15833,10 @@ async function getBnbBuySettings(user_id, exchange) {
             resolve(settings)
         })
     })
+}
+
+async function setDafaultBnbBuy(user_id){
+    //if bnb auto buy settings exists then do nothing else set default settings 
 }
 
 // ****************** END BNB auto Buy ****************************** //
