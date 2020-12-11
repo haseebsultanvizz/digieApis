@@ -4993,14 +4993,14 @@ async function make_migrated_parent(order_id, action=''){
             //set new fields to add in parent
             var pricesObj = await get_current_market_prices('binance', [])
             var currSymbol = buy_order[0]['symbol']
-            var currentMarketPrice = order_status == 'open' ? pricesObj[currSymbol] : buy_order[0]['market_sold_price'] 
+            var orderSellPrice = order_status == 'open' ? pricesObj[currSymbol] : buy_order[0]['market_sold_price'] 
             var orderPurchasePrice = buy_order[0]['purchased_price']
             //save pl before migration
-            var pl_before_migration = calculate_percentage(orderPurchasePrice, currentMarketPrice)
-            var pl_status_before_migration = (currentMarketPrice > orderPurchasePrice) ? 'positive' : 'negative'
+            var pl_before_migration = calculate_percentage(orderPurchasePrice, orderSellPrice) 
+            var pl_status_before_migration = (orderSellPrice > orderPurchasePrice) ? 'positive' : 'negative'
 
             last_trade_buy_price = parseFloat(orderPurchasePrice)
-            last_trade_sell_price = parseFloat(currentMarketPrice)
+            last_trade_sell_price = parseFloat(orderSellPrice)
             last_trade_pl = parseFloat(pl_before_migration)
             last_trade_pl_status = pl_status_before_migration
             
@@ -5066,7 +5066,7 @@ async function make_migrated_parent(order_id, action=''){
                         'admin_id': parentOrder[0]['admin_id'],
                         'order_mode': parentOrder[0]['application_mode'],
                         'application_mode': parentOrder[0]['application_mode'],
-                        'order_level': parentOrder[0]['level'],
+                        'order_level': parentOrder[0]['order_level'],
                         'symbol': parentOrder[0]['symbol'],
                         'parent_status': 'parent',
                         'status': { '$ne': 'canceled' },
@@ -5078,11 +5078,40 @@ async function make_migrated_parent(order_id, action=''){
                             'last_trade_sell_price': last_trade_sell_price,
                             'last_trade_pl': last_trade_pl,
                             'last_trade_pl_status': last_trade_pl_status,
+                            'status': 'new',
                             'migrated_parent': 'yes',
+                            'modified_date': new Date(),
                         }
                         await db.collection('buy_orders_kraken').updateOne({ '_id': kraken_parent[0]['_id'] }, { '$set': updateParent})
+
+                        
+                        //TODO: insert parent error log
+                        let show_hide_log = 'yes'
+                        let type = 'migrated_parent'
+                        let log_msg = 'Parent has been migrated.'
+                        let order_mode = kraken_parent[0]['application_mode']
+                        create_orders_history_log(kraken_parent[0]['_id'], log_msg, type, show_hide_log, 'kraken', order_mode, kraken_parent[0]['created_date'])
+
                     }else{
-                        await db.collection('buy_orders_kraken').insertOne(parentOrder[0])
+
+                        parentOrder[0]['status'] = 'new'
+                        parentOrder[0]['migrated_parent'] = 'yes'
+                        parentOrder[0]['created_date'] = new Date()
+                        parentOrder[0]['modified_date'] = new Date()
+
+                        await db.collection('buy_orders_kraken').insertOne(parentOrder[0], async (err, result) => {
+                            if (err) {
+                                console.log(err)
+                            } else {
+                                //TODO: insert parent error log
+                                let show_hide_log = 'yes'
+                                let type = 'migrated_parent'
+                                let log_msg = 'Parent has been migrated.'
+                                let order_mode = parentOrder[0]['application_mode']
+                                create_orders_history_log(parentOrder[0]['_id'], log_msg, type, show_hide_log, 'kraken', order_mode, parentOrder[0]['created_date'])
+                            }
+                        })
+
                     }
 
                     successFlag = true
@@ -5165,12 +5194,12 @@ async function make_migrated_parent(order_id, action=''){
                             // console.log('Inserted_id ', result.upsertedId._id)
                             db.collection('buy_orders_kraken').updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields })
 
-                            // //TODO: insert parent creation log
-                            // let show_hide_log = 'yes'
-                            // let type = 'parent_created_by_ATG'
-                            // let log_msg = 'Parent created from auto trade generator.'
-                            // let order_mode = application_mode
-                            // create_orders_history_log(result.upsertedId._id, log_msg, type, show_hide_log, exchange, order_mode, remainingFields['created_date'])
+                            //TODO: insert parent creation log
+                            let show_hide_log = 'yes'
+                            let type = 'migrated_parent'
+                            let log_msg = 'Parent has been migrated.'
+                            let order_mode = application_mode
+                            create_orders_history_log(result.upsertedId._id, log_msg, type, show_hide_log, 'kraken', order_mode, remainingFields['created_date'])
 
                         } else if (result.modifiedCount > 0) {
                             
@@ -5180,12 +5209,12 @@ async function make_migrated_parent(order_id, action=''){
                                 if (result2.length > 0) {
                                     // console.log('modified_id ', String(result2[0]['_id']))
 
-                                    // //TODO: insert parent creation log
-                                    // let show_hide_log = 'yes'
-                                    // let type = 'parent_updated_by_ATG_manually'
-                                    // let log_msg = 'Parent updated from auto trade generator manually.'
-                                    // let order_mode = application_mode
-                                    // create_orders_history_log(result2[0]['_id'], log_msg, type, show_hide_log, exchange, order_mode, result2[0]['created_date'])
+                                    //TODO: insert parent creation log
+                                    let show_hide_log = 'yes'
+                                    let type = 'migrated_parent'
+                                    let log_msg = 'Parent has been migrated.'
+                                    let order_mode = application_mode
+                                    create_orders_history_log(result2[0]['_id'], log_msg, type, show_hide_log, exchange, order_mode, result2[0]['created_date'])
 
                                 }
                             })
