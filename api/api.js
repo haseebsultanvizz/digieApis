@@ -5092,6 +5092,13 @@ async function make_migrated_parent(order_id, action=''){
                         let order_mode = kraken_parent[0]['application_mode']
                         create_orders_history_log(kraken_parent[0]['_id'], log_msg, type, show_hide_log, 'kraken', order_mode, kraken_parent[0]['created_date'])
 
+                        //TODO:  log
+                        let show_hide_log = 'yes'
+                        let type = 'migrated_parent_'
+                        let log_msg = 'Parent migrated successfully.'
+                        let order_mode = buy_order[0]['application_mode']
+                        create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, buy_order[0]['created_date'])
+
                     }else{
 
                         parentOrder[0]['status'] = 'new'
@@ -5109,6 +5116,13 @@ async function make_migrated_parent(order_id, action=''){
                                 let log_msg = 'Parent has been migrated.'
                                 let order_mode = parentOrder[0]['application_mode']
                                 create_orders_history_log(parentOrder[0]['_id'], log_msg, type, show_hide_log, 'kraken', order_mode, parentOrder[0]['created_date'])
+
+                                //TODO:  log
+                                let show_hide_log = 'yes'
+                                let type = 'migrated_parent_'
+                                let log_msg = 'Parent migrated successfully.'
+                                let order_mode = buy_order[0]['application_mode']
+                                create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, buy_order[0]['created_date'])
                             }
                         })
 
@@ -5165,6 +5179,7 @@ async function make_migrated_parent(order_id, action=''){
                             'stop_loss': typeof buy_order[0]['stop_loss'] != 'undefined' ? buy_order[0]['stop_loss'] : '',
                             'un_limit_child_orders': 'no',
                             'modified_date': new Date(),
+                            'created_date': new Date(),
                             'is_sell_order': 'no',
                             'sell_price': '',
                             'randomize_sort': (Math.floor(Math.random() * (1000 - 0 + 1)) + 0),
@@ -5173,6 +5188,7 @@ async function make_migrated_parent(order_id, action=''){
                             'last_trade_pl': last_trade_pl,
                             'last_trade_pl_status': last_trade_pl_status,
                             'migrated_parent': 'yes',
+                            'status': 'new',
                         }
                     }
 
@@ -5201,9 +5217,15 @@ async function make_migrated_parent(order_id, action=''){
                             let order_mode = application_mode
                             create_orders_history_log(result.upsertedId._id, log_msg, type, show_hide_log, 'kraken', order_mode, remainingFields['created_date'])
 
+                            //TODO:  log
+                            let show_hide_log = 'yes'
+                            let type = 'migrated_parent_'
+                            let log_msg = 'Parent migrated successfully.'
+                            let order_mode = buy_order[0]['application_mode']
+                            create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, buy_order[0]['created_date'])
+
                         } else if (result.modifiedCount > 0) {
                             
-
                             db.collection('buy_orders_kraken').find(where1).limit(1).toArray(async function (err, result2) {
                                 if (err) throw err;
                                 if (result2.length > 0) {
@@ -5215,6 +5237,13 @@ async function make_migrated_parent(order_id, action=''){
                                     let log_msg = 'Parent has been migrated.'
                                     let order_mode = application_mode
                                     create_orders_history_log(result2[0]['_id'], log_msg, type, show_hide_log, exchange, order_mode, result2[0]['created_date'])
+
+                                    //TODO:  log
+                                    let show_hide_log = 'yes'
+                                    let type = 'migrated_parent_'
+                                    let log_msg = 'Parent migrated successfully.'
+                                    let order_mode = buy_order[0]['application_mode']
+                                    create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, buy_order[0]['created_date'])
 
                                 }
                             })
