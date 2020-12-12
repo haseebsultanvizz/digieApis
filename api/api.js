@@ -5043,6 +5043,7 @@ async function migrate_order(order_id, exchange='', action=''){
             buy_order[0]['pl_before_migration'] = parseFloat(pl_before_migration)
             buy_order[0]['pl_status_before_migration'] = pl_status_before_migration
             buy_order[0]['shifted_order'] = 'yes'
+            buy_order[0]['modified_date'] = new Date()
 
             //move buy order to buy_orders_kraken
             await db.collection('buy_orders_kraken').insertOne(buy_order[0])
@@ -5069,6 +5070,24 @@ async function migrate_order(order_id, exchange='', action=''){
                 if (sell_order.length > 0){
                     await db.collection('orders_kraken').insertOne(sell_order[0])
                 }
+            }
+
+            if (action == 'isResumeExchange') {
+
+                //update fields and move order to sold then delete from buy collection
+                let pricesObj = await get_current_market_prices('binance', [])
+                let symbol = buy_order[0]['symbol'] 
+                buy_order[0]['is_sell_order'] = 'sold'
+                buy_order[0]['status'] = 'FILLED'
+                buy_order[0]['market_sold_price'] = pricesObj[symbol]
+                buy_order[0]['modified_date'] = new Date()
+
+                //move to sold collection
+                await db.collection('sold_buy_orders').insertOne(buy_order[0])
+
+                //delete from buy collection
+                await db.collection('buy_orders').deleteOne({ '_id': buy_order[0]['_id'] })
+
             }
     
         }
