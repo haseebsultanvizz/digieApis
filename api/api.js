@@ -4782,7 +4782,12 @@ router.post('/sellOrderManually', async (req, resp) => {
     if (action != '') {
         if (action == 'isResumeExchange') {
             //only move
-            await migrate_order(String(orderId), exchange, action)
+            if (await checkQuanity(orderId)){
+                await migrate_order(String(orderId), exchange, action)
+                responseMessage = 'Order shifted successfully'
+            }else{
+                responseMessage = 'Order not shifted becuse of min qty issue'
+            }
             sellNow = false
         } else if (action == 'isResume') {
             //move then sell
@@ -4902,6 +4907,9 @@ router.post('/sellOrderManually', async (req, resp) => {
         } //Order Arr End 
     }
 
+    if (responseMessage == 'Order shifted successfully'){
+        sellNow = true
+    }
 
     let responseObj = {
         'status': sellNow ? true : false,
@@ -4913,6 +4921,84 @@ router.post('/sellOrderManually', async (req, resp) => {
 
 }) //End of sellOrderManually
 
+
+async function checkQuanity(order_id){
+
+    return new Promise(async resolve=>{
+
+        const db = await conn
+
+        let where = {
+            '_id': new ObjectID(String(order_id))
+        }
+        let buy_order = await db.collection('buy_orders').find(where).toArray()
+
+        if (buy_order.length > 0){
+
+            //check if parent of that symbol and level exists, if exists insert the following fields in it else create a new parent
+            var coin = buy_order[0]['symbol']
+            var whereCoins = { '$in': [coin, 'BTCUSDT'] }
+            var coinData = await listmarketPriceMinNotationCoinArr(whereCoins, 'kraken')
+            var BTCUSDTPRICE = parseFloat(coinData['BTCUSDT']['currentmarketPrice'])
+
+            var currentMarketPrice = parseFloat(coinData[coin]['currentmarketPrice'])
+            var marketMinNotation = coinData[coin]['marketMinNotation']
+            var marketMinNotationStepSize = coinData[coin]['marketMinNotationStepSize']
+            var toFixedNum = 6
+
+            //find min required quantity
+            var extra_qty_percentage = 30;
+            var extra_qty_val = 0;
+            extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
+            var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
+            var minReqQty = 0;
+            minReqQty = (calculatedMinNotation / currentMarketPrice);
+
+            if (true) {
+                // if (exchange == 'kraken') {
+                minReqQty = calculatedMinNotation
+                toFixedNum = 6
+            } else {
+                // toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+            }
+
+            minReqQty += marketMinNotationStepSize
+            minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
+
+            //TODO: find one usd worth of quantity
+            let selectedCoin = coin;
+
+            let splitArr = selectedCoin.split('USDT');
+            var quantity =  buy_order[0]['quantity']
+            var usd_worth = splitArr[1] == '' ? quantity * currentMarketPrice : quantity * currentMarketPrice * BTCUSDTPRICE
+            quantity = parseFloat(parseFloat(quantity).toFixed(toFixedNum))
+            usd_worth = parseFloat(usd_worth.toFixed(2))
+
+            //add new field to hide button
+            await db.collection('buy_orders').updateOne(where, {'$set':{'order_shifted_resume_exchange':'yes'}})
+
+            if (minReqQty <= quantity) {
+
+                resolve(true)
+
+            }else{
+                //add log can not convert because min qty issue
+                var log_msg = 'Can not shift order because of min qty issue'
+                var type = 'migrated_order_min_qty_issue'
+                var show_hide_log = 'yes'
+                var order_created_date = ((buy_order.length > 0) ? buy_order[0]['created_date'] : new Date())
+                var order_mode = ((buy_order.length > 0) ? buy_order[0]['application_mode'] : 'test')
+                await create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, order_created_date)
+                //end save log
+                resolve(false)
+            }
+
+        }else{
+            resolve(false)
+        }
+        
+    })
+}
 
 async function migrate_order(order_id, exchange='', action=''){
 
@@ -4927,13 +5013,13 @@ async function migrate_order(order_id, exchange='', action=''){
         if (buy_order.length > 0){
 
             //insert processed field flag ==> 'trade_migrated': 'yes'
-            buy_orders[0]['trade_migrated'] = 'yes'
+            buy_order[0]['trade_migrated'] = 'yes'
             await db.collection('buy_orders').updateOne({ '_id': buy_order[0]['_id'] }, { '$set': {'trade_migrated': 'yes'}})
 
             //save log
             var log_msg = 'Order migrated'
             if (action == 'isResumeExchange'){
-                log_msg = 'Order migrated'
+                log_msg = 'Order shifted successfully'
             }else if(action == 'isResume'){
                 log_msg = 'Order migrated and sold'
             }
@@ -4956,9 +5042,25 @@ async function migrate_order(order_id, exchange='', action=''){
             
             buy_order[0]['pl_before_migration'] = parseFloat(pl_before_migration)
             buy_order[0]['pl_status_before_migration'] = pl_status_before_migration
+            buy_order[0]['shifted_order'] = 'yes'
 
             //move buy order to buy_orders_kraken
             await db.collection('buy_orders_kraken').insertOne(buy_order[0])
+
+            //save log
+            var log_msg = 'Order migrated'
+            if (action == 'isResumeExchange') {
+                log_msg = 'Shifted order'
+            } else if (action == 'isResume') {
+                log_msg = 'Order migrated and sold'
+            }
+
+            var type = 'migrated_order'
+            var show_hide_log = 'yes'
+            var order_created_date = ((buy_order.length > 0) ? buy_order[0]['created_date'] : new Date())
+            var order_mode = ((buy_order.length > 0) ? buy_order[0]['application_mode'] : 'test')
+            await create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'kraken', order_mode, order_created_date)
+            //end save log
     
             if (typeof buy_order[0]['sell_order_id'] != 'undefined' && buy_order[0]['sell_order_id'] != ''){
                 
