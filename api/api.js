@@ -16135,10 +16135,52 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                     }
                 })
             } else if (exchange == 'bam') {
-                resolve({
-                    'status': false,
-                    'message': 'Buy/sell comming soon on Bam'
+
+                var options = {
+                    method: 'POST',
+                    url: 'http://52.22.53.12:3600/buySellPostBAM',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    json: reqData
+                }
+                request(options, function (error, response, body) {
+                    if (error) {
+                        //Do nothing
+                        console.log(error)
+
+                        resolve({
+                            'status': false,
+                            'message': 'An error occured'
+                        })
+                    } else {
+                        if (body.success == 'true') {
+
+                            body.reqData = reqData
+                            //Save History
+                            saveBuySellCoinBalanceHistory(dataArr.user_id, exchange, body, dataArr.action)
+                            //Update User Balance
+                            update_user_balance(dataArr.user_id)
+
+                            resolve({
+                                'status': true,
+                                'message': dataArr.action == 'buy' ? 'Balance buy successfull' : 'Balance sell successfull'
+                            })
+                        } else {
+                            // console.log(body)
+                            resolve({
+                                'status': false,
+                                'response': body,
+                                'message': body.msg
+                            })
+                        }
+                    }
                 })
+
+                // resolve({
+                //     'status': false,
+                //     'message': 'Buy/sell comming soon on Bam'
+                // })
             } else if (exchange == 'kraken'){
 
                 var options = {
