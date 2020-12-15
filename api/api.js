@@ -4254,6 +4254,10 @@ router.post('/makeCostAvg', async (req, resp) => {
                 }
             }
 
+            if (tab == 'lthTab'){
+                update['$set']['avg_sell_price'] = parseFloat(sell_price)
+            }
+
             let result = await db.collection(collectionName).updateOne(where, update)
             
             if (tab == 'openTab' && result.modifiedCount > 0){
