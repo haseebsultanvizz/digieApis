@@ -445,6 +445,14 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.exchangesArr = exchangesArr;
                                 respObj.default_exchange = typeof userArr['default_exchange'] != 'undefined' && userArr['default_exchange'] != '' ? userArr['default_exchange'] : (exchangesArr.length > 0 ? exchangesArr[0] : 'binance');
 
+
+                                if (typeof userArr['package_id'] != 'undefined' && userArr['package_id'] != ''){
+                                    let myPackage = await db.collection('dynamic_packages').find({ '_id': userArr['package_id']}).toArray();
+                                    if (myPackage.length > 0){
+                                        respObj['myPackage'] = myPackage[0] 
+                                    }
+                                }
+
                                 //Update last login time
                                 db.collection('users').updateOne({
                                     '_id': userArr['_id']
@@ -626,8 +634,52 @@ router.get('/test_test', async (req,res)=>{
     
     // let result = await get_all_users_current_trading_points()
 
-    let abc = '<div>Waleed Bhai ki frmaish!</div>'
-    res.write("<!DOCTYPE HTML><html><head>city</head><body>"+abc+"</body></html>")
+    // let abc = '<div>Waleed Bhai ki frmaish!</div>'
+    // res.write("<!DOCTYPE HTML><html><head>city</head><body>"+abc+"</body></html>")
+
+    const db = await conn
+
+    let collection_name = 'dynamic_packages'
+
+    var insData = [
+        {
+            'name': 'Digie premium trading',
+            'slug': 'digiePremiumTrading',
+            'status': 0,
+            'description': 'All features included',
+            'user_id': 'global',
+            'features': [
+                'autoSelfTrading',
+                'autoTrading',
+                'atg',
+                'costAvg',
+                'lthPause',
+                'resumePause',
+            ],
+            'created_date': new Date(),
+            'updated_date': new Date(),
+        },
+        {
+            'name': 'Auto self trading',
+            'slug': 'autoSelfTrading',
+            'status': 0,
+            'description': 'Only auto self trading feature is enabled',
+            'user_id': 'global',
+            'features': [
+                'manualTrading',
+            ],
+            'created_date': new Date(),
+            'updated_date': new Date(),
+        }
+    ]
+
+    
+    // let result = await db.collection(collection_name).insertMany(insData)
+
+    // console.log(result)
+
+    // res.send(result)
+    res.send()
 
 })
 
