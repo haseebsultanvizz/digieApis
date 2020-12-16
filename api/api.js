@@ -649,12 +649,27 @@ router.get('/test_test', async (req,res)=>{
             'description': 'All features included',
             'user_id': 'global',
             'features': [
-                'autoSelfTrading',
-                'autoTrading',
-                'atg',
-                'costAvg',
-                'lthPause',
-                'resumePause',
+                {
+                    'name': 'manualTrading',
+                },
+                {
+                    'name': 'autoSelfTrading',
+                },
+                {
+                    'name': 'autoTrading',
+                },
+                {
+                    'name': 'atg',
+                },
+                {
+                    'name': 'costAvg',
+                },
+                {
+                    'name': 'lthPause',
+                },
+                {
+                    'name': 'resumePause',
+                },
             ],
             'created_date': new Date(),
             'updated_date': new Date(),
@@ -666,7 +681,9 @@ router.get('/test_test', async (req,res)=>{
             'description': 'Only auto self trading feature is enabled',
             'user_id': 'global',
             'features': [
-                'manualTrading',
+                {
+                    'name': 'manualTrading',
+                },
             ],
             'created_date': new Date(),
             'updated_date': new Date(),
@@ -3360,6 +3377,12 @@ router.post('/listOrderListing', async (req, resp) => {
             resumePlClass = resumePL > 0 ? 'success' : 'danger'
             order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"> <b>' + resumePL.toFixed(2) + '%</b></span>'
         }
+
+
+        if (exchange == 'kraken' && typeof orderListing[index]['shifted_order_label'] != 'undefined' && typeof orderListing[index]['shifted_order_label'] != ''){
+            htmlStatus += '<span class="badge badge-info">' + orderListing[index]['shifted_order_label'] + '</span>';
+            htmlStatusArr.push(orderListing[index]['shifted_order_label'])
+        }
         
         // if(postDAta.status == 'new'){
         //     if (typeof orderListing[index].deep_price_on_off != 'undefined' && orderListing[index].deep_price_on_off == 'yes'){
@@ -5099,6 +5122,7 @@ async function migrate_order(order_id, exchange='', action=''){
             buy_order[0]['pl_before_migration'] = parseFloat(pl_before_migration)
             buy_order[0]['pl_status_before_migration'] = pl_status_before_migration
             buy_order[0]['shifted_order'] = 'yes'
+            buy_order[0]['shifted_order_label'] = 'shifted'
             buy_order[0]['modified_date'] = new Date()
 
             //move buy order to buy_orders_kraken
@@ -5250,6 +5274,9 @@ async function make_migrated_parent(order_id, action=''){
                 if (minReqQty <= quantity) {
                     // console.log('creating new parent')
 
+
+
+                    /*
                     let where1 = {
                         'admin_id': parentOrder[0]['admin_id'],
                         'order_mode': parentOrder[0]['application_mode'],
@@ -5315,6 +5342,36 @@ async function make_migrated_parent(order_id, action=''){
                         })
 
                     }
+                    */
+
+                    parentOrder[0]['status'] = 'new'
+                    parentOrder[0]['migrated_parent'] = 'yes'
+                    parentOrder[0]['new_insert'] = 'yes'
+                    parentOrder[0]['created_date'] = new Date()
+                    parentOrder[0]['modified_date'] = new Date()
+
+                    var newObj = Object.assign(parentOrder[0])
+                    delete newObj['_id'] 
+
+                    await db.collection('buy_orders_kraken').insertOne(newObj, async (err, result) => {
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            //TODO: insert parent error log
+                            var show_hide_log = 'yes'
+                            var type = 'migrated_parent'
+                            var log_msg = 'Parent has been migrated.'
+                            var order_mode = parentOrder[0]['application_mode']
+                            create_orders_history_log(result.insertedId, log_msg, type, show_hide_log, 'kraken', order_mode, parentOrder[0]['created_date'])
+
+                            //TODO:  log
+                            var show_hide_log = 'yes'
+                            var type = 'migrated_parent_'
+                            var log_msg = 'Parent migrated successfully.'
+                            var order_mode = buy_order[0]['application_mode']
+                            create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, buy_order[0]['created_date'])
+                        }
+                    })
 
                     successFlag = true
                     minQtyMigrationIssue = false
@@ -5380,6 +5437,7 @@ async function make_migrated_parent(order_id, action=''){
                         }
                     }
 
+                    /*
                     let upsert1 = {
                         'upsert': true
                     }
@@ -5436,6 +5494,35 @@ async function make_migrated_parent(order_id, action=''){
                                 }
                             })
 
+                        }
+                    })
+                    */
+
+                    var newObj = Object.assign(set1['$set'], {
+                        'market_value': '',
+                        'price': '',
+                        'status': 'new',
+                        'pause_status': 'play',
+                        'created_date': set1['$set']['modified_date']})
+                    delete newObj['_id']
+
+                    await db.collection('buy_orders_kraken').insertOne(newObj, async (err, result) => {
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            //TODO: insert parent error log
+                            var show_hide_log = 'yes'
+                            var type = 'migrated_parent'
+                            var log_msg = 'Parent has been migrated.'
+                            var order_mode = parentOrder[0]['application_mode']
+                            create_orders_history_log(result.insertedId, log_msg, type, show_hide_log, 'kraken', order_mode, parentOrder[0]['created_date'])
+
+                            //TODO:  log
+                            var show_hide_log = 'yes'
+                            var type = 'migrated_parent_'
+                            var log_msg = 'Parent migrated successfully.'
+                            var order_mode = buy_order[0]['application_mode']
+                            create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, buy_order[0]['created_date'])
                         }
                     })
 
