@@ -333,6 +333,16 @@ Content-Type: application/json
     "user_id": "5c09137bfc9aadaac61dd0ae"
 }
 
+###
+
+POST https://users.digiebot.com/cronjob/GetUserTotalPoints
+Content-Type: application/json
+Authorization: Basic cG9pbnRTdXBwbHk6NGU0NmQ5OWFjMjJhNGIwYWJlNTc2OGE3OGVlODdiOGM=
+
+{ 
+    "user_id": "5eb5a5a628914a45246bacc6"
+}
+
 
 ###
 

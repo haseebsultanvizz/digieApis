@@ -4861,8 +4861,13 @@ router.post('/sellOrderManually', async (req, resp) => {
     if (action != '') {
         if (action == 'isResumeExchange') {
             //only move
-            if (await checkQuanity(orderId)){
-                await migrate_order(String(orderId), exchange, action)
+            if (await checkQuanity(orderId, tab)){
+
+                if (tab == 'soldTab') {
+                    await migrate_order(String(orderId), exchange, action, tab)
+                }else{
+                    await migrate_order(String(orderId), exchange, action)
+                }
                 responseMessage = 'Order shifted successfully'
             }else{
                 responseMessage = 'Order not shifted becuse of min qty issue'
@@ -5001,16 +5006,23 @@ router.post('/sellOrderManually', async (req, resp) => {
 }) //End of sellOrderManually
 
 
-async function checkQuanity(order_id){
+async function checkQuanity(order_id, tab=''){
 
     return new Promise(async resolve=>{
+
+        var collection_name = 'buy_orders'
+        if (tab == 'soldTab') {
+            collection_name = 'sold_buy_orders'
+        }
+
+        console.log('tab    === ', tab)
 
         const db = await conn
 
         let where = {
             '_id': new ObjectID(String(order_id))
         }
-        let buy_order = await db.collection('buy_orders').find(where).toArray()
+        let buy_order = await db.collection(collection_name).find(where).toArray()
 
         if (buy_order.length > 0){
 
@@ -5054,7 +5066,9 @@ async function checkQuanity(order_id){
             usd_worth = parseFloat(usd_worth.toFixed(2))
 
             //add new field to hide button
-            await db.collection('buy_orders').updateOne(where, {'$set':{'order_shifted_resume_exchange':'yes'}})
+            await db.collection(collection_name).updateOne(where, {'$set':{'order_shifted_resume_exchange':'yes'}})
+
+            console.log(minReqQty, ' <= ', quantity)
 
             if (minReqQty <= quantity) {
 
@@ -5079,21 +5093,26 @@ async function checkQuanity(order_id){
     })
 }
 
-async function migrate_order(order_id, exchange='', action=''){
+async function migrate_order(order_id, exchange='', action='', tab=''){
 
     return new Promise(async resolve =>{
         const db = await conn
+
+        var collection_name = 'buy_orders'
+        if (action == 'isResumeExchange' && tab == 'soldTab') {
+            collection_name = 'sold_buy_orders'
+        }
     
         let where = {
             '_id': new ObjectID(String(order_id))
         }
-        let buy_order = await db.collection('buy_orders').find(where).toArray()
+        let buy_order = await db.collection(collection_name).find(where).toArray()
     
         if (buy_order.length > 0){
 
             //insert processed field flag ==> 'trade_migrated': 'yes'
             buy_order[0]['trade_migrated'] = 'yes'
-            await db.collection('buy_orders').updateOne({ '_id': buy_order[0]['_id'] }, { '$set': {'trade_migrated': 'yes'}})
+            await db.collection(collection_name).updateOne({ '_id': buy_order[0]['_id'] }, { '$set': {'trade_migrated': 'yes'}})
 
             //save log
             var log_msg = 'Order migrated'
@@ -5162,8 +5181,13 @@ async function migrate_order(order_id, exchange='', action=''){
                 buy_order[0]['market_sold_price'] = pricesObj[symbol]
                 buy_order[0]['modified_date'] = new Date()
 
-                //move to sold collection
-                await db.collection('sold_buy_orders').insertOne(buy_order[0])
+
+                if(tab == 'soldTab'){
+                    //DO nothing
+                }else{
+                    //move to sold collection
+                    await db.collection('sold_buy_orders').insertOne(buy_order[0])
+                }
 
                 //delete from buy collection
                 await db.collection('buy_orders').deleteOne({ '_id': buy_order[0]['_id'] })
