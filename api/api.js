@@ -5144,8 +5144,17 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
             buy_order[0]['shifted_order_label'] = 'shifted'
             buy_order[0]['modified_date'] = new Date()
 
+            let insData = Object.assign(buy_order[0])
+
+            if(tab == 'soldTab'){
+                insData['is_sell_order'] = 'yes'
+                insData['status'] = 'FILLED'
+                delete insData['market_sold_price']
+                insData['modified_date'] = new Date()
+            }
+
             //move buy order to buy_orders_kraken
-            await db.collection('buy_orders_kraken').insertOne(buy_order[0])
+            await db.collection('buy_orders_kraken').insertOne(insData)
 
             //save log
             var log_msg = 'Order migrated'
@@ -5221,7 +5230,7 @@ async function make_migrated_parent(order_id, action=''){
         }
 
         if (order_status != ''){
-            let notExistingCoinsArr = ['XMRBTC', 'ZENBTC', 'XEMBTC', 'QTUMUSDT', 'NEOUSDT', 'NEOBTC', 'EOSUSDT']
+            let notExistingCoinsArr = ['ZENBTC', 'XEMBTC', 'QTUMUSDT', 'NEOUSDT', 'NEOBTC', 'EOSUSDT']
             if (notExistingCoinsArr.includes(buy_order[0]['symbol'])){
                 resolve(false)
             }
