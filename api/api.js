@@ -5015,7 +5015,7 @@ async function checkQuanity(order_id, tab=''){
             collection_name = 'sold_buy_orders'
         }
 
-        console.log('tab    === ', tab)
+        // console.log('tab    === ', tab)
 
         const db = await conn
 
@@ -5068,7 +5068,7 @@ async function checkQuanity(order_id, tab=''){
             //add new field to hide button
             await db.collection(collection_name).updateOne(where, {'$set':{'order_shifted_resume_exchange':'yes'}})
 
-            console.log(minReqQty, ' <= ', quantity)
+            // console.log(minReqQty, ' <= ', quantity)
 
             if (minReqQty <= quantity) {
 
@@ -5145,11 +5145,14 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
             buy_order[0]['modified_date'] = new Date()
 
             let insData = Object.assign(buy_order[0])
+            insData['exchange'] = 'kraken'
+            delete insData['is_manual_sold']
 
             if(tab == 'soldTab'){
                 insData['is_sell_order'] = 'yes'
                 insData['status'] = 'FILLED'
                 delete insData['market_sold_price']
+                delete insData['trading_status']
                 insData['modified_date'] = new Date()
             }
 
@@ -5176,7 +5179,17 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
                 let sell_order = await db.collection('orders').find({ '_id': new ObjectID(String(buy_order[0]['sell_order_id']))}).toArray()
                 
                 if (sell_order.length > 0){
-                    await db.collection('orders_kraken').insertOne(sell_order[0])
+                    let insSellOrder = Object.assign(sell_order[0])
+                    insSellOrder['exchange'] = 'kraken'
+                    delete insSellOrder['is_manual_sold']
+
+                    if (tab == 'soldTab') {
+                        insSellOrder['status'] = 'new'
+                        delete insSellOrder['insSellOrder']
+                        insSellOrder['modified_date'] = new Date()
+                    }
+
+                    await db.collection('orders_kraken').insertOne(insSellOrder)
                 }
             }
 
