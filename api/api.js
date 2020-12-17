@@ -5153,7 +5153,40 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
                 insData['status'] = 'FILLED'
                 delete insData['market_sold_price']
                 delete insData['trading_status']
+
+                //unset cost avg fields
+                delete insData['cost_avg']
+                delete insData['show_order']
+                delete insData['cavg_parent']
+                delete insData['cost_avg_buy']
+                delete insData['move_to_cost_avg']
+                delete insData['direct_child_order_id']
+                delete insData['direct_parent_child_id']
+                delete insData['ist_parent_child_buy_id']
+                delete insData['cost_avg_percentage']
+                delete insData['avg_sell_price']
+
+                //set LTH fields if cost avg
+                if (typeof insData['stop_loss_rule'] != 'undefined' && insData['stop_loss_rule'] == 'custom_stop_loss' && !isNaN(parseFloat(insData['custom_stop_loss_percentage']))) {
+                    insData['stop_loss'] = 'yes'
+
+                    let loss_price = (parseFloat(insData['purchased_price']) * parseFloat(insData['custom_stop_loss_percentage'])) / 100;
+
+                    insData['iniatial_trail_stop'] = parseFloat(insData['purchased_price']) - parseFloat(loss_price);
+
+                    //enable LTH functionality
+                    insData['lth_functionality'] = 'yes'
+                    insData['lth_profit'] = 1.5
+
+                } else {
+                    insData['stop_loss'] = 'no'
+                    insData['loss_percentage'] = ''
+                    insData['custom_stop_loss_percentage'] = ''
+                    insData['lth_functionality'] = 'no'
+                    insData['lth_profit'] = ''
+                }
                 insData['modified_date'] = new Date()
+
             }
 
             //move buy order to buy_orders_kraken
@@ -5190,6 +5223,40 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
                     }
 
                     await db.collection('orders_kraken').insertOne(insSellOrder)
+                }else{
+
+                    //Create sellArr
+                    let insSellOrder = {
+                        'admin_id': insData['admin_id'],
+                        'application_mode': insData['application_mode'], 
+                        'buy_order_id': insData['_id'], 
+                        'custom_stop_loss_percentage': insData['custom_stop_loss_percentage'], 
+                        'iniatial_trail_stop': insData['iniatial_trail_stop'],  
+                        'order_level': insData['order_level'], 
+                        'order_mode': insData['order_mode'], 
+                        'order_type': insData['order_type'],
+                        'purchased_price': insData['purchased_price'],
+                        'quantity': insData['quantity'],
+                        'sell_price': insData['sell_price'], 
+                        'defined_sell_percentage': insData['defined_sell_percentage'], 
+                        'sell_profit_percent': insData['defined_sell_percentage'], 
+                        'status': 'new',
+                        'trigger_type': insData['trigger_type'],
+                        'created_date': new Date(), 
+                        'modified_date': new Date()
+                    }
+
+                    if (typeof insData['sell_order_id'] != 'undefined' && insData['sell_order_id'] != ''){
+                        insSellOrder['_id'] = new ObjectID(String(insData['sell_order_id']))
+                    }
+
+                    let insRes = await db.collection('orders_kraken').insertOne(insSellOrder)
+                    if (typeof insRes.insertedId != 'undefined'){
+
+                        await db.collection('buy_orders_kraken').updateOne({ '_id': new ObjectID(String(insData['_id'])) }, { '$set': { 'sell_order_id': insRes.insertedId }})
+
+                    }
+
                 }
             }
 
