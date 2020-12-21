@@ -5179,6 +5179,8 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
                     insData['lth_profit'] = 1.5
 
                 } else {
+                    insData['stop_loss_rule'] = ''
+                    insData['iniatial_trail_stop'] = ''
                     insData['stop_loss'] = 'no'
                     insData['loss_percentage'] = ''
                     insData['custom_stop_loss_percentage'] = ''
