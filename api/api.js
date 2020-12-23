@@ -2017,6 +2017,8 @@ router.post('/editAutoOrder', async (req, resp) => {
 
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     let order = req.body.orderArr;
+
+    // console.log(order)
     order['modified_date'] = new Date()
     let orderId = order['orderId'];
     var exchange = order['exchange'];
@@ -2025,13 +2027,24 @@ router.post('/editAutoOrder', async (req, resp) => {
     //get order detail which you want to update
     var buyOrderArr = await listOrderById(orderId, exchange);
 
-    if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent' && order['cost_avg'] != 'undefined' && order['cost_avg'] != '') {
+    let isParent = false
+    let unsetParentFields = [] 
+    if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent') {
+        isParent = true
+        if (order['cost_avg'] != 'undefined' && order['cost_avg'] == ''){
+            let db1 = await conn
+            let tempCol1 = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+ exchange
+            await db1.collection(tempCol1).updateOne({ '_id': buyOrderArr[0]['_id'] }, { '$unset': { 'cost_avg': '', 'is_sell_order': '', 'is_lth_order':''}})
+        }
+    }
+
+    if (isParent && order['cost_avg'] != 'undefined' && order['cost_avg'] == '') {
 
         // await unsetCostAvgParent(orderId, exchange)
         delete buyOrderArr[0]['cost_avg']
         delete order['cost_avg']
 
-    }else if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
+    } else if (!isParent && buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
         await updateCostAvgChildOrders(orderId, order, exchange)
     }
 
@@ -2150,6 +2163,12 @@ router.post('/editAutoOrder', async (req, resp) => {
             }
         }
 
+    
+    if(isParent){
+        delete order['is_sell_order']
+        delete order['is_lth_order']
+    }
+
     var where = {};
     where['_id'] = new ObjectID(orderId);
     var updPrmise = updateOne(where, order, collection);
@@ -2204,9 +2223,10 @@ router.post('/editAutoOrder', async (req, resp) => {
     var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
     var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
     var promiseLog = create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-    promiseLog.then((callback) => {
-
-    })
+    
+    if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent' && order['cost_avg'] != 'undefined' && order['cost_avg'] == '') {
+            
+    }
 
     //Send Notification
     send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', notification_msg, orderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
