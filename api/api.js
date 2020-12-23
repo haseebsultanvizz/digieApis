@@ -689,14 +689,45 @@ router.get('/test_test', async (req,res)=>{
             'updated_date': new Date(),
         }
     ]
+    // var result = await db.collection(collection_name).insertMany(insData)
 
+    var krakenCoins = ['ADABTC', 'BTCUSDT', 'DASHBTC', 'EOSBTC', 'ETCBTC', 'ETHBTC', 'LINKBTC', 'LTCUSDT', 'QTUMBTC', 'TRXBTC', 'XLMBTC', 'XMRBTC', 'XRPBTC', 'XRPUSDT']
+
+    // var result = await db.collection('buy_orders_kraken').updateMany({ 'pause_parent_cancel':{'$exists':true}}, {'$set':{'pause_parent_cancel': new Date(), 'status':'canceled'}})
     
-    // let result = await db.collection(collection_name).insertMany(insData)
+    var result = await db.collection('buy_orders_kraken').aggregate([
+        // { '$match': { 'admin_id':'5c0915befc9aadaac61dd1b8', 'application_mode': 'live', 'parent_status': 'parent'} },
+        { '$match': { 'application_mode': 'live', 'status': 'canceled', 'parent_status': 'parent'} },
+        // { '$match': { 'application_mode': 'live', 'status': 'canceled', 'parent_status': 'parent'} },
+        { '$sort': { 'created_date': -1 } },
+        // { '$group': { '_id': { 'admin_id': '$admin_id', 'symbol': 'ADABTC', 'order_level': '$order_level' }, 'data': { '$push': '$$ROOT' }, 'sum': { '$sum': 1 } } },
+        { '$group': { '_id': { 'admin_id': '$admin_id', 'symbol': '$symbol', 'order_level': '$order_level' }, 'data': { '$push': '$$ROOT' }, 'sum': { '$sum': 1 } } },
+        { '$match': { 'sum': { '$gte': 1 } } },
+        // { '$project': { '_id': 0, 'data': { '$slice': ["$data", 0, 1] } } },
+        { '$project': { '_id': 0, 'data': { '$slice': ["$data", 0, { '$subtract': [{ '$size': "$data" }, { '$cond': { 'if': { '$gt': [{ '$size': "$data" }, 1] }, 'then': 1, 'else': 0 } }] }] } } },
+        { '$unwind': '$data' },
+        { '$project': { '_id': '$data._id' } },
+        { '$group': { '_id': null, 'parent_ids': { '$push': '$_id' } } },
+        // { '$count': 'total' }
+    ], { allowDiskUse: true }).toArray()
+
 
     // console.log(result)
 
-    // res.send(result)
-    res.send()
+    console.log(result[0]['parent_ids'].length)
+
+    // var result = await db.collection('buy_orders_kraken').updateMany({ '_id': { '$in': result[0]['parent_ids']}}, {'$set':{'revert_canceled_parent_shahzad': new Date(), 'status':'new'}})
+
+
+    // let whereqqq = {
+    //     'application_mode': 'live', 
+    //     'parent_status': 'parent',
+    //     'pause_status': 'pause',
+    // }
+    // var result = await db.collection('buy_orders_kraken').updateMany(whereqqq, {'$set':{'pause_parent_cancel': new Date(), 'status':'canceled'}})
+
+    res.send(result)
+    // res.send()
 
 })
 
@@ -18811,6 +18842,13 @@ router.post('/getParentsGridData', async (req, res) => {
                     '$group': {
                         '_id': { 'symbol': '$symbol' },
                         'levels': { '$push': '$order_level' },
+                        'parentsArr': { '$push': {
+                            'status': '$status',
+                            'pause_status': '$pause_status',
+                            'order_level': '$order_level',
+                            'usd_worth': '$usd_worth',
+                            'quantity': '$quantity',
+                        } },
                     }
                 }
             ]).toArray()
@@ -18822,10 +18860,18 @@ router.post('/getParentsGridData', async (req, res) => {
                 for(let i=0; i<count; i++){
                     let obj = {}
                     obj['coin'] = result[i]['_id']['symbol']
+                    obj['parentsArr'] = result[i]['parentsArr']
                     for(let j=1; j<=20; j++){
                         let currLevel = 'level_'+j
                         let currLevelsArr = result[i]['levels'].filter(item => { return item == currLevel }) 
                         obj[currLevel] = currLevelsArr.length
+                        
+                        let curr_level_play_count = currLevel + '_play'
+                        let curr_level_pause_count = currLevel + '_pause'
+                        let playArr = result[i]['parentsArr'].filter(item => { return (item.order_level == currLevel && item.pause_status == 'play') }) 
+                        let pauseArr = result[i]['parentsArr'].filter(item => { return (item.order_level == currLevel && item.pause_status == 'pause') })
+                        obj[curr_level_play_count] = playArr.length
+                        obj[curr_level_pause_count] = pauseArr.length
                     }
                     resArr.push(obj)
                 }
