@@ -3068,6 +3068,8 @@ router.post('/listOrderListing', async (req, resp) => {
     var currentMarketPrice = 0;
     
     for (let index in orderListing) {
+        
+        // if(index >= 1){break}
 
         let currSymbol = orderListing[index].symbol 
         currentMarketPrice = pricesObj[currSymbol]
@@ -3083,8 +3085,13 @@ router.post('/listOrderListing', async (req, resp) => {
             var convertToBtc = orderListing[index].quantity * order_price;
             let splitArr = orderListing[index].symbol.split('USDT');
             var coinPriceInBtc = ((splitArr.length > 1) && (splitArr[1] == '')) ? ((orderListing[index].quantity) * order_price) : (BTCUSDTPRICE * convertToBtc);
-        }
 
+            //sold usd worth will not change
+            if (orderListing[index]['is_sell_order'] == 'sold' && typeof orderListing[index]['market_sold_price_usd'] != 'undefined' && orderListing[index]['market_sold_price_usd'] != '' && !isNaN(parseFloat(orderListing[index]['market_sold_price_usd']))) {
+                coinPriceInBtc = ((splitArr.length > 1) && (splitArr[1] == '')) ? ((orderListing[index].quantity) * orderListing[index]['market_sold_price']) : orderListing[index]['market_sold_price_usd'];
+            }
+
+        }
 
         var order = orderListing[index];
         order['customCurrentMarketPrice'] = parseFloat(currentMarketPrice).toFixed(8);
@@ -4785,12 +4792,13 @@ router.post('/costAvgChildLogs', async (req, resp) => {
         let promiseResponseArr = await Promise.all(promiseArr)
         
         let promiseArr2 = []
-        promiseResponseArr.map(item => { 
-            let itemObj = item[0]
-            let order_created_date = itemObj['created_date']
-            let order_mode = (typeof itemObj['order_mode'] == 'undefined') ? itemObj['application_mode'] : itemObj['order_mode']
-            
-            promiseArr2.push(costAvgChildLogs(itemObj['_id'], exchange, order_mode, order_created_date))
+        promiseResponseArr.map(item => {
+            if(item.length > 0){
+                let itemObj = item[0]
+                let order_created_date = itemObj['created_date']
+                let order_mode = (typeof itemObj['order_mode'] == 'undefined') ? itemObj['application_mode'] : itemObj['order_mode']
+                promiseArr2.push(costAvgChildLogs(itemObj['_id'], exchange, order_mode, order_created_date))
+            }
         })
     
         let childOrderLogsArr = []
@@ -10144,6 +10152,9 @@ router.post('/remove_error', async (req, resp) => {
                     set1['modified_date'] = new Date()
 
                     update['$set'] = set1
+                    update['$unset'] = {
+                        'is_lth_order':''
+                    }
 
                     let updated = await db.collection(buy_collection).updateOne(where, update)
 
@@ -12438,7 +12449,19 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 let costAvgObj = {}
                 // let profitLoss = obj['is_sell_order'] == 'sold' ? obj['cost_avg_profit'] : getPercentageDiff(currPrice, obj['purchased_price'])
                 let profitLoss = obj['is_sell_order'] == 'sold' ? getPercentageDiff(obj['market_sold_price'], obj['purchased_price']) : getPercentageDiff(currPrice, obj['purchased_price'])
-                let usd_worth = (splitArr[1] == '' ? obj['quantity'] * currPrice : obj['quantity'] * currPrice * BTCUSDTPrice)
+                let usd_worth = 0 
+                
+                //sold usd worth
+                if (obj['is_sell_order'] == 'sold' && typeof obj['market_sold_price_usd'] != 'undefined' && obj['market_sold_price_usd'] != '' && !isNaN(parseFloat(obj['market_sold_price_usd']))){
+                    usd_worth = (splitArr[1] == '' ? obj['quantity'] * obj['market_sold_price'] : obj['market_sold_price_usd'])
+                }else{
+
+                    if (obj['status'] == 'new') {
+                        usd_worth = (splitArr[1] == '' ? obj['quantity'] * currPrice : obj['quantity'] * currPrice * BTCUSDTPrice)
+                    } else {
+                        usd_worth = (splitArr[1] == '' ? obj['quantity'] * obj['purchased_price'] : obj['quantity'] * obj['purchased_price'] * BTCUSDTPrice)
+                    }
+                }
 
                 let statusHtml = ''
                 let type = ''
