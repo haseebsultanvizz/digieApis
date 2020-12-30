@@ -18167,7 +18167,20 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                     // totalTradeAbleInUSD = (btcInTrades * marketPricesArr['BTCUSDT']['currentmarketPrice']) >= tradeLimit ? 0 : ((tradeLimit / marketPricesArr['BTCUSDT']['currentmarketPrice']) - btcInTrades) * marketPricesArr['BTCUSDT']['currentmarketPrice']
 
-                    let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
+                    console.log('Package is GREATER than total balance  ------------------------------------ ')
+
+                    let _70percentOfTotal = (70 * tradeLimit) / 100;
+                    // console.log('_70percentOfTotal   ', _70percentOfTotal, ' -------------    usedUsdWorthInTrades ', usedUsdWorthInTrades)
+                    if (_70percentOfTotal > usedUsdWorthInTrades) {
+                        var trraadeable = tradeLimit - _70percentOfTotal > 0 ? tradeLimit - _70percentOfTotal : 0
+                    } else {
+                        var trraadeable = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
+                    }
+                    console.log('after 70% check remainingTradddeeAble', trraadeable)
+                    
+                    let remainingTradddeeAble = trraadeable
+                    
+                    // let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
 
                     // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
 
@@ -18187,9 +18200,37 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                 } else {
 
-                    let trraadeable = remainaingUsdWorthForTrading >= tradeLimit ? tradeLimit : remainaingUsdWorthForTrading
+                    console.log('Package is GREATER than total balance  ------------------------------------ ')
 
-                    let remainingTradddeeAble = trraadeable - usedUsdWorthInTrades > 0 ? trraadeable - usedUsdWorthInTrades : 0
+                    let _70percentOfTotal = (70 * tradeLimit) / 100;
+                    console.log('_70percentOfTotal   ', _70percentOfTotal, ' -------------    usedUsdWorthInTrades ', usedUsdWorthInTrades)
+
+                    if (_70percentOfTotal > usedUsdWorthInTrades) {
+                        var trraadeable = tradeLimit - _70percentOfTotal > 0 ? tradeLimit - _70percentOfTotal : 0
+                    } else {
+                        var trraadeable = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
+                    }
+                    console.log('after 70% check remainingTradddeeAble', trraadeable)
+
+                    // let trraadeable = remainaingUsdWorthForTrading >= tradeLimit ? tradeLimit : remainaingUsdWorthForTrading
+                    // let remainingTradddeeAble = trraadeable - usedUsdWorthInTrades > 0 ? trraadeable - usedUsdWorthInTrades : 0
+
+
+
+                    let remainingTradddeeAble = trraadeable
+
+                    // let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
+
+                    // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
+
+                    availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
+
+                    availableBTC = parseFloat(availableBTC.toFixed(6))
+
+                    availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble
+
+                    availableUSDT = parseFloat(availableUSDT.toFixed(2))
+
 
                     // console.log('222222222 remainingTradddeeAble ', remainingTradddeeAble)
 
@@ -18485,16 +18526,16 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                     }
                 }
 
-                // console.log("resultttttttttttttt ------------------------------------------------------------- ")
-                // console.log(set)
-                // console.log(settings['user_id'] + " dailyTradeableBTC: " + dailyTradeableBTC + " dailyTradeableUSDT: " + dailyTradeableUSDT)
+                console.log("resultttttttttttttt ------------------------------------------------------------- ")
+                console.log(set)
+                console.log(settings['user_id'] + " dailyTradeableBTC: " + dailyTradeableBTC + " dailyTradeableUSDT: " + dailyTradeableUSDT)
     
-                // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
+                console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
     
-                let updateSettings = await db.collection(collectionName).updateOne(where, set)
+                // let updateSettings = await db.collection(collectionName).updateOne(where, set)
     
-                let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT+")]"
-                saveATGLog(user_id, exchange, 'daily_actual_tradeable_cron', 'update Daily Actual Trade Able Auto Trade Gen ' + msg, application_mode)
+                // let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT+")]"
+                // saveATGLog(user_id, exchange, 'daily_actual_tradeable_cron', 'update Daily Actual Trade Able Auto Trade Gen ' + msg, application_mode)
     
                 // let upd = updateDailyTradeSettings(user_id, exchange, application_mode = 'live')
             }
