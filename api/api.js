@@ -12498,7 +12498,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 if (typeof obj['market_sold_price'] == 'undefined'){
                     obj['market_sold_price'] = 0;
                 }
-                // console.log(obj['_id'], obj['symbol'], obj['sell_price'], obj['market_sold_price'])
+                // console.log(obj['_id'], obj['symbol'], obj['sell_price'], obj['market_sold_price'], obj['purchased_price'], typeof obj['purchased_price'])
 
                 costAvgObj['buy_price'] = obj['purchased_price'].toFixed(8)
                 costAvgObj['sell_price'] = obj['is_sell_order'] == 'sold' ? obj['market_sold_price'].toFixed(8) : obj['sell_price'].toFixed(8)
@@ -13894,6 +13894,32 @@ async function saveATGLog(user_id, exchange, log_type, log_message, application_
 }
 
 
+async function runDailyLimitUpdateCron(user_id, exchange){
+    return new Promise(async resolve =>{
+        const db = await conn
+        //check if daily limit not exist calculate again
+        let limit_collection = exchange == 'binance' ? 'daily_trade_buy_limit' : 'daily_trade_buy_limit_'+exchange
+        let where = {
+            'user_id': user_id, 
+        }
+        let dailyLimit = db.collection(limit_collection).find(where).toArray()
+        if (dailyLimit.length > 0){
+            resolve(false)
+        }else{
+            //Hit Cron
+            let cron_name = exchange == 'binance' ? 'update_daily_buy_limit' : 'update_daily_buy_limit_'+exchange 
+            let save_history = 'no' 
+            let reqObj = {
+                'type': 'GET',
+                'url': 'http://app.digiebot.com/admin/trading_reports/cronjob/' + cron_name + '/' + user_id + '/' + save_history,
+                'payload': {},
+            }
+            let apiResult = await customApiRequest(reqObj)
+            resolve(true)
+        }
+    })
+}
+
 async function getUserRemainingLimit(user_id, exchange){
     return new Promise(async (resolve)=>{
         let db = await conn
@@ -14255,6 +14281,9 @@ async function createAutoTradeParents(settings){
 
         }
 
+        // { "_id" : ObjectId("5ef9cc0184c66a51207a3bb1"), "user_id" : "5c0912b7fc9aadaac61dd072", "daily_buy_usd_worth" : 0, "num_of_trades_buy_today" : 0, "daily_buy_usd_limit" : 41.412846272754, "created_date" : ISODate("2020-06-29T11:09:53Z"), "modified_date" : ISODate("2020-12-29T14:17:42.458Z"), "BTCTradesTodayCount" : 0, "USDTTradesTodayCount" : 0, "dailyTradeableBTC" : 0.27, "dailyTradeableBTC_usd_worth" : 20, "dailyTradeableUSDT" : 5000, "dailyTradeableUSDT_usd_worth" : 20, "daily_bought_btc_usd_worth" : 0, "daily_bought_usdt_usd_worth" : 0 }
+
+
         //sleep 7 seconds before sending call next
         await new Promise(r => setTimeout(r, 7000));
         // console.log('after sleep parents processed: ', keepParentIdsArr.length)
@@ -14300,6 +14329,9 @@ async function createAutoTradeParents(settings){
         if (typeof remove_duplicates != 'undefined' && remove_duplicates == 'yes' && (coins.length * bots.length) == keepParentIdsArr.length) {
             removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode, keepParentIdsArr)
         }
+
+
+        let runDailyCron = await runDailyLimitUpdateCron(user_id, exchange)
 
         resolve(true)
         
