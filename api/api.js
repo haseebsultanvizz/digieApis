@@ -18578,6 +18578,108 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
     })
 }
 
+async function is_trade_limit_exceeded(user_id, exchange) {
+    return new Promise(async (resolve) => {
+
+        let userBalancesInfo_Promise = get_dashboard_wallet(user_id, exchange)
+        let marketPricesArr_promise = getPricesArr(exchange, [])
+        let tradeLimit_promise = getSubscription(user_id)
+        let myPromises = await Promise.all([userBalancesInfo_Promise, marketPricesArr_promise, tradeLimit_promise])
+
+        let userBalancesInfo = myPromises[0]
+        let marketPricesArr = myPromises[1]
+        let tradeLimit = myPromises[2]
+
+        if (userBalancesInfo['status']) {
+
+            let btcBalanceObj = userBalancesInfo['data']['avaiableBalance'].length > 0 ? userBalancesInfo['data']['avaiableBalance'].filter(item => item['coin_symbol'] == 'BTC') : {}
+            let usdtBalanceObj = userBalancesInfo['data']['avaiableBalance'].length > 0 ? userBalancesInfo['data']['avaiableBalance'].filter(item => item['coin_symbol'] == 'USDT') : {}
+            btcBalance = typeof btcBalanceObj[0]['coin_balance'] != 'undefined' ? parseFloat(btcBalanceObj[0]['coin_balance']) : 0
+            usdtBalance = typeof usdtBalanceObj[0]['coin_balance'] != 'undefined' ? parseFloat(usdtBalanceObj[0]['coin_balance']) : 0
+
+            // console.log('wallet BTC :: ', btcBalance, '  -------  wallet USDT :: ', usdtBalance)
+
+            btcBalance = parseFloat(btcBalance.toFixed(6))
+            usdtBalance = parseFloat(usdtBalance.toFixed(2))
+
+            //new formula for available from old ATG
+            let balanceArr = userBalancesInfo['data']
+            // console.log('before1 ', balanceArr)
+            let walletBalanceArr = balanceArr['avaiableBalance']
+
+            let tempBalanceObj = {}
+            walletBalanceArr.map(item => { tempBalanceObj[item.coin_symbol] = item.coin_balance })
+
+            availableBTC = parseFloat(parseFloat(tempBalanceObj['BTC']).toFixed(6))
+            availableUSDT = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
+            availableBNB = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
+
+            availableBtc = availableBTC
+            availableUsdt = availableUSDT
+
+            totalAvailableBalanceForPackageSelection = ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT']) + balanceArr['openBalance']['OpenUsdWorth'] + balanceArr['lthBalance']['LthUsdWorth'] + balanceArr['costAvgBalance']['costAvgUsdWorth']) - balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
+
+            let usedUsdWorthInTrades = balanceArr['openBalance']['OpenUsdWorth'] + balanceArr['lthBalance']['LthUsdWorth'] + balanceArr['costAvgBalance']['costAvgUsdWorth'] + balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
+
+            let remainaingUsdWorthForTrading = ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])) - balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
+
+            // console.log('tradeLimit:  ', tradeLimit,  '   ---    wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
+
+            if (tradeLimit <= totalAvailableBalanceForPackageSelection) {
+
+                // console.log('Package is less than total balance  ------------------------------------ ')
+
+                let _70percentOfTotal = (70 * tradeLimit) / 100;
+                // console.log('_70percentOfTotal   ', _70percentOfTotal, ' -------------    usedUsdWorthInTrades ', usedUsdWorthInTrades)
+
+                if (_70percentOfTotal > usedUsdWorthInTrades) {
+                    var remainingTradddeeAble = tradeLimit - _70percentOfTotal > 0 ? tradeLimit - _70percentOfTotal : 0
+                } else {
+                    var remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
+                }
+                // console.log('after 70% check remainingTradddeeAble', remainingTradddeeAble)
+
+                // let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
+
+                // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
+
+                availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
+
+                availableBTC = parseFloat(availableBTC.toFixed(6))
+
+                availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble
+
+                availableUSDT = parseFloat(availableUSDT.toFixed(2))
+
+                if (remainingTradddeeAble <= 0) {
+                    // console.log('Your trade limit has been exceeded please upgrade to a bigger package', 'ERROR');
+                    resolve(true)
+                }
+                resolve(false)
+            }
+            resolve(false)
+        }
+        resolve(false)
+    })
+}
+
+router.post('/is_trade_limit_exceeded', async (req, res)=>{
+    let user_id = req.body.user_id
+    let exchange = req.body.exchange
+    let trade_limit_exceeded = await is_trade_limit_exceeded(user_id, exchange)
+    if (trade_limit_exceeded){
+        res.send({
+            'status':true,
+            'message': 'Your trade limit has been exceeded please upgrade to a bigger package',
+        })
+    }else{
+        res.send({
+            'status': false,
+            'message': 'Trade limit not exceeded',
+        })
+    }
+})
+
 //testing purpose
 async function findLimitExceedUsers(user_id, exchange, application_mode = 'live') {
     return new Promise(async (resolve) => {

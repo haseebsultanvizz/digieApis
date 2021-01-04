@@ -289,6 +289,15 @@ Content-Type: application/json
 
 ###
 
+POST http://localhost:3010/apiEndPoint/is_trade_limit_exceeded
+# POST http://34.205.124.51:3010/apiEndPoint/is_trade_limit_exceeded
+Content-Type: application/json
+
+{
+    "user_id": "5c86f33bfc9aad989b4ca8d2",
+    "exchange": "kraken"
+}
+
 ###
 
 POST http://localhost:3010/apiEndPoint/updateDailyTradeSettings_digie
