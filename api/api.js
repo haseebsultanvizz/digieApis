@@ -3988,6 +3988,291 @@ function list_orders_by_filter(collectionName, filter, pagination, limit, skip) 
 } //End of list_orders
 
 
+router.post('/getMergeOrders', async (req, res)=>{
+
+    let user_id = req.body.user_id
+    let symbol = req.body.symbol
+    let tab = req.body.tab
+    let exchange = req.body.exchange
+
+    if(typeof user_id != 'undefined' && user_id != '' && typeof symbol != 'undefined' && symbol != '' && typeof tab != 'undefined' && tab != '' && typeof exchange != 'undefined' && exchange != ''){
+
+        const db = await conn
+        var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+ exchange
+    
+        let where = {}
+    
+        where['admin_id'] = user_id
+        where['symbol'] = symbol
+        where['application_mode'] = 'live'
+        where['trigger_type'] = 'barrier_percentile_trigger'
+        // where['order_level'] = ''
+        where['$or'] = []
+    
+        // if (tab == 'openTab') {
+            let openTab = {}
+            openTab['$or'] = [
+                {
+                    'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                    'is_sell_order': 'yes',
+                    'is_lth_order': { '$ne': 'yes' },
+                    'cost_avg': 'yes',
+                    'cavg_parent': 'yes',
+                    'show_order': 'yes',
+                    'avg_orders_ids.0': { '$exists': false },
+                    'move_to_cost_avg': { '$ne': 'yes' },
+                },
+                {
+                    'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                    'is_sell_order': 'yes',
+                    'is_lth_order': { '$ne': 'yes' },
+                    'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
+                },
+            ]
+
+            where['$or'].push(openTab)
+        // }
+    
+        // if (tab == 'lthTab') {
+
+            let lthTab = {}
+            lthTab['status'] = {
+                '$in': ['LTH', 'LTH_ERROR']
+            };
+            lthTab['is_sell_order'] = 'yes';
+            lthTab['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+
+            where['$or'].push(lthTab)
+        // }
+    
+        // if (tab == 'costAvgTab') {
+
+            let costAvgTab = {}
+    
+            costAvgTab['$or'] = [
+                {
+                    'cost_avg': { '$in': ['taking_child', 'yes'] },
+                    'cavg_parent': 'yes',
+                    'show_order': 'yes',
+                    'avg_orders_ids.0': { '$exists': false },
+                    'move_to_cost_avg': 'yes',
+                },
+                // {
+                //     'cost_avg': { '$in': ['taking_child', 'yes'] },
+                //     'cavg_parent': 'yes',
+                //     'show_order': 'yes',
+                //     'avg_orders_ids.0': { '$exists': true }
+                // },
+            ]
+            costAvgTab['status'] = { '$ne': 'canceled' }
+
+            where['$or'].push(costAvgTab)
+    
+            var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+        // }
+    
+        // if (tab == 'soldTab') {
+
+            let soldTab = {} 
+    
+            soldTab['$or'] = [
+                { 'resume_status': 'completed', 'trading_status': 'complete' },
+                { 'cost_avg': 'completed', 'cavg_parent': 'yes', 'show_order': 'yes' },
+                { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false }, 'cost_avg': { '$nin': ['', 'yes', 'taking_child', 'completed'] } },
+            ];
+            soldTab['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+            soldTab['trade_history_issue'] = { '$exists': true }
+    
+            // if (!digie_admin_ids.includes(user_id)) {
+                soldTab['$or'][0]['show_order'] = 'yes'
+            // }
+
+            where['$or'].push(soldTab)
+    
+            var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+        // }
+
+        // if (tab == 'costAvgTab') {
+            var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+            var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            var SoldOrderArr = await db.collection(soldOrdercollection).find(where).toArray();
+            var buyOrderArr = await db.collection(buyOrdercollection).find(where).toArray();
+
+        console.log('Sold orders ', SoldOrderArr.length, '   -----   Buy orders ', buyOrderArr.length)
+            var returnArr = SoldOrderArr.concat(buyOrderArr);
+            var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
+        // } else {
+        //     var orderArr = await db.collection(collectionName).find(where).toArray();
+        // }
+    
+        // console.log(where)
+        // console.log('tab: ', tab, '  -----  total orders: ', orderArr.length)
+
+        if (orderArr.length > 0){
+            res.send({
+                'status': true,
+                'data': orderArr, 
+                'message': 'data found'
+            })
+        }else{
+            res.send({
+                'status': false,
+                'message': 'data not found'
+            })
+        }
+
+    }else{
+        res.send({
+            'status':false,
+            'message':'Invalid request'
+        })
+    }
+
+})
+
+router.post('/mergeAndMigrate', async (req, res)=>{
+
+    let mergedOrder = req.body.mergedOrder
+    let user_id = req.body.user_id
+    let tab = req.body.tab
+    let exchange = req.body.exchange
+
+    if (typeof user_id != 'undefined' && user_id != '' && typeof tab != 'undefined' && tab != '' && typeof exchange != 'undefined' && exchange != '', typeof mergedOrder != 'undefined' && mergedOrder.length > 0){
+
+        const db = await conn
+        var buy_collection = 'buy_orders'
+        var sell_collection = 'sold_buy_orders'
+        var buy_collection_kraken = 'buy_orders_kraken'
+
+        //get curent market prices
+        // let pricesObj = await get_current_market_prices(exchange, ['BTCUSDT', mergedOrder[0]['symbol']])
+        // var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
+        // var currentMarketPrice = parseFloat(mergedOrder[0]['symbol'])
+
+        let new_order = Object.assign(mergedOrder[0])
+        let all_merge_orders = mergedOrder[0]['all_merge_orders']
+
+        console.log('11111111', all_merge_orders.length)
+        console.log(all_merge_orders)
+
+        delete new_order['merge_ids']
+        delete new_order['all_merge_orders']
+        new_order['merge_migrate_order_ids'] = mergedOrder[0]['merge_ids']
+
+        //calculate purchased price
+
+        //calculate sell price
+
+        //calculate initial trail stop
+        
+        //set or unset fields from new order
+        //make ids as id object
+        new_order['_id'] = new ObjectID(new_order['_id'])
+        new_order['buy_parent_id'] = new ObjectID(new_order['buy_parent_id'])
+        new_order['sell_order_id'] = new ObjectID(new_order['sell_order_id'])
+        
+        new_order['status'] = 'FILLED'
+        new_order['lth_functionality'] = 'no'
+        new_order['lth_profi'] = ''
+        new_order['is_lth_order'] = ''
+        new_order['cavg_parent'] = 'yes'
+        new_order['cost_avg'] = 'yes'
+        new_order['move_to_cost_avg'] = 'yes'
+        new_order['show_order'] = 'yes'
+        new_order['avg_purchase_price'] = [
+            {
+                'purchased_price': ''
+            }
+        ]
+        new_order['purchased_price'] = ''
+        new_order['avg_sell_price'] = ''
+        new_order['iniatial_trail_stop'] = ''
+
+        new_order['created_date'] = new Date()
+        new_order['modified_date'] = new Date()
+
+        console.log(new_order)
+
+
+        // let order = {
+        //     "price": '',//same as purchased price
+        //     "quantity": '',
+        //     "symbol": '',
+        //     "custom_stop_loss_percentage": '',
+        //     "order_type": '',
+        //     "admin_id": user_id,
+        //     "trigger_type": "barrier_percentile_trigger",
+        //     "sell_price": '',
+        //     "created_date": new Date(),
+        //     "modified_date": new Date(),
+        //     "buy_date": '',
+        //     "buy_parent_id": '',
+        //     "iniatial_trail_stop": '',
+        //     "application_mode": "live",
+        //     "order_mode": "live",
+        //     "defined_sell_percentage": '',
+        //     "order_level": '',
+        //     "sell_profit_percent": '',
+        //     "lth_functionality": "no",
+        //     "lth_profit": "",
+        //     "activate_stop_loss_profit_percentage": 100,
+        //     "stop_loss_rule": "custom_stop_loss",
+        //     "opportunityId": '',
+        //     "first_stop_loss_update": '',
+        //     "is_sell_order": "yes",
+        //     "auto_sell": "yes",
+        //     "purchased_price": '',
+        //     "status": "FILLED",
+        //     "trading_ip": '',
+        //     "market_value": 0.00693,
+        //     "tradeId": 16261709,
+        //     "market_value_usd": '',
+        //     "sell_order_id": '',
+        //     "is_lth_order": "",
+        //     "cavg_parent": "yes",
+        //     "cost_avg": "yes",
+        //     "move_to_cost_avg": "yes",
+        //     "show_order": "yes",
+        //     "avg_purchase_price": [
+        //         {
+        //             "purchased_price": ''
+        //         }
+        //     ],
+        //     "cost_avg_updated": "admin_shahzad_function",
+        //     "avg_sell_price": ''
+        // }
+
+
+        
+
+        res.send({
+            'status': true,
+            'message': 'Merge successful'
+        })
+
+    }else{
+        res.send({
+            'status':false,
+            'message':'Invalid request'
+        })
+    }
+
+})
+
+async function calculate_merge_migrate_trade_values(merge_migrate_ids=[]){
+    return new Promise(async resolve=>{
+        if (merge_migrate_ids.length > 0){
+            // const db = await conn
+
+            
+
+
+            resolve(true)
+        }else{
+            resolve(false)
+        }
+    })
+} 
 
 //post call from manage coins component
 router.post('/manageCoins', async (req, resp) => {
@@ -10153,7 +10438,8 @@ router.post('/remove_error', async (req, resp) => {
 
                     update['$set'] = set1
                     update['$unset'] = {
-                        'is_lth_order':''
+                        'is_lth_order':'',
+                        'order_sell_process': ''
                     }
 
                     let updated = await db.collection(buy_collection).updateOne(where, update)
