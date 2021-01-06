@@ -4139,21 +4139,16 @@ router.post('/mergeAndMigrate', async (req, res)=>{
 
     if (typeof user_id != 'undefined' && user_id != '' && typeof tab != 'undefined' && tab != '' && typeof exchange != 'undefined' && exchange != '', typeof mergedOrder != 'undefined' && mergedOrder.length > 0){
 
-        const db = await conn
+        // const db = await conn
         var buy_collection = 'buy_orders'
         var sell_collection = 'sold_buy_orders'
         var buy_collection_kraken = 'buy_orders_kraken'
 
-        //get curent market prices
-        // let pricesObj = await get_current_market_prices(exchange, ['BTCUSDT', mergedOrder[0]['symbol']])
-        // var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
-        // var currentMarketPrice = parseFloat(mergedOrder[0]['symbol'])
-
         let new_order = Object.assign(mergedOrder[0])
         let all_merge_orders = mergedOrder[0]['all_merge_orders']
 
-        console.log('11111111', all_merge_orders.length)
-        console.log(all_merge_orders)
+        // console.log('11111111', all_merge_orders.length)
+        // console.log(all_merge_orders)
 
         delete new_order['merge_ids']
         delete new_order['all_merge_orders']
@@ -4243,12 +4238,62 @@ router.post('/mergeAndMigrate', async (req, res)=>{
         // }
 
 
-        
 
-        res.send({
-            'status': true,
-            'message': 'Merge successful'
-        })
+        //get curent market prices
+        // let pricesObj = await get_current_market_prices(exchange, ['BTCUSDT', mergedOrder[0]['symbol']])
+        // var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
+        // var currentMarketPrice = parseFloat(mergedOrder[0]['symbol'])
+
+        /*********  Check minQuantity  ****************/
+        let coin = new_order['symbol']
+        var whereCoins = { '$in': [coin, 'BTCUSDT'] }
+        var coinData = await listmarketPriceMinNotationCoinArr(whereCoins, 'kraken')
+        var BTCUSDTPRICE = parseFloat(coinData['BTCUSDT']['currentmarketPrice'])
+
+        var currentMarketPrice = parseFloat(coinData[coin]['currentmarketPrice'])
+        var marketMinNotation = coinData[coin]['marketMinNotation']
+        var marketMinNotationStepSize = coinData[coin]['marketMinNotationStepSize']
+        var toFixedNum = 6
+
+        //find min required quantity
+        var extra_qty_percentage = 30;
+        var extra_qty_val = 0;
+        extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
+        var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
+        var minReqQty = 0;
+        minReqQty = (calculatedMinNotation / currentMarketPrice);
+
+        if (true) {
+            // if (exchange == 'kraken') {
+            minReqQty = calculatedMinNotation
+            toFixedNum = 6
+        } else {
+            // toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+        }
+
+        minReqQty += marketMinNotationStepSize
+        minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
+        /*********  End Check minQuantity  ************/
+
+        console.log(new_order['quantity'], minReqQty)
+
+        if (new_order['quantity'] < minReqQty) {
+
+            //return with message
+            res.send({
+                'status': false,
+                'message': 'Minimum Quantity Should Be ' + minReqQty
+            })
+
+        } else {
+            //process this order
+            let resultingFields = await calculate_merge_migrate_trade_values(all_merge_orders, currentMarketPrice)
+
+            res.send({
+                'status': true,
+                'message': 'Merge successful'
+            })
+        }
 
     }else{
         res.send({
@@ -4259,13 +4304,59 @@ router.post('/mergeAndMigrate', async (req, res)=>{
 
 })
 
-async function calculate_merge_migrate_trade_values(merge_migrate_ids=[]){
+async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], currentMarketPrice){
     return new Promise(async resolve=>{
-        if (merge_migrate_ids.length > 0){
+        if (merge_migrate_orders.length > 0){
             // const db = await conn
 
-            
+            let purchase_prices_sum = 0
+            let sell_price = 0
+            let initial_trail_stop = 0
 
+            let totalPL = 0; 
+
+            merge_migrate_orders.map(item=>{
+                purchase_prices_sum += parseFloat(item.purchased_price)
+                totalPL += parseFloat(calculate_percentage(parseFloat(item.purchased_price), currentMarketPrice))
+
+                console.log('Purchased price: ', item.purchased_price, '  ----  target_profit: ', parseFloat(merge_migrate_orders[0]['defined_sell_percentage']), ' ----- : quantity ', parseFloat(item.quantity))
+
+            })
+
+            let avg_purchase_price = purchase_prices_sum / merge_migrate_orders.length
+            totalPL = totalPL / merge_migrate_orders.length
+
+            let defined_sell_percentage = parseFloat(merge_migrate_orders[0]['defined_sell_percentage'])
+            
+            let stop_loss = typeof merge_migrate_orders[0]['stop_loss_rule'] != 'undefined' && merge_migrate_orders[0]['stop_loss_rule'] != '' && !isNaN(parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage'])) ? parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage']) : false
+            
+            let custom_stop_loss_percentage = parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage'])
+            
+            sell_price = ((parseFloat(avg_purchase_price) * defined_sell_percentage) / 100) + parseFloat(avg_purchase_price);
+             
+            if (stop_loss){
+                initial_trail_stop = parseFloat(avg_purchase_price) - ((parseFloat(avg_purchase_price) * custom_stop_loss_percentage) / 100);
+            }else{
+                initial_trail_stop = parseFloat(avg_purchase_price) - ((parseFloat(avg_purchase_price) * 2.5) / 100);
+            }
+
+            let purchased_price_by_pl = 0
+            if (totalPL > 0){
+                purchased_price_by_pl = currentMarketPrice - ((totalPL/100) * currentMarketPrice)  
+            } else if (totalPL == 0){
+                purchased_price_by_pl = currentMarketPrice  
+            }else{
+                purchased_price_by_pl = currentMarketPrice + ((totalPL / 100) * currentMarketPrice)
+            }
+
+            console.log({
+                'currentMarketPrice': currentMarketPrice,
+                'purchased_price': avg_purchase_price,
+                'sell_price': sell_price,
+                'iniatial_trail_stop': initial_trail_stop,
+                'totalPL': totalPL,
+                'purchased_price_by_pl': purchased_price_by_pl
+            })
 
             resolve(true)
         }else{
