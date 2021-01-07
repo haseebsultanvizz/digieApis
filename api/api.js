@@ -4139,112 +4139,34 @@ router.post('/mergeAndMigrate', async (req, res)=>{
 
     if (typeof user_id != 'undefined' && user_id != '' && typeof tab != 'undefined' && tab != '' && typeof exchange != 'undefined' && exchange != '', typeof mergedOrder != 'undefined' && mergedOrder.length > 0){
 
-        // const db = await conn
+        const db = await conn
         var buy_collection = 'buy_orders'
         var sell_collection = 'sold_buy_orders'
         var buy_collection_kraken = 'buy_orders_kraken'
+        var sell_collection_kraken = 'orders_kraken'
 
         let new_order = Object.assign(mergedOrder[0])
-        let all_merge_orders = mergedOrder[0]['all_merge_orders']
-
-        // console.log('11111111', all_merge_orders.length)
-        // console.log(all_merge_orders)
-
-        delete new_order['merge_ids']
-        delete new_order['all_merge_orders']
-        new_order['merge_migrate_order_ids'] = mergedOrder[0]['merge_ids']
-
-        //calculate purchased price
-
-        //calculate sell price
-
-        //calculate initial trail stop
+        let temp_all_merge_orders = mergedOrder[0]['all_merge_orders']
         
-        //set or unset fields from new order
-        //make ids as id object
-        new_order['_id'] = new ObjectID(new_order['_id'])
-        new_order['buy_parent_id'] = new ObjectID(new_order['buy_parent_id'])
-        new_order['sell_order_id'] = new ObjectID(new_order['sell_order_id'])
-        
-        new_order['status'] = 'FILLED'
-        new_order['lth_functionality'] = 'no'
-        new_order['lth_profi'] = ''
-        new_order['is_lth_order'] = ''
-        new_order['cavg_parent'] = 'yes'
-        new_order['cost_avg'] = 'yes'
-        new_order['move_to_cost_avg'] = 'yes'
-        new_order['show_order'] = 'yes'
-        new_order['avg_purchase_price'] = [
-            {
-                'purchased_price': ''
+        let all_merge_orders = temp_all_merge_orders.map(item=>{ 
+            let obj = item
+            obj['created_date'] = new Date(obj['created_date'])
+            obj['modified_date'] = new Date(obj['modified_date'])
+            obj['_id'] = new ObjectID(obj['_id'])
+            obj['buy_parent_id'] = new ObjectID(obj['buy_parent_id'])
+            obj['sell_order_id'] = new ObjectID(obj['sell_order_id'])
+
+            if (typeof obj['buy_date'] != 'undefined' && obj['buy_date'] != ''){
+                obj['buy_date'] = new Date(obj['buy_date'])
             }
-        ]
-        new_order['purchased_price'] = ''
-        new_order['avg_sell_price'] = ''
-        new_order['iniatial_trail_stop'] = ''
-
-        new_order['created_date'] = new Date()
-        new_order['modified_date'] = new Date()
-
-        console.log(new_order)
-
-
-        // let order = {
-        //     "price": '',//same as purchased price
-        //     "quantity": '',
-        //     "symbol": '',
-        //     "custom_stop_loss_percentage": '',
-        //     "order_type": '',
-        //     "admin_id": user_id,
-        //     "trigger_type": "barrier_percentile_trigger",
-        //     "sell_price": '',
-        //     "created_date": new Date(),
-        //     "modified_date": new Date(),
-        //     "buy_date": '',
-        //     "buy_parent_id": '',
-        //     "iniatial_trail_stop": '',
-        //     "application_mode": "live",
-        //     "order_mode": "live",
-        //     "defined_sell_percentage": '',
-        //     "order_level": '',
-        //     "sell_profit_percent": '',
-        //     "lth_functionality": "no",
-        //     "lth_profit": "",
-        //     "activate_stop_loss_profit_percentage": 100,
-        //     "stop_loss_rule": "custom_stop_loss",
-        //     "opportunityId": '',
-        //     "first_stop_loss_update": '',
-        //     "is_sell_order": "yes",
-        //     "auto_sell": "yes",
-        //     "purchased_price": '',
-        //     "status": "FILLED",
-        //     "trading_ip": '',
-        //     "market_value": 0.00693,
-        //     "tradeId": 16261709,
-        //     "market_value_usd": '',
-        //     "sell_order_id": '',
-        //     "is_lth_order": "",
-        //     "cavg_parent": "yes",
-        //     "cost_avg": "yes",
-        //     "move_to_cost_avg": "yes",
-        //     "show_order": "yes",
-        //     "avg_purchase_price": [
-        //         {
-        //             "purchased_price": ''
-        //         }
-        //     ],
-        //     "cost_avg_updated": "admin_shahzad_function",
-        //     "avg_sell_price": ''
-        // }
-
-
-
-        //get curent market prices
-        // let pricesObj = await get_current_market_prices(exchange, ['BTCUSDT', mergedOrder[0]['symbol']])
-        // var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
-        // var currentMarketPrice = parseFloat(mergedOrder[0]['symbol'])
+            if (typeof obj['sell_date'] != 'undefined' && obj['sell_date'] != ''){
+                obj['sell_date'] = new Date(obj['sell_date'])
+            }
+            return obj;
+        })
 
         /*********  Check minQuantity  ****************/
+        //get curent market prices
         let coin = new_order['symbol']
         var whereCoins = { '$in': [coin, 'BTCUSDT'] }
         var coinData = await listmarketPriceMinNotationCoinArr(whereCoins, 'kraken')
@@ -4275,7 +4197,7 @@ router.post('/mergeAndMigrate', async (req, res)=>{
         minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
         /*********  End Check minQuantity  ************/
 
-        console.log(new_order['quantity'], minReqQty)
+        // console.log(new_order['quantity'], minReqQty)
 
         if (new_order['quantity'] < minReqQty) {
 
@@ -4289,10 +4211,146 @@ router.post('/mergeAndMigrate', async (req, res)=>{
             //process this order
             let resultingFields = await calculate_merge_migrate_trade_values(all_merge_orders, currentMarketPrice)
 
-            res.send({
-                'status': true,
-                'message': 'Merge successful'
-            })
+            if (resultingFields){
+
+                delete new_order['all_merge_orders']
+                delete new_order['_id']
+                delete new_order['sell_order_id']
+                new_order['merge_ids']
+                
+                //set or unset fields from new order
+                //make ids as id object
+                new_order['buy_parent_id'] = new ObjectID(new_order['buy_parent_id'])
+                new_order['status'] = 'FILLED'
+                new_order['lth_functionality'] = 'no'
+                new_order['lth_profi'] = ''
+                new_order['is_lth_order'] = ''
+                new_order['cavg_parent'] = 'yes'
+                new_order['cost_avg'] = 'yes'
+                // new_order['move_to_cost_avg'] = 'yes'
+                new_order['show_order'] = 'yes'
+                new_order['avg_purchase_price'] = [
+                    {
+                        'purchased_price': resultingFields['purchased_price']
+                    }
+                ]
+                new_order['stop_loss_rule'] = 'custom_stop_loss'
+                new_order['custom_stop_loss_percentage'] = 5
+                new_order['stop_loss'] = 'yes'
+                new_order['purchased_price'] = resultingFields['purchased_price']
+                new_order['sell_price'] = resultingFields['sell_price']
+                new_order['avg_sell_price'] = resultingFields['sell_price']
+                new_order['iniatial_trail_stop'] = resultingFields['iniatial_trail_stop']
+                new_order['merge_migrated_order'] = 'yes'
+                
+                new_order['buy_date'] = new Date()
+                new_order['created_date'] = new Date()
+                new_order['modified_date'] = new Date()
+
+                new_order['shifted_order'] = 'yes'
+                new_order['shifted_order_label'] = 'shifted'
+
+                //insert new order in kraken
+                let insertBuyNew = await db.collection(buy_collection_kraken).insertOne(new_order)
+                
+                if (typeof insertBuyNew.insertedId != 'undefined') {
+                    //insert sell order
+                    let newSellOrder = {
+                        "admin_id": new_order['admin_id'],
+                        "symbol": new_order['symbol'],
+                        "quantity": new_order['quantity'],
+                        "trigger_type": new_order['trigger_type'],
+                        "order_type": new_order['order_type'],
+                        "cost_avg": new_order['cost_avg'],
+                        "application_mode": new_order['application_mode'],
+                        "order_mode": new_order['order_mode'],
+                        "sell_profit_percent": new_order['sell_profit_percent'],
+                        "order_level": new_order['order_level'],
+                        "trading_ip": new_order['trading_ip'],
+                        "buy_order_id": insertBuyNew.insertedId,
+                        'status': 'new',
+                        'market_value': new_order['purchased_price'],
+                        'sell_price': new_order['sell_price'],
+                        "created_date": new Date(),
+                        "modified_date": new Date(),
+                    }
+
+                    let insertSellNew = await db.collection(sell_collection_kraken).insertOne(newSellOrder)
+                    //insert sell order id in buy order
+                    if (typeof insertSellNew.insertedId != 'undefined') {
+                        await db.collection(buy_collection_kraken).updateOne({ '_id': insertBuyNew.insertedId }, { '$set': { 'sell_order_id': insertSellNew.insertedId } })    
+                    }
+                    //insert log in new order
+                    //save log
+                    var migrated_ids = new_order['merge_ids'].join(', ')
+                    var log_msg = 'Merge Order migrated (' + migrated_ids + ')'
+                    var type = 'merge_migrated_order'
+                    var show_hide_log = 'yes'
+                    var order_created_date = new_order['created_date']
+                    var order_mode = new_order['application_mode']
+                    await create_orders_history_log(insertBuyNew.insertedId, log_msg, type, show_hide_log, 'kraken', order_mode, order_created_date)
+
+                    //update fields and insert logs in merged orders
+                    let total_merge_orders = all_merge_orders.length
+                    for (let i = 0; i < total_merge_orders; i++){
+
+
+                        let symbol11 = total_merge_orders[i]['symbol']
+                        let splitArr11111 = symbol11.split('USDT');
+                        let market_sold_price_usd = (splitArr11111[1] == '' ? parseFloat(buy_order[0]['quantity']) * currentMarketPrice : parseFloat(buy_order[0]['quantity']) * currentMarketPrice * BTCUSDTPRICE)
+
+                        //sold fields
+                        let updateFields = {}
+                        updateFields = {
+                            'trading_status': 'complete',
+                            'status': 'FILLED',
+                            'is_sell_order': 'sold',
+                            'market_sold_price': currentMarketPrice,
+                            'market_sold_price_usd': market_sold_price_usd,
+                            'sell_date': new Date(),
+                            'modified_date': new Date(),
+                            'trade_migrated': 'yes',
+                            'order_shifted_resume_exchange': 'yes',
+                            'merge_migrated_order': 'yes',
+                        }
+
+                        let buy_order = await db.collection(buy_collection).find({ '_id': all_merge_orders[i]['_id']}).toArray()
+                        if (buy_order.length > 0){
+
+                            let tempInsert = Object.assign(buy_order[0], updateFields)
+
+                            let insertttttt = await db.collection(sell_collection).insertOne(tempInsert)
+                            if (typeof insertttttt.insertedId != 'undefined'){
+                                //delete from buy_collection 
+                                await db.collection(buy_collection).deleteOne({ '_id': all_merge_orders[i]['_id'] })
+                            }
+                        }else{
+                            let sold_order = await db.collection(sell_collection).find({ '_id': all_merge_orders[i]['_id']}).toArray()
+                            if(sold_order.length > 0){
+                                await db.collection(sell_collection).updateOne({ '_id': all_merge_orders[i]['_id'] }, { '$set': updateFields})
+                            }
+                        }
+
+                        var log_msg = 'Order merged and migrated'
+                        var type = 'merge_migrated_order'
+                        var show_hide_log = 'yes'
+                        var order_created_date = all_merge_orders[i]['created_date']
+                        var order_mode = all_merge_orders[i]['application_mode']
+                        await create_orders_history_log(all_merge_orders[i]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, order_created_date)
+                    }
+                }
+
+                res.send({
+                    'status': true,
+                    'message': 'Merge successful'
+                })
+
+            }else{
+                res.send({
+                    'status': true,
+                    'message': 'Something went wrong'
+                })
+            }
         }
 
     }else{
@@ -4313,52 +4371,58 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
             let sell_price = 0
             let initial_trail_stop = 0
 
-            let totalPL = 0; 
+            // let totalPL = 0; 
 
             merge_migrate_orders.map(item=>{
                 purchase_prices_sum += parseFloat(item.purchased_price)
-                totalPL += parseFloat(calculate_percentage(parseFloat(item.purchased_price), currentMarketPrice))
+                // totalPL += parseFloat(calculate_percentage(parseFloat(item.purchased_price), currentMarketPrice))
 
                 console.log('Purchased price: ', item.purchased_price, '  ----  target_profit: ', parseFloat(merge_migrate_orders[0]['defined_sell_percentage']), ' ----- : quantity ', parseFloat(item.quantity))
 
             })
 
             let avg_purchase_price = purchase_prices_sum / merge_migrate_orders.length
-            totalPL = totalPL / merge_migrate_orders.length
+            // totalPL = totalPL / merge_migrate_orders.length
 
             let defined_sell_percentage = parseFloat(merge_migrate_orders[0]['defined_sell_percentage'])
             
-            let stop_loss = typeof merge_migrate_orders[0]['stop_loss_rule'] != 'undefined' && merge_migrate_orders[0]['stop_loss_rule'] != '' && !isNaN(parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage'])) ? parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage']) : false
+            // let stop_loss = typeof merge_migrate_orders[0]['stop_loss_rule'] != 'undefined' && merge_migrate_orders[0]['stop_loss_rule'] == 'custom_stop_loss' && !isNaN(parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage'])) ? parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage']) : false
             
-            let custom_stop_loss_percentage = parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage'])
+            // let custom_stop_loss_percentage = parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage'])
             
             sell_price = ((parseFloat(avg_purchase_price) * defined_sell_percentage) / 100) + parseFloat(avg_purchase_price);
              
-            if (stop_loss){
-                initial_trail_stop = parseFloat(avg_purchase_price) - ((parseFloat(avg_purchase_price) * custom_stop_loss_percentage) / 100);
-            }else{
-                initial_trail_stop = parseFloat(avg_purchase_price) - ((parseFloat(avg_purchase_price) * 2.5) / 100);
-            }
+            // if (stop_loss){
+            //     initial_trail_stop = parseFloat(avg_purchase_price) - ((parseFloat(avg_purchase_price) * custom_stop_loss_percentage) / 100);
+            // }else{
+                initial_trail_stop = parseFloat(avg_purchase_price) - ((parseFloat(avg_purchase_price) * 5) / 100);
+            // }
 
-            let purchased_price_by_pl = 0
-            if (totalPL > 0){
-                purchased_price_by_pl = currentMarketPrice - ((totalPL/100) * currentMarketPrice)  
-            } else if (totalPL == 0){
-                purchased_price_by_pl = currentMarketPrice  
-            }else{
-                purchased_price_by_pl = currentMarketPrice + ((totalPL / 100) * currentMarketPrice)
-            }
+            // let purchased_price_by_pl = 0
+            // if (totalPL > 0){
+            //     purchased_price_by_pl = currentMarketPrice - ((totalPL/100) * currentMarketPrice)  
+            // } else if (totalPL == 0){
+            //     purchased_price_by_pl = currentMarketPrice  
+            // }else{
+            //     purchased_price_by_pl = currentMarketPrice + ((totalPL / 100) * currentMarketPrice)
+            // }
 
-            console.log({
+            let result11 = {
                 'currentMarketPrice': currentMarketPrice,
                 'purchased_price': avg_purchase_price,
                 'sell_price': sell_price,
                 'iniatial_trail_stop': initial_trail_stop,
-                'totalPL': totalPL,
-                'purchased_price_by_pl': purchased_price_by_pl
-            })
+                // 'totalPL': totalPL,
+                // 'purchased_price_by_pl': purchased_price_by_pl
+            }
+            
+            console.log(result11)
 
-            resolve(true)
+            if (!isNaN(avg_purchase_price) && !isNaN(sell_price) && !isNaN(initial_trail_stop)){
+                resolve(result11)
+            }else{
+                resolve(false)
+            }
         }else{
             resolve(false)
         }
