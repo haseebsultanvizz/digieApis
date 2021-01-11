@@ -14309,7 +14309,7 @@ async function getBtcUsdtBalance(user_id, exchange){
                 }
             ]
 
-            if(exchange == 'binance' || exchange == 'bam'){
+            if(exchange != 'binance' && exchange != 'bam'){
                 defualt.push({'coin_balance': 0, 'coin_symbol': "BNB", 'user_id': user_id, '_id': ''})
             }
             resolve(defualt)
@@ -18203,7 +18203,10 @@ router.post('/updateDailyActualTradeAbleAutoTradeGen', async (req, res) => {
                 
                     // await updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, application_mode)
 
-                    await updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, application_mode)
+                    // await updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, application_mode)
+                    
+                    
+                    await updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, application_mode)
 
                     // await findLimitExceedUsers(user_id, exchange, application_mode)
                 }
@@ -19018,6 +19021,274 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
     })
 }
+
+async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, application_mode = 'live') {
+    return new Promise(async (resolve) => {
+
+        // console.log('************** Cron Testing ****************')
+
+        var db = await conn
+
+        var collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+        var where = {
+            'application_mode': application_mode,
+            'user_id': user_id,
+        }
+        let settings = await db.collection(collectionName).find(where).limit(1).toArray()
+
+        let myWallet = await get_dashboard_wallet(user_id, exchange)
+
+        if (settings.length > 0 && myWallet.status) {
+
+            let balanceArr = myWallet.data
+
+            settings = settings[0]
+
+            var OldactualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' ? settings.step_4.actualTradeableBTC : 0
+            var OldactualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' ? settings.step_4.actualTradeableUSDT : 0
+
+            var totalTradeAbleInUSD = typeof settings.step_4.totalTradeAbleInUSD != 'undefined' ? settings.step_4.totalTradeAbleInUSD : 0
+            var btcInvestPercentage = typeof settings.step_4.btcInvestPercentage != 'undefined' ? settings.step_4.btcInvestPercentage : 0
+            var usdtInvestPercentage = typeof settings.step_4.usdtInvestPercentage != 'undefined' ? settings.step_4.usdtInvestPercentage : 0
+            var dailTradeAbleBalancePercentage = typeof settings.step_4.dailTradeAbleBalancePercentage != 'undefined' ? settings.step_4.dailTradeAbleBalancePercentage : 10
+
+            var baseCurrencyArr = typeof settings.step_4.baseCurrencyArr != 'undefined' ? settings.step_4.baseCurrencyArr : ['BTC', 'USDT']
+            var customBtcPackage = typeof settings.step_4.customBtcPackage != 'undefined' ? settings.step_4.customBtcPackage : 0.02
+            var customUsdtPackage = typeof settings.step_4.customUsdtPackage != 'undefined' ? settings.step_4.customUsdtPackage : 1000
+
+            //Hit ATG Api Call
+            let data = {
+                'user_id': user_id,
+                'exchange': exchange,
+                'baseCurrencyArr': baseCurrencyArr,
+                'customBtcPackage': customBtcPackage,
+                'customUsdtPackage': customUsdtPackage,
+                'dailTradeAbleBalancePercentage': dailTradeAbleBalancePercentage,
+            }
+
+            let result = await newAtgApiCall(data)
+
+            if (result) {
+                
+                
+                if (result.status) {
+
+                        let data11 = result.data
+
+                        var dailyBtc = data11['dailyBtc']
+                        var dailyUsdt = data11['dailyUsdt']
+
+                        var dailyBtcUsdWorth = data11['dailyBtcUsdWorth']
+                        var dailyUsdtUsdWorth = data11['dailyUsdtUsdWorth']
+
+                        var btcInvestPercentage = data11['btcInvestPercentage']
+                        var tradeableBTC = data11['tradeableBTC']
+                        var availableBTC = data11['availableBTC']
+                        var actualTradeableBTC = data11['actualTradeableBTC']
+                        var dailyTradeableBTC = data11['dailyTradeableBTC']
+
+                        var usdtInvestPercentage = data11['usdtInvestPercentage']
+                        var tradeableUSDT = data11['tradeableUSDT']
+                        var availableUSDT = data11['availableUSDT']
+                        var actualTradeableUSDT = data11['actualTradeableUSDT']
+                        var dailyTradeableUSDT = data11['dailyTradeableUSDT'] 
+
+
+                    //TODO: update actual tradeable
+                    var where = {
+                        '_id': settings['_id']
+                    }
+                    var set = {
+                        '$set': {
+                            'step_4.actualTradeableBTC': actualTradeableBTC,
+                            'step_4.actualTradeableUSDT': actualTradeableUSDT,
+                            'step_4.dailyTradeableBTC': dailyTradeableBTC,
+                            'step_4.dailyTradeableUSDT': dailyTradeableUSDT,
+        
+                            // new fields,
+                            'step_4.availableBTC': availableBTC,
+                            'step_4.availableUSDT': availableUSDT,
+        
+                            'step_4.openOnlyBtc': balanceArr['openBalance']['onlyBtc'],
+                            'step_4.openOnlyUsdt': balanceArr['openBalance']['onlyUsdt'],
+        
+                            'step_4.lthOnlyBtc': balanceArr['lthBalance']['onlyBtc'],
+                            'step_4.lthOnlyUsdt': balanceArr['lthBalance']['onlyUsdt'],
+        
+                            //new1 fields
+                            'step_4.baseCurrencyArr': baseCurrencyArr,
+                            'step_4.btcInvestPercentage': btcInvestPercentage,
+                            'step_4.usdtInvestPercentage': usdtInvestPercentage,
+        
+                        }
+                    }
+        
+                    // console.log("resultttttttttttttt ------------------------------------------------------------- ")
+                    // console.log(set)
+                    // console.log(settings['user_id'] + " dailyTradeableBTC: " + dailyTradeableBTC + " dailyTradeableUSDT: " + dailyTradeableUSDT)
+        
+                    // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
+        
+                    let updateSettings = await db.collection(collectionName).updateOne(where, set)
+        
+                    let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT + ")]"
+                    saveATGLog(user_id, exchange, 'daily_actual_tradeable_cron', 'update Daily Actual Trade Able Auto Trade Gen ' + msg, application_mode)
+        
+                    // let upd = updateDailyTradeSettings(user_id, exchange, application_mode = 'live')
+
+                }
+
+            }
+
+
+
+        }
+        resolve(true)
+
+    })
+}
+
+router.post('/find_available_btc_usdt_atg', async (req, res)=>{
+
+    let reqData = req.body.data
+    let user_id = reqData.user_id
+    let exchange = reqData.exchange
+    let baseCurrencyArr = reqData.baseCurrencyArr
+    let customBtcPackage = reqData.customBtcPackage
+    let customUsdtPackage = reqData.customUsdtPackage
+    let dailTradeAbleBalancePercentage = reqData.dailTradeAbleBalancePercentage
+
+    let data = {
+        'user_id': user_id,
+        'exchange': exchange,
+        'baseCurrencyArr': baseCurrencyArr,
+        'customBtcPackage': customBtcPackage,
+        'customUsdtPackage': customUsdtPackage,
+        'dailTradeAbleBalancePercentage': dailTradeAbleBalancePercentage,
+    }
+
+    let result = await newAtgApiCall(data)
+
+    if (result){
+        res.send(result)
+    }else{
+        res.send({
+            'status': false,
+            'message': 'something went wrong'
+        })
+    }
+})
+
+async function newAtgApiCall(payload){
+
+    return new Promise(async resolve =>{
+
+        // //Sample payload        
+        // let data = {
+        //     'user_id': user_id,
+        //     'exchange': exchange,
+        //     'baseCurrencyArr': baseCurrencyArr,
+        //     'customBtcPackage': customBtcPackage,
+        //     'customUsdtPackage': customUsdtPackage,
+        //     'dailTradeAbleBalancePercentage': dailTradeAbleBalancePercentage,
+        // }
+        
+        let cron_name = 'find_available_btc_usdt'
+        let reqObj = {
+            'type': 'POST',
+            'url': 'http://app.digiebot.com/admin/trading_reports/Atg/' + cron_name,
+            'headers': {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            'payload': payload,
+        }
+      
+        // console.log(payload)
+        let apiResult = await customApiRequest(reqObj)
+        // console.log(apiResult)
+        resolve(apiResult.status ? apiResult.body : false)
+    })
+}
+
+router.get('/findCustomPackageVal', async (req,res)=>{
+    const db = await conn
+
+    let exchange = 'binance'
+    let atgCollection = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_'+ exchange
+
+    let atgSettings = await db.collection(atgCollection).find({'application_mode':'live'}).toArray()
+    console.log(atgSettings.length)
+
+    let marketPricesArr = await getPricesArr(exchange, ['BTCUSDT'])
+    let BTCUSDTPrice = marketPricesArr['BTCUSDT']['currentmarketPrice']
+
+
+    let btcPackages = [
+        0.001,
+        0.005,
+        0.01,
+        0.05,
+        0.1,
+        0.15,
+        0.2,
+        0.25,
+        0.3,
+        0.35,
+        0.4,
+        0.45,
+        0.5, // this and next only admin can set this for user 
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1,
+    ]
+
+    let usdtPackages = [
+        1000,
+        2500,
+        5000,
+        10000, // this and next only admin can set this for user
+        20000,
+        30000,
+    ]
+
+    let totalItems = atgSettings.length
+    // atgSettings.map(item=>{
+
+    for (let i = 0; i < totalItems; i++){
+        
+        let item = atgSettings[i]
+
+        console.log('-------------------------------------------------------------------')
+        console.log('availableBTC  ', item.step_4['availableBTC'], '   ----   ', item.step_4['availableUSDT'])
+    
+        let customBtcPackage = 0.02 
+        let customUsdtPackage = 1000
+    
+        let btcGoal = item.step_4['availableBTC']
+        
+        customBtcPackage = btcPackages.reduce(function (prev, curr) {
+            return (Math.abs(curr - btcGoal) < Math.abs(prev - btcGoal) ? curr : prev);
+        });
+        
+        let usdtGoal = item.step_4['availableUSDT']
+        
+        customUsdtPackage = usdtPackages.reduce(function (prev, curr) {
+            return (Math.abs(curr - usdtGoal) < Math.abs(prev - usdtGoal) ? curr : prev);
+        });
+    
+        console.log(item._id, '  ----   customBtcPackage  ', customBtcPackage, '   ----   customUsdtPackage', customUsdtPackage)
+
+        // await db.collection(atgCollection).updateOne({ '_id': item._id }, { '$set': { 'step_4.customBtcPackage': btcPackage, 'step_4.customUsdtPackage': usdtPackage }})
+
+    }
+
+    // })
+
+    res.send({})
+})
 
 async function is_trade_limit_exceeded(user_id, exchange) {
     return new Promise(async (resolve) => {
@@ -20670,6 +20941,9 @@ router.post('/disable_exchange_key', async (req, res) => {
         if(exchange == 'binance'){
             await db.collection('users').updateOne({ _id: new ObjectID(user_id) }, { '$unset': { 'api_key': '', 'api_secret': ''}})
 
+            await db.collection('user_wallet').deleteMany({'user_id': user_id})
+            await db.collection('buy_orders').updateMany({'application_mode':'live', 'admin_id': user_id, 'parent_status':'parent', 'status':{'$ne':'canceled'}}, {'$set':{'pick_parent':'no', 'pick_parent_no':'api_key_removed'}})
+
             actionSuccess = true
         } else if (exchange == 'kraken'){
             if(keyNo == ''){
@@ -20683,7 +20957,14 @@ router.post('/disable_exchange_key', async (req, res) => {
             }
         }else{
             let collection_name = exchange+'_credentials'
+            
+            let wallet_collection = 'user_wallet_'+exchange
+            let buy_collection = 'buy_orders_'+exchange
+
             await db.collection(collection_name).updateOne({ 'user_id': user_id }, { '$unset': { 'api_key': '', 'api_secret': '' } })
+
+            await db.collection(wallet_collection).deleteMany({ 'user_id': user_id })
+            await db.collection(buy_collection).updateMany({ 'application_mode': 'live', 'admin_id': user_id, 'parent_status': 'parent', 'status': { '$ne': 'canceled' } }, { '$set': { 'pick_parent': 'no', 'pick_parent_no': 'api_key_removed' } })
 
             actionSuccess = true
         }
