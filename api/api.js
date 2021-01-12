@@ -15110,7 +15110,10 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
         
                 let coinsMinQtyArr = btcCoinsMinQty.concat(usdtCoinsMinQty)
 
-                let coinsWorthArr = await calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBTC, dailyTradeableUSDT, BTCUSDTPrice, coinsMinQtyArr)
+                // let coinsWorthArr = await calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBTC, dailyTradeableUSDT, BTCUSDTPrice, coinsMinQtyArr)
+
+                let coinsWorthArr = await find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, dailyTradeableUSDT, coinsMinQtyArr, BTCUSDTPrice)
+
                 resolve(coinsWorthArr)
             }
         }
@@ -15246,6 +15249,142 @@ async function makeTradeCategory(){
         }
         resolve(catArr)
     })
+}
+
+async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, dailyTradeableUSDT, coinsMinQtyArr, BTCUSDTPrice) {
+
+    return new Promise(async resolve => {
+
+        let tradeCategory = await makeTradeCategory()
+
+        // console.log(' =-------------------=====::::::::::::::::::::::::: ', dailyTradeableBTC, dailyTradeableUSDT)
+
+        let dailyTradeableBTC_usd_worth = dailyTradeableBTC * BTCUSDTPrice
+        let dailyTradeableUSDT_usd_worth = dailyTradeableUSDT
+
+        let coinsCategoryWorth = []
+
+        coinsMinQtyArr.map(coin=>{
+
+            //check if coin is BTC or USDT then use their respective daily trade worth
+            let splitArr = coin['coin'].split('USDT')
+            let dailyUsdWorth = splitArr[1] == '' ? dailyTradeableUSDT_usd_worth : dailyTradeableBTC_usd_worth
+            let minQtyUsd = coin['usd_worth']
+
+            let min_trades = 0
+            let max_trades = 0
+            let trade_usd_worth = 0
+            if (dailyUsdWorth <= 50) {
+                min_trades = 1
+                max_trades = 3
+                if (minQtyUsd < dailyUsdWorth) {
+                    for (let i = max_trades; i >= 1; i--) {
+                        if (minQtyUsd <= (dailyUsdWorth / i)) {
+                            trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            break;
+                        }
+                    }
+                }
+                if (trade_usd_worth == 0) {
+                    trade_usd_worth = minQtyUsd
+                }
+            } else if (dailyUsdWorth > 50 && dailyUsdWorth <= 100) {
+                min_trades = 3
+                max_trades = 4
+                if (minQtyUsd < dailyUsdWorth) {
+                    for (let i = max_trades; i >= 1; i--) {
+                        if (minQtyUsd <= (dailyUsdWorth / i)) {
+                            trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            break;
+                        }
+                    }
+                }
+                if (trade_usd_worth == 0) {
+                    trade_usd_worth = minQtyUsd
+                }
+            } else if (dailyUsdWorth > 100 && dailyUsdWorth <= 200) {
+                min_trades = 4
+                max_trades = 5
+                if (minQtyUsd < dailyUsdWorth) {
+                    for (let i = max_trades; i >= 1; i--) {
+                        if (minQtyUsd <= (dailyUsdWorth / i)) {
+                            trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            break;
+                        }
+                    }
+                }
+                if (trade_usd_worth == 0) {
+                    trade_usd_worth = minQtyUsd
+                }
+            } else if (dailyUsdWorth > 200 && dailyUsdWorth <= 2000) {
+                min_trades = 5
+                max_trades = 6
+                if (minQtyUsd < dailyUsdWorth) {
+                    for (let i = max_trades; i >= 1; i--) {
+                        if (minQtyUsd <= (dailyUsdWorth / i)) {
+                            trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            break;
+                        }
+                    }
+                }
+                if (trade_usd_worth == 0) {
+                    trade_usd_worth = minQtyUsd
+                }
+            } else if (dailyUsdWorth > 2000 && dailyUsdWorth <= 3000) {
+                min_trades = 6
+                max_trades = 7
+                if (minQtyUsd < dailyUsdWorth) {
+                    for (let i = max_trades; i >= 1; i--) {
+                        if (minQtyUsd <= (dailyUsdWorth / i)) {
+                            trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            break;
+                        }
+                    }
+                }
+                if (trade_usd_worth == 0) {
+                    trade_usd_worth = minQtyUsd
+                }
+            } else if (dailyUsdWorth > 3000) {
+                min_trades = 7
+                max_trades = 8
+                if (minQtyUsd < dailyUsdWorth) {
+                    for (let i = max_trades; i >= 1; i--) {
+                        if (minQtyUsd <= (dailyUsdWorth / i)) {
+                            trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            break;
+                        }
+                    }
+                }
+                if (trade_usd_worth == 0) {
+                    trade_usd_worth = minQtyUsd
+                }
+            }
+        
+            let result = {}
+        
+            let cat = tradeCategory.filter(item => { return (trade_usd_worth > item.lower_limit && trade_usd_worth <= item.upper_limit) ? true : false })
+            if (cat.length > 0) {
+                coinsCategoryWorth.push({
+                    'coin': coin,
+                    'worth': cat[0]['upper_limit'],
+                    // 'minQtyUsd': minQtyUsd,
+                })        
+            } else {
+                coinsCategoryWorth.push({
+                    'coin': coin,
+                    'worth': tradeCategory[(tradeCategory.length - 1)]['upper_limit'],
+                    // 'minQtyUsd': minQtyUsd,
+                })
+            }
+
+        })
+
+        // console.log(coinsCategoryWorth)
+        resolve(coinsCategoryWorth)
+
+    })//Promise End
+    // return result
+
 }
 
 //resetAutoTradeGenerator
@@ -19225,27 +19364,19 @@ router.get('/findCustomPackageVal', async (req,res)=>{
 
 
     let btcPackages = [
-        0.001,
-        0.005,
         0.01,
-        0.05,
+        0.02,
+        0.04,
         0.1,
-        0.15,
         0.2,
-        0.25,
         0.3,
-        0.35,
         0.4,
-        0.45,
-        0.5, // this and next only admin can set this for user 
-        0.6,
-        0.7,
-        0.8,
-        0.9,
+        0.5, // this and next only admin can set this for user
         1,
     ]
 
     let usdtPackages = [
+        500,
         1000,
         2500,
         5000,
