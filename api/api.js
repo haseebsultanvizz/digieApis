@@ -3906,6 +3906,24 @@ async function listOrderListing(postDAta3, dbConnection) {
     //if status is all the get from both buy_orders and sold_buy_orders 
     if (postDAta.status == 'all') {
 
+
+        let tempAllFilter = await getAllTabFilter()
+        let filter_all_2 = Object.assign(tempAllFilter, filter)
+        delete filter_all_2['cost_avg']
+
+        //Sold tab extra dynamic check
+        if (!digie_admin_ids.includes(postDAta.admin_id)) {
+            filter_all_2['$or'][4]['show_order'] = 'yes'
+        }
+
+        //CostAvg tab extra dynamic check
+        if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
+            filter_all_2['$or'][8]['show_order'] = {
+                'cost_avg': { '$exists': true },
+                'show_order': 'yes'
+            }
+        }
+
         if (!digie_admin_ids.includes(postDAta.admin_id)) {
             filter['is_sell_order'] = {
                 '$nin': ['pause', 'resume_pause']
@@ -3920,8 +3938,12 @@ async function listOrderListing(postDAta3, dbConnection) {
 
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter, pagination, limit, skip);
-        var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter, pagination, limit, skip);
+        // var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter, pagination, limit, skip);
+        // var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter, pagination, limit, skip);
+        
+        var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter_all_2, pagination, limit, skip);
+        var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter_all_2, pagination, limit, skip);
+      
         // var returnArr = mergeOrdersArrays(SoldOrderArr, buyOrderArr);
         var returnArr = SoldOrderArr.concat(buyOrderArr);
         var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
@@ -20074,6 +20096,143 @@ router.get('/fixUsdWorth', async (req, res) => {
 
 })
 
+async function getAllTabFilter(){
+    return new Promise(resolve=>{
+        let myAllFilter = {}
+        myAllFilter['$or'] =[
+            //Open
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': 'yes',
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': false },
+                'move_to_cost_avg': { '$ne': 'yes' },
+            },
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
+            },
+            //Filled
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': 'yes',
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': false },
+                'move_to_cost_avg': { '$ne': 'yes' },
+            },
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
+            },
+            //Sold
+            {
+                'resume_status': 'completed',
+                'trading_status': 'complete',
+                'cost_avg': { '$nin': ['taking_child', 'yes'] }
+            },
+            {
+                'cost_avg': 'completed',
+                'cavg_parent': 'yes',
+                'show_order': 'yes'
+            },
+            {
+                'is_sell_order': 'sold',
+                'resume_order_id': { '$exists': false },
+                'cost_avg': { '$nin': ['', 'yes', 'taking_child', 'completed'] },
+                'cost_avg': { '$nin': ['taking_child', 'yes'] }
+            },
+            //one more dynamic condition at the end
+    
+            //CostAvg
+            {
+                'cost_avg': { '$in': ['taking_child', 'yes'] },
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': false },
+                'move_to_cost_avg': 'yes',
+                'status': { '$ne': 'canceled' }
+            },
+            {
+                'cost_avg': { '$in': ['taking_child', 'yes'] },
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': true },
+                'status': { '$ne': 'canceled' }
+            },
+            //one more dynamic condition at the end
+    
+            //LthPause
+            {
+                'status': { '$in': ['FILLED', 'pause'] },
+                'is_sell_order': {
+                    '$in': ['pause', 'resume_pause']
+                },
+                'resume_status': { '$ne': 'completed' },
+                'show_order': { '$ne': 'no' }
+            },
+    
+            //Parent
+            {
+                'parent_status': 'parent',
+                'status': {
+                    '$in': ['new', 'takingOrder']
+                }
+            },
+    
+            //LTH
+            {
+                'status': {
+                    '$in': ['LTH', 'LTH_ERROR']
+                },
+                'is_sell_order': 'yes',
+                'cost_avg': { '$nin': ['taking_child', 'yes', 'completed'] }
+            },
+    
+            //New
+            {
+                'status': {
+                    '$in': ['new', 'new_ERROR', 'BUY_ID_ERROR']
+                },
+                'price': {
+                    '$ne': ''
+                },
+            },
+    
+            //Canceled
+            {
+                'status': 'canceled',
+            },
+    
+            //Errors
+            {
+                'parent_status': { '$exists': false },
+                'status': { '$nin': ['new', 'FILLED', 'fraction_submitted_buy', 'canceled', 'LTH', 'submitted', 'submitted_for_sell', 'fraction_submitted_sell'] }
+            },
+    
+            //Submitted
+            {
+                'status': {
+                    '$in': ['submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'submitted_ERROR']
+                },
+                'cost_avg': { '$nin': ['taking_child', 'yes', 'completed'] }
+            },
+    
+        ]
+
+        resolve(myAllFilter)
+    })
+}
+
 async function getOrderStats(postData2){
 
         // application_mode = "live"
@@ -20629,6 +20788,24 @@ async function getOrderStats(postData2){
             filter_all['created_date'] = obj
         }
 
+        let tempAllFilter = await getAllTabFilter()
+        let filter_all_2 = Object.assign(tempAllFilter, filter_all)
+        delete filter_all_2['cost_avg']
+         
+        //Sold tab extra dynamic check
+        if (!digie_admin_ids.includes(postDAta.admin_id)) {
+            filter_all_2['$or'][4]['show_order'] = 'yes'
+        }
+        
+        //CostAvg tab extra dynamic check
+        if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
+            filter_all_2['$or'][8]['show_order'] = {
+                'cost_avg': { '$exists': true },
+                'show_order': 'yes'
+            }
+        }
+        
+
         if (!digie_admin_ids.includes(postDAta.admin_id)) {
             filter_all['is_sell_order'] = {
                 '$nin': ['pause', 'resume_pause']
@@ -20642,13 +20819,18 @@ async function getOrderStats(postData2){
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_all[key] = value;
+                filter_all_2[key] = value;
             }
         }
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
-        let all1Promise = countCollection(soldOrdercollection, filter_all);
+        // let all1Promise = countCollection(soldOrdercollection, filter_all);
+        let all1Promise = countCollection(soldOrdercollection, filter_all_2);
+        
         // filter_all['parent_status'] = {'$exists': false}
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        let all2Promise = countCollection(buyOrdercollection, filter_all);
+        // let all2Promise = countCollection(buyOrdercollection, filter_all);
+        
+        let all2Promise = countCollection(buyOrdercollection, filter_all_2);
         //End count All tab
 
 
