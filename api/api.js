@@ -15387,13 +15387,13 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
             let cat = tradeCategory.filter(item => { return (trade_usd_worth > item.lower_limit && trade_usd_worth <= item.upper_limit) ? true : false })
             if (cat.length > 0) {
                 coinsCategoryWorth.push({
-                    'coin': coin,
+                    'coin': coin.coin,
                     'worth': cat[0]['upper_limit'],
                     // 'minQtyUsd': minQtyUsd,
                 })        
             } else {
                 coinsCategoryWorth.push({
-                    'coin': coin,
+                    'coin': coin.coin,
                     'worth': tradeCategory[(tradeCategory.length - 1)]['upper_limit'],
                     // 'minQtyUsd': minQtyUsd,
                 })
@@ -19692,6 +19692,40 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
 /* End CRON SCRIPT for update Actual TradeAble BTC/USDT and total Tradeable in USD  */
 
 
+router.post('/getBtcUsdtPackages', async (req, res)=>{
+    
+    let user_id = req.body.user_id
+    let exchange = req.body.exchange
+    
+    const db = await conn
+
+    let where = {
+        'user_id': user_id,
+        'application_mode': 'live',
+    }
+
+    let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+    let data = await db.collection(collectionName).find(where).project({'step_4.customBtcPackage': 1, 'step_4.customUsdtPackage':1}).toArray()
+
+    // console.log(data)
+
+    if (data.length > 0){
+        res.send({
+            'status': true,
+            'data': {
+                'customBtcPackage': data[0]['step_4']['customBtcPackage'],
+                'customUsdtPackage': data[0]['step_4']['customUsdtPackage']
+            },
+            'message': 'Data found'
+        })
+    }else{
+        res.send({
+            'status':false,
+            'message':'Data not found'
+        })
+    }
+
+})
 
 
 //get_latest_buy_sell_details
