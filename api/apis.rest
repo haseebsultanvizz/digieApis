@@ -377,7 +377,7 @@ Content-Type: application/json
 }
 ###
 
-POST http://localhost:3010/apiEndPoint/find_available_btc_usdt_atg
+POST app.digiebot.com/admin/trading_reports/Atg/find_available_btc_usdt_test
 Content-Type: application/json
 
 { 

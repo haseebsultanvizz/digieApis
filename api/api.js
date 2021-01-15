@@ -14215,6 +14215,8 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 }
 
                 saveATGLog(user_id, exchange, 'update', 'Auto trade settings update manually successful', application_mode)
+
+                await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode)
                 
                 await createAutoTradeParents(autoTradeData)
                 
@@ -14247,6 +14249,8 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
 
                 saveATGLog(user_id, exchange, 'new', 'Auto trade settings added manually successful', application_mode)
 
+                await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode)
+
                 await createAutoTradeParents(autoTradeData)
 
                 res.send({
@@ -14265,6 +14269,36 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
     }
 
 })//end saveAutoTradeSettings
+
+async function checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode){
+    return new Promise(async resolve=>{
+        //set BNB if not already set
+        if ((exchange == 'binance' || exchange == 'bam') && application_mode == 'live') {
+            let bnbAutoBuySetting = await getBnbBuySettings(user_id, exchange)
+            // console.log(bnbAutoBuySetting)
+            if (bnbAutoBuySetting.length == 0) {
+                //set Auto buy bnb for very minimum val
+                //by default use BTC as base currency
+                //Insert CoinAutoBuy settings 
+                let buyArr = {
+                    'admin_id': user_id,
+                    'application_mode': 'live',
+                    'symbol': 'BNBBTC',
+                    'buy_currency': 'BTC',
+                    'auto_buy': 'yes',
+                    'trigger_buy_usdt_worth': 5,
+                    'auto_buy_usdt_worth': 5,
+                    'created_date': new Date(),
+                    'updated_date': new Date(),
+                }
+                if (await coinAutoBuy(buyArr, exchange)) {
+                    hit_auto_buy_cron(user_id, exchange)
+                }
+            }
+        }
+        resolve(true)
+    })
+}
 
 //getBtcUsdtBalance
 router.post('/getBtcUsdtBalance', async (req, res) => {
@@ -14363,23 +14397,85 @@ async function runDailyLimitUpdateCron(user_id, exchange){
         //check if daily limit not exist calculate again
         let limit_collection = exchange == 'binance' ? 'daily_trade_buy_limit' : 'daily_trade_buy_limit_'+exchange
         let where = {
-            'user_id': user_id, 
+            'user_id': user_id,
         }
-        let dailyLimit = db.collection(limit_collection).find(where).toArray()
+        let dailyLimit = await db.collection(limit_collection).find(where).toArray()
+
+        // console.log('CRONE 11111 ============================ ', dailyLimit)
+
         if (dailyLimit.length > 0){
-            resolve(false)
+            //get ATG settings and update daily limit fields on ATG update
+            let ATG_collection = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_'+exchange
+            let ATG_settings = await db.collection(ATG_collection).find({'application_mode':'live', 'user_id':user_id}).toArray()
+
+            // console.log(ATG_settings[0]['step_4']['dailyTradeableBTC'], ATG_settings[0]['step_4']['dailyTradeableUSDT'])
+
+            if (ATG_settings.length > 0){
+                
+                if (typeof ATG_settings[0]['step_4'] != 'undefined'){
+                     
+                    if (typeof ATG_settings[0]['step_4']['dailyTradeableBTC'] != 'undefined' && typeof ATG_settings[0]['step_4']['dailyTradeableUSDT'] != 'undefined'){
+                        
+                        var pricesObj = await get_current_market_prices(exchange, ['BTCUSDT'])
+                        var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
+                        
+                        var dailyTradeableBTC = ATG_settings[0]['step_4']['dailyTradeableBTC']
+                        var dailyTradeableUSDT = ATG_settings[0]['step_4']['dailyTradeableUSDT']
+                        var dailyTradeableBTC_usd_worth = parseFloat((ATG_settings[0]['step_4']['dailyTradeableBTC'] * BTCUSDTPRICE).toFixed(2))
+                        var dailyTradeableUSDT_usd_worth = parseFloat((ATG_settings[0]['step_4']['dailyTradeableUSDT']).toFixed(2))
+                        var daily_buy_usd_limit = parseFloat((dailyTradeableBTC_usd_worth + dailyTradeableUSDT_usd_worth).toFixed(2))
+    
+                        // console.log('CRONE ============================ ', ATG_settings[0]['step_4']['dailyTradeableBTC'], ATG_settings[0]['step_4']['dailyTradeableUSDT'])
+        
+
+                        //user_id not equal to admin and vizzdeveloper
+                        if (user_id != '5c0912b7fc9aadaac61dd072' && user_id != '5c0915befc9aadaac61dd1b8'){
+                            //update limit collection value
+                            await db.collection(limit_collection).updateOne(where, {
+                                '$set':{
+                                    'dailyTradeableBTC': !isNaN(dailyTradeableBTC) ? dailyTradeableBTC : 0,
+                                    'dailyTradeableUSDT': !isNaN(dailyTradeableUSDT) ? dailyTradeableUSDT : 0,
+                                    'dailyTradeableBTC_usd_worth': !isNaN(dailyTradeableBTC_usd_worth) ? dailyTradeableBTC_usd_worth : 0,
+                                    'dailyTradeableUSDT_usd_worth': !isNaN(dailyTradeableUSDT_usd_worth) ? dailyTradeableUSDT_usd_worth : 0,
+                                    'daily_buy_usd_limit': !isNaN(daily_buy_usd_limit) ? daily_buy_usd_limit : 0, 
+                                    'modified_date': new Date()                         
+                                }
+                            })
+                        }
+    
+                        //set pick parent to yes
+                        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+                        await db.collection(buy_collection).updateMany({ 'application_mode': 'live', 'admin_id': user_id, 'parent_status': 'parent', 'status': { '$ne': 'canceled' } }, { '$set': { 'pick_parent': 'yes'} })
+                    }
+                }
+
+            }
+
+            db.daily_trade_buy_limit.updateOne({ 'user_id': '5c0912b7fc9aadaac61dd072' }, { '$set': { 'dailyTradeableBTC': 0.5, 'dailyTradeableBTC_usd_worth': 50000, 'dailyTradeableUSDT': 50000, 'dailyTradeableUSDT_usd_worth': 50000, 'daily_buy_usd_limit': 50000, } })
+
+            // resolve(false)
         }else{
             //Hit Cron
-            let cron_name = exchange == 'binance' ? 'update_daily_buy_limit' : 'update_daily_buy_limit_'+exchange 
-            let save_history = 'no' 
-            let reqObj = {
+            var cron_name = exchange == 'binance' ? 'update_daily_buy_limit' : 'update_daily_buy_limit_'+exchange 
+            var save_history = 'no' 
+            var reqObj = {
                 'type': 'GET',
                 'url': 'http://app.digiebot.com/admin/trading_reports/cronjob/' + cron_name + '/' + user_id + '/' + save_history,
                 'payload': {},
             }
-            let apiResult = await customApiRequest(reqObj)
-            resolve(true)
+            var apiResult = await customApiRequest(reqObj)
         }
+        
+        //Hit Cron2
+        var cron_name = exchange == 'binance' ? 'unset_pick_parent_based_on_base_currency_daily_limit' : 'unset_pick_parent_based_on_base_currency_daily_limit_' + exchange
+        var save_history = 'no'
+        var reqObj = {
+            'type': 'GET',
+            'url': 'http://app.digiebot.com/admin/trading_reports/cronjob/' + cron_name,
+            'payload': {},
+        }
+        var apiResult = await customApiRequest(reqObj)
+        resolve(true)
     })
 }
 
@@ -14526,7 +14622,7 @@ async function createAutoTradeParents(settings){
             //TODO: find one usd worth of quantity
             let selectedCoin = coin;
             let currCoin = coinsWorthArr.filter(item =>{return item.coin == selectedCoin})
-            
+
             let splitArr = selectedCoin.split('USDT');
             let oneUsdWorthQty = 0;
             var usdWorthQty = 0
@@ -14794,6 +14890,7 @@ async function createAutoTradeParents(settings){
         }
 
 
+        //send update Daily trade limit call on ATG update
         let runDailyCron = await runDailyLimitUpdateCron(user_id, exchange)
 
         resolve(true)
@@ -15277,7 +15374,7 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
 
     return new Promise(async resolve => {
 
-        let tradeCategory = await makeTradeCategory()
+        // let tradeCategory = await makeTradeCategory()
 
         // console.log(' =-------------------=====::::::::::::::::::::::::: ', dailyTradeableBTC, dailyTradeableUSDT)
 
@@ -15296,6 +15393,7 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
             let min_trades = 0
             let max_trades = 0
             let trade_usd_worth = 0
+            let max_trade_usd_worth = 400
             if (dailyUsdWorth <= 50) {
                 min_trades = 1
                 max_trades = 3
@@ -15381,26 +15479,22 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
                     trade_usd_worth = minQtyUsd
                 }
             }
-        
+    
             let result = {}
-        
-            let cat = tradeCategory.filter(item => { return (trade_usd_worth > item.lower_limit && trade_usd_worth <= item.upper_limit) ? true : false })
-            if (cat.length > 0) {
-                coinsCategoryWorth.push({
-                    'coin': coin.coin,
-                    'worth': cat[0]['upper_limit'],
-                    // 'minQtyUsd': minQtyUsd,
-                })        
-            } else {
-                coinsCategoryWorth.push({
-                    'coin': coin.coin,
-                    'worth': tradeCategory[(tradeCategory.length - 1)]['upper_limit'],
-                    // 'minQtyUsd': minQtyUsd,
-                })
+
+            trade_usd_worth = parseFloat(trade_usd_worth.toFixed(2))
+
+            if (trade_usd_worth > max_trade_usd_worth) {
+                trade_usd_worth = max_trade_usd_worth
             }
 
-        })
+            coinsCategoryWorth.push({
+                'coin': coin.coin,
+                'worth': trade_usd_worth,
+                'minQtyUsd': minQtyUsd,
+            })
 
+        })
         // console.log(coinsCategoryWorth)
         resolve(coinsCategoryWorth)
 
@@ -19357,7 +19451,7 @@ async function newAtgApiCall(payload){
         let cron_name = 'find_available_btc_usdt'
         let reqObj = {
             'type': 'POST',
-            'url': 'http://app.digiebot.com/admin/trading_reports/Atg/' + cron_name,
+            'url': 'https://app.digiebot.com/admin/trading_reports/Atg/' + cron_name,
             'headers': {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
@@ -19388,12 +19482,14 @@ router.get('/findCustomPackageVal', async (req,res)=>{
     let btcPackages = [
         0.01,
         0.02,
+        0.03,
         0.04,
         0.1,
         0.2,
         0.3,
         0.4,
         0.5, // this and next only admin can set this for user
+        0.75, 
         1,
     ]
 
