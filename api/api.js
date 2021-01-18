@@ -15396,6 +15396,8 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
             let max_trades = 0
             let trade_usd_worth = 0
             let max_trade_usd_worth = 400
+            let tradeCount = 0
+
             if (dailyUsdWorth <= 50) {
                 min_trades = 1
                 max_trades = 3
@@ -15403,12 +15405,14 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
                     for (let i = max_trades; i >= 1; i--) {
                         if (minQtyUsd <= (dailyUsdWorth / i)) {
                             trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            tradeCount = i
                             break;
                         }
                     }
                 }
                 if (trade_usd_worth == 0) {
                     trade_usd_worth = minQtyUsd
+                    tradeCount = 1
                 }
             } else if (dailyUsdWorth > 50 && dailyUsdWorth <= 100) {
                 min_trades = 3
@@ -15417,12 +15421,14 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
                     for (let i = max_trades; i >= 1; i--) {
                         if (minQtyUsd <= (dailyUsdWorth / i)) {
                             trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            tradeCount = i
                             break;
                         }
                     }
                 }
                 if (trade_usd_worth == 0) {
                     trade_usd_worth = minQtyUsd
+                    tradeCount = 1
                 }
             } else if (dailyUsdWorth > 100 && dailyUsdWorth <= 200) {
                 min_trades = 4
@@ -15431,12 +15437,14 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
                     for (let i = max_trades; i >= 1; i--) {
                         if (minQtyUsd <= (dailyUsdWorth / i)) {
                             trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            tradeCount = i
                             break;
                         }
                     }
                 }
                 if (trade_usd_worth == 0) {
                     trade_usd_worth = minQtyUsd
+                    tradeCount = 1
                 }
             } else if (dailyUsdWorth > 200 && dailyUsdWorth <= 2000) {
                 min_trades = 5
@@ -15445,12 +15453,14 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
                     for (let i = max_trades; i >= 1; i--) {
                         if (minQtyUsd <= (dailyUsdWorth / i)) {
                             trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            tradeCount = i
                             break;
                         }
                     }
                 }
                 if (trade_usd_worth == 0) {
                     trade_usd_worth = minQtyUsd
+                    tradeCount = 1
                 }
             } else if (dailyUsdWorth > 2000 && dailyUsdWorth <= 3000) {
                 min_trades = 6
@@ -15459,12 +15469,14 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
                     for (let i = max_trades; i >= 1; i--) {
                         if (minQtyUsd <= (dailyUsdWorth / i)) {
                             trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            tradeCount = i
                             break;
                         }
                     }
                 }
                 if (trade_usd_worth == 0) {
                     trade_usd_worth = minQtyUsd
+                    tradeCount = 1
                 }
             } else if (dailyUsdWorth > 3000) {
                 min_trades = 7
@@ -15473,12 +15485,14 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
                     for (let i = max_trades; i >= 1; i--) {
                         if (minQtyUsd <= (dailyUsdWorth / i)) {
                             trade_usd_worth = parseFloat((dailyUsdWorth / i).toFixed(2))
+                            tradeCount = i
                             break;
                         }
                     }
                 }
                 if (trade_usd_worth == 0) {
                     trade_usd_worth = minQtyUsd
+                    tradeCount = 1
                 }
             }
     
@@ -15494,10 +15508,11 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
                 'coin': coin.coin,
                 'worth': trade_usd_worth,
                 'minQtyUsd': minQtyUsd,
+                'tradeCount': tradeCount,
             })
 
         })
-        // console.log(coinsCategoryWorth)
+       s // console.log(coinsCategoryWorth)
         resolve(coinsCategoryWorth)
 
     })//Promise End
