@@ -15512,7 +15512,7 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
             })
 
         })
-       s // console.log(coinsCategoryWorth)
+        // console.log(coinsCategoryWorth)
         resolve(coinsCategoryWorth)
 
     })//Promise End
