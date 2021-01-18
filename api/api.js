@@ -14451,8 +14451,6 @@ async function runDailyLimitUpdateCron(user_id, exchange){
 
             }
 
-            db.daily_trade_buy_limit.updateOne({ 'user_id': '5c0912b7fc9aadaac61dd072' }, { '$set': { 'dailyTradeableBTC': 0.5, 'dailyTradeableBTC_usd_worth': 50000, 'dailyTradeableUSDT': 50000, 'dailyTradeableUSDT_usd_worth': 50000, 'daily_buy_usd_limit': 50000, } })
-
             // resolve(false)
         }else{
             //Hit Cron
@@ -19559,8 +19557,8 @@ async function is_trade_limit_exceeded(user_id, exchange) {
 
             let btcBalanceObj = userBalancesInfo['data']['avaiableBalance'].length > 0 ? userBalancesInfo['data']['avaiableBalance'].filter(item => item['coin_symbol'] == 'BTC') : {}
             let usdtBalanceObj = userBalancesInfo['data']['avaiableBalance'].length > 0 ? userBalancesInfo['data']['avaiableBalance'].filter(item => item['coin_symbol'] == 'USDT') : {}
-            btcBalance = typeof btcBalanceObj[0]['coin_balance'] != 'undefined' ? parseFloat(btcBalanceObj[0]['coin_balance']) : 0
-            usdtBalance = typeof usdtBalanceObj[0]['coin_balance'] != 'undefined' ? parseFloat(usdtBalanceObj[0]['coin_balance']) : 0
+            btcBalance = typeof btcBalanceObj[0] != 'undefined' && typeof btcBalanceObj[0]['coin_balance'] != 'undefined' ? parseFloat(btcBalanceObj[0]['coin_balance']) : 0
+            usdtBalance = typeof usdtBalanceObj[0] != 'undefined' && typeof usdtBalanceObj[0]['coin_balance'] != 'undefined' ? parseFloat(usdtBalanceObj[0]['coin_balance']) : 0
 
             // console.log('wallet BTC :: ', btcBalance, '  -------  wallet USDT :: ', usdtBalance)
 
