@@ -14724,6 +14724,8 @@ async function createAutoTradeParents(settings){
                                 if (result2.length > 0) {
                                     // console.log('modified_id ', String(result2[0]['_id']))
 
+                                    db.collection(collectionName).updateOne({'_id': result2[0]['_id'], 'pause_manually': {'$ne': 'yes'}}, {'$set': {'pause_status': 'play'}})
+
                                     //TODO: insert parent creation log
                                     let show_hide_log = 'yes'
                                     let type = 'parent_updated_by_ATG_manually'
@@ -14819,6 +14821,8 @@ async function createAutoTradeParents(settings){
                                 if(err) throw err;
                                 if (result2.length > 0) {
                                     // console.log('modified_id ', String(result2[0]['_id']))
+
+                                    db.collection(collectionName).updateOne({ '_id': result2[0]['_id'], 'pause_manually': { '$ne': 'yes' } }, { '$set': { 'pause_status': 'play' } })
 
                                     //TODO: insert parent creation log
                                     let show_hide_log = 'yes'
