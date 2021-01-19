@@ -4317,9 +4317,9 @@ router.post('/mergeAndMigrate', async (req, res)=>{
                     for (let i = 0; i < total_merge_orders; i++){
 
 
-                        let symbol11 = total_merge_orders[i]['symbol']
+                        let symbol11 = all_merge_orders[i]['symbol']
                         let splitArr11111 = symbol11.split('USDT');
-                        let market_sold_price_usd = (splitArr11111[1] == '' ? parseFloat(buy_order[0]['quantity']) * currentMarketPrice : parseFloat(buy_order[0]['quantity']) * currentMarketPrice * BTCUSDTPRICE)
+                        let market_sold_price_usd = (splitArr11111[1] == '' ? parseFloat(all_merge_orders[i]['quantity']) * currentMarketPrice : parseFloat(all_merge_orders[i]['quantity']) * currentMarketPrice * BTCUSDTPRICE)
 
                         //sold fields
                         let updateFields = {}
@@ -4399,7 +4399,7 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
                 purchase_prices_sum += parseFloat(item.purchased_price)
                 // totalPL += parseFloat(calculate_percentage(parseFloat(item.purchased_price), currentMarketPrice))
 
-                console.log('Purchased price: ', item.purchased_price, '  ----  target_profit: ', parseFloat(merge_migrate_orders[0]['defined_sell_percentage']), ' ----- : quantity ', parseFloat(item.quantity))
+                // console.log('Purchased price: ', item.purchased_price, '  ----  target_profit: ', parseFloat(merge_migrate_orders[0]['defined_sell_percentage']), ' ----- : quantity ', parseFloat(item.quantity))
 
             })
 
@@ -4438,7 +4438,7 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
                 // 'purchased_price_by_pl': purchased_price_by_pl
             }
             
-            console.log(result11)
+            // console.log(result11)
 
             if (!isNaN(avg_purchase_price) && !isNaN(sell_price) && !isNaN(initial_trail_stop)){
                 resolve(result11)
