@@ -19345,26 +19345,29 @@ async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, ap
                 
                 if (result.status) {
 
-                        let data11 = result.data
+                    let data11 = result.data
 
-                        var dailyBtc = data11['dailyBtc']
-                        var dailyUsdt = data11['dailyUsdt']
+                    var dailyBtc = data11['dailyBtc']
+                    var dailyUsdt = data11['dailyUsdt']
 
-                        var dailyBtcUsdWorth = data11['dailyBtcUsdWorth']
-                        var dailyUsdtUsdWorth = data11['dailyUsdtUsdWorth']
+                    var dailyBtcUsdWorth = data11['dailyBtcUsdWorth']
+                    var dailyUsdtUsdWorth = data11['dailyUsdtUsdWorth']
 
-                        var btcInvestPercentage = data11['btcInvestPercentage']
-                        var tradeableBTC = data11['tradeableBTC']
-                        var availableBTC = data11['availableBTC']
-                        var actualTradeableBTC = data11['actualTradeableBTC']
-                        var dailyTradeableBTC = data11['dailyTradeableBTC']
+                    var btcInvestPercentage = data11['btcInvestPercentage']
+                    var tradeableBTC = data11['tradeableBTC']
+                    var availableBTC = data11['availableBTC']
+                    var actualTradeableBTC = data11['actualTradeableBTC']
+                    var dailyTradeableBTC = data11['dailyTradeableBTC']
 
-                        var usdtInvestPercentage = data11['usdtInvestPercentage']
-                        var tradeableUSDT = data11['tradeableUSDT']
-                        var availableUSDT = data11['availableUSDT']
-                        var actualTradeableUSDT = data11['actualTradeableUSDT']
-                        var dailyTradeableUSDT = data11['dailyTradeableUSDT'] 
+                    var usdtInvestPercentage = data11['usdtInvestPercentage']
+                    var tradeableUSDT = data11['tradeableUSDT']
+                    var availableUSDT = data11['availableUSDT']
+                    var actualTradeableUSDT = data11['actualTradeableUSDT']
+                    var dailyTradeableUSDT = data11['dailyTradeableUSDT'] 
 
+
+                    let coinsArr = settings.step_2.coins
+                    let totalTrades = await updateNumberOfDailyTrades(dailyTradeableBTC, dailyTradeableUSDT, coinsArr, exchange)
 
                     //TODO: update actual tradeable
                     var where = {
@@ -19391,6 +19394,10 @@ async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, ap
                             'step_4.baseCurrencyArr': baseCurrencyArr,
                             'step_4.btcInvestPercentage': btcInvestPercentage,
                             'step_4.usdtInvestPercentage': usdtInvestPercentage,
+                            
+                            //daily expected trade count
+                            'step_4.dailyTradesExpectedBtc': totalTrades['btcTradeCount'],
+                            'step_4.dailyTradesExpectedUsdt': totalTrades['usdtTradeCount'],
         
                         }
                     }
@@ -19418,6 +19425,57 @@ async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, ap
         resolve(true)
 
     })
+}
+
+async function updateNumberOfDailyTrades(dailyTradeableBTC, dailyTradeableUSDT, coinsArr, exchange){
+    return new Promise(async resolve=>{
+
+        let totalTradeAbleInUSD = 0
+
+        let coinsWorthArr = await findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, dailyTradeableUSDT, coinsArr, exchange)
+
+        let total = coinsWorthArr.length 
+
+        if (total > 0){
+
+            let btcArr = []
+            let usdtArr = []
+
+            for (let i = 0; i < total; i++){
+
+                let obj = coinsWorthArr[i]
+
+                let splitArr = obj['coin'].split('USDT')
+                if (splitArr[1] == '') {
+                    usdtArr.push(coinsWorthArr[i])
+                }else{
+                    btcArr.push(coinsWorthArr[i])
+                }
+            }
+
+            let btcCount = findFrequentOccuringVal(btcArr)
+            let usdtCount = findFrequentOccuringVal(usdtArr)
+
+            resolve({
+                'btcTradeCount': typeof btcCount != 'undefined' ? btcCount['tradeCount'] : 0,
+                'usdtTradeCount': typeof usdtCount != 'undefined' ? usdtCount['tradeCount'] : 0,
+            })
+
+        }else{
+            resolve({
+                'btcTradeCount': 0,
+                'usdtTradeCount': 0
+            })
+        }
+    
+    })
+}
+
+function findFrequentOccuringVal(arr) {
+    return arr.sort((a, b) =>
+        arr.filter(v => v.tradeCount === a.tradeCount).length
+        - arr.filter(v => v.tradeCount === b.tradeCount).length
+    ).pop();
 }
 
 router.post('/find_available_btc_usdt_atg', async (req, res)=>{
