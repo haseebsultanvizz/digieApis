@@ -10468,7 +10468,7 @@ router.post('/update_user_wallet_kraken', async (req, resp)=>{
 
     let user_id = req.body.user_id
 
-    if (typeof user_id != 'undefined' && user_id != ''){
+    if (false && typeof user_id != 'undefined' && user_id != ''){
 
         let status = await update_user_wallet_kraken(user_id)
 
