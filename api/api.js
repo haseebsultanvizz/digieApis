@@ -1999,11 +1999,17 @@ router.post('/createAutoOrder', async (req, resp) => {
 
     order['randomize_sort'] = Math.floor(Math.random() * (1000 - 0 + 1)) + 0; 
 
-    if (typeof order['admin_id'] != 'undefined' && digie_admin_ids.includes(order['admin_id'])){
+    if (false && typeof order['admin_id'] != 'undefined' && digie_admin_ids.includes(order['admin_id'])){
         order['pick_parent'] = 'yes'; 
     }else{
-        const user_remaining_usd_limit = await getUserRemainingLimit(order['admin_id'], order['exchange'])
-        order['pick_parent'] (user_remaining_usd_limit > usd_worth ? 'yes' : 'no')
+        let  user_remaining_usd_limit = await getUserRemainingLimit(order['admin_id'], order['exchange'])
+        let splitArr = order['symbol']
+        if (splitArr[1] == '') {
+            user_remaining_usd_limit = user_remaining_usd_limit['remaining_usdt_usd_limit']
+        } else {
+            user_remaining_usd_limit = user_remaining_usd_limit['remaining_btc_usd_limit']
+        }
+        order['pick_parent'] = (user_remaining_usd_limit > 0 ? 'yes' : 'no')
     }
 
     let orderResp = await createAutoOrder(order);
@@ -10458,6 +10464,110 @@ function validate_kraken_credentials(APIKEY, APISECRET, user_id = '') {
     })
 } //End of validate_kraken_credentials
 
+router.post('/update_user_wallet_kraken', async (req, resp)=>{
+
+    let user_id = req.body.user_id
+
+    if (typeof user_id != 'undefined' && user_id != ''){
+
+        let status = await update_user_wallet_kraken(user_id)
+
+        if (status){
+            resp.send({
+                'status': true,
+                'message': 'Balance updated successfully'
+            })
+        }else{
+            resp.send({
+                'status': false,
+                'message': 'something went wrong'
+            })
+        }
+    }else{
+        resp.send({
+            'status':false,
+            'message':'user_id is required'
+        })
+    }
+})
+
+async function update_user_wallet_kraken(user_id){
+    return new Promise(async resolve=>{
+
+        const db = await conn
+
+        let api_secret_arr = await db.collection('kraken_credentials').find({ 'user_id': user_id, 'api_key': { '$ne': '' }, 'api_secret':{ '$ne': '' }}).toArray()
+        if (api_secret_arr.length > 0){
+
+            
+            let key = api_secret_arr[0]['api_key']
+            let secret = api_secret_arr[0]['api_secret']
+
+            // console.log(key, secret)
+
+            const KrakenClient = require('kraken-api');
+            
+            const kraken = new KrakenClient(key, secret);
+            
+            var balanceArr = await kraken.api('Balance');
+
+            console.log(balanceArr)
+            
+            if (balanceArr['error'].length > 0){
+                // console.log(balanceArr)
+                resolve(false)
+            }else{
+
+                //update balance in collection
+                let wallet_collection = 'user_wallet_kraken'
+
+                if(Object.keys(balanceArr['result']).length === 0 && balanceArr['result'].constructor === Object){
+                    resolve(false)
+                }else{
+                    for (const [key, value] of Object.entries(balanceArr['result'])) {
+                        let symbol = key
+                        let currBalance = parseFloat(value)
+
+                        // console.log(symbol, currBalance, typeof currBalance)
+
+                        // let allCoins = [ 'ZUSD', 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', 'USDT', 'EOS', 'ADA', 'QTUM', 'LINK', 'TRX' ]
+                        
+                        let changeCoinArr = [ 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', ]
+
+                        if (changeCoinArr.includes(key)){
+                            symbol = key == 'XXBT' ? 'BTC' : key.substring(1)
+                        }
+                        
+                        let where = {
+                            'user_id': user_id, 
+                            'coin_symbol': symbol
+                        }
+
+                        let update = {
+                            '$set':{
+                                'available': currBalance,
+                                'coin_balance': currBalance
+                            }
+                        }
+
+                        let upsert = {
+                            'upsert': true
+                        }
+
+                        // console.log(symbol, currBalance, typeof currBalance)
+
+                        await db.collection(wallet_collection).updateOne(where, update, upsert)
+
+                    }
+                    resolve(true)
+                }
+            }
+        }else{
+            resolve(true)
+        }
+    })
+}
+
 //check error in sell for buy orders
 router.post('/get_error_in_sell', async (req, resp) => {
 
@@ -14490,22 +14600,30 @@ async function getUserRemainingLimit(user_id, exchange){
             },
             {
                 '$addFields':{
-                    'remaining_usd_limit': {
-                        '$subtract': ['$daily_buy_usd_limit', '$daily_buy_usd_worth']
+                    'remaining_btc_usd_limit': {
+                        '$subtract': ['$dailyTradeableBTC_usd_worth', '$daily_bought_btc_usd_worth']
+                    },
+                    'remaining_usdt_usd_limit': {
+                        '$subtract': ['$dailyTradeableUSDT_usd_worth', '$daily_bought_usdt_usd_worth']
                     }
                 }
             },
             {
                 '$project':{
-                    'remaining_usd_limit': 1,
+                    'remaining_btc_usd_limit': 1,
+                    'remaining_usdt_usd_limit': 1,
                     '_id': 0
                 }
             }
         ]).toArray()
         
-        let remaining_usd_limit = (result.length > 0 && !isNaN(result[0]['remaining_usd_limit'])) ? result[0]['remaining_usd_limit'] : 0
+        let remaining_btc_usd_limit = (result.length > 0 && !isNaN(result[0]['remaining_btc_usd_limit'])) ? result[0]['remaining_btc_usd_limit'] : 0
+        let remaining_usdt_usd_limit = (result.length > 0 && !isNaN(result[0]['remaining_usdt_usd_limit'])) ? result[0]['remaining_usdt_usd_limit'] : 0
 
-        resolve(remaining_usd_limit)
+        resolve({
+            'remaining_btc_usd_limit': remaining_btc_usd_limit,
+            'remaining_usdt_usd_limit': remaining_usdt_usd_limit,
+        })
 
     })
 }
@@ -14588,7 +14706,7 @@ async function createAutoTradeParents(settings){
         var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         var level = ''
 
-        const user_remaining_usd_limit = await getUserRemainingLimit(user_id, exchange)
+        let user_remaining_usd_limit = await getUserRemainingLimit(user_id, exchange)
 
         for(let i=0; i<coninsCount; i++){
 
@@ -14630,9 +14748,12 @@ async function createAutoTradeParents(settings){
             if (splitArr[1] == '') {
                 oneUsdWorthQty = 1 / currentMarketPrice
 
+                user_remaining_usd_limit = user_remaining_usd_limit['remaining_usdt_usd_limit']
+
             } else {
                 oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
 
+                user_remaining_usd_limit = user_remaining_usd_limit['remaining_btc_usd_limit']
             }
 
             usd_worth = parseFloat(usd_worth.toFixed(2))

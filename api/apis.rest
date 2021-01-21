@@ -289,6 +289,16 @@ Content-Type: application/json
 
 ###
 
+POST http://localhost:3010/apiEndPoint/update_user_wallet_kraken
+# POST http://34.205.124.51:3010/apiEndPoint/update_user_wallet_kraken
+Content-Type: application/json
+
+{ 
+    "user_id": "5c0912b7fc9aadaac61dd072"
+}
+
+###
+
 POST http://localhost:3010/apiEndPoint/is_trade_limit_exceeded
 # POST http://34.205.124.51:3010/apiEndPoint/is_trade_limit_exceeded
 Content-Type: application/json
