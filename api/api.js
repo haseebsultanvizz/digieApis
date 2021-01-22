@@ -2003,13 +2003,14 @@ router.post('/createAutoOrder', async (req, resp) => {
         order['pick_parent'] = 'yes'; 
     }else{
         let  user_remaining_usd_limit = await getUserRemainingLimit(order['admin_id'], order['exchange'])
+        let user_remaining_limit = 0
         let splitArr = order['symbol']
         if (splitArr[1] == '') {
-            user_remaining_usd_limit = user_remaining_usd_limit['remaining_usdt_usd_limit']
+            user_remaining_limit = user_remaining_usd_limit['remaining_usdt_usd_limit']
         } else {
-            user_remaining_usd_limit = user_remaining_usd_limit['remaining_btc_usd_limit']
+            user_remaining_limit = user_remaining_usd_limit['remaining_btc_usd_limit']
         }
-        order['pick_parent'] = (user_remaining_usd_limit > 0 ? 'yes' : 'no')
+        order['pick_parent'] = (user_remaining_limit > 0 ? 'yes' : 'no')
     }
 
     let orderResp = await createAutoOrder(order);
@@ -14712,6 +14713,9 @@ async function createAutoTradeParents(settings){
         var level = ''
 
         let user_remaining_usd_limit = await getUserRemainingLimit(user_id, exchange)
+        let user_remaining_limit = 0
+
+        console.log('user_remaining_usd_limit ', user_remaining_usd_limit)
 
         for(let i=0; i<coninsCount; i++){
 
@@ -14753,12 +14757,12 @@ async function createAutoTradeParents(settings){
             if (splitArr[1] == '') {
                 oneUsdWorthQty = 1 / currentMarketPrice
 
-                user_remaining_usd_limit = user_remaining_usd_limit['remaining_usdt_usd_limit']
+                user_remaining_limit = user_remaining_usd_limit['remaining_usdt_usd_limit']
 
             } else {
                 oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
 
-                user_remaining_usd_limit = user_remaining_usd_limit['remaining_btc_usd_limit']
+                user_remaining_limit = user_remaining_usd_limit['remaining_btc_usd_limit']
             }
 
             usd_worth = parseFloat(usd_worth.toFixed(2))
@@ -14791,7 +14795,7 @@ async function createAutoTradeParents(settings){
                             'price': '',
                             'quantity': minReqQty,
                             'usd_worth': usd_worth,
-                            'pick_parent': (digie_admin_ids.includes(user_id) || (user_remaining_usd_limit > usd_worth) ? 'yes' : 'no'),
+                            'pick_parent': (digie_admin_ids.includes(user_id) || (user_remaining_limit > usd_worth) ? 'yes' : 'no'),
                             'defined_sell_percentage': profit_percentage,
                             'sell_profit_percent': profit_percentage,
                             'current_market_price': currentMarketPrice,
@@ -14890,7 +14894,7 @@ async function createAutoTradeParents(settings){
                             'price': '',
                             'quantity': quantity,
                             'usd_worth': usd_worth,
-                            'pick_parent': (digie_admin_ids.includes(user_id) || (user_remaining_usd_limit > usd_worth) ? 'yes' : 'no'),
+                            'pick_parent': (digie_admin_ids.includes(user_id) || (user_remaining_limit > usd_worth) ? 'yes' : 'no'),
                             'defined_sell_percentage': profit_percentage,
                             'sell_profit_percent': profit_percentage,
                             'current_market_price': currentMarketPrice,
@@ -15313,6 +15317,11 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
             let pricesArr = []
             if (coinsArr.length > 0){
                 await Promise.all(coinsArr.map(coin=>{
+
+                    if (typeof coinData[coin] == 'undefined'){
+                        console.log(coin, '  currentmarketPrice ', coinData[coin])
+                    }
+                    
                     pricesArr.push({
                         'coin': coin,
                         'price': parseFloat(coinData[coin]['currentmarketPrice']),
@@ -18582,13 +18591,122 @@ async function  updateDailyTradeSettings(user_id, exchange, application_mode='li
 
 router.post('/updateDailyTradeSettings_digie_manual_run', async (req, res) => {
 
-    let exchange = 'binance'
+    let exchange = 'kraken'
     let application_mode = 'live'
+    
+    let doneUsers = [
+        '5c886871fc9aad24d27efdd2',
+        '5e02a3e42bac2d10a11aa757',
+        '5c0912b7fc9aadaac61dd072',
+        '5c0912cbfc9aadaac61dd079',
+        '5c0912e6fc9aadaac61dd085',
+        '5c0912e8fc9aadaac61dd086',
+        '5c0912effc9aadaac61dd089',
+        '5c09133afc9aadaac61dd096',
+        '5c091344fc9aadaac61dd099',
+        '5c09134cfc9aadaac61dd09c',
+        '5c091351fc9aadaac61dd09e',
+        '5c091362fc9aadaac61dd0a4',
+        '5c09137bfc9aadaac61dd0ae',
+        '5c091383fc9aadaac61dd0b1',
+        '5c091395fc9aadaac61dd0b9',
+        '5c091397fc9aadaac61dd0ba',
+        '5c0913a0fc9aadaac61dd0be',
+        '5c0913a5fc9aadaac61dd0c0',
+        '5c0913a7fc9aadaac61dd0c1',
+        '5c0913a9fc9aadaac61dd0c2',
+        '5c0913abfc9aadaac61dd0c3',
+        '5c0913b8fc9aadaac61dd0c9',
+        '5c0913d0fc9aadaac61dd0d3',
+        '5c0913d2fc9aadaac61dd0d4',
+        '5c0913dcfc9aadaac61dd0d9',
+        '5c0913e0fc9aadaac61dd0db',
+        '5c0913ebfc9aadaac61dd0e0',
+        '5c0913eefc9aadaac61dd0e1',
+        '5c0913f0fc9aadaac61dd0e2',
+        '5c0913fdfc9aadaac61dd0e8',
+        '5c0913fffc9aadaac61dd0e9',
+        '5c091401fc9aadaac61dd0ea',
+        '5c091403fc9aadaac61dd0eb',
+        '5c091405fc9aadaac61dd0ec',
+        '5c09140efc9aadaac61dd0f0',
+        '5c091410fc9aadaac61dd0f1',
+        '5c09141efc9aadaac61dd0f8',
+        '5c091425fc9aadaac61dd0fb',
+        '5c09142afc9aadaac61dd0fd',
+        '5c09142cfc9aadaac61dd0fe',
+        '5c09142efc9aadaac61dd0ff',
+        '5c091432fc9aadaac61dd101',
+        '5c091439fc9aadaac61dd104',
+        '5c09143cfc9aadaac61dd105',
+        '5c091443fc9aadaac61dd108',
+        '5c09144cfc9aadaac61dd10c',
+        '5c09144efc9aadaac61dd10d',
+        '5c091450fc9aadaac61dd10e',
+        '5c091453fc9aadaac61dd10f',
+        '5c091470fc9aadaac61dd11d',
+        '5c091477fc9aadaac61dd120',
+        '5c09147cfc9aadaac61dd122',
+        '5c091480fc9aadaac61dd124',
+        '5c091482fc9aadaac61dd125',
+        '5c091484fc9aadaac61dd126',
+        '5c09148afc9aadaac61dd129',
+        '5c091493fc9aadaac61dd12d',
+        '5c091495fc9aadaac61dd12e',
+        '5c091498fc9aadaac61dd12f',
+        '5c09149afc9aadaac61dd130',
+        '5c0914a0fc9aadaac61dd133',
+        '5c0914abfc9aadaac61dd138',
+        '5c0914b4fc9aadaac61dd13c',
+        '5c0914b9fc9aadaac61dd13e',
+        '5c0914ccfc9aadaac61dd147',
+        '5c0914d6fc9aadaac61dd14c',
+        '5c0914dffc9aadaac61dd150',
+        '5c0914e4fc9aadaac61dd152',
+        '5c0914e6fc9aadaac61dd153',
+        '5c0914f1fc9aadaac61dd158',
+        '5c0914f3fc9aadaac61dd159',
+        '5c091500fc9aadaac61dd15f',
+        '5c091513fc9aadaac61dd168',
+        '5c091517fc9aadaac61dd16a',
+        '5c091519fc9aadaac61dd16b',
+        '5c09151bfc9aadaac61dd16c',
+        '5c09151dfc9aadaac61dd16d',
+        '5c091537fc9aadaac61dd179',
+        '5c09153dfc9aadaac61dd17c',
+        '5c091541fc9aadaac61dd17e',
+        '5c091544fc9aadaac61dd17f',
+        '5c091555fc9aadaac61dd187',
+        '5c091559fc9aadaac61dd189',
+        '5c09155efc9aadaac61dd18b',
+        '5c091564fc9aadaac61dd18e',
+        '5c091566fc9aadaac61dd18f',
+        '5c09156afc9aadaac61dd191',
+        '5c09156cfc9aadaac61dd192',
+        '5c091584fc9aadaac61dd19d',
+        '5c09159afc9aadaac61dd1a7',
+        '5c09159efc9aadaac61dd1a9',
+        '5c0915a7fc9aadaac61dd1ad',
+        '5c0915b2fc9aadaac61dd1b2',
+        '5c0915c0fc9aadaac61dd1b9',
+        '5c0915c8fc9aadaac61dd1bd',
+        '5c0915defc9aadaac61dd1c7',
+        '5c0915e2fc9aadaac61dd1c9',
+        '5c0f2c8ffc9aad58f2674532',
+        '5c155879fc9aadace2428cb2',
+        '5c1ab8e8fc9aad3c0c53fea2',
+        '5c38fd6dfc9aad5b96116982',
+        '5c6f2c69fc9aad694e443eb2',
+        '5c70d923fc9aad047d351bf2',
+    ]
 
     const db = await conn
     //get all users with auto trade settings
     let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+
+
     let where = {
+        'user_id': { '$nin': doneUsers},
         'application_mode': application_mode,
         'step_2.coins': { '$exists': true },
         'step_4.totalTradeAbleInUSD': { '$exists': true },
@@ -18609,15 +18727,18 @@ router.post('/updateDailyTradeSettings_digie_manual_run', async (req, res) => {
 
     let users = await db.collection(collectionName).find(where).project({ 'user_id': 1 }).toArray()
 
-    if (false && users.length > 0) {
+    console.log('total users  => ', users.length)
+
+    if (users.length > 0) {
         totalUsers = users.length
         for (let i = 0; i < totalUsers; i++) {
             let user_id = users[i]['user_id']
             await updateDailyTradeSettings(user_id, exchange, application_mode)
+            console.log('Curr Iteration =>  ', i, '    -------------  user_id =>', user_id)
 
             // break;
-            //wait for 30 seconds
-            await new Promise(r => setTimeout(r, 30000));
+            //wait for 20 seconds
+            await new Promise(r => setTimeout(r, 20000));
         }
     }
 
