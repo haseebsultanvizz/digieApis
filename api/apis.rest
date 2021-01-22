@@ -404,3 +404,7 @@ Content-Type: application/json
 GET http://localhost:3010/apiEndPoint/findCustomPackageVal
 
 ###
+
+POST http://localhost:3010/apiEndPoint/updateDailyTradeSettings_digie_manual_run
+
+###

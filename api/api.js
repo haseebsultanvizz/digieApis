@@ -1999,7 +1999,7 @@ router.post('/createAutoOrder', async (req, resp) => {
 
     order['randomize_sort'] = Math.floor(Math.random() * (1000 - 0 + 1)) + 0; 
 
-    if (false && typeof order['admin_id'] != 'undefined' && digie_admin_ids.includes(order['admin_id'])){
+    if (typeof order['admin_id'] != 'undefined' && digie_admin_ids.includes(order['admin_id'])){
         order['pick_parent'] = 'yes'; 
     }else{
         let  user_remaining_usd_limit = await getUserRemainingLimit(order['admin_id'], order['exchange'])
@@ -10468,7 +10468,10 @@ router.post('/update_user_wallet_kraken', async (req, resp)=>{
 
     let user_id = req.body.user_id
 
-    if (false && typeof user_id != 'undefined' && user_id != ''){
+    if (typeof user_id != 'undefined' && user_id != ''){
+
+        //sleep 1 seconds before sending call next
+        await new Promise(r => setTimeout(r, 1000));
 
         let status = await update_user_wallet_kraken(user_id)
 
@@ -10510,11 +10513,10 @@ async function update_user_wallet_kraken(user_id){
             const kraken = new KrakenClient(key, secret);
             
             var balanceArr = await kraken.api('Balance');
-
-            console.log(balanceArr)
             
             if (balanceArr['error'].length > 0){
-                // console.log(balanceArr)
+                console.log('Erorrrrrrrrrrrrrrrr')
+                console.log(balanceArr)
                 resolve(false)
             }else{
 
@@ -10524,6 +10526,9 @@ async function update_user_wallet_kraken(user_id){
                 if(Object.keys(balanceArr['result']).length === 0 && balanceArr['result'].constructor === Object){
                     resolve(false)
                 }else{
+
+                    console.log('success == ', balanceArr)
+
                     for (const [key, value] of Object.entries(balanceArr['result'])) {
                         let symbol = key
                         let currBalance = parseFloat(value)
@@ -18511,7 +18516,10 @@ router.post('/updateDailyTradeSettings_digie', async (req, res) => {
                 totalUsers = users.length
                 for(let i=0; i<totalUsers; i++){
                     user_id = users[i]['user_id']
-                    await updateDailyTradeSettings(user_id, exchange, application_mode) 
+                    await updateDailyTradeSettings(user_id, exchange, application_mode)
+
+                    //wait for 30 seconds
+                    await new Promise(r => setTimeout(r, 30000));
                 }
             }
 
@@ -18571,6 +18579,56 @@ async function  updateDailyTradeSettings(user_id, exchange, application_mode='li
     })
 
 }
+
+router.post('/updateDailyTradeSettings_digie_manual_run', async (req, res) => {
+
+    let exchange = 'binance'
+    let application_mode = 'live'
+
+    const db = await conn
+    //get all users with auto trade settings
+    let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+    let where = {
+        'application_mode': application_mode,
+        'step_2.coins': { '$exists': true },
+        'step_4.totalTradeAbleInUSD': { '$exists': true },
+        'step_4.btcInvestPercentage': { '$exists': true },
+        'step_4.usdtInvestPercentage': { '$exists': true },
+        'step_4.tradeableUSDT': { '$exists': true },
+        'step_4.tradeableBTC': { '$exists': true },
+        'step_4.actualTradeableUSDT': { '$exists': true },
+        'step_4.actualTradeableBTC': { '$exists': true },
+        'step_4.dailTradeAbleBalancePercentage': { '$exists': true },
+        'step_4.dailyTradeableBTC': { '$exists': true },
+        'step_4.dailyTradeableUSDT': { '$exists': true },
+        // 'step_4.noOfDailyBTCTrades': { '$exists': true },
+        // 'step_4.perBtcTradeUsdVal': { '$exists': true },
+        // 'step_4.noOfDailyUSDTTrades': { '$exists': true },
+        // 'step_4.perUsdtTradeUsdVal': { '$exists': true },
+    }
+
+    let users = await db.collection(collectionName).find(where).project({ 'user_id': 1 }).toArray()
+
+    if (false && users.length > 0) {
+        totalUsers = users.length
+        for (let i = 0; i < totalUsers; i++) {
+            let user_id = users[i]['user_id']
+            await updateDailyTradeSettings(user_id, exchange, application_mode)
+
+            // break;
+            //wait for 30 seconds
+            await new Promise(r => setTimeout(r, 30000));
+        }
+    }
+
+res.send({
+    'status': true,
+    'message': 'Daily Auto Trade usdworth and min quantity updated successfully.'
+});
+
+})//End updateDailyTradeSettings
+
+
 
 async function updateATGSettingsArr(user_id, exchange, application_mode, updateObj){
     conn.then(async (db) => {
