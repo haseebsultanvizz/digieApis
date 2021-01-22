@@ -10515,8 +10515,8 @@ async function update_user_wallet_kraken(user_id){
             var balanceArr = await kraken.api('Balance');
             
             if (balanceArr['error'].length > 0){
-                console.log('Erorrrrrrrrrrrrrrrr')
-                console.log(balanceArr)
+                // console.log('Erorrrrrrrrrrrrrrrr')
+                // console.log(balanceArr)
                 resolve(false)
             }else{
 
@@ -10527,7 +10527,7 @@ async function update_user_wallet_kraken(user_id){
                     resolve(false)
                 }else{
 
-                    console.log('success == ', balanceArr)
+                    // console.log('success == ', balanceArr)
 
                     for (const [key, value] of Object.entries(balanceArr['result'])) {
                         let symbol = key
