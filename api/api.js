@@ -10553,7 +10553,8 @@ async function update_user_wallet_kraken(user_id){
                         let update = {
                             '$set':{
                                 'available': currBalance,
-                                'coin_balance': currBalance
+                                'coin_balance': currBalance,
+                                'modified_date':new Date()
                             }
                         }
 
