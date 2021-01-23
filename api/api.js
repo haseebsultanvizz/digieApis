@@ -10516,8 +10516,8 @@ async function update_user_wallet_kraken(user_id){
             var balanceArr = await kraken.api('Balance');
             
             if (balanceArr['error'].length > 0){
-                // console.log('Erorrrrrrrrrrrrrrrr')
-                // console.log(balanceArr)
+                console.log('Erorrrrrrrrrrrrrrrr::   user_id :: ', user_id)
+                console.log(balanceArr)
                 resolve(false)
             }else{
 
@@ -10528,11 +10528,12 @@ async function update_user_wallet_kraken(user_id){
                     resolve(false)
                 }else{
 
-                    // console.log('success == ', balanceArr)
+                    console.log('success ===  user_id :: ', user_id , ' ---- ', balanceArr)
 
                     for (const [key, value] of Object.entries(balanceArr['result'])) {
                         let symbol = key
-                        let currBalance = parseFloat(value)
+                        // let currBalance = parseFloat(value)
+                        let currBalance = value
 
                         // console.log(symbol, currBalance, typeof currBalance)
 
@@ -13564,26 +13565,33 @@ async function update_user_balance(user_id) {
     // };
     // request(options, function (error, response, body) { });
     
+
+
     //Update Kraken Balance
-    var options = {
-        method: 'POST',
-        // url: 'http://52.22.53.12:3100/updateUserBalanceKraken',
-        url: 'http://34.199.235.34:3200/updateUserBalance',
-        headers: {
-            'cache-control'   : 'no-cache',
-            'Connection'      : 'keep-alive',
-            'Accept-Encoding' : 'gzip, deflate',
-            'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-            'Cache-Control'   : 'no-cache',
-            'Accept'          : '*/*',
-            'User-Agent'      : 'PostmanRuntime/7.20.1',
-            'Content-Type'    : 'application/json'
-        },
-        json: {
-            'user_id': user_id
-        }
-    };
-    request(options, function (error, response, body) { });
+    await update_user_wallet_kraken(user_id)
+
+    // //Update Kraken Balance
+    // var options = {
+    //     method: 'POST',
+    //     // url: 'http://52.22.53.12:3100/updateUserBalanceKraken',
+    //     url: 'http://34.199.235.34:3200/updateUserBalance',
+    //     headers: {
+    //         'cache-control'   : 'no-cache',
+    //         'Connection'      : 'keep-alive',
+    //         'Accept-Encoding' : 'gzip, deflate',
+    //         'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+    //         'Cache-Control'   : 'no-cache',
+    //         'Accept'          : '*/*',
+    //         'User-Agent'      : 'PostmanRuntime/7.20.1',
+    //         'Content-Type'    : 'application/json'
+    //     },
+    //     json: {
+    //         'user_id': user_id
+    //     }
+    // };
+    // request(options, function (error, response, body) { });
+
+
 
     return true
 }
@@ -18698,6 +18706,76 @@ router.post('/updateDailyTradeSettings_digie_manual_run', async (req, res) => {
         '5c38fd6dfc9aad5b96116982',
         '5c6f2c69fc9aad694e443eb2',
         '5c70d923fc9aad047d351bf2',
+        '5c7ebaedfc9aad8d19525022',
+        '5c82d3bafc9aad5b2958c352',
+        '5c83ec7afc9aad5db6248922',
+        '5c867845fc9aad4d6c252bb2',
+        '5c86f33bfc9aad989b4ca8d2',
+        '5c885834fc9aad5b7709f062',
+        '5c899d22fc9aad58553ce172',
+        '5c94bfeafc9aad986b64e652',
+        '5c9ff9c3fc9aadb7002aa242',
+        '5ca3b72ffc9aad8468118fb2',
+        '5cc919affc9aad738a75f3b2',
+        '5ce49199fc9aad5c8b316402',
+        '5ce5c30efc9aadb43a5107b2',
+        '5cece616fc9aad7eb04b3d32',
+        '5cf18df2fc9aad0f621deb72',
+        '5cf21de8fc9aad437d783d82',
+        '5d13d50efc9aad306b22e1c2',
+        '5d1aa617fc9aad944e6811d2',
+        '5d24105dfc9aad1d2463f162',
+        '5d3bd3b1fc9aad1942677c72',
+        '5d8de93a6b178200b1077c42',
+        '5dafc44fdcf4fc27371c9f82',
+        '5dce8eecdba3c771dc7c08f6',
+        '5de10b4cbe21fb3af17bbe3e',
+        '5e13233d0df6b4531a669e38',
+        '5e41ab693bde856ad75877fc',
+        '5e42b1b8447ec75c1d1f5693',
+        '5e506386f4c44d53de5d14c3',
+        '5e575c86ecdd2260111f2882',
+        '5e63edd816b0646960785112',
+        '5e6c0f0866cc1728a72b3912',
+        '5e6cc3841b75897b9b7bc592',
+        '5e6f3ca8f9e9e025db184aa2',
+        '5e82b59f67134e590b4f3392',
+        '5e8a7b78c700bb29166b6501',
+        '5e91d98558a4f70eee4e40be',
+        '5eac53ff3db2132d636b6af9',
+        '5ebc527a13e065446c4b4abe',
+        '5ebce07751ee1e2ead5d8193',
+        '5ec08c34987f090f9f7e9677',
+        '5ec47137e0d1042af03c0d4f',
+        '5ecaf447596f2f1fa87e1d09',
+        '5ed00af960e236288b755a8b',
+        '5ed5fae8cc67734410172b12',
+        '5edc563846cb0c59fa0f620b',
+        '5edd16023ca39944df3da844',
+        '5ee01ddc688c20728f4f6262',
+        '5f3c48d5e48dd3026d59b2fc',
+        '5f445b4a19408436893d13c5',
+        '5f4586528ab16e49d6544285',
+        '5f492031cbb93212d26125fd',
+        '5f4a34f698e0d7755b094043',
+        '5f4bbfba47e65b1a3f0c75f6',
+        '5f503e44640d66499f5ceabe',
+        '5f516ad55397d21bd1256e04',
+        '5f535e710d8343597741b2a4',
+        '5f535e94b7566979e12b0087',
+        '5f5bf17d5a43f8775b0f8a2a',
+        '5f61cc515c6ef0497a6eb8e6',
+        '5f731ba5f0a55270873ad789',
+        '5f74b035ed0916135e578292',
+        '5f7507341cb1ea013217f865',
+        '5f79c8db7d53d8176c645282',
+        '5f7ca7fe6113d200a02d0a50',
+        '5f84414b7bc54b2dc74ddfc0',
+        '5fb96b006008f969bf7d7c5b',
+        '5fbb90153f9bb708885990e8',
+        '5fbf6499084105189550d982',
+        '5fc0e8b3041d4822f46aef84',
+        '5fc4b1cb24796039ed42b662',
     ]
 
     const db = await conn
