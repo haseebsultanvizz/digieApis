@@ -10524,7 +10524,7 @@ async function update_user_wallet_kraken(user_id){
                 //update balance in collection
                 let wallet_collection = 'user_wallet_kraken'
 
-                if(Object.keys(balanceArr['result']).length === 0 && balanceArr['result'].constructor === Object){
+                if (typeof balanceArr['result'] == 'undefined' || typeof balanceArr['result'] == 'null' || (Object.keys(balanceArr['result']).length === 0 && balanceArr['result'].constructor === Object)){
                     resolve(false)
                 }else{
 
