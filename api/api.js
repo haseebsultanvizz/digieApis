@@ -13573,28 +13573,28 @@ async function update_user_balance(user_id) {
 
 
     //Update Kraken Balance
-    await update_user_wallet_kraken(user_id)
+    // await update_user_wallet_kraken(user_id)
 
-    // //Update Kraken Balance
-    // var options = {
-    //     method: 'POST',
-    //     // url: 'http://52.22.53.12:3100/updateUserBalanceKraken',
-    //     url: 'http://34.199.235.34:3200/updateUserBalance',
-    //     headers: {
-    //         'cache-control'   : 'no-cache',
-    //         'Connection'      : 'keep-alive',
-    //         'Accept-Encoding' : 'gzip, deflate',
-    //         'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-    //         'Cache-Control'   : 'no-cache',
-    //         'Accept'          : '*/*',
-    //         'User-Agent'      : 'PostmanRuntime/7.20.1',
-    //         'Content-Type'    : 'application/json'
-    //     },
-    //     json: {
-    //         'user_id': user_id
-    //     }
-    // };
-    // request(options, function (error, response, body) { });
+    //Update Kraken Balance
+    var options = {
+        method: 'POST',
+        // url: 'http://52.22.53.12:3100/updateUserBalanceKraken',
+        url: 'http://34.199.235.34:3200/updateUserBalance',
+        headers: {
+            'cache-control'   : 'no-cache',
+            'Connection'      : 'keep-alive',
+            'Accept-Encoding' : 'gzip, deflate',
+            'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control'   : 'no-cache',
+            'Accept'          : '*/*',
+            'User-Agent'      : 'PostmanRuntime/7.20.1',
+            'Content-Type'    : 'application/json'
+        },
+        json: {
+            'user_id': user_id
+        }
+    };
+    request(options, function (error, response, body) { });
 
 
 
@@ -21985,6 +21985,303 @@ router.get('/testKrakenBuyApi', async (req, res)=>{
     console.log(krakenReqResult)
     
     res.send({})
+})
+
+router.post('/swap_kraken_api_keys', async (req, res)=>{
+
+    const db = await conn
+
+    let secondary_key_user_ids_Arr = [
+        '5c155879fc9aadace2428cb2',
+        '5e82b59f67134e590b4f3392',
+        '5c091351fc9aadaac61dd09e',
+        '5e6c0f0866cc1728a72b3912',
+        '5eb5a2658b65c31ff8233604',
+        '5e575c86ecdd2260111f2882',
+        '5c091455fc9aadaac61dd110',
+        '5c0915befc9aadaac61dd1b8',
+        '5ebaa54ad4d1dd5efa3baef2',
+        '5c0914c3fc9aadaac61dd143',
+        '5ec0093226266525ac2f12e4',
+        '5ebd9906626b2b634c6c1fff',
+        '5cb7e921fc9aad0b765f1ba2',
+        '5ebc527a13e065446c4b4abe',
+        '5dce8eecdba3c771dc7c08f6',
+        '5ecaf447596f2f1fa87e1d09',
+        '5ec9de0051232841cf650ce6',
+        '5ec47137e0d1042af03c0d4f',
+        '5ec7c8b691abf0662741cfda',
+        '5edd16023ca39944df3da844',
+        '5c0915defc9aadaac61dd1c7',
+        '5ed5fae8cc67734410172b12',
+        '5e02a3e42bac2d10a11aa757',
+        '5ef0d80654786256be15bee8',
+        '5d13d50efc9aad306b22e1c2',
+        '5c9ff9c3fc9aadb7002aa242',
+        '5c091517fc9aadaac61dd16a',
+        '5f445b4a19408436893d13c5',
+        '5cece616fc9aad7eb04b3d32',
+        '5f492031cbb93212d26125fd',
+        '5f4a34f698e0d7755b094043',
+        '5f4bbfba47e65b1a3f0c75f6',
+        '5f516ad55397d21bd1256e04',
+        '5f535e94b7566979e12b0087',
+        '5f535e710d8343597741b2a4',
+        '5f61cc515c6ef0497a6eb8e6',
+        '5f5b8e72a266e84bee5aaeda',
+        '5ee01ddc688c20728f4f6262',
+        '5f731ba5f0a55270873ad789',
+        '5f7507341cb1ea013217f865',
+        '5f74b035ed0916135e578292',
+        '5f7ae1d041def579e6601705',
+        '5f79c8db7d53d8176c645282',
+        '5f7ca7fe6113d200a02d0a50',
+        '5de10b4cbe21fb3af17bbe3e',
+        '5f84414b7bc54b2dc74ddfc0',
+        '5ed00af960e236288b755a8b',
+        '5d8de93a6b178200b1077c42',
+        '5c091564fc9aadaac61dd18e',
+        '5cc919affc9aad738a75f3b2',
+        '5c091480fc9aadaac61dd124',
+        '5fb96b006008f969bf7d7c5b',
+        '5c091362fc9aadaac61dd0a4',
+        '5c886282fc9aad98b069ebd2',
+        '5fbf6499084105189550d982',
+        '5c091453fc9aadaac61dd10f',
+        '5c091500fc9aadaac61dd15f',
+        '5c091395fc9aadaac61dd0b9',
+        '5c1ab8e8fc9aad3c0c53fea2',
+        '5e8a7b78c700bb29166b6501',
+        '5c0915c8fc9aadaac61dd1bd',
+        '5c091477fc9aadaac61dd120',
+        '5c09142efc9aadaac61dd0ff',
+        '5c09142afc9aadaac61dd0fd',
+        '5e6f3ca8f9e9e025db184aa2',
+        '5c82d3bafc9aad5b2958c352',
+        '5c0914e6fc9aadaac61dd153',
+        '5c091484fc9aadaac61dd126',
+        '5c09133afc9aadaac61dd096',
+        '5c09137bfc9aadaac61dd0ae',
+        '5c09139bfc9aadaac61dd0bc',
+        '5c0914b4fc9aadaac61dd13c',
+        '5cf18df2fc9aad0f621deb72',
+        '5c83ec7afc9aad5db6248922',
+        '5c0913a0fc9aadaac61dd0be',
+        '5c09156afc9aadaac61dd191',
+        '5c0913e0fc9aadaac61dd0db',
+        '5c0912e8fc9aadaac61dd086',
+        '5c091403fc9aadaac61dd0eb',
+        '5c0915b2fc9aadaac61dd1b2',
+        '5c09153dfc9aadaac61dd17c',
+        '5e63edd816b0646960785112',
+        '5c0914dffc9aadaac61dd150',
+        '5e3c3e9c13805328b20a0da6',
+        '5d9d9482710a9027ff3da7b2',
+        '5c0914b9fc9aadaac61dd13e',
+        '5c09155efc9aadaac61dd18b',
+        '5c09159afc9aadaac61dd1a7',
+        '5c09151dfc9aadaac61dd16d',
+        '5c09147cfc9aadaac61dd122',
+        '5c0915a7fc9aadaac61dd1ad',
+        '5c09159efc9aadaac61dd1a9',
+        '5c091410fc9aadaac61dd0f1',
+        '5c091544fc9aadaac61dd17f',
+        '5c091537fc9aadaac61dd179',
+        '5eac53ff3db2132d636b6af9',
+        '5e0a7f7fd5228d29d163d375',
+        '5c091493fc9aadaac61dd12d',
+        '5c0912e6fc9aadaac61dd085',
+        '5c091405fc9aadaac61dd0ec',
+        '5c867845fc9aad4d6c252bb2',
+        '5c0914abfc9aadaac61dd138',
+        '5c091541fc9aadaac61dd17e',
+        '5c6f2c69fc9aad694e443eb2',
+        '5ca3b72ffc9aad8468118fb2',
+        '5c09151bfc9aadaac61dd16c',
+        '5c09144cfc9aadaac61dd10c',
+        '5c0914a0fc9aadaac61dd133',
+        '5c83d1e3fc9aad95e66599e2',
+        '5c09134cfc9aadaac61dd09c',
+        '5c0913dcfc9aadaac61dd0d9',
+        '5c0913a7fc9aadaac61dd0c1',
+        '5c0913a5fc9aadaac61dd0c0',
+        '5e506386f4c44d53de5d14c3',
+        '5ebce07751ee1e2ead5d8193',
+        '5edc563846cb0c59fa0f620b',
+        '5c0913a9fc9aadaac61dd0c2',
+        '5c091584fc9aadaac61dd19d',
+        '5c0914b2fc9aadaac61dd13b',
+        '5c091470fc9aadaac61dd11d',
+        '5c091439fc9aadaac61dd104',
+        '5c38fd6dfc9aad5b96116982',
+        '5c8aefb9fc9aad4913315d32',
+        '5c0f2c8ffc9aad58f2674532',
+        '5c0914e9fc9aadaac61dd154',
+        '5c0915c0fc9aadaac61dd1b9',
+        '5c09143cfc9aadaac61dd105',
+        '5c091344fc9aadaac61dd099',
+        '5c94bfeafc9aad986b64e652',
+        '5c0913f4fc9aadaac61dd0e4',
+        '5c0914adfc9aadaac61dd139',
+        '5c0913eefc9aadaac61dd0e1',
+        '5c0914ccfc9aadaac61dd147',
+        '5c0913d2fc9aadaac61dd0d4',
+        '5fce1d9f05f8183a215c0bd4',
+        '5fc0e8b3041d4822f46aef84',
+        '5c091495fc9aadaac61dd12e',
+        '5c091562fc9aadaac61dd18d',
+        '5c09144efc9aadaac61dd10d',
+        '5fbb90153f9bb708885990e8',
+        '5cf21de8fc9aad437d783d82',
+        '5c091443fc9aadaac61dd108',
+        '5c899d22fc9aad58553ce172',
+        '5c0914d6fc9aadaac61dd14c',
+        '5c0912cbfc9aadaac61dd079',
+        '5ec08c34987f090f9f7e9677',
+        '5d3bd3b1fc9aad1942677c72',
+        '5c091559fc9aadaac61dd189',
+        '5c091432fc9aadaac61dd101',
+        '5d1aa617fc9aad944e6811d2',
+        '5c091354fc9aadaac61dd09f',
+        '5c09135bfc9aadaac61dd0a2',
+        '5c091566fc9aadaac61dd18f',
+        '5c091598fc9aadaac61dd1a6',
+        '5c091383fc9aadaac61dd0b1',
+        '5c0913d0fc9aadaac61dd0d3',
+        '5c09148afc9aadaac61dd129',
+        '5c0913abfc9aadaac61dd0c3',
+        '5c091390fc9aadaac61dd0b7',
+        '5c0915b8fc9aadaac61dd1b5',
+        '5c0913fffc9aadaac61dd0e9',
+        '5c0912effc9aadaac61dd089',
+        '5dafc44fdcf4fc27371c9f82',
+        '5c0913defc9aadaac61dd0da',
+        '5c09148ffc9aadaac61dd12b',
+        '5c70d923fc9aad047d351bf2',
+        '5c091513fc9aadaac61dd168',
+        '5fdc80ed5fac7e62123f3eee',
+        '5c8ee110fc9aad1bf15e6812',
+        '5d24105dfc9aad1d2463f162',
+        '5c09141efc9aadaac61dd0f8',
+        '5e41ab693bde856ad75877fc',
+        '5c091519fc9aadaac61dd16b',
+        '5fe24869959bf0305756605d',
+        '5c0913b8fc9aadaac61dd0c9',
+        '5c091450fc9aadaac61dd10e',
+        '5c0913ebfc9aadaac61dd0e0',
+        '5e4ec6f98334a705c918e553',
+        '5c091401fc9aadaac61dd0ea',
+        '5f503e44640d66499f5ceabe',
+        '5fe9054c56432b4e873b74a2',
+        '5fe9062756432b4e873b74a3',
+        '5ce1cb27fc9aad6b5036c422',
+        '5fec55770c8e6f5d9a796002',
+        '5fea0d677a410c07a4728e22',
+        '5f5bf17d5a43f8775b0f8a2a',
+        '5fe9053c8ea15f364862a2d2',
+        '5ff03f95c563f408c3146762',
+        '5c09149afc9aadaac61dd130',
+        '5ff237a52812ce43842ac7d7',
+        '5c7ebaedfc9aad8d19525022',
+        '5c0913e2fc9aadaac61dd0dc',
+        '5c091498fc9aadaac61dd12f',
+        '5e984802540fe254314ab8a2',
+        '5e42b1b8447ec75c1d1f5693',
+        '5c0913b4fc9aadaac61dd0c7',
+        '5c0914e4fc9aadaac61dd152',
+        '5fe7611f9dd63524651c53d2',
+        '5ce5c30efc9aadb43a5107b2',
+        '5c09140efc9aadaac61dd0f0',
+        '60006d5a042cee3805670715',
+        '5e91d98558a4f70eee4e40be',
+        '60069ad77b061c5c4976f9a2',
+        '5ff6ef19f64b93782b12a0d8',
+        '5fd8ae12ecb99d435a07786f',
+        '5c0915e2fc9aadaac61dd1c9',
+        '5fff20f91f78c407db25b83e',
+        '60069d7804682c1ee9448472',
+        '5c091407fc9aadaac61dd0ed',
+        '5c84096afc9aad3f13329242',
+        '5dc1da2f179c215806523b00',
+    ]
+
+    let where = {
+        'user_id': { '$in': secondary_key_user_ids_Arr},  
+        'api_key': {'$ne':''},  
+        'api_secret': {'$ne':''},  
+    }
+
+    let usersArr = await db.collection('kraken_credentials').find(where).toArray()
+
+    let totalUsers = usersArr.length
+
+    console.log(totalUsers)
+    
+    if (totalUsers > 0){
+
+        for(let i=0; i<totalUsers; i++){
+
+            let end_time = new Date()
+
+            //check if API key is invalid
+            let reqObj = {
+                'type': 'POST',
+                'url': 'https://app.digiebot.com/admin/api_calls/verify_api_key_secret',
+                'headers': {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                'payload': {
+                    'exchange': 'kraken',
+                    'user_id': usersArr[i]['user_id']
+                }
+            }
+
+            // console.log(payload)
+            let apiResult = await customApiRequest(reqObj)
+            console.log(usersArr[i]['user_id'], apiResult)
+
+            if(apiResult.status){
+                
+                if (apiResult['body']['status']){
+                    //is valid 
+                    //Do Nothing
+                    console.log('user_id: ', usersArr[i]['user_id'], ' ----------- ', end_time)
+
+                    await db.collection('kraken_credentials').updateOne({ 'user_id': usersArr[i]['user_id']}, {'$set':{'old_secondary_key_valid':'yes'}})
+                    
+                } else {
+
+                    console.log('Invalid key_secret user_id: ', usersArr[i]['user_id'], ' ----------- ', end_time)
+
+                    // swap Secondary api key with primary api key
+                    // let where = {
+                    //     'user_id': usersArr[i]['user_id']
+                    // }
+                    // let set = {
+                    //     '$set': {
+                    //         'key_secret_swaped': 'yes',
+                    //         'api_key': usersArr[i]['api_key_secondary'],
+                    //         'api_secret': usersArr[i]['api_secret_secondary'],
+                    //         'api_key_secondary': usersArr[i]['api_key'],
+                    //         'api_secret_secondary': usersArr[i]['api_secret']
+                    //     }
+                    // }
+                    // await db.collection('kraken_credentials').updateOne(where, set)
+
+                    await db.collection('kraken_credentials').updateOne({ 'user_id': usersArr[i]['user_id'] }, { '$set': { 'old_secondary_key_valid': 'no' } })
+
+                }
+
+            } 
+
+            await new Promise(r => setTimeout(r, 5000));
+
+        }
+    }
+
+    res.send({})
+
 })
 
 module.exports = router;

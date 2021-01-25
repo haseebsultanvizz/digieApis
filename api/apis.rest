@@ -419,3 +419,13 @@ Content-Type: application/json
 }
 
 ###
+
+POST http://localhost:3010/apiEndPoint/swap_kraken_api_keys
+# POST http://34.205.124.51:3010/apiEndPoint/swap_kraken_api_keys
+Content-Type: application/json
+
+{ 
+    
+}
+
+###
