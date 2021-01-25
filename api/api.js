@@ -10175,12 +10175,11 @@ router.post('/saveKrakenCredentials', (req, resp) => {
         insertArr['user_id'] = user_id;
         insertArr['api_key'] = api_key;
         insertArr['api_secret'] = api_secret;
+        insertArr['modified_date'] = new Date();
         let set = {};
         set['$set'] = insertArr;
         let where = {};
-        where['user_id'] = user_id; {
-            upsert: true
-        }
+        where['user_id'] = user_id;
         let upsert = {
             upsert: true
         };
@@ -10211,12 +10210,11 @@ router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
         insertArr['user_id'] = user_id;
         insertArr['api_key_secondary'] = api_key;
         insertArr['api_secret_secondary'] = api_secret;
+        insertArr['modified_date_secondary'] = new Date();
         let set = {};
         set['$set'] = insertArr;
         let where = {};
-        where['user_id'] = user_id; {
-            upsert: true
-        }
+        where['user_id'] = user_id; 
         let upsert = {
             upsert: true
         };
@@ -10507,69 +10505,75 @@ async function update_user_wallet_kraken(user_id){
             let key = api_secret_arr[0]['api_key']
             let secret = api_secret_arr[0]['api_secret']
 
-            // console.log(key, secret)
+            console.log(key, secret)
 
-            const KrakenClient = require('kraken-api');
-            
-            const kraken = new KrakenClient(key, secret);
-            
-            var balanceArr = await kraken.api('Balance');
-            
-            if (balanceArr['error'].length > 0){
-                console.log('Erorrrrrrrrrrrrrrrr::   user_id :: ', user_id)
-                console.log(balanceArr)
+            if(typeof key == 'undefined' || typeof secret == 'undefined'){
                 resolve(false)
             }else{
 
-                //update balance in collection
-                let wallet_collection = 'user_wallet_kraken'
+                const KrakenClient = require('kraken-api');
+                
+                const kraken = new KrakenClient(key, secret);
+                
+                var balanceArr = await kraken.api('Balance');
 
-                if (typeof balanceArr['result'] == 'undefined' || typeof balanceArr['result'] == 'null' || (Object.keys(balanceArr['result']).length === 0 && balanceArr['result'].constructor === Object)){
+                if (balanceArr['error'].length > 0){
+                    console.log('Erorrrrrrrrrrrrrrrr::   user_id :: ', user_id)
+                    console.log(balanceArr)
                     resolve(false)
                 }else{
 
-                    console.log('success ===  user_id :: ', user_id , ' ---- ', balanceArr)
+                    //update balance in collection
+                    let wallet_collection = 'user_wallet_kraken'
 
-                    for (const [key, value] of Object.entries(balanceArr['result'])) {
-                        let symbol = key
-                        // let currBalance = parseFloat(value)
-                        let currBalance = value
+                    if (typeof balanceArr['result'] == 'undefined' || typeof balanceArr['result'] == 'null' || (Object.keys(balanceArr['result']).length === 0 && balanceArr['result'].constructor === Object)){
+                        resolve(false)
+                    }else{
 
-                        // console.log(symbol, currBalance, typeof currBalance)
+                        console.log('success ===  user_id :: ', user_id , ' ---- ', balanceArr)
 
-                        // let allCoins = [ 'ZUSD', 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', 'USDT', 'EOS', 'ADA', 'QTUM', 'LINK', 'TRX' ]
-                        
-                        let changeCoinArr = [ 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', ]
+                        for (const [key, value] of Object.entries(balanceArr['result'])) {
+                            let symbol = key
+                            // let currBalance = parseFloat(value)
+                            let currBalance = value
 
-                        if (changeCoinArr.includes(key)){
-                            symbol = key == 'XXBT' ? 'BTC' : key.substring(1)
-                        }
-                        
-                        let where = {
-                            'user_id': user_id, 
-                            'coin_symbol': symbol
-                        }
+                            // console.log(symbol, currBalance, typeof currBalance)
 
-                        let update = {
-                            '$set':{
-                                'available': currBalance,
-                                'coin_balance': currBalance,
-                                'modified_date':new Date()
+                            // let allCoins = [ 'ZUSD', 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', 'USDT', 'EOS', 'ADA', 'QTUM', 'LINK', 'TRX' ]
+                            
+                            let changeCoinArr = [ 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', ]
+
+                            if (changeCoinArr.includes(key)){
+                                symbol = key == 'XXBT' ? 'BTC' : key.substring(1)
                             }
+                            
+                            let where = {
+                                'user_id': user_id, 
+                                'coin_symbol': symbol
+                            }
+
+                            let update = {
+                                '$set':{
+                                    'available': currBalance,
+                                    'coin_balance': currBalance,
+                                    'modified_date':new Date()
+                                }
+                            }
+
+                            let upsert = {
+                                'upsert': true
+                            }
+
+                            // console.log(symbol, currBalance, typeof currBalance)
+
+                            await db.collection(wallet_collection).updateOne(where, update, upsert)
+
                         }
-
-                        let upsert = {
-                            'upsert': true
-                        }
-
-                        // console.log(symbol, currBalance, typeof currBalance)
-
-                        await db.collection(wallet_collection).updateOne(where, update, upsert)
-
+                        resolve(true)
                     }
-                    resolve(true)
                 }
             }
+
         }else{
             resolve(true)
         }
@@ -21910,5 +21914,40 @@ router.post('/disable_exchange_key', async (req, res) => {
     }
 })
 
+
+router.get('/testKrakenBuyApi', async (req, res)=>{
+    
+
+    const KrakenClient = require('kraken-api');
+
+    // resp, err := api.queryPrivate("AddOrder", params, & AddOrderResponse{})
+    // response, err := api.AddOrder(coinSymbol, "buy", "market", quantityString, args)
+    // coinSymbol:= strings.Replace(pair, "BTC", "XBT", -1)
+
+
+    // ordertype: [market] pair: [XRPXBT] type: [buy] volume: [40.000345]]
+
+    let user_id = '5c0912b7fc9aadaac61dd072'
+    let key = 'M4ArMfjRuZr7HT77C+NJAU/hHJjcMZcUKJwKaqsIgx05WiGYzF8/XDC6'
+    let secret = 'haGQwnH5tdQS6cQLqm97QTyQwdu/4gjcS/nb+fxlIPIWlu9yZIzHHSnsV6WPq5zIjfpjWZifsRqm5PNL9SRQYw=='
+
+    const kraken = new KrakenClient(key, secret);
+    
+    // let allCoins = [ 'ZUSD', 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', 'USDT', 'EOS', 'ADA', 'QTUM', 'LINK', 'TRX' ]
+    // let changeCoinArr = ['XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR']
+
+    let params = {
+        'ordertype': 'market',
+        'pair': 'XRPXBT',
+        'type': 'sell', 
+        'volume': 40.000345
+    }
+
+    var krakenReqResult = await kraken.api('AddOrder', params);
+
+    console.log(krakenReqResult)
+    
+    res.send({})
+})
 
 module.exports = router;
