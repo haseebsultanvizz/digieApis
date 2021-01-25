@@ -21853,6 +21853,43 @@ async function get_current_market_prices(exchange, coins=[]) {
 /* ******************** End Get current market prices ************************* */
 
 
+router.post('/isKeyUpdated', async (req,res) =>{
+
+    let exchange = req.body.exchange
+    let user_id = req.body.user_id
+
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != ''){
+
+        const db = await conn
+
+        let collection_name = 'kraken_credentials'
+        let where = {
+            'user_id': user_id,
+            'modified_date': {'$gte': new Date('2021-01-25T05:47:57.101Z')}
+        }
+        let result = await db.collection(collection_name).find(where).toArray()
+
+        if (result.length > 0){
+            res.send({
+                'status': true,
+                'message': 'key updated',
+            })
+        }else{
+            res.send({
+                'status': false,
+                'message': 'key not updated',
+            })
+        }
+    }else{
+        res.send({
+            'status':false,
+            'message': 'Something went wrong'
+        })
+    }
+
+})
+
+
 router.post('/disable_exchange_key', async (req, res) => {
     let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''
     let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
