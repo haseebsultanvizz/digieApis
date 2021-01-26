@@ -3500,6 +3500,7 @@ router.post('/listOrderListing', async (req, resp) => {
                         order['profitLossPercentageHtml'] = '<span class="text-' + costAvgData['curr_avg_profit_color'] + '"><b>' + costAvgData['curr_avg_profit'] + '%</b> (' + cost_avg_order_ids.length + ')</span>';
                         order['coinPriceInBtc'] = costAvgData['total_usd_worth']
                         order['targetPrice'] = costAvgData['target_avg_profit']
+                        order['quantity'] = costAvgData['totalQuantity']
                         // order['targetPrice'] = orderListing[index]['defined_sell_percentage']
                     }
                 }
@@ -10494,6 +10495,9 @@ router.post('/update_user_wallet_kraken', async (req, resp)=>{
 })
 
 async function update_user_wallet_kraken(user_id){
+
+    return true;
+    /*
     return new Promise(async resolve=>{
 
         const db = await conn
@@ -10578,6 +10582,7 @@ async function update_user_wallet_kraken(user_id){
             resolve(true)
         }
     })
+    */
 }
 
 //check error in sell for buy orders
@@ -13028,6 +13033,8 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
 
             // console.log('totalCount: ',orders.length , currPrice, BTCUSDTPrice)
 
+            let totalQuantity = 0
+
             for (let i = 0; i < totalOrders; i++) {
 
                 let obj = orders[i]
@@ -13095,6 +13102,8 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 costAvgObj['profitLoss'] = profitLoss
                 costAvgObj['plColor'] = (profitLoss > 0 ? 'success' : 'danger')
 
+                totalQuantity += typeof obj['quantity'] != 'undefined' && !isNaN(parseFloat(obj['quantity'])) ? parseFloat(obj['quantity']) : 0
+                
                 costAvgArr.push(costAvgObj)
             }
 
@@ -13175,6 +13184,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 'target_avg_profit': target_avg_profit,
                 'target_avg_profit_color': target_avg_profit_color,
                 'total_usd_worth': totalUsdWorth,
+                'totalQuantity': parseFloat(totalQuantity.toFixed(6)),
             })
 
             // (async() => {
