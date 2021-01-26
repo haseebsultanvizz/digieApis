@@ -4832,6 +4832,9 @@ router.post('/makeCostAvg', async (req, resp) => {
                     'modified_date': new Date()
                 }
             }
+
+            // let temp = {'cost_avg': 'yes', 'show_order': 'yes', 'cavg_parent': 'yes', 'modified_date': ISODate(), 'cost_avg_buy': 'yes', 'move_to_cost_avg' : 'yes'}
+            // let temp1 = { 'direct_child_order_id': '', 'direct_parent_child_id': '', 'ist_parent_child_buy_id': '', 'cost_avg_percentage': '', 'avg_sell_price': ''}
             
             if (tab == 'soldTab') {
                 update['$set']['cost_avg_buy'] = 'yes'
@@ -19786,6 +19789,9 @@ async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, ap
                     let coinsArr = settings.step_2.coins
                     let totalTrades = await updateNumberOfDailyTrades(dailyTradeableBTC, dailyTradeableUSDT, coinsArr, exchange)
 
+                    let dailyTradesExpectedBtc = (dailyTradeableBTC > 0 && baseCurrencyArr.includes('BTC') && typeof totalTrades['btcTradeCount'] != 'undefined' ? totalTrades['btcTradeCount'] : 0)
+                    let dailyTradesExpectedUsdt = (dailyTradeableUSDT > 0 && baseCurrencyArr.includes('USDT') && typeof totalTrades['usdtTradeCount'] != 'undefined' ? totalTrades['usdtTradeCount'] : 0)
+
                     //TODO: update actual tradeable
                     var where = {
                         '_id': settings['_id']
@@ -19813,8 +19819,8 @@ async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, ap
                             'step_4.usdtInvestPercentage': usdtInvestPercentage,
                             
                             //daily expected trade count
-                            'step_4.dailyTradesExpectedBtc': totalTrades['btcTradeCount'],
-                            'step_4.dailyTradesExpectedUsdt': totalTrades['usdtTradeCount'],
+                            'step_4.dailyTradesExpectedBtc': dailyTradesExpectedBtc,
+                            'step_4.dailyTradesExpectedUsdt': dailyTradesExpectedUsdt,
         
                         }
                     }
