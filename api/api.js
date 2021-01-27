@@ -14442,6 +14442,48 @@ async function checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode){
     })
 }
 
+
+router.get('/checkBnbMissingUsers', async (req, res)=>{
+
+    const db = await conn
+
+    let user_ids = [
+        // "5ce5c30efc9aadb43a5107b2",
+        // "5eacb7127e3d9a5d907991f6",
+        // "5ec09dd0de3bad2b8e1a0c83",
+        // "5ec4010e3d54ca3f5e64ea55",
+        // "5ece18f12c0ea241bf7bc374",
+        // "5f6cba84e08cd706a933d5bc",
+        // "5ff2378fb355937f37164483",
+
+
+        // "5f647ec346781e3f6147ad34",
+        // "5f9928063297197e4676d4f6",
+        // "5ff0ebcc46ab4e637e332df4",
+        // "5ff237a52812ce43842ac7d7",
+        // "5ff417b3bcda3155d8242ea2",
+        // "5ff83b18cdfba428f534c593",
+        // "5ff85a99b8e1ff3dfc619159",
+        // "5ffc8a1c1cdf025c7c7c5ee5",
+    ]
+
+    let collectionName = 'user_wallet'
+
+    let result = await db.collection(collectionName).find({'coin_symbol':'BNB', 'user_id':{'$in':user_ids}, 'coin_balance':{'$lte':0}}).toArray()
+
+    for(let i=0; i<result.length; i++){
+
+        // console.log(result[i]['user_id'])
+        // await checkIfBnbAutoBuyNeeded(result[i]['user_id'], 'binance', 'live')
+        break;
+    }
+
+    // console.log(result)
+
+    res.send({})
+    
+})
+
 //getBtcUsdtBalance
 router.post('/getBtcUsdtBalance', async (req, res) => {
 
@@ -16965,7 +17007,8 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
             // console.log(exchange)
             var options = {
                 method: 'POST',
-                url: 'http://52.22.53.12:3600/buyBNBPost',
+                // url: 'http://52.22.53.12:3600/buyBNBPost',
+                url: 'http://52.206.153.43:3600/buyBNBPost',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -17003,7 +17046,8 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
         } else if (exchange == 'bam'){
             var options = {
                 method: 'POST',
-                url: 'http://52.22.53.12:2607/buyBNBPost',
+                // url: 'http://52.22.53.12:2607/buyBNBPost',
+                url: 'http://52.206.153.43:2607/buyBNBPost',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -17360,7 +17404,8 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
             if (exchange == 'binance') {
                 var options = {
                     method: 'POST',
-                    url: 'http://52.22.53.12:3600/buySellPost',
+                    // url: 'http://52.22.53.12:3600/buySellPost',
+                    url: 'http://52.206.153.43:3600/buySellPost',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -17402,7 +17447,8 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
 
                 var options = {
                     method: 'POST',
-                    url: 'http://52.22.53.12:3600/buySellPostBAM',
+                    // url: 'http://52.22.53.12:3600/buySellPostBAM',
+                    url: 'http://52.206.153.43:3600/buySellPostBAM',
                     headers: {
                         'Content-Type': 'application/json'
                     },

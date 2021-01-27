@@ -429,3 +429,17 @@ Content-Type: application/json
 }
 
 ###
+
+GET http://localhost:3010/apiEndPoint/checkBnbMissingUsers
+
+
+###
+
+POST http://localhost:3010/apiEndPoint/hit_auto_buy_cron
+# POST http://34.205.124.51:3010/apiEndPoint/hit_auto_buy_cron
+Content-Type: application/json
+
+{ 
+    "user_id": "5c0912b7fc9aadaac61dd072",
+    "exchange": "binance"   
+}
