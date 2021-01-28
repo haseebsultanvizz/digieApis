@@ -14454,9 +14454,9 @@ router.get('/checkBnbMissingUsers', async (req, res)=>{
         // "5ec4010e3d54ca3f5e64ea55",
         // "5ece18f12c0ea241bf7bc374",
         // "5f6cba84e08cd706a933d5bc",
+
+
         // "5ff2378fb355937f37164483",
-
-
         // "5f647ec346781e3f6147ad34",
         // "5f9928063297197e4676d4f6",
         // "5ff0ebcc46ab4e637e332df4",
@@ -17008,7 +17008,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
             var options = {
                 method: 'POST',
                 // url: 'http://52.22.53.12:3600/buyBNBPost',
-                url: 'http://52.206.153.43:3600/buyBNBPost',
+                url: 'http://52.7.57.119:3600/buyBNBPost',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -17047,7 +17047,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
             var options = {
                 method: 'POST',
                 // url: 'http://52.22.53.12:2607/buyBNBPost',
-                url: 'http://52.206.153.43:2607/buyBNBPost',
+                url: 'http://52.7.57.119:2607/buyBNBPost',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -17405,7 +17405,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                 var options = {
                     method: 'POST',
                     // url: 'http://52.22.53.12:3600/buySellPost',
-                    url: 'http://52.206.153.43:3600/buySellPost',
+                    url: 'http://52.7.57.119:3600/buySellPost',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -17448,7 +17448,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                 var options = {
                     method: 'POST',
                     // url: 'http://52.22.53.12:3600/buySellPostBAM',
-                    url: 'http://52.206.153.43:3600/buySellPostBAM',
+                    url: 'http://52.7.57.119:3600/buySellPostBAM',
                     headers: {
                         'Content-Type': 'application/json'
                     },
