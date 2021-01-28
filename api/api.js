@@ -4208,7 +4208,7 @@ router.post('/mergeAndMigrate', async (req, res)=>{
         var toFixedNum = 6
 
         //find min required quantity
-        var extra_qty_percentage = 30;
+        var extra_qty_percentage = 40;
         var extra_qty_val = 0;
         extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
         var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
@@ -5570,7 +5570,7 @@ async function checkQuanity(order_id, tab=''){
             var toFixedNum = 6
 
             //find min required quantity
-            var extra_qty_percentage = 30;
+            var extra_qty_percentage = 40;
             var extra_qty_val = 0;
             extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
             var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
@@ -5881,7 +5881,7 @@ async function make_migrated_parent(order_id, action=''){
             var toFixedNum = 6
 
             //find min required quantity
-            var extra_qty_percentage = 30;
+            var extra_qty_percentage = 40;
             var extra_qty_val = 0;
             extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
             var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
@@ -14795,7 +14795,7 @@ async function createAutoTradeParents(settings){
             var toFixedNum = 6
 
             //find min required quantity
-            var extra_qty_percentage = 30;
+            var extra_qty_percentage = 40;
             var extra_qty_val = 0;
             extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
             var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
@@ -17709,7 +17709,7 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                 let toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
 
                 //find min required quantity
-                var extra_qty_percentage = 30;
+                var extra_qty_percentage = 40;
                 var extra_qty_val = 0;
                 extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
                 var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
@@ -17844,7 +17844,7 @@ async function isMinQtyValid(symbol, qty, exchange){
     
     let selectedCoin = symbol;
     let splitArr = selectedCoin.split('USDT');
-    var extra_qty_percentage = 30;
+    var extra_qty_percentage = 40;
     var extra_qty_val = 0;
     var toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
 
@@ -18474,7 +18474,7 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
         var toFixedNum = 6
     
         //find min required quantity
-        var extra_qty_percentage = 30;
+        var extra_qty_percentage = 40;
         var extra_qty_val = 0;
         extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
         var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
