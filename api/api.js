@@ -15402,7 +15402,7 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
                 let usdtCoinsMinQty = []
                 if (pricesArr.length > 0) {
                     await Promise.all(pricesArr.map(item => {
-                        var extra_qty_percentage = 30;
+                        var extra_qty_percentage = 40;
                         var extra_qty_val = 0;
                         extra_qty_val = (extra_qty_percentage * item['marketMinNotation']) / 100
                         var calculatedMinNotation = item['marketMinNotation'] + extra_qty_val;
