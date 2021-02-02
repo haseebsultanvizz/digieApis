@@ -10238,6 +10238,39 @@ router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
 
 }) //End of saveKrakenCredentialsSecondary
 
+router.post('/saveKrakenCredentialsThirdKey', (req, resp) => {
+    var user_id = req.body.user_id;
+    var api_key = req.body.api_key_third_key;
+    var api_secret = req.body.api_secret_third_key;
+
+    conn.then((db) => {
+        let insertArr = {};
+        insertArr['user_id'] = user_id;
+        insertArr['api_key_third_key'] = api_key;
+        insertArr['api_secret_third_key'] = api_secret;
+        insertArr['modified_date_third_key'] = new Date();
+        let set = {};
+        set['$set'] = insertArr;
+        let where = {};
+        where['user_id'] = user_id; 
+        let upsert = {
+            upsert: true
+        };
+        db.collection('kraken_credentials').updateOne(where, set, upsert, (err, result) => {
+            if (err) {
+                console.log(err);
+            } else {
+                let validation = validate_kraken_credentials(api_key, api_secret, user_id)
+                resp.status(200).send({
+                    "success": "true",
+                    "message": "Credentials Updated Successfully"
+                })
+            }
+        })
+    })
+
+}) //End of saveKrakenCredentialsThirdKey
+
 router.post('/getBamCredentials', async (req, resp) => {
     var user_id = req.body.user_id;
     var bamCredentials = await getBamCredentials(user_id);
@@ -10361,6 +10394,8 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
         binance.balance((error, balances) => {
             if (error) {
 
+                console.log(' error +++++++++++++++++++++++++++++++++++++++++++ ', error)
+
                 //invalid Credentials
                 let where = {
                     'api_key': APIKEY,
@@ -10383,6 +10418,8 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
                 message['message'] = error.body;
                 resolve(message);
             } else {
+
+                console.log(' balances +++++++++++++++++++++++++++++++++++++++++++ ', balances)
 
                 //valid Credentials
                 let where = {
@@ -18663,189 +18700,15 @@ async function  updateDailyTradeSettings(user_id, exchange, application_mode='li
 
 router.post('/updateDailyTradeSettings_digie_manual_run', async (req, res) => {
 
-    let exchange = 'kraken'
+    let exchange = 'binance'
     let application_mode = 'live'
     
     let doneUsers = [
-        '5c886871fc9aad24d27efdd2',
-        '5e02a3e42bac2d10a11aa757',
-        '5c0912b7fc9aadaac61dd072',
-        '5c0912cbfc9aadaac61dd079',
-        '5c0912e6fc9aadaac61dd085',
-        '5c0912e8fc9aadaac61dd086',
-        '5c0912effc9aadaac61dd089',
-        '5c09133afc9aadaac61dd096',
-        '5c091344fc9aadaac61dd099',
-        '5c09134cfc9aadaac61dd09c',
-        '5c091351fc9aadaac61dd09e',
-        '5c091362fc9aadaac61dd0a4',
-        '5c09137bfc9aadaac61dd0ae',
-        '5c091383fc9aadaac61dd0b1',
-        '5c091395fc9aadaac61dd0b9',
-        '5c091397fc9aadaac61dd0ba',
-        '5c0913a0fc9aadaac61dd0be',
-        '5c0913a5fc9aadaac61dd0c0',
-        '5c0913a7fc9aadaac61dd0c1',
-        '5c0913a9fc9aadaac61dd0c2',
-        '5c0913abfc9aadaac61dd0c3',
-        '5c0913b8fc9aadaac61dd0c9',
-        '5c0913d0fc9aadaac61dd0d3',
-        '5c0913d2fc9aadaac61dd0d4',
-        '5c0913dcfc9aadaac61dd0d9',
-        '5c0913e0fc9aadaac61dd0db',
-        '5c0913ebfc9aadaac61dd0e0',
-        '5c0913eefc9aadaac61dd0e1',
-        '5c0913f0fc9aadaac61dd0e2',
-        '5c0913fdfc9aadaac61dd0e8',
-        '5c0913fffc9aadaac61dd0e9',
-        '5c091401fc9aadaac61dd0ea',
-        '5c091403fc9aadaac61dd0eb',
-        '5c091405fc9aadaac61dd0ec',
-        '5c09140efc9aadaac61dd0f0',
-        '5c091410fc9aadaac61dd0f1',
-        '5c09141efc9aadaac61dd0f8',
-        '5c091425fc9aadaac61dd0fb',
-        '5c09142afc9aadaac61dd0fd',
-        '5c09142cfc9aadaac61dd0fe',
-        '5c09142efc9aadaac61dd0ff',
-        '5c091432fc9aadaac61dd101',
-        '5c091439fc9aadaac61dd104',
-        '5c09143cfc9aadaac61dd105',
-        '5c091443fc9aadaac61dd108',
-        '5c09144cfc9aadaac61dd10c',
-        '5c09144efc9aadaac61dd10d',
-        '5c091450fc9aadaac61dd10e',
-        '5c091453fc9aadaac61dd10f',
-        '5c091470fc9aadaac61dd11d',
-        '5c091477fc9aadaac61dd120',
-        '5c09147cfc9aadaac61dd122',
-        '5c091480fc9aadaac61dd124',
-        '5c091482fc9aadaac61dd125',
-        '5c091484fc9aadaac61dd126',
-        '5c09148afc9aadaac61dd129',
-        '5c091493fc9aadaac61dd12d',
-        '5c091495fc9aadaac61dd12e',
-        '5c091498fc9aadaac61dd12f',
-        '5c09149afc9aadaac61dd130',
-        '5c0914a0fc9aadaac61dd133',
-        '5c0914abfc9aadaac61dd138',
-        '5c0914b4fc9aadaac61dd13c',
-        '5c0914b9fc9aadaac61dd13e',
-        '5c0914ccfc9aadaac61dd147',
-        '5c0914d6fc9aadaac61dd14c',
-        '5c0914dffc9aadaac61dd150',
-        '5c0914e4fc9aadaac61dd152',
-        '5c0914e6fc9aadaac61dd153',
-        '5c0914f1fc9aadaac61dd158',
-        '5c0914f3fc9aadaac61dd159',
-        '5c091500fc9aadaac61dd15f',
-        '5c091513fc9aadaac61dd168',
-        '5c091517fc9aadaac61dd16a',
-        '5c091519fc9aadaac61dd16b',
-        '5c09151bfc9aadaac61dd16c',
-        '5c09151dfc9aadaac61dd16d',
-        '5c091537fc9aadaac61dd179',
-        '5c09153dfc9aadaac61dd17c',
-        '5c091541fc9aadaac61dd17e',
-        '5c091544fc9aadaac61dd17f',
-        '5c091555fc9aadaac61dd187',
-        '5c091559fc9aadaac61dd189',
-        '5c09155efc9aadaac61dd18b',
-        '5c091564fc9aadaac61dd18e',
-        '5c091566fc9aadaac61dd18f',
-        '5c09156afc9aadaac61dd191',
-        '5c09156cfc9aadaac61dd192',
-        '5c091584fc9aadaac61dd19d',
-        '5c09159afc9aadaac61dd1a7',
-        '5c09159efc9aadaac61dd1a9',
-        '5c0915a7fc9aadaac61dd1ad',
-        '5c0915b2fc9aadaac61dd1b2',
-        '5c0915c0fc9aadaac61dd1b9',
-        '5c0915c8fc9aadaac61dd1bd',
-        '5c0915defc9aadaac61dd1c7',
-        '5c0915e2fc9aadaac61dd1c9',
-        '5c0f2c8ffc9aad58f2674532',
-        '5c155879fc9aadace2428cb2',
-        '5c1ab8e8fc9aad3c0c53fea2',
-        '5c38fd6dfc9aad5b96116982',
-        '5c6f2c69fc9aad694e443eb2',
-        '5c70d923fc9aad047d351bf2',
-        '5c7ebaedfc9aad8d19525022',
-        '5c82d3bafc9aad5b2958c352',
-        '5c83ec7afc9aad5db6248922',
-        '5c867845fc9aad4d6c252bb2',
-        '5c86f33bfc9aad989b4ca8d2',
-        '5c885834fc9aad5b7709f062',
-        '5c899d22fc9aad58553ce172',
-        '5c94bfeafc9aad986b64e652',
-        '5c9ff9c3fc9aadb7002aa242',
-        '5ca3b72ffc9aad8468118fb2',
-        '5cc919affc9aad738a75f3b2',
-        '5ce49199fc9aad5c8b316402',
-        '5ce5c30efc9aadb43a5107b2',
-        '5cece616fc9aad7eb04b3d32',
-        '5cf18df2fc9aad0f621deb72',
-        '5cf21de8fc9aad437d783d82',
-        '5d13d50efc9aad306b22e1c2',
-        '5d1aa617fc9aad944e6811d2',
-        '5d24105dfc9aad1d2463f162',
-        '5d3bd3b1fc9aad1942677c72',
-        '5d8de93a6b178200b1077c42',
-        '5dafc44fdcf4fc27371c9f82',
-        '5dce8eecdba3c771dc7c08f6',
-        '5de10b4cbe21fb3af17bbe3e',
-        '5e13233d0df6b4531a669e38',
-        '5e41ab693bde856ad75877fc',
-        '5e42b1b8447ec75c1d1f5693',
-        '5e506386f4c44d53de5d14c3',
-        '5e575c86ecdd2260111f2882',
-        '5e63edd816b0646960785112',
-        '5e6c0f0866cc1728a72b3912',
-        '5e6cc3841b75897b9b7bc592',
-        '5e6f3ca8f9e9e025db184aa2',
-        '5e82b59f67134e590b4f3392',
-        '5e8a7b78c700bb29166b6501',
-        '5e91d98558a4f70eee4e40be',
-        '5eac53ff3db2132d636b6af9',
-        '5ebc527a13e065446c4b4abe',
-        '5ebce07751ee1e2ead5d8193',
-        '5ec08c34987f090f9f7e9677',
-        '5ec47137e0d1042af03c0d4f',
-        '5ecaf447596f2f1fa87e1d09',
-        '5ed00af960e236288b755a8b',
-        '5ed5fae8cc67734410172b12',
-        '5edc563846cb0c59fa0f620b',
-        '5edd16023ca39944df3da844',
-        '5ee01ddc688c20728f4f6262',
-        '5f3c48d5e48dd3026d59b2fc',
-        '5f445b4a19408436893d13c5',
-        '5f4586528ab16e49d6544285',
-        '5f492031cbb93212d26125fd',
-        '5f4a34f698e0d7755b094043',
-        '5f4bbfba47e65b1a3f0c75f6',
-        '5f503e44640d66499f5ceabe',
-        '5f516ad55397d21bd1256e04',
-        '5f535e710d8343597741b2a4',
-        '5f535e94b7566979e12b0087',
-        '5f5bf17d5a43f8775b0f8a2a',
-        '5f61cc515c6ef0497a6eb8e6',
-        '5f731ba5f0a55270873ad789',
-        '5f74b035ed0916135e578292',
-        '5f7507341cb1ea013217f865',
-        '5f79c8db7d53d8176c645282',
-        '5f7ca7fe6113d200a02d0a50',
-        '5f84414b7bc54b2dc74ddfc0',
-        '5fb96b006008f969bf7d7c5b',
-        '5fbb90153f9bb708885990e8',
-        '5fbf6499084105189550d982',
-        '5fc0e8b3041d4822f46aef84',
-        '5fc4b1cb24796039ed42b662',
     ]
 
     const db = await conn
     //get all users with auto trade settings
     let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
-
 
     let where = {
         'user_id': { '$nin': doneUsers},
@@ -18880,7 +18743,7 @@ router.post('/updateDailyTradeSettings_digie_manual_run', async (req, res) => {
 
             // break;
             //wait for 20 seconds
-            await new Promise(r => setTimeout(r, 20000));
+            await new Promise(r => setTimeout(r, 17000));
         }
     }
 
@@ -21951,6 +21814,170 @@ router.post('/isKeyUpdated', async (req,res) =>{
 
 })
 
+router.post('/validateApiKeys', async (req, res)=>{
+    let user_id = req.body.user_id
+    let exchange = req.body.exchange
+    if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != ''){
+
+        const db = await conn
+
+        let collectionName = exchange == 'binance' ? 'users' : exchange +'_credentials'
+        let where = {}
+        if(exchange == 'binance'){
+            where['_id'] = new ObjectID(user_id)
+        }else{
+            where['user_id'] = user_id
+        }
+
+        let settings = await db.collection(collectionName).find(where).toArray()
+
+        if(exchange == 'kraken'){
+
+            let apiKey1Status = ''
+            let apiKey2Status = ''
+            let apiKey3Status = ''
+            if(settings.length > 0){
+
+                //key1 validity
+                if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != ''){
+                    let resKey1 = await validate_kraken_credentials(settings[0]['api_key'], settings[0]['api_secret'], user_id = '');
+
+                    let status11 = resKey1.status;
+                    if (status11 == 'error' || status11 == false) {
+                        apiKey1Status = 'inValid'
+                    } else {
+                        apiKey1Status = 'valid'
+                    }
+                }else{
+                    apiKey1Status = 'notSet'
+                }
+                //wait for 1 second
+                await new Promise(r => setTimeout(r, 1000));
+                
+                //key2 validity
+                if (typeof settings[0]['api_key_secondary'] != 'undefined' && settings[0]['api_key_secondary'] != '' && typeof settings[0]['api_secret_secondary'] != 'undefined' && settings[0]['api_secret_secondary'] != ''){
+                    let resKey2 = await validate_kraken_credentials(settings[0]['api_key_secondary'], settings[0]['api_secret_secondary'], user_id = '');
+
+                    let status11 = resKey2.status;
+                    if (status11 == 'error' || status11 == false) {
+                        apiKey2Status = 'inValid'
+                    } else {
+                        apiKey2Status = 'valid'
+                    }
+                }else{
+                    apiKey2Status = 'notSet'
+                }
+                //wait for 1 second
+                await new Promise(r => setTimeout(r, 1000));
+                
+                //key3 validity
+                if (typeof settings[0]['api_key_third_key'] != 'undefined' && settings[0]['api_key_third_key'] != '' && typeof settings[0]['api_secret_third_key'] != 'undefined' && settings[0]['api_secret_third_key'] != ''){
+                    let resKey3 = await validate_kraken_credentials(settings[0]['api_key_third_key'], settings[0]['api_secret_third_key'], user_id = '');
+
+                    let status11 = resKey3.status;
+                    if (status11 == 'error' || status11 == false) {
+                        apiKey3Status = 'inValid'
+                    } else {
+                        apiKey3Status = 'valid'
+                    }
+                }else{
+                    apiKey3Status = 'notSet'
+                }
+
+            }else{
+                apiKey1Status = 'notSet'
+                apiKey2Status = 'notSet'
+                apiKey3Status = 'notSet'
+            }
+
+            let responseObj = {
+                'status': true,
+                'exchange': exchange,
+                'key1': apiKey1Status,
+                'key2': apiKey2Status,
+                'key3': apiKey3Status,
+                'message': ''
+            }
+            // console.log(responseObj)
+            
+            res.send(responseObj)
+
+        } else if (exchange == 'binance'){
+
+            //key1 validity
+            if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '') {
+                let resKey1 = await validate_binance_credentials(settings[0]['api_key'], settings[0]['api_secret']);
+
+                if (resKey1) {
+                    apiKey1Status = 'valid'
+                } else {
+                    apiKey1Status = 'inValid'
+                }
+            } else {
+                apiKey1Status = 'notSet'
+            }
+
+            let responseObj = {
+                'status': true,
+                'exchange': exchange,
+                'key1': apiKey1Status,
+                'message': ''
+            }
+            // console.log(responseObj)
+
+            res.send(responseObj)
+        
+        } else if (exchange == 'bam'){
+
+            //key1 validity
+            if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '') {
+                // let resKey1 = await validate_bam_credentials(settings[0]['api_key'], settings[0]['api_secret'], user_id)
+                let resKey1 = await validate_binance_credentials(settings[0]['api_key'], settings[0]['api_secret']);
+
+                console.log(resKey1)
+
+                if (resKey1) {
+                    apiKey1Status = 'valid'
+                } else {
+                    apiKey1Status = 'inValid'
+                }
+            } else {
+                apiKey1Status = 'notSet'
+            }
+
+            let responseObj = {
+                'status': true,
+                'exchange': exchange,
+                'key1': apiKey1Status,
+                'message': ''
+            }
+            // console.log(responseObj)
+
+            res.send(responseObj)
+        }
+    }else{
+        res.send({
+            'status':false,
+            'message':'user_id and exchange is required'
+        })
+    }
+})
+
+async function validate_binance_credentials(api_key, api_secret){
+    return new Promise(async resolve =>{
+
+        let reqObj = {
+            'type': 'POST',
+            'url': 'https://app.digiebot.com/admin/Api_calls/validate_binance_credentials',
+            'payload': {
+                'APIKEY': api_key,
+                'APISECRET': api_secret,
+            },
+        }
+        let result = await customApiRequest(reqObj)
+        resolve(result.status && result.body['status'] ? true : false)
+    })
+}
 
 router.post('/disable_exchange_key', async (req, res) => {
     let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''

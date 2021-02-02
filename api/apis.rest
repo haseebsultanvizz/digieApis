@@ -430,6 +430,9 @@ Content-Type: application/json
 
 ###
 
+POST http://localhost:3010/apiEndPoint/updateDailyTradeSettings_digie_manual_run
+###
+
 GET http://localhost:3010/apiEndPoint/checkBnbMissingUsers
 
 
