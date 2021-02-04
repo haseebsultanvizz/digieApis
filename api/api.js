@@ -10394,7 +10394,6 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
         binance.balance((error, balances) => {
             if (error) {
 
-                console.log(' error +++++++++++++++++++++++++++++++++++++++++++ ', error)
 
                 //invalid Credentials
                 let where = {
@@ -10419,7 +10418,7 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
                 resolve(message);
             } else {
 
-                console.log(' balances +++++++++++++++++++++++++++++++++++++++++++ ', balances)
+                // console.log(' balances +++++++++++++++++++++++++++++++++++++++++++ ', balances)
 
                 //valid Credentials
                 let where = {
@@ -21931,10 +21930,8 @@ router.post('/validateApiKeys', async (req, res)=>{
 
             //key1 validity
             if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '') {
-                // let resKey1 = await validate_bam_credentials(settings[0]['api_key'], settings[0]['api_secret'], user_id)
-                let resKey1 = await validate_binance_credentials(settings[0]['api_key'], settings[0]['api_secret']);
-
-                console.log(resKey1)
+                
+                let resKey1 = await validate_bam_credentials_app(settings[0]['api_key'], settings[0]['api_secret']);
 
                 if (resKey1) {
                     apiKey1Status = 'valid'
@@ -21969,6 +21966,22 @@ async function validate_binance_credentials(api_key, api_secret){
         let reqObj = {
             'type': 'POST',
             'url': 'https://app.digiebot.com/admin/Api_calls/validate_binance_credentials',
+            'payload': {
+                'APIKEY': api_key,
+                'APISECRET': api_secret,
+            },
+        }
+        let result = await customApiRequest(reqObj)
+        resolve(result.status && result.body['status'] ? true : false)
+    })
+}
+
+async function validate_bam_credentials_app(api_key, api_secret){
+    return new Promise(async resolve =>{
+
+        let reqObj = {
+            'type': 'POST',
+            'url': 'https://app.digiebot.com/admin/Api_calls/validate_bam_credentials',
             'payload': {
                 'APIKEY': api_key,
                 'APISECRET': api_secret,
@@ -22306,7 +22319,7 @@ router.post('/swap_kraken_api_keys', async (req, res)=>{
 
     console.log(totalUsers)
     
-    if (totalUsers > 0){
+    if (false && totalUsers > 0){
 
         for(let i=0; i<totalUsers; i++){
 
@@ -22337,7 +22350,7 @@ router.post('/swap_kraken_api_keys', async (req, res)=>{
                     //Do Nothing
                     console.log('user_id: ', usersArr[i]['user_id'], ' ----------- ', end_time)
 
-                    await db.collection('kraken_credentials').updateOne({ 'user_id': usersArr[i]['user_id']}, {'$set':{'old_secondary_key_valid':'yes'}})
+                    // await db.collection('kraken_credentials').updateOne({ 'user_id': usersArr[i]['user_id']}, {'$set':{'old_secondary_key_valid':'yes'}})
                     
                 } else {
 
@@ -22358,7 +22371,7 @@ router.post('/swap_kraken_api_keys', async (req, res)=>{
                     // }
                     // await db.collection('kraken_credentials').updateOne(where, set)
 
-                    await db.collection('kraken_credentials').updateOne({ 'user_id': usersArr[i]['user_id'] }, { '$set': { 'old_secondary_key_valid': 'no' } })
+                    // await db.collection('kraken_credentials').updateOne({ 'user_id': usersArr[i]['user_id'] }, { '$set': { 'old_secondary_key_valid': 'no' } })
 
                 }
 

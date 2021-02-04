@@ -339,7 +339,7 @@ POST http://34.199.235.34:3200/updateUserBalance
 Content-Type: application/json
 
 { 
-    "user_id": "5c09137bfc9aadaac61dd0ae"
+    "user_id": "60128d52ee1646605b7ecfe3"
 }
 
 ###
