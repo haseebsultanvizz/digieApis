@@ -4252,6 +4252,7 @@ router.post('/mergeAndMigrate', async (req, res)=>{
                 //make ids as id object
                 new_order['buy_parent_id'] = new ObjectID(new_order['buy_parent_id'])
                 new_order['status'] = 'FILLED'
+                new_order['order_level'] = 'level_'+new_order['order_level'].split(' ')[1]
                 new_order['lth_functionality'] = 'no'
                 new_order['lth_profi'] = ''
                 new_order['is_lth_order'] = ''

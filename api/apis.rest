@@ -339,7 +339,10 @@ POST http://34.199.235.34:3200/updateUserBalance
 Content-Type: application/json
 
 { 
-    "user_id": "60128d52ee1646605b7ecfe3"
+    "user_id": "5c0912b7fc9aadaac61dd072",
+    "validating": true,
+    "api_key": "lKe4YhcP9p6A2TgaWizyLRnXr1c/bfImVrXaezwgm0In5ad5JPxWUfaZ",
+    "api_secret": "yFMACoiyIKulnfcEOvPOtYjbidCKhhzK4+xHfqjnfLezR02Jo1sHOgj9PHkwCBiMHG7Pm5MJLKeMY5GS++9g+w=="
 }
 
 ###
