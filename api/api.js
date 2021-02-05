@@ -10463,8 +10463,8 @@ router.post('/validate_kraken_credentials', async (req, resp) => {
 function validate_kraken_credentials(APIKEY, APISECRET, user_id = '') {
     return new Promise((resolve, reject) => {
 
-        APIKEY = APIKEY.trim()
-        APISECRET = APISECRET.trim()
+        APIKEY = APIKEY != null && APIKEY != '' ? APIKEY.trim() : ''
+        APISECRET = APISECRET != null && APISECRET != '' ? APISECRET.trim() : ''
 
         var options = {
             method: 'POST',
@@ -21839,7 +21839,7 @@ router.post('/validateApiKeys', async (req, res)=>{
             if(settings.length > 0){
 
                 //key1 validity
-                if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != ''){
+                if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && settings[0]['api_key'] != null && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '' && settings[0]['api_secret'] != null){
                     let resKey1 = await validate_kraken_credentials(settings[0]['api_key'], settings[0]['api_secret'], user_id = '');
 
                     let status11 = resKey1.status;
@@ -21855,7 +21855,7 @@ router.post('/validateApiKeys', async (req, res)=>{
                 await new Promise(r => setTimeout(r, 1000));
                 
                 //key2 validity
-                if (typeof settings[0]['api_key_secondary'] != 'undefined' && settings[0]['api_key_secondary'] != '' && typeof settings[0]['api_secret_secondary'] != 'undefined' && settings[0]['api_secret_secondary'] != ''){
+                if (typeof settings[0]['api_key_secondary'] != 'undefined' && settings[0]['api_key_secondary'] != '' && settings[0]['api_key_secondary'] != null && typeof settings[0]['api_secret_secondary'] != 'undefined' && settings[0]['api_secret_secondary'] != '' && settings[0]['api_secret_secondary'] != null){
                     let resKey2 = await validate_kraken_credentials(settings[0]['api_key_secondary'], settings[0]['api_secret_secondary'], user_id = '');
 
                     let status11 = resKey2.status;
@@ -21871,7 +21871,7 @@ router.post('/validateApiKeys', async (req, res)=>{
                 await new Promise(r => setTimeout(r, 1000));
                 
                 //key3 validity
-                if (typeof settings[0]['api_key_third_key'] != 'undefined' && settings[0]['api_key_third_key'] != '' && typeof settings[0]['api_secret_third_key'] != 'undefined' && settings[0]['api_secret_third_key'] != ''){
+                if (typeof settings[0]['api_key_third_key'] != 'undefined' && settings[0]['api_key_third_key'] != '' && settings[0]['api_key_third_key'] != null && typeof settings[0]['api_secret_third_key'] != 'undefined' && settings[0]['api_secret_third_key'] != '' && settings[0]['api_secret_third_key'] != null){
                     let resKey3 = await validate_kraken_credentials(settings[0]['api_key_third_key'], settings[0]['api_secret_third_key'], user_id = '');
 
                     let status11 = resKey3.status;
@@ -21905,7 +21905,7 @@ router.post('/validateApiKeys', async (req, res)=>{
         } else if (exchange == 'binance'){
 
             //key1 validity
-            if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '') {
+            if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && settings[0]['api_key'] != null && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '' && settings[0]['api_secret'] != null) {
                 let resKey1 = await validate_binance_credentials(settings[0]['api_key'], settings[0]['api_secret']);
 
                 if (resKey1) {
@@ -21930,7 +21930,7 @@ router.post('/validateApiKeys', async (req, res)=>{
         } else if (exchange == 'bam'){
 
             //key1 validity
-            if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '') {
+            if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && settings[0]['api_key'] != null && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '' && settings[0]['api_secret'] != null) {
                 
                 let resKey1 = await validate_bam_credentials_app(settings[0]['api_key'], settings[0]['api_secret']);
 
