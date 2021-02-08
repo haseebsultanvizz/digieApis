@@ -5470,8 +5470,6 @@ router.post('/sellOrderManually', async (req, resp) => {
                 }
                 // console.log('2222 ', quantity)
 
-                process.exit(0)
-
                 let coin_symbol = (typeof buyOrderArr['symbol'] == undefined) ? '' : buyOrderArr['symbol'];
                 let admin_id = (typeof buyOrderArr['admin_id'] == undefined) ? '' : buyOrderArr['admin_id'];
                 let trigger_type = (typeof buyOrderArr['trigger_type'] == undefined) ? '' : buyOrderArr['trigger_type'];
