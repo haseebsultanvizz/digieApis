@@ -5081,11 +5081,16 @@ function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
 
 //post call for getting order by id
 router.post('/listOrderById', async (req, resp) => {
+
+    // console.log(req.body)
+
     let orderId = req.body.orderId;
     let exchange = req.body.exchange;
     var timezone = req.body.timezone;
     //promise for  getting order by id 
     var ordeArr = await listOrderById(orderId, exchange);
+
+    let show_special_logs = typeof req.body.show_special_logs != 'undefined' ? req.body.show_special_logs : false  
 
     if (ordeArr.length > 0){
         var orderObj = ordeArr[0];
@@ -5094,7 +5099,7 @@ router.post('/listOrderById', async (req, resp) => {
 
 
         //promise for gettiong order log
-        var ordeLog = await listOrderLog(orderId, exchange, order_mode, order_created_date);
+        var ordeLog = await listOrderLog(orderId, exchange, order_mode, order_created_date, show_special_logs);
 
 
         var respArr = {};
@@ -5195,7 +5200,7 @@ router.post('/listOrderLogById', async (req, resp) => {
 }) //End of listOrderLogById
 
 //get order log on the base of order id 
-async function listOrderLog(orderId, exchange, order_mode, order_created_date) {
+async function listOrderLog(orderId, exchange, order_mode, order_created_date, show_special_logs=false) {
     return new Promise((resolve) => {
         conn.then(async (db) => {
             var where = {};
@@ -5218,6 +5223,10 @@ async function listOrderLog(orderId, exchange, order_mode, order_created_date) {
             } else {
                 var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
             }
+
+            // if (!show_special_logs){
+            //     where['type'] = { '$nin': ['test_logs_func', 'testing_apikey_secrets']}
+            // }
 
             var pipeline = [{
                     $match: where
