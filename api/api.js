@@ -5392,6 +5392,9 @@ router.post('/sellOrderManually', async (req, resp) => {
     let orderId = req.body.orderId;
     let currentMarketPrice = req.body.currentMarketPriceByCoin;
     let exchange = req.body.exchange;
+
+    let costAvgParent = typeof req.body.costAvgParent != 'undefined' ? req.body.costAvgParent : false;
+    let costAvgParentAddedQty = typeof req.body.costAvgParentAddedQty != 'undefined' ? req.body.costAvgParentAddedQty : false;
     
     let action = typeof req.body.action != 'undefined' && req.body.action != '' ? req.body.action : '';
     let tab = typeof req.body.tab != 'undefined' && req.body.tab != '' ? req.body.tab : '';
@@ -5459,6 +5462,16 @@ router.post('/sellOrderManually', async (req, resp) => {
                 let application_mode = (typeof buyOrderArr['application_mode'] == undefined) ? '' : buyOrderArr['application_mode'];
                 let buy_order_id = buyOrderArr['_id'];
                 let quantity = (typeof buyOrderArr['quantity'] == undefined) ? '' : buyOrderArr['quantity'];
+
+
+                // console.log('1111 ', quantity)
+                if (costAvgParent && costAvgParentAddedQty !== false){
+                    quantity = costAvgParentAddedQty
+                }
+                // console.log('2222 ', quantity)
+
+                process.exit(0)
+
                 let coin_symbol = (typeof buyOrderArr['symbol'] == undefined) ? '' : buyOrderArr['symbol'];
                 let admin_id = (typeof buyOrderArr['admin_id'] == undefined) ? '' : buyOrderArr['admin_id'];
                 let trigger_type = (typeof buyOrderArr['trigger_type'] == undefined) ? '' : buyOrderArr['trigger_type'];
@@ -13336,6 +13349,9 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
 
             } else if (orderType == 'costAvgParent') {
 
+                const db = await conn
+                let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+
                 //loop all childs and send sell API call
                 let ids = []
                 ids.push(order_id)
@@ -13343,28 +13359,65 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
                 let childsCount = ids.length
 
                 if (typeof tab != 'undefined' && tab == 'costAvgTab'){
-                    const db = await conn
-                    let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+ exchange
-                    await db.collection(buyCollection).updateOne({ '_id': ObjectID(order_id) }, { '$set': { 'cost_avg': 'completed', 'move_to_cost_avg':'yes'}})
+                    // await db.collection(buyCollection).updateOne({ '_id': ObjectID(order_id) }, { '$set': { 'cost_avg': 'completed', 'move_to_cost_avg':'yes'}})
                 }
+
+                //sell parent by adding all open child quantity
+                let allChildTrades = []
+                let totalCostAvgQty = 0;
+                let childIds = []
+                for (let i = 0; i < ids.length; i++) {
+                    childIds.push(new ObjectID(String(ids[i])))
+                }
+                whereChilds = {
+                    '_id': { '$in': childIds }
+                }
+                allChildTrades = await db.collection(buyCollection).find(whereChilds).toArray()
+                if (allChildTrades.length > 0) {
+                    allChildTrades.forEach(item => totalCostAvgQty += parseFloat(item.quantity))
+                }
+                // console.log('totalCostAvgQty ', totalCostAvgQty)
+                // process.exit(0)
 
                 for (let i = 0; i < childsCount; i++) {
 
-                    if (action != '') {
-                        if (action == 'isResumeExchange') {
-                            //only move
-                            await migrate_order(String(ids[i]), exchange, action)
-                            sellNow = false
-                        } else if (action == 'isResume') {
-                            //move then sell
-                            await migrate_order(String(ids[i]), exchange, action)
-                        }
-                    }
+                    // if (action != '') {
+                    //     if (action == 'isResumeExchange') {
+                    //         //only move
+                    //         await migrate_order(String(ids[i]), exchange, action)
+                    //         sellNow = false
+                    //     } else if (action == 'isResume') {
+                    //         //move then sell
+                    //         await migrate_order(String(ids[i]), exchange, action)
+                    //     }
+                    // }
 
-                    if (sellNow){
+                    if (false && sellNow){
+                        // var options = {
+                        //     method: 'POST',
+                        //     // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                        //     url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                        //     headers: {
+                        //         'cache-control': 'no-cache',
+                        //         'Connection': 'keep-alive',
+                        //         'Accept-Encoding': 'gzip, deflate',
+                        //         'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                        //         'Cache-Control': 'no-cache',
+                        //         'Accept': '*/*',
+                        //         'User-Agent': 'PostmanRuntime/7.20.1',
+                        //         'Content-Type': 'application/json'
+                        //     },
+                        //     json: {
+                        //         'orderId': String(ids[i]),
+                        //         'exchange': exchange,
+                        //         'currentMarketPriceByCoin': currentmarketPrice,
+                        //     }
+                        // };
+                        // request(options, function (error, response, body) { });
+                    } else if (sellNow){
                         var options = {
                             method: 'POST',
-                            // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                            // url: 'http://localhost:3010/apiEndPoint/sellOrderManually',
                             url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
                             headers: {
                                 'cache-control': 'no-cache',
@@ -13377,12 +13430,15 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
                                 'Content-Type': 'application/json'
                             },
                             json: {
-                                'orderId': String(ids[i]),
+                                'orderId': String(order_id),
                                 'exchange': exchange,
                                 'currentMarketPriceByCoin': currentmarketPrice,
+                                'costAvgParent': true,
+                                'costAvgParentAddedQty': totalCostAvgQty, 
                             }
                         };
                         request(options, function (error, response, body) { });
+                        break;
                     }
                 }
             }
