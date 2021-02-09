@@ -10825,9 +10825,10 @@ router.post('/remove_error', async (req, resp) => {
                                 'status': { '$ne': 'canceled' },
                             }
                             let updObj3 = {};
-                            updObj3['status'] = 'new';
-                            updObj3['pause_status'] = 'play';
-                            updObj3['modified_date'] = new Date()
+                            updObj3['$set'] = {};
+                            updObj3['$set']['status'] = 'new';
+                            updObj3['$set']['pause_status'] = 'play';
+                            updObj3['$set']['modified_date'] = new Date()
                             await db.collection(buy_collection).updateOne(where3, updObj3)
                         }
                     }
