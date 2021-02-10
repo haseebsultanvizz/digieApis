@@ -358,7 +358,9 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.is_global_user = 'yes';
                             respObj.exchangesArr = exchangesArr;
                             respObj.default_exchange = typeof userArr['default_exchange'] != 'undefined' && userArr['default_exchange'] != '' ? userArr['default_exchange'] : (exchangesArr.length > 0 ? exchangesArr[0] : 'binance');
-
+                            
+                            respObj.userPackage = await getUserPackage(String(userArr['_id']));
+                            
                             resp.send(respObj);
 
                         } else {
@@ -445,6 +447,7 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.exchangesArr = exchangesArr;
                                 respObj.default_exchange = typeof userArr['default_exchange'] != 'undefined' && userArr['default_exchange'] != '' ? userArr['default_exchange'] : (exchangesArr.length > 0 ? exchangesArr[0] : 'binance');
 
+                                respObj.userPackage = await getUserPackage(String(userArr['_id']));
 
                                 if (typeof userArr['package_id'] != 'undefined' && userArr['package_id'] != ''){
                                     let myPackage = await db.collection('dynamic_packages').find({ '_id': userArr['package_id']}).toArray();
@@ -13892,6 +13895,91 @@ async function getSubscription(user_id){
             }
         })
 
+    })
+}
+
+router.post('/updateUserPackage', async (req, res)=>{
+
+    let user_id = req.body.user_id
+    let userPackage = req.body.userPackage
+
+    if (typeof user_id != 'undefined' && user_id != '' && typeof userPackage != 'undefined'){
+        // 'autoPackage'
+        // 'manualPackage'
+
+        let updatedItems = await  updateUserPackage(user_id, userPackage)
+        
+        // console.log(updatedItems == userPackage.length ? 'added' : 'error')
+
+        res.send({
+            'status': true,
+            'message': 'updated successfully',
+        })
+
+    }else{
+        res.send({
+            'status': false,
+            'message': 'user_id and package is required',
+        })
+    }
+})
+
+router.post('/getUserPackage', async (req, res)=>{
+
+    let user_id = req.body.user_id
+
+    if (typeof user_id != 'undefined' && user_id != ''){
+        let userPackage = await getUserPackage(user_id)
+        res.send({
+            'status': true,
+            'userPackage': userPackage,
+            'message': 'data found',
+        })
+    }else{
+        res.send({
+            'status': false,
+            'message': 'user_id is required',
+        })
+    }
+})
+
+async function updateUserPackage(user_id, userPackage=[]){
+    let db = await conn
+
+    return new Promise(async resolve => {
+        //remove all 
+        await db.collection('users').updateOne({'_id': new ObjectID(String(user_id))}, {'$unset':{'userPackage':''}})
+        
+        let totalModules = 0
+        //add new
+        await Promise.all([userPackage.map(item=>{ 
+            let where = {
+                '_id': new ObjectID(String(user_id)),
+                'userPackage': { '$ne': item }
+            }
+            let set = {
+                '$push': {'userPackage': item}
+            }
+            db.collection('users').updateOne(where, set)
+            totalModules++
+        })])
+    
+        resolve(totalModules)
+    })
+}
+
+async function getUserPackage(user_id){
+    return new Promise(async (resolve) =>{
+        const db = await conn
+        
+        let defaultModules = [
+            'autoTrading',
+            'manualTrading'
+        ]
+
+        let user = await db.collection('users').find({'_id':new ObjectID(String(user_id))}).toArray()
+        let userPackage = user.length > 0 && typeof user[0]['userPackage'] != 'undefined' && user[0]['userPackage'] != '' ? user[0]['userPackage'] : defaultModules 
+        resolve(userPackage)
     })
 }
 
