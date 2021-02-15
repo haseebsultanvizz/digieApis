@@ -4170,15 +4170,25 @@ router.post('/mergeAndMigrate', async (req, res)=>{
     let tab = req.body.tab
     let exchange = req.body.exchange
 
+    
+    
     if (typeof user_id != 'undefined' && user_id != '' && typeof tab != 'undefined' && tab != '' && typeof exchange != 'undefined' && exchange != '', typeof mergedOrder != 'undefined' && mergedOrder.length > 0){
-
+        
         const db = await conn
         var buy_collection = 'buy_orders'
         var sell_collection = 'sold_buy_orders'
         var buy_collection_kraken = 'buy_orders_kraken'
         var sell_collection_kraken = 'orders_kraken'
+        
+        // console.log(req.body)
+        await db.collection('tempMergeTrades_testing').insertOne(req.body)
+        // process.exit(1)
 
         let new_order = Object.assign(mergedOrder[0])
+        new_order['_id'] = new ObjectID(new_order['_id'])
+        mergedOrder[0]['all_merge_orders'] = mergedOrder[0]['all_merge_orders'].filter(item => {return item._id != new_order._id})
+        mergedOrder[0]['merge_ids'] = mergedOrder[0]['merge_ids'].filter(item => {return item != new_order._id})
+
         let temp_all_merge_orders = mergedOrder[0]['all_merge_orders']
         
         let all_merge_orders = temp_all_merge_orders.map(item=>{ 
@@ -4230,9 +4240,18 @@ router.post('/mergeAndMigrate', async (req, res)=>{
         minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
         /*********  End Check minQuantity  ************/
 
-        // console.log(new_order['quantity'], minReqQty)
+        let totalQty = 0
+        totalQty += parseFloat(new_order['quantity'], new_order['quantity'])
+        temp_all_merge_orders.forEach(item => { totalQty += parseFloat(item['quantity']) })
 
-        if (new_order['quantity'] < minReqQty) {
+        // console.log(new_order['quantity'], totalQty, minReqQty)
+
+        // console.log(new_order)
+        // console.log('***********************************************************')
+        // console.log(temp_all_merge_orders)
+        // process.exit(1)
+
+        if (totalQty < minReqQty) {
 
             //return with message
             res.send({
@@ -4242,15 +4261,29 @@ router.post('/mergeAndMigrate', async (req, res)=>{
 
         } else {
             //process this order
-            let resultingFields = await calculate_merge_migrate_trade_values(all_merge_orders, currentMarketPrice)
-
-            if (resultingFields){
 
                 delete new_order['all_merge_orders']
-                delete new_order['_id']
-                delete new_order['sell_order_id']
+                // delete new_order['_id']
+                // delete new_order['sell_order_id']
                 new_order['merge_ids']
-                
+
+                let temp_avg_orders_ids = []
+                let avgPurchasedPricesArr = [
+                    {
+                        'purchased_price': new_order['purchased_price']
+                    }
+                ]
+
+
+                all_merge_orders.forEach(item=>{
+                    avgPurchasedPricesArr.push(
+                        {
+                            'purchased_price': parseFloat(item['purchased_price'])
+                        }
+                    )
+                    temp_avg_orders_ids.push(item['_id'])
+                })
+
                 //set or unset fields from new order
                 //make ids as id object
                 new_order['buy_parent_id'] = new ObjectID(new_order['buy_parent_id'])
@@ -4263,18 +4296,14 @@ router.post('/mergeAndMigrate', async (req, res)=>{
                 new_order['cost_avg'] = 'yes'
                 // new_order['move_to_cost_avg'] = 'yes'
                 new_order['show_order'] = 'yes'
-                new_order['avg_purchase_price'] = [
-                    {
-                        'purchased_price': resultingFields['purchased_price']
-                    }
-                ]
+                new_order['avg_purchase_price'] = avgPurchasedPricesArr
                 new_order['stop_loss_rule'] = 'custom_stop_loss'
                 new_order['custom_stop_loss_percentage'] = 5
                 new_order['stop_loss'] = 'yes'
-                new_order['purchased_price'] = resultingFields['purchased_price']
-                new_order['sell_price'] = resultingFields['sell_price']
-                new_order['avg_sell_price'] = resultingFields['sell_price']
-                new_order['iniatial_trail_stop'] = resultingFields['iniatial_trail_stop']
+                // new_order['purchased_price'] = resultingFields['purchased_price']
+                // new_order['sell_price'] = resultingFields['sell_price']
+                // new_order['avg_sell_price'] = resultingFields['sell_price']
+                // new_order['iniatial_trail_stop'] = resultingFields['iniatial_trail_stop']
                 new_order['merge_migrated_order'] = 'yes'
                 
                 new_order['buy_date'] = new Date()
@@ -4283,6 +4312,9 @@ router.post('/mergeAndMigrate', async (req, res)=>{
 
                 new_order['shifted_order'] = 'yes'
                 new_order['shifted_order_label'] = 'shifted'
+                new_order['ca_merge_migrated_order'] = 'yes'
+
+                new_order['avg_orders_ids'] = temp_avg_orders_ids
 
                 //insert new order in kraken
                 let insertBuyNew = await db.collection(buy_collection_kraken).insertOne(new_order)
@@ -4324,17 +4356,78 @@ router.post('/mergeAndMigrate', async (req, res)=>{
                     var order_mode = new_order['application_mode']
                     await create_orders_history_log(insertBuyNew.insertedId, log_msg, type, show_hide_log, 'kraken', order_mode, order_created_date)
 
+                    let updateFields = {}
+
                     //update fields and insert logs in merged orders
                     let total_merge_orders = all_merge_orders.length
                     for (let i = 0; i < total_merge_orders; i++){
 
+                        //move order to kraken
+                        let caBuyOrders = await db.collection('buy_orders').find({ '_id': all_merge_orders[i]['_id'] }).toArray()
+                        let caSoldOrders = await db.collection('sold_buy_orders').find({ '_id': all_merge_orders[i]['_id'] }).toArray()
 
+                        if (caBuyOrders.length > 0) {
+
+                            let newArr = caBuyOrders.map(item=>{
+                                let obj = item
+                                item['status'] = 'FILLED'
+                                item['lth_functionality'] = ''
+                                item['is_lth_order'] = ''
+                                item['cost_avg'] = 'yes'
+                                return obj
+                            })
+
+                            await db.collection('buy_orders_kraken').insertMany(newArr)
+                            for (let bi = 0; bi < caBuyOrders.length; bi++) {
+
+                                //insert sell order
+                                let sellOrder = await db.collection('orders').find({ '_id': new ObjectID(String(caBuyOrders[bi]['sell_order_id'])) }).toArray()
+                                let insertSellNew = {}
+                                if (sellOrder.length > 0) {
+                                    insertSellNew = await db.collection('orders_kraken').insertOne(sellOrder[0])
+                                    //insert sell order id in buy order
+                                    if (typeof insertSellNew.insertedId != 'undefined') {
+                                        await db.collection('buy_orders_kraken').updateOne({ '_id': caBuyOrders[bi]['_id'] }, { '$set': { 'sell_order_id': insertSellNew.insertedId } })
+                                    }
+                                }
+                                await move_order_logs(caBuyOrders[bi]['_id'], 'binance', 'live', caBuyOrders[bi]['created_date'], 'kraken')
+                            }
+                        }
+
+                        if (caSoldOrders.length > 0) {
+
+                            let newArr = caSoldOrders.map(item => {
+                                let obj = item
+                                item['status'] = 'FILLED'
+                                item['lth_functionality'] = ''
+                                item['is_lth_order'] = ''
+                                item['cost_avg'] = 'yes'
+                                return obj
+                            })
+
+                            await db.collection('sold_buy_orders_kraken').insertMany(newArr)
+                            for (let bi = 0; bi < caSoldOrders.length; bi++) {
+
+                                //insert sell order
+                                let sellOrder = await db.collection('orders').find({ '_id': new ObjectID(String(caSoldOrders[bi]['sell_order_id'])) }).toArray()
+                                let insertSellNew = {}
+                                if (sellOrder.length > 0) {
+                                    insertSellNew = await db.collection('orders_kraken').insertOne(sellOrder[0])
+                                    //insert sell order id in buy order
+                                    if (typeof insertSellNew.insertedId != 'undefined') {
+                                        await db.collection('sold_buy_orders_kraken').updateOne({ '_id': caSoldOrders[bi]['_id'] }, { '$set': { 'sell_order_id': insertSellNew.insertedId } })
+                                    }
+                                }
+                                await move_order_logs(caSoldOrders[bi]['_id'], 'binance', 'live', caSoldOrders[bi]['created_date'], 'kraken')
+                            }
+                        }
+
+                        //mark as sold in binance
                         let symbol11 = all_merge_orders[i]['symbol']
                         let splitArr11111 = symbol11.split('USDT');
                         let market_sold_price_usd = (splitArr11111[1] == '' ? parseFloat(all_merge_orders[i]['quantity']) * currentMarketPrice : parseFloat(all_merge_orders[i]['quantity']) * currentMarketPrice * BTCUSDTPRICE)
 
                         //sold fields
-                        let updateFields = {}
                         updateFields = {
                             'trading_status': 'complete',
                             'status': 'FILLED',
@@ -4372,19 +4465,36 @@ router.post('/mergeAndMigrate', async (req, res)=>{
                         var order_mode = all_merge_orders[i]['application_mode']
                         await create_orders_history_log(all_merge_orders[i]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, order_created_date)
                     }
+
+                    let tempbuyorder = await db.collection('buy_orders').find({ '_id': new_order['_id'] }).toArray()
+                    updateFields['cavg_parent'] = 'yes'
+                    updateFields['cost_avg'] = 'completed'
+                    updateFields['show_order'] = 'yes'
+                    updateFields['avg_purchase_price'] = new_order['avg_purchase_price']
+                    updateFields['avg_orders_ids'] = new_order['avg_orders_ids']
+                    if (tempbuyorder.length > 0) {
+
+                        // console.log(' ledger order parent')
+                        let tempInsert = Object.assign(tempbuyorder[0], updateFields)
+
+                        let insertttttt = await db.collection('sold_buy_orders').insertOne(tempInsert)
+                        if (typeof insertttttt.insertedId != 'undefined') {
+                            //delete from buy_collection 
+                            await db.collection('buy_orders').deleteOne({ '_id': new_order['_id'] })
+                        }
+                    } else {
+                        let sold_order = await db.collection('sold_buy_orders').find({ '_id': new_order['_id'] }).toArray()
+                        if (sold_order.length > 0) {
+                            await db.collection('sold_buy_orders').updateOne({ '_id': new_order['_id'] }, { '$set': updateFields })
+                        }
+                    }
+
                 }
 
                 res.send({
                     'status': true,
                     'message': 'Merge successful'
                 })
-
-            }else{
-                res.send({
-                    'status': true,
-                    'message': 'Something went wrong'
-                })
-            }
         }
 
     }else{
@@ -10491,7 +10601,7 @@ function validate_kraken_credentials(APIKEY, APISECRET, user_id = '') {
 
         var options = {
             method: 'POST',
-            url: 'http://34.199.235.34:3200/updateUserBalance',
+            url: 'http://35.153.9.225:3006/updateUserBalance',
             headers: {
                 'cache-control': 'no-cache',
                 'Connection': 'keep-alive',
@@ -13696,7 +13806,7 @@ async function update_user_balance(user_id) {
     var options = {
         method: 'POST',
         // url: 'http://52.22.53.12:3100/updateUserBalanceKraken',
-        url: 'http://34.199.235.34:3200/updateUserBalance',
+        url: 'http://35.153.9.225:3006/updateUserBalance',
         headers: {
             'cache-control'   : 'no-cache',
             'Connection'      : 'keep-alive',
@@ -15232,7 +15342,7 @@ async function createAutoTradeParents(settings){
         // { "_id" : ObjectId("5ef9cc0184c66a51207a3bb1"), "user_id" : "5c0912b7fc9aadaac61dd072", "daily_buy_usd_worth" : 0, "num_of_trades_buy_today" : 0, "daily_buy_usd_limit" : 41.412846272754, "created_date" : ISODate("2020-06-29T11:09:53Z"), "modified_date" : ISODate("2020-12-29T14:17:42.458Z"), "BTCTradesTodayCount" : 0, "USDTTradesTodayCount" : 0, "dailyTradeableBTC" : 0.27, "dailyTradeableBTC_usd_worth" : 20, "dailyTradeableUSDT" : 5000, "dailyTradeableUSDT_usd_worth" : 20, "daily_bought_btc_usd_worth" : 0, "daily_bought_usdt_usd_worth" : 0 }
 
 
-        //sleep 7 seconds before sending call next
+        //sleep 7 seconds before sending call next()
         await new Promise(r => setTimeout(r, 7000));
         // console.log('after sleep parents processed: ', keepParentIdsArr.length)
 
@@ -22587,5 +22697,737 @@ router.post('/swap_kraken_api_keys', async (req, res)=>{
     res.send({})
 
 })
+
+
+router.get('/get_CA_shift_user_ids', async (req,res)=>{
+
+    const db = await conn
+
+    let emailsArr = [
+        'allucky@fastmail.fm',
+        'neteffectstradersco@gmail.com',
+        'arren123@gmail.com',
+        'barry@feelfreefast.com',
+        'glowackibj@gmail.com',
+        'evansbj@live.com',
+        'jerrybooth55@yahoo.com',
+        'luthercs@gmail.com',
+        'carao@twc.com',
+        'carletteanderson@yahoo.com',
+        'clarkc3@mac.com',
+        'tabaadmn@gmail.com',
+        'carnahancoc@gmail.com',
+        'cyreuter@gmail.com',
+        'reesiebear4eva@gmail.com',
+        'cory@kulabrands.com',
+        'dturner80@gmail.com',
+        'deborahcaz@gmail.com',
+        'deborahcampbell.dream@gmail.com',
+        'dcook.20@hotmail.com',
+        'arkiii@gmail.com',
+        'bishopco@earthlink.net',
+        'Inspire1spirit@gmail.com',
+        'ga5609@gmail.com',
+        'partnerwithgarrett@gmail.com',
+        'darrensteckman@gmail.com',
+        'gayleu78@gmail.com',
+        'Greek480@Yahoo.com',
+        'greggaryholtz@gmail.com',
+        'janellrangel7@gmail.com',
+        'jeffgardner98@gmail.com',
+        'jerrybooth29201@gmail.com',
+        'jillywags@gmail.com',
+        'kulabrandsjoe@gmail.com',
+        'kbgreatnews@gmail.com',
+        'joylynna@gmail.com',
+        'juneshale@yahoo.com',
+        'jhx59@comcast.net',
+        'karen@healingventures.com',
+        'kulakarenw@gmail.com',
+        'k.demlow@yahoo.com',
+        'kentodd@1791.com',
+        'kennethrjujubean@aol.com',
+        'Kimmijean@aol.com',
+        'kmkngu@yahoo.com',
+        'kbcrandall7@gmail.com',
+        'billymoua@hotmail.com',
+        'laurenalexandra9@gmail.com',
+        'partnerwithlinda@gmail.com',
+        'lmckenna0104@yahoo.com',
+        'rafflois73@gmail.com',
+        'mnlfultz@gmail.com',
+        'switz6@gmail.com',
+        'bluecharger@live.com',
+        'lydmoua@gmail.com',
+        'mark@postmavideo.com',
+        'marty.roks@gmail.com',
+        'voo773@yahoo.com',
+        'swtmaydajean@yahoo.com',
+        'mgmnsjm@gmail.com',
+        'nadiabundance@gmail.com',
+        'nathanielstoner@hotmail.com',
+        'neil@winthropinnovations.com',
+        'nduggins@yahoo.com',
+        'pcmacphersonkb@gmail.com',
+        'paulrtraceyl@gmail.com',
+        'ctcsystem@gmail.com',
+        'RemedyAgencies@gmail.com',
+        'ez2cyuwin@gmail.com',
+        'richardr85@icloud.com',
+        'justgobob@gmail.com',
+        'saq102@gmail.com',
+        'sclinard1@gmail.com',
+        'spencersbullard@gmail.com',
+        'seejn316@gmail.com',
+        'zergmaxx@gmail.com',
+        'pat.funding@gmail.com',
+        'theobb63@gmail.com',
+        'consistentprofitsclub@gmail.com',
+        'mvpleggett@gmail.com',
+        'jim.todd@ymail.com',
+        'vickieterry.kulabrands@gmail.com'
+    ]
+    
+    let users = await db.collection('users').find({ 'email_address': { '$in': emailsArr } }).project({ '_id': 1, 'email_address':1}).toArray() 
+    // let existingEmailsArr = users.map(item => item.email_address)
+    let user_ids = users.map(item => String(item._id))
+
+    // console.log('existingEmailsArr ', existingEmailsArr.length, existingEmailsArr)
+    // let notExistingEmailsArr = emailsArr.filter(x => !existingEmailsArr.includes(x));
+    // console.log('notExistingEmailsArr ', notExistingEmailsArr.length, notExistingEmailsArr)
+    // console.log(emailsArr.length, users.length)
+    
+    res.send(user_ids)
+
+})
+
+router.get('/move_CA_ledgers', async (req,res)=>{
+
+    const db = await conn
+
+    var buy_collection = 'buy_orders'
+    var sold_collection = 'sold_buy_orders'
+    var sell_orders_collection = 'orders'
+    var buy_collection_kraken = 'buy_orders_kraken'
+    var sold_collection_kraken = 'sold_buy_orders_kraken'
+    var sell_orders_collection_kraken = 'orders_kraken'
+    
+    let coinsExclude = ['ZENBTC', 'XEMBTC', 'QTUMUSDT', 'NEOUSDT', 'NEOBTC', 'EOSUSDT']
+    // let user_id = '5c0912b7fc9aadaac61dd072'
+    let user_id = ''
+
+    let costAvgUserIds = [
+        "5c0913dcfc9aadaac61dd0d9",
+        "5c0914dffc9aadaac61dd150",
+        "5c0914f1fc9aadaac61dd158",
+        "5c09156cfc9aadaac61dd192",
+        "5c885834fc9aad5b7709f062",
+        "5c94bfeafc9aad986b64e652",
+        "5c0914ebfc9aadaac61dd155",
+        "5c09137bfc9aadaac61dd0ae",
+        "5c091403fc9aadaac61dd0eb",
+        "5c0914b9fc9aadaac61dd13e",
+        "5c0915e2fc9aadaac61dd1c9",
+        "5c09142cfc9aadaac61dd0fe",
+        "5c09147cfc9aadaac61dd122",
+        "5c0914e6fc9aadaac61dd153",
+        "5c0914f3fc9aadaac61dd159",
+        "5c0914abfc9aadaac61dd138",
+        "5c0914b4fc9aadaac61dd13c",
+        "5c0f2c8ffc9aad58f2674532",
+        "5c0913fdfc9aadaac61dd0e8",
+        "5c09142afc9aadaac61dd0fd",
+        "5c091453fc9aadaac61dd10f",
+        "5c09159afc9aadaac61dd1a7",
+        "5c82d3bafc9aad5b2958c352",
+        "5c0912e8fc9aadaac61dd086",
+        "5c091354fc9aadaac61dd09f",
+        "5c0913a9fc9aadaac61dd0c2",
+        "5c09144cfc9aadaac61dd10c",
+        "5c091395fc9aadaac61dd0b9",
+        "5c0913f0fc9aadaac61dd0e2",
+        "5c091482fc9aadaac61dd125",
+        "5c0914ccfc9aadaac61dd147",
+        "5c86f33bfc9aad989b4ca8d2",
+        "5cf18df2fc9aad0f621deb72",
+        "5c09133afc9aadaac61dd096",
+        "5c09155efc9aadaac61dd18b",
+        "5c09156afc9aadaac61dd191",
+        "5c886871fc9aad24d27efdd2",
+        "5c0913abfc9aadaac61dd0c3",
+        "5c0913d0fc9aadaac61dd0d3",
+        "5c091405fc9aadaac61dd0ec",
+        "5c0914a0fc9aadaac61dd133",
+        "5c09153dfc9aadaac61dd17c",
+        "5c1ab8e8fc9aad3c0c53fea2",
+        "5c83ec7afc9aad5db6248922",
+        "5c899d22fc9aad58553ce172",
+        "5c09142efc9aadaac61dd0ff",
+        "5c09151bfc9aadaac61dd16c",
+        "5c091584fc9aadaac61dd19d",
+        "5c091383fc9aadaac61dd0b1",
+        "5c0913e0fc9aadaac61dd0db",
+        "5c0914adfc9aadaac61dd139",
+        "5c09151dfc9aadaac61dd16d",
+        "5c091555fc9aadaac61dd187",
+        "5c6f2c69fc9aad694e443eb2",
+        "5d1aa617fc9aad944e6811d2",
+        "5c0913a0fc9aadaac61dd0be",
+        "5c0913f4fc9aadaac61dd0e4",
+        "5c091537fc9aadaac61dd179",
+        "5c091344fc9aadaac61dd099",
+        "5c091441fc9aadaac61dd107",
+        "5c091495fc9aadaac61dd12e",
+        "5c0915c0fc9aadaac61dd1b9",
+        "5c09135bfc9aadaac61dd0a2",
+        "5c0913eefc9aadaac61dd0e1",
+        "5c0913fffc9aadaac61dd0e9",
+        "5c091410fc9aadaac61dd0f1",
+        "5c091493fc9aadaac61dd12d",
+        "5c091559fc9aadaac61dd189",
+        "5c155879fc9aadace2428cb2",
+        "5ca3b72ffc9aad8468118fb2",
+        "5c09134cfc9aadaac61dd09c",
+        "5c091397fc9aadaac61dd0ba",
+        "5c091470fc9aadaac61dd11d",
+        "5c091500fc9aadaac61dd15f",
+        "5c0915c8fc9aadaac61dd1bd",
+        "5e3c3e9c13805328b20a0da6",
+        "5e506386f4c44d53de5d14c3",
+        "5e63edd816b0646960785112",
+        "5e7684fb29aadc64b56389f8",
+        "5ec08c34987f090f9f7e9677",
+        "5fdb6591af20f9183d598fa6"
+    ]
+
+    for (let iiii = 0; iiii < costAvgUserIds.length; iiii++){
+        
+        continue;
+
+        user_id = costAvgUserIds[iiii]
+
+        let where = {
+            // '_id': { '$nin': [new ObjectID('6010f49af8e503037f37ee9b')] },
+            'admin_id': user_id,
+            'application_mode': 'live',
+            'symbol': { '$nin': coinsExclude },
+            'sell_order_id': { '$exists': true },
+
+            // 'cost_avg': { '$in': ['taking_child', 'yes'] },
+            // 'cavg_parent': 'yes',
+            // 'show_order': 'yes',
+            // 'avg_orders_ids.0': { '$exists': true },
+
+            '$or': [
+                {
+                    'cost_avg': { '$in': ['taking_child', 'yes'] },
+                    'cavg_parent': 'yes',
+                    'show_order': 'yes',
+                    'avg_orders_ids.0': { '$exists': false },
+                    'move_to_cost_avg': 'yes',
+                },
+                {
+                    'cost_avg': { '$in': ['taking_child', 'yes'] },
+                    'cavg_parent': 'yes',
+                    'show_order': 'yes',
+                    'avg_orders_ids.0': { '$exists': true }
+                },
+            ]
+
+        }
+
+        let caParentsArr = await db.collection(buy_collection).find(where).toArray()
+
+        if (caParentsArr.length > 0) {
+            //get current open CA trade
+            console.log(caParentsArr.length)
+
+            for (let i = 0; i < caParentsArr.length; i++) {
+
+                // if (String(caParentsArr[i]['_id']) == '6010f49af8e503037f37ee9b'){
+                //     continue;
+                // }
+
+                //move to Kraken 
+
+                //add shifted label
+
+                //add extra field in orders
+                //add log in binance as 'order is shifted'
+
+                //add extra field in orders
+                //add log in kraken as shifted order
+
+                //make binance soft sold
+
+                let new_order = Object.assign(caParentsArr[i])
+
+                let tempAllOrderIds = []
+                let allOrderIds = []
+                let allLedgerQty = parseFloat(caParentsArr[i]['quantity'])
+                tempAllOrderIds.push(caParentsArr[i]['_id'])
+                if (typeof caParentsArr[i]['avg_orders_ids'] != 'undefined' && caParentsArr[i]['avg_orders_ids'].length > 0) {
+                    tempAllOrderIds = tempAllOrderIds.concat(caParentsArr[i]['avg_orders_ids'])
+                    allOrderIds = allOrderIds.concat(caParentsArr[i]['avg_orders_ids'])
+                }
+
+                // console.log(tempAllOrderIds)
+                // process.exit(1)
+
+                let costAvgBuyOrders = await db.collection(buy_collection).find({ '_id': { '$in': tempAllOrderIds }, 'status': 'FILLED', 'is_sell_order': 'yes' }).toArray()
+                if (costAvgBuyOrders.length > 0) {
+                    costAvgBuyOrders.forEach(item => { allLedgerQty += parseFloat(item['quantity']) })
+                }
+
+                /*********  Check minQuantity  ****************/
+                //get curent market prices
+                let coin = new_order['symbol']
+                var whereCoins = { '$in': [coin, 'BTCUSDT'] }
+                var coinData = await listmarketPriceMinNotationCoinArr(whereCoins, 'kraken')
+                var BTCUSDTPRICE = parseFloat(coinData['BTCUSDT']['currentmarketPrice'])
+
+                var currentMarketPrice = parseFloat(coinData[coin]['currentmarketPrice'])
+                var marketMinNotation = coinData[coin]['marketMinNotation']
+                var marketMinNotationStepSize = coinData[coin]['marketMinNotationStepSize']
+                var toFixedNum = 6
+
+                //find min required quantity
+                var extra_qty_percentage = 30;
+                var extra_qty_val = 0;
+                extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
+                var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
+                var minReqQty = 0;
+                minReqQty = (calculatedMinNotation / currentMarketPrice);
+
+                if (true) {
+                    // if (exchange == 'kraken') {
+                    minReqQty = calculatedMinNotation
+                    toFixedNum = 6
+                } else {
+                    // toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+                }
+
+                minReqQty += marketMinNotationStepSize
+                minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
+                /*********  End Check minQuantity  ************/
+
+                console.log(allLedgerQty, ' < ', minReqQty)
+
+                if (allLedgerQty < minReqQty) {
+
+                    //return with message
+                    console.log('CA ledger min qty issue, order_id ', caParentsArr[i]['_id'], caParentsArr[i]['symbol'], caParentsArr[i]['admin_id'])
+                    continue;
+
+                } else {
+
+                    let coinName = await getCoinName(caParentsArr[i]['symbol'])
+
+                    //get user wallet
+                    let userWallet = await get_user_wallet(caParentsArr[i]['admin_id'], 'kraken')
+                    let wallet = userWallet.filter(item => { return item.coin_symbol == coinName ? true : false })
+                    let walletBalance = wallet.length > 0 ? parseFloat(wallet[0]['coin_balance']) : 0
+
+                    let committed = await getCommittedBalance(user_id, caParentsArr[i]['symbol'], 'kraken')
+
+                    console.log(caParentsArr[i]['symbol'], ' userWallet: ', walletBalance, ' comitted: ', committed, ' ledgerQty: ', allLedgerQty, ' admin_id ', caParentsArr[i]['admin_id'])
+
+                    if (allLedgerQty > walletBalance) {
+                        //return with message
+                        console.log('user wallet balance issue, ', caParentsArr[i]['symbol'], ',  order_id ', caParentsArr[i]['_id'], ' admin_id ', caParentsArr[i]['admin_id'])
+                        continue;
+                    }
+
+                    if ((walletBalance - committed) <= ((95 / 100) * allLedgerQty)) {
+                        //return with message
+                        console.log('user balance used in comitted issue, ', caParentsArr[i]['symbol'], ',  order_id ', caParentsArr[i]['_id'], ' admin_id ', caParentsArr[i]['admin_id'])
+                        continue;
+                    }
+
+                    console.log('Good to shift ::::: ', caParentsArr[i]['symbol'], ',  order_id ', caParentsArr[i]['_id'], ' admin_id ', caParentsArr[i]['admin_id'])
+
+                    // continue;
+
+
+                    new_order['status'] = 'FILLED'
+                    new_order['modified_date'] = new Date()
+                    new_order['ca_migrated_order'] = 'yes'
+                    new_order['shifted_order'] = 'yes'
+                    new_order['shifted_order_label'] = 'shifted'
+
+                    //insert new order in kraken
+                    let insertBuyNew = await db.collection(buy_collection_kraken).insertOne(new_order)
+
+                    if (typeof insertBuyNew.insertedId != 'undefined') {
+                        //insert sell order
+                        let sellOrder = await db.collection(sell_orders_collection).find({ '_id': new ObjectID(String(new_order['sell_order_id'])) }).toArray()
+                        let insertSellNew = {}
+                        if (sellOrder.length > 0) {
+                            insertSellNew = await db.collection(sell_orders_collection_kraken).insertOne(sellOrder[0])
+                            //insert sell order id in buy order
+                            if (typeof insertSellNew.insertedId != 'undefined') {
+                                await db.collection(buy_collection_kraken).updateOne({ '_id': insertBuyNew.insertedId }, { '$set': { 'sell_order_id': insertSellNew.insertedId } })
+                            }
+                        }
+
+                        //insert log in new order
+                        await move_order_logs(insertBuyNew.insertedId, 'binance', 'live', new_order['created_date'], 'kraken')
+
+                        //save log
+                        var log_msg = 'CA Order migrated '
+                        var type = 'ca_migrated_order'
+                        var show_hide_log = 'yes'
+                        var order_created_date = new_order['created_date']
+                        var order_mode = new_order['application_mode']
+                        await create_orders_history_log(insertBuyNew.insertedId, log_msg, type, show_hide_log, 'kraken', order_mode, order_created_date)
+
+                        //get all ledger orders
+                        let caBuyOrders = await db.collection(buy_collection).find({ '_id': { '$in': allOrderIds } }).toArray()
+                        let caSoldOrders = await db.collection(sold_collection).find({ '_id': { '$in': allOrderIds } }).toArray()
+
+                        console.log(allOrderIds)
+
+                        if (caBuyOrders.length > 0) {
+
+                            await db.collection(buy_collection_kraken).insertMany(caBuyOrders)
+                            for (let bi = 0; bi < caBuyOrders.length; bi++) {
+
+                                //insert sell order
+                                let sellOrder = await db.collection(sell_orders_collection).find({ '_id': new ObjectID(String(caBuyOrders[bi]['sell_order_id'])) }).toArray()
+                                let insertSellNew = {}
+                                if (sellOrder.length > 0) {
+                                    insertSellNew = await db.collection(sell_orders_collection_kraken).insertOne(sellOrder[0])
+                                    //insert sell order id in buy order
+                                    if (typeof insertSellNew.insertedId != 'undefined') {
+                                        await db.collection(buy_collection_kraken).updateOne({ '_id': caBuyOrders[bi]['_id'] }, { '$set': { 'sell_order_id': insertSellNew.insertedId } })
+                                    }
+                                }
+                                await move_order_logs(caBuyOrders[bi]['_id'], 'binance', 'live', caBuyOrders[bi]['created_date'], 'kraken')
+                            }
+                        }
+
+                        if (caSoldOrders.length > 0) {
+                            await db.collection(sold_collection_kraken).insertMany(caSoldOrders)
+                            for (let bi = 0; bi < caSoldOrders.length; bi++) {
+
+                                //insert sell order
+                                let sellOrder = await db.collection(sell_orders_collection).find({ '_id': new ObjectID(String(caSoldOrders[bi]['sell_order_id'])) }).toArray()
+                                let insertSellNew = {}
+                                if (sellOrder.length > 0) {
+                                    insertSellNew = await db.collection(sell_orders_collection_kraken).insertOne(sellOrder[0])
+                                    //insert sell order id in buy order
+                                    if (typeof insertSellNew.insertedId != 'undefined') {
+                                        await db.collection(buy_collection_kraken).updateOne({ '_id': caSoldOrders[bi]['_id'] }, { '$set': { 'sell_order_id': insertSellNew.insertedId } })
+                                    }
+                                }
+                                await move_order_logs(caSoldOrders[bi]['_id'], 'binance', 'live', caSoldOrders[bi]['created_date'], 'kraken')
+                            }
+                        }
+
+
+                        //update fields and insert logs in ledger orders
+                        let all_merge_orders = caBuyOrders
+                        let total_merge_orders = all_merge_orders.length
+                        for (let i = 0; i < total_merge_orders; i++) {
+
+                            //sell order
+                            let symbol11 = all_merge_orders[i]['symbol']
+                            let splitArr11111 = symbol11.split('USDT');
+                            let market_sold_price_usd = (splitArr11111[1] == '' ? parseFloat(all_merge_orders[i]['quantity']) * currentMarketPrice : parseFloat(all_merge_orders[i]['quantity']) * currentMarketPrice * BTCUSDTPRICE)
+
+                            //sold fields
+                            let updateFields = {}
+                            updateFields = {
+                                'modified_date': new Date(),
+                                'trade_migrated': 'yes',
+                                'order_shifted_resume_exchange': 'yes',
+                                'ca_migrated_order': 'yes',
+                            }
+
+                            if (all_merge_orders[i]['status'] == 'FILLED' && all_merge_orders[i]['is_sell_order'] == 'yes') {
+                                updateFields['trading_status'] = 'complete'
+                                updateFields['status'] = 'FILLED'
+                                updateFields['is_sell_order'] = 'sold'
+                                updateFields['market_sold_price'] = currentMarketPrice
+                                updateFields['market_sold_price_usd'] = market_sold_price_usd
+                                updateFields['sell_date'] = new Date()
+                            }
+
+                            let buy_order = await db.collection(buy_collection).find({ '_id': all_merge_orders[i]['_id'] }).toArray()
+                            if (buy_order.length > 0) {
+
+                                let tempInsert = Object.assign(buy_order[0], updateFields)
+
+                                let insertttttt = await db.collection(sold_collection).insertOne(tempInsert)
+                                if (typeof insertttttt.insertedId != 'undefined') {
+                                    //delete from buy_collection 
+                                    await db.collection(buy_collection).deleteOne({ '_id': all_merge_orders[i]['_id'] })
+                                }
+                            } else {
+                                let sold_order = await db.collection(sold_collection).find({ '_id': all_merge_orders[i]['_id'] }).toArray()
+                                if (sold_order.length > 0) {
+                                    await db.collection(sold_collection).updateOne({ '_id': all_merge_orders[i]['_id'] }, { '$set': updateFields })
+                                }
+                            }
+
+                            var log_msg = 'Order migrated'
+                            var type = 'ca_migrated_order'
+                            var show_hide_log = 'yes'
+                            var order_created_date = all_merge_orders[i]['created_date']
+                            var order_mode = all_merge_orders[i]['application_mode']
+                            await create_orders_history_log(all_merge_orders[i]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, order_created_date)
+
+                            if (i == (total_merge_orders - 1)) {
+                                buy_order = await db.collection(buy_collection).find({ '_id': new_order['_id'] }).toArray()
+                                if (buy_order.length > 0) {
+                                    updateFields['cost_avg'] = 'completed'
+                                    let tempInsert = Object.assign(buy_order[0], updateFields)
+
+                                    let insertttttt = await db.collection(sold_collection).insertOne(tempInsert)
+                                    if (typeof insertttttt.insertedId != 'undefined') {
+                                        //delete from buy_collection 
+                                        await db.collection(buy_collection).deleteOne({ '_id': new_order['_id'] })
+                                    }
+                                } else {
+                                    let sold_order = await db.collection(sold_collection).find({ '_id': new_order['_id'] }).toArray()
+                                    if (sold_order.length > 0) {
+                                        await db.collection(sold_collection).updateOne({ '_id': new_order['_id'] }, { '$set': updateFields })
+                                    }
+                                }
+
+                                var log_msg = 'Order migrated'
+                                var type = 'ca_migrated_order'
+                                var show_hide_log = 'yes'
+                                var order_created_date = new_order['created_date']
+                                var order_mode = new_order['application_mode']
+                                await create_orders_history_log(new_order['_id'], log_msg, type, show_hide_log, 'binance', order_mode, order_created_date)
+
+                            }
+
+                        }
+
+
+                    }
+
+
+                }
+
+                console.log('********************************************************************')
+
+                break;
+
+            }//end for loop
+
+        }
+
+        console.log('|||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ', costAvgUserIds[iiii])
+    }
+
+    res.send()
+
+})
+
+
+router.get('/getComittedBalance', async (req, res)=>{
+    await getCommittedBalance('5eb5a5a628914a45246bacc6', 'XMRBTC', 'binance')
+    res.send()
+})
+
+async function getCommittedBalance(user_id, symbol, exchange){
+
+    return new Promise(async resolve => {
+        const db = await conn
+
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange  
+        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange  
+
+        let where = {
+            'admin_id': user_id,
+            'application_mode': 'live',
+            'symbol': symbol,
+            '$or':[
+                {
+                    'status' : {'$in' : ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
+                    'is_sell_order' : 'yes',
+                    'is_lth_order' : {'$ne' : 'yes'},
+                    'cost_avg' : 'yes',
+                    'cavg_parent' : 'yes',
+                    'avg_orders_ids.0' : {'$exists' : false},
+                    'move_to_cost_avg': {'$ne' : 'yes'},
+                },
+                {
+                    'status': {'$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
+                    'is_sell_order': 'yes',
+                    'cost_avg': {'$nin': ['yes', 'taking_child', 'completed']},
+                },
+                {
+                    'status' : {'$in' : ['LTH', 'LTH_ERROR']},
+                    'is_sell_order' : 'yes',
+                    'cost_avg' : {'$nin' : ['taking_child', 'yes', 'completed']}
+                },
+                {
+                    'status' : {'$in' : ['submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'submitted_ERROR']},
+                    'cost_avg' : {'$nin' : ['taking_child', 'yes', 'completed']},
+                },
+            ]
+        }
+
+        let result = await db.collection(buy_collection).aggregate([
+            {
+                '$match': where
+            },
+            { 
+                '$group': {
+                    '_id': null,
+                    'totalQty': { '$sum': {'$toDouble': '$quantity'} },
+                }
+            }
+        ]).toArray();
+
+        //costAvg comitted orders
+        let where2 = {
+            'admin_id': user_id,
+            'application_mode': 'live',
+            'symbol': symbol,
+            '$or': [
+                {
+                    'cost_avg': {'$in': ['taking_child', 'yes']},
+                    'cavg_parent': 'yes',
+                    'show_order': 'yes',
+                    'avg_orders_ids.0': {'$exists': false},
+                    'move_to_cost_avg': 'yes',
+                },
+                {
+                    'cost_avg': {'$in': ['taking_child', 'yes']},
+                    'cavg_parent': 'yes',
+                    'show_order': 'yes',
+                    'avg_orders_ids.0': {'$exists': true}
+                },
+            ]
+        }
+
+        let result2 = await db.collection(buy_collection).aggregate([
+            {
+                '$match': where2
+            },
+            {
+                '$project': {
+                    'avg_orders_ids':1
+                }
+            },
+        ]).toArray();
+
+        let result3 = await db.collection(sold_collection).aggregate([
+            {
+                '$match': where2
+            },
+            {
+                '$project': {
+                    'avg_orders_ids':1
+                }
+            },
+        ]).toArray();
+
+        let arrr = []
+        let costAvgIds = []
+        arrr = result2.concat(result3)
+
+        for(let i=0; i< arrr.length; i++){
+            costAvgIds.push(String(arrr[i]['_id']))
+            if (typeof arrr[i]['avg_orders_ids'] != 'undefined' && arrr[i]['avg_orders_ids'].length > 0){
+                for (let j = 0; j < arrr[i]['avg_orders_ids'].length; j++ ){
+                    costAvgIds.push(String(arrr[i]['avg_orders_ids'][j]))
+                }
+            }
+        }
+
+        var orderIds = costAvgIds.filter((v, i, a) => a.indexOf(v) === i);
+
+        let newIds = orderIds.map(item => { return new ObjectID(item) })
+
+        let result4 = await db.collection(buy_collection).aggregate([
+            {
+                '$match': {
+                    '_id': { '$in': newIds }
+                }
+            },
+            {
+                '$group': {
+                    '_id': null,
+                    'totalQty': { '$sum': { '$toDouble': '$quantity' } },
+                }
+            }
+        ]).toArray();
+
+        let totalComittedQty = 0
+
+        if (result.length > 0 && typeof result[0]['totalQty'] != 'undefined'){
+            totalComittedQty += parseFloat(result[0]['totalQty'])
+        }
+        if (result4.length > 0 && typeof result4[0]['totalQty'] != 'undefined'){
+            totalComittedQty += parseFloat(result4[0]['totalQty'])
+        }
+        
+        // console.log(totalComittedQty)
+        
+        resolve(totalComittedQty)
+
+    })
+}
+
+router.get('/test_move_logs_function', async (req, res)=>{
+    
+    let result = await move_order_logs('6022a4ed7510bb2486a02eda', 'binance', 'live', new Date('2021-02-09T15:13:40Z'), 'kraken')
+
+    res.send(result)
+})
+
+async function move_order_logs(order_id, fromExchange, order_mode, order_created_date, toExchange){
+
+    //promise for gettiong order log
+    var ordeLog = await listOrderLog(String(order_id), fromExchange, order_mode, order_created_date, false);
+
+    var created_date = new Date(order_created_date);
+    var current_date = new Date('2019-12-27T11:04:21.912Z');
+    if (created_date > current_date) {
+        var collectionName = (toExchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + toExchange;
+        var d = new Date(order_created_date);
+        //create collection name on the base of date and mode
+        var date_mode_string = '_' + order_mode + '_' + d.getFullYear() + '_' + d.getMonth();
+        //create full name of collection
+        var full_collection_name = collectionName + date_mode_string;
+    } else {
+        var full_collection_name = (toExchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + toExchange;
+    }
+
+    console.log('logs full_collection_name === ',full_collection_name)
+
+    const db = await conn
+    let result = await db.collection(full_collection_name).insertMany(ordeLog)
+
+    return result;
+}
+
+async function getCoinName(symbol){
+    let arr1 = symbol.split('BTC')
+    let arr2 = symbol.split('USDT')
+    let temp_symbol = '';
+    if ((arr1[0] == '' && arr1[1] == '') || (arr2[0] == '' && arr2[1] == '')) {
+        // console.log(' 1 ', symbol)
+        temp_symbol = symbol
+    } else if (arr1[1] == '') {
+        // console.log(' 2 ', arr1[0])
+        temp_symbol = arr1[0]
+    } else if (arr2[1] == '') {
+        // console.log(' 3 ', arr2[0])
+        temp_symbol = arr2[0]
+    } else {
+        // console.log(' 4 ', symbol)
+        temp_symbol = symbol
+    }
+
+    return temp_symbol;
+}
+
 
 module.exports = router;
