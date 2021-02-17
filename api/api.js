@@ -17568,7 +17568,7 @@ async function saveBnbAutoBuyHistory(user_id, exchange, response, buyType='autoB
                     console.log(err)
                     resolve(false)
                 } else {
-                    console.log(result)
+                    // console.log(result)
                     resolve(true)
                 }
             })
@@ -20240,7 +20240,11 @@ async function is_trade_limit_exceeded(user_id, exchange) {
             }
 
             let result = await newAtgApiCall(reqObj)
-            let data = result.data
+            let data = typeof result.data != 'undefined' ? data : false
+            
+            if(data === false){
+                resolve(false)
+            }
 
             // if (data.btcLimitExceeded && baseCurrencyArr.includes('BTC')) {
             //     responseObj['btcStatus'] = true
