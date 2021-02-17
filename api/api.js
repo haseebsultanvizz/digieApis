@@ -22216,7 +22216,7 @@ router.post('/validateApiKeys', async (req, res)=>{
         } else if (exchange == 'binance'){
 
             //key1 validity
-            if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && settings[0]['api_key'] != null && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '' && settings[0]['api_secret'] != null) {
+            if (settings.length > 0 && typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && settings[0]['api_key'] != null && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '' && settings[0]['api_secret'] != null) {
                 let resKey1 = await validate_binance_credentials(settings[0]['api_key'], settings[0]['api_secret']);
 
                 if (resKey1) {
@@ -22241,7 +22241,7 @@ router.post('/validateApiKeys', async (req, res)=>{
         } else if (exchange == 'bam'){
 
             //key1 validity
-            if (typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && settings[0]['api_key'] != null && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '' && settings[0]['api_secret'] != null) {
+            if (settings.length > 0 && typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && settings[0]['api_key'] != null && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '' && settings[0]['api_secret'] != null) {
                 
                 let resKey1 = await validate_bam_credentials_app(settings[0]['api_key'], settings[0]['api_secret']);
 
