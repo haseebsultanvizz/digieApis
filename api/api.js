@@ -1,7 +1,9 @@
 var express = require('express');
 var router = express.Router();
 var request = require('request');
-const conn = require('../connection/database');
+const connections = require('../connection/database');
+const conn = connections.connectionDatabase;
+const localConn = connections.localConnectionDatabase;
 ObjectID = require('mongodb').ObjectID;
 var md5 = require('md5');
 var app = express();
@@ -2417,6 +2419,9 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
     await update_cost_avg_fields_shahzad(order_id, order, exchange)
     // process.exit(1)
 
+    // await updateAvgSellFullTransactionPrice(order_id, exchange, order['symbol'])
+    // await updateAvgSellThreeTransactionPrice(order_id, exchange, order['symbol'])
+
     var ids = []
 
     var buyOrderArr = await listOrderById(order_id, exchange);
@@ -2916,6 +2921,336 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
     }
 
 }
+
+async function updateAvgSellFullTransactionPrice(order_id, exchange, coinSymbol){
+    conn.then(async (db) => {
+
+        var type = "all";
+        var order_mode = 'live';
+        var pricesObj = await get_current_market_prices(exchange, [coinSymbol])
+        var currentMarketPrice = pricesObj[coinSymbol]
+
+        //List all order for which deep price meet
+        var parentActiveOrderArr = await getCostAverageParentOrdes(order_id, exchange, coinSymbol, order_mode, type);
+
+        console.log("parentActiveOrderArr ::::::::  updateAvgSellFullTransactionPrice ", parentActiveOrderArr)
+        if (typeof parentActiveOrderArr !== 'undefined' && parentActiveOrderArr != '') {
+            for (let orderIndex in parentActiveOrderArr) {
+                var countOrderBuy = 1;
+                var quantity = parentActiveOrderArr[orderIndex]['quantity'];// Get quantity 
+                var costParentOrderId = parentActiveOrderArr[orderIndex]['_id'];// Get _id 
+                var parentpurchasedPrice = parentActiveOrderArr[orderIndex]['purchased_price'];// Get Purchased 
+                var avg_orders_ids = parentActiveOrderArr[orderIndex]['avg_orders_ids'];// Get avg_orders_ids 
+                var definedSellPercentage = parentActiveOrderArr[orderIndex]['defined_sell_percentage'];// Get Defined Sell Percentage
+
+                // We will run Loop to multiple 0.5 on each iteration 
+                for (let i = 1; i < 5000; i++) {
+                    // Formula Goes Here
+                    var XPrice = 0;
+                    var finalValOverAll = 0;
+                    var incrementVal = i * 0.3
+                    var IncrePercnt = (currentMarketPrice * incrementVal) / 100
+                    var XPrice = (currentMarketPrice + IncrePercnt);
+                    var finalValOverAll = ((XPrice - parentpurchasedPrice) / parentpurchasedPrice) * 100;
+                    
+                    var response = ''
+
+                    if(i == 1){
+                        response = await sumChildOrders(exchange, avg_orders_ids, XPrice, countOrderBuy, definedSellPercentage, finalValOverAll, costParentOrderId, quantity);
+                        console.log ('loop iteration ', i)
+                    }else{
+                        console.log ('loop iteration ', i)
+                    }
+
+                    if (response == false) {
+                        i = 1;
+                        console.log(" ~~~~~~~~ ALL TRANSACTION OVERALL Response Is Good and Order cost average updated costParentOrderId ~~~~~~~~ ", costParentOrderId)
+                        break;
+                    } // END of if(response==false)
+                    countOrderBuy = 1
+                }// END of Iteration loop 
+            }// END of for(let orderIndex in parentActiveOrderArr){
+        }// END of if (typeof parentActiveOrderArr!=='undefined' && parentActiveOrderArr !== '')
+        
+    })// END of  conn.then(async (db) => 
+}// END of updateAvgSellFullTransactionPrice
+
+async function updateAvgSellThreeTransactionPrice(order_id, exchange, coinSymbol){
+    conn.then(async (db) => {
+
+        var type = "three";
+        var order_mode = 'live';
+        var pricesObj = await get_current_market_prices(exchange, [coinSymbol])
+        var currentMarketPrice = pricesObj[coinSymbol]
+        //List all order for which deep price meet           
+        var parentActiveOrderArr = await getCostAverageParentOrdes(order_id, exchange, coinSymbol, order_mode, type);
+        if (typeof parentActiveOrderArr !== 'undefined' && parentActiveOrderArr != '') {
+            for (let orderIndex in parentActiveOrderArr) {
+                // According to sir we need 5% profit on last three orders                    
+                var countOrderBuy = 1;
+                var definedSellPercentage = 5
+                var quantity = parentActiveOrderArr[orderIndex]['quantity'];// Get quantity 
+                var costParentOrderId = parentActiveOrderArr[orderIndex]['_id'];// Get _id 
+                var avg_orders_ids = parentActiveOrderArr[orderIndex]['avg_orders_ids'];// Get avg_orders_ids 
+                var parentpurchasedPrice = parentActiveOrderArr[orderIndex]['purchased_price'];// Get purchased_price 
+                var definedSellPercentage = parentActiveOrderArr[orderIndex]['defined_sell_percentage'];// Get Defined Sell Percentage
+
+                // We will run Loop to multiple 0.5 on each iteration 
+                if (typeof avg_orders_ids !== "undefined" && avg_orders_ids !== "") {
+                    console.log("costParentOrderId IST ::: ", costParentOrderId)
+                    for (let i = 1; i < 500; i++) {
+                        // Formula Goes Here
+                        var XPrice = 0;
+                        var finalValOverAll = 0;
+                        var incrementVal = i * 0.5
+                        var IncrePercnt = (currentMarketPrice * incrementVal) / 100
+                        var XPrice = (currentMarketPrice + IncrePercnt);
+                        var finalValOverAll = ((XPrice - parentpurchasedPrice) / parentpurchasedPrice) * 100;
+
+                        var response = ''
+                        if (i == 1) {
+                            response = await sumLastThreeChildOrders(order_id, exchange, costParentOrderId, avg_orders_ids, XPrice, countOrderBuy, definedSellPercentage, finalValOverAll, quantity);
+                            console.log('loop iteration ', i)
+                        } else {
+                            console.log('loop iteration ', i)
+                        }
+
+                        if (response == false) {
+                            i = 1;
+                            console.log(" ~~~~~~~~ LAST THREE Response Is Good and Order cost average updated costParentOrderId ~~~~~~~~ ", costParentOrderId)
+                            break;
+                        }// END of if(response==false)
+                        countOrderBuy = 1
+                    }// END of Iteration loop 
+                }// END of if(typeof avg_orders_ids!=="undefined" && avg_orders_ids!=="")
+            }// END of for(let orderIndex in parentActiveOrderArr){
+        }// END of if (typeof parentActiveOrderArr!=='undefined' && parentActiveOrderArr !== '')
+
+    })// END of conn.then(async (db) => 
+}// END of costAvgSellOverAllOrders
+
+async function sumChildOrders(exchange, avg_orders_ids, XPrice, countOrderBuy, definedSellPercentage, finalValOverAll, costParentOrderId, quantityAll){
+    return new Promise((resolve) => {
+        conn.then(async (db) => {
+
+            //console.log("::::::::::::   finalValOverAll ::::::::::", finalValOverAll)
+            var type = "all";
+            var buyOrderArrsIds = []
+            for (let avgIndex in avg_orders_ids) {
+                // Here we Get the orders from Buy order collection 
+                var childBuyOrderId = avg_orders_ids[avgIndex];
+                var childOrderArr = await getOrderBuyOrder(exchange, childBuyOrderId)
+                if (typeof childOrderArr !== 'undefined' && childOrderArr["_id"] !== "" && childOrderArr["_id"] !== 'undefined') {
+                    if (childOrderArr["status"] !== "canceled") {
+                        // *countOrderBuy* used for to count the buy orders  
+                        countOrderBuy++;
+                        buyOrderArrsIds.push(childOrderArr["_id"])
+                        var quantityChild = parseFloat(childOrderArr['quantity']);
+                        var purchasedPrice = parseFloat(childOrderArr['purchased_price']);
+                        var topVariation = (XPrice - purchasedPrice);
+                        var bottomVariation = purchasedPrice;
+                        var singleOrderPercentage = (topVariation / bottomVariation) * 100;
+                        quantityAll += quantityChild;
+                        finalValOverAll += singleOrderPercentage;
+                    }// END of childOrderArr["status"]!=="canceled"
+                } else {
+                    // ELSE we get the orders from sold_buy_order collection 
+                    var childOrderArr = await getOrderSoldBuyOrder(exchange, childBuyOrderId)
+                    countOrderBuy++;
+                    if (typeof childOrderArr !== 'undefined' && childOrderArr["_id"] !== "" && childOrderArr["_id"] !== 'undefined') {
+                        var purchasedPrice = parseFloat(childOrderArr['purchased_price']);
+                        var marketSoldPrice = parseFloat(childOrderArr['market_sold_price']);
+                        var topVariation = (marketSoldPrice - purchasedPrice);
+                        var bottomVariation = purchasedPrice;
+                        var singleOrderPercentage = (topVariation / bottomVariation) * 100;
+                        finalValOverAll += singleOrderPercentage;
+                    } // END of (typeof childOrderArr!=='undefined' && childOrderArr["_id"]!== "" && childOrderArr["_id"]!== 'undefined')
+                }// END of else
+            } // END of for(let avgIndex in avg_orders_ids)
+            var profitPercAndNoOrder = definedSellPercentage * countOrderBuy;
+            //console.log("finalValOverAll ::::", finalValOverAll)
+            //console.log("profitPercAndNoOrder ::::", profitPercAndNoOrder)
+            if (finalValOverAll > profitPercAndNoOrder) {
+                await updateaverageSellprice(exchange, costParentOrderId, XPrice, type, buyOrderArrsIds, quantityAll); //Status submitted_for_sell 
+                console.log("XPRICE ::::", XPrice)
+                var response = false;
+                resolve(response);
+            }// END of if(finalValOverAll > profitPercAndNoOrder)
+            var response = true;
+            resolve(response);
+        })
+    })
+} // END of sumChildOrders
+
+async function updateaverageSellprice(exchange, buy_order_id, avg_sell_price, type, byyOrderArrsIds, quantityAll){
+    return new Promise((resolve) => {
+        conn.then((db) => {
+            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            var set = {};
+            var where = {};
+            var upd_data = {};
+            console.log("buy_order_id ", buy_order_id)
+            if (type == "three") {
+                upd_data['avg_sell_price_three'] = avg_sell_price;
+                upd_data['avg_price_three_upd'] = "yes";
+                upd_data['last_three_ids'] = byyOrderArrsIds;
+                upd_data['quantity_three'] = quantityAll;
+            } else {
+                upd_data['avg_sell_price'] = avg_sell_price;
+                upd_data['avg_price_all_upd'] = "yes";
+                upd_data['all_buy_ids'] = byyOrderArrsIds;
+                upd_data['quantity_all'] = quantityAll;
+            }
+            set['$set'] = upd_data;
+            where._id = new ObjectID(buy_order_id);
+            db.collection(collectionName).updateOne(where, set, (err, result) => {
+                if (err) {
+                    resolve(err)
+                } else {
+                    resolve(result)
+                }
+            })
+        })
+    })
+} //End of updateaverageSellpric
+
+async function getOrderBuyOrder(exchange, buy_order_id){
+    return new Promise(resolve => {
+        conn.then(db => {
+
+            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            var where = {}
+            where['_id'] = new ObjectID(buy_order_id);
+            where['is_sell_order'] = { $ne: "sold" };
+            db.collection(collectionName).find(where).limit(1).toArray((err, result) => {
+                if (err) {
+                    resolve(err)
+                } else {
+                    resolve(result[0])
+                }
+            })
+        })
+    })
+}
+
+async function getOrderSoldBuyOrder(exchange, buy_order_id){
+    return new Promise(resolve => {
+        conn.then(db => {
+
+            var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+            var where = {}
+            where['_id'] = new ObjectID(buy_order_id);
+            db.collection(collectionName).find(where).limit(1).toArray((err, result) => {
+                if (err) {
+                    resolve(err)
+                } else {
+                    resolve(result[0])
+                }
+            })
+        })
+    })
+}
+
+async function sumLastThreeChildOrders(exchange, costParentOrderId, avg_orders_ids, XPrice, countOrderBuy, definedSellPercentage, finalValOverAllParent, quantity){
+    return new Promise((resolve) => {
+        conn.then(async (db) => {
+            var type = "three";
+            var quantityAll = 0
+            var finalValOverAll = 0
+            var onlyCountBuyOrder = 0
+            avg_orders_ids.reverse();
+            var byyOrderArrsIds = []
+            for (let avgIndex = 0; avgIndex <= avg_orders_ids.length; avgIndex++) {
+                var childBuyOrderId = avg_orders_ids[avgIndex];
+                // Here we Get the orders from Buy order collection 
+                var childOrderArr = await module.exports.getOrderBuyOrder(exchange, childBuyOrderId)
+                if (typeof childOrderArr !== 'undefined' && childOrderArr["_id"] !== "" && childOrderArr["_id"] !== 'undefined') {
+                    if (childOrderArr["status"] !== "canceled") {
+                        // *countOrderBuy* used for to count the buy orders  
+                        console.log("childOrderArr ::::", childOrderArr["_id"])
+                        countOrderBuy++;
+                        onlyCountBuyOrder++;
+                        byyOrderArrsIds.push(childOrderArr["_id"])
+                        var quantityChild = parseFloat(childOrderArr['quantity']);
+                        var purchasedPrice = parseFloat(childOrderArr['purchased_price']);
+                        var topVariation = (XPrice - purchasedPrice);
+                        var bottomVariation = purchasedPrice;
+                        quantityAll += quantityChild
+                        var singleOrderPercentage = (topVariation / bottomVariation) * 100;
+                        console.log("singleOrderPercentage BUY ORDER ::::", singleOrderPercentage)
+                        finalValOverAll += singleOrderPercentage;
+                    }// END of childOrderArr["status"]!=="canceled"
+                }// END of typeof childOrderArr!=='undefined' && childOrderArr["_id"]!== "" && childOrderArr["_id"]!== 'undefined')
+                if (onlyCountBuyOrder == 3) { console.log("onlyCountBuyOrder inside break::::", onlyCountBuyOrder); break; }
+            } // END of for(let avgIndex in avg_orders_ids)
+            if (onlyCountBuyOrder < 3) {
+                console.log(" Why I am here in onlyCountBuyOrder");
+                finalValOverAll += finalValOverAllParent;
+                quantityAll += quantity;
+                byyOrderArrsIds.push(costParentOrderId);
+                onlyCountBuyOrder++;
+            }// END of if(onlyCountBuyOrder < 3)
+
+
+            var profitPercAndNoOrder = definedSellPercentage * onlyCountBuyOrder;
+
+            if (finalValOverAll > profitPercAndNoOrder) {
+
+                console.log("definedSellPercentage ::::", definedSellPercentage)
+                console.log("onlyCountBuyOrder ::::", onlyCountBuyOrder)
+                console.log("profitPercAndNoOrder ::::", profitPercAndNoOrder)
+                console.log("finalValOverAll ::::", finalValOverAll)
+
+                await module.exports.updateaverageSellprice(exchange, costParentOrderId, XPrice, type, byyOrderArrsIds, quantityAll); // 
+                console.log("Response is going GOOD here :::: XPrice", XPrice)
+                var response = false;
+                resolve(response);
+            }// END of if(finalValOverAll > profitPercAndNoOrder)
+            var response = true;
+            resolve(response);
+        })
+    })
+} // END of sumLastThreeChildOrders
+
+async function getCostAverageParentOrdes(order_id, exchange, coinSymbol, order_mode, type){
+    return new Promise((resolve) => {
+        conn.then((db) => {
+
+            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+
+            var search_criteria = {}
+            search_criteria['_id'] = new ObjectID(String(order_id));
+            if (type == "three") {
+                search_criteria['avg_price_three_upd'] = { $nin: ["yes", "fraction_submitted_sell"] };
+            } else {
+                search_criteria['avg_price_all_upd'] = { $nin: ["yes", "fraction_submitted_sell"] };
+            }
+            //search_criteria['admin_id']              = "5c0912b7fc9aadaac61dd072";
+            search_criteria["cost_avg"] = { $in: ["yes", "taking_child"] };
+            search_criteria['order_mode'] = order_mode;
+            search_criteria['is_sell_order'] = 'yes';
+            search_criteria['status'] = 'FILLED';
+            search_criteria['symbol'] = coinSymbol;
+            search_criteria['trigger_type'] = "barrier_percentile_trigger"; // Trigger Type
+            search_criteria["cavg_parent"] = "yes";
+            search_criteria["avg_orders_ids"] = { $exists: true };
+            //console.log("search_criteria :::::", search_criteria)
+            db.collection(collectionName).find(search_criteria).limit(1).toArray((error, success) => {
+                if (error) {
+                    resolve(error)
+                } else {
+                    if (success.length > 0) {
+                        var response = true;
+                        resolve(success);
+                    } else {
+                        var response = false;
+                        resolve(response);
+                    }
+                }
+            })
+        })
+    })
+} // END of costAvgSellOverAllOrders
 
 async function unsetCostAvgParent(order_id, exchange) {
     return new Promise(async (resolve)=>{
@@ -4994,6 +5329,9 @@ router.post('/makeCostAvg', async (req, resp) => {
 
                 let tttttorder = {}
                 await update_cost_avg_fields_shahzad(order_id, tttttorder, exchange)
+
+                // await updateAvgSellFullTransactionPrice(order_id, exchange, order['symbol'])
+                // await updateAvgSellThreeTransactionPrice(order_id, exchange, order['symbol'])
 
             } else if (tab == 'soldTab'){
                 tabName = 'Sold '
@@ -13155,7 +13493,7 @@ async function getLast3CostAvgOpenOrders(order_ids, exchange) {
             let totalItems = order_ids.length
 
             for (let i = 0; i < totalItems; i++) {
-                ids_arr.push(new ObjectID(order_ids[i]))
+                ids_arr.push(new ObjectID(String(order_ids[i])))
             }
 
             let where = {

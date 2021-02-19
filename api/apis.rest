@@ -507,4 +507,3 @@ GET http://localhost:3010/apiEndPoint/getComittedBalance
 
 ###
 GET http://localhost:3010/apiEndPoint/move_CA_ledgers
-

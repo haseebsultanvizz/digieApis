@@ -18,6 +18,26 @@ function connectionDatabase() {
     })//End of promise object
 }//End of connectionDatabase
 
-module.exports = connectionDatabase()
+function localConnectionDatabase() {
+    return new Promise((resolve, reject) => {
+        var url = "mongodb://localhost";
+
+        MongoClient.connect(url, { useNewUrlParser: true }, (err, client) => {
+            assert.equal(null, err);
+            if (err) {
+                reject(err);
+            } else {
+                const db = client.db('localBinance');
+                resolve(db)
+            }//End of  connection success
+        });//End of Db Connection
+    })//End of promise object
+}//End of connectionDatabase
+
+
+module.exports = {
+    'connectionDatabase': connectionDatabase(),
+    'localConnectionDatabase': localConnectionDatabase()
+}
 
 
