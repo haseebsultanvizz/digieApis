@@ -20,17 +20,19 @@ function connectionDatabase() {
 
 function localConnectionDatabase() {
     return new Promise((resolve, reject) => {
-        var url = "mongodb://localhost";
+        // var url = "mongodb://localhost";
 
-        MongoClient.connect(url, { useNewUrlParser: true }, (err, client) => {
-            assert.equal(null, err);
-            if (err) {
-                reject(err);
-            } else {
-                const db = client.db('localBinance');
-                resolve(db)
-            }//End of  connection success
-        });//End of Db Connection
+        // MongoClient.connect(url, { useNewUrlParser: true }, (err, client) => {
+        //     assert.equal(null, err);
+        //     if (err) {
+        //         reject(err);
+        //     } else {
+        //         const db = client.db('localBinance');
+        //         resolve(db)
+        //     }//End of  connection success
+        // });//End of Db Connection
+
+        resolve(true)
     })//End of promise object
 }//End of connectionDatabase
 
