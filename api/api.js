@@ -20578,7 +20578,7 @@ async function is_trade_limit_exceeded(user_id, exchange) {
             }
 
             let result = await newAtgApiCall(reqObj)
-            let data = typeof result.data != 'undefined' ? data : false
+            let data = typeof result.data != 'undefined' ? result.data : false
             
             if(data === false){
                 resolve(false)
@@ -23771,5 +23771,164 @@ async function getCoinName(symbol){
     return temp_symbol;
 }
 
+async function getTradeHistory(filter, exchange, timezone){
+
+    const db = await conn
+    exchange = 'kraken'
+    let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_'+ exchange
+
+    let coinPairsObj = {
+        'BTCUSDT': 'XBTUSDT',
+        'XRPBTC': 'XRPXBT',
+        'LINKBTC': 'LINKXBT',
+        'XLMBTC': 'XLMXBT',
+        'ETHBTC': 'ETHXBT',
+        'XMRBTC': 'XMRXBT',
+        'ADABTC': 'ADAXBT',
+        'QTUMBTC': 'QTUMXBT',
+        'TRXBTC': 'TRXXBT',
+        'XRPUSDT': 'XRPUSDT',
+        'LTCUSDT': 'LTCUSDT',
+        'EOSBTC': 'EOSXBT',
+        'ETCBTC': 'ETCXBT',
+        'DASHBTC': 'DASHXBT',
+    }
+
+    if (filter.coins.length > 0){
+        filter.coins = filter.coins.map(str => coinPairsObj[str])
+    }else{
+        for (const [key, value] of Object.entries(coinPairsObj)) {
+            filter.coins.push(value)
+        }
+    }
+
+    let where = {}
+
+    let user_id = filter.admin_id
+    let application_mode = filter.application_mode
+    let coins = filter.coins
+    let end_date = filter.end_date
+    let limit = filter.limit
+    let order_level = filter.order_level
+    let order_type = filter.order_type
+    let skip = filter.skip
+    let start_date = filter.start_date
+    let status = filter.status
+    let trigger_type = filter.trigger_type
+
+    let pipeline = [
+        {
+            '$match': {
+                'user_id': user_id,
+                'trades.value.pair' : {'$in': coins}
+            }
+        }
+    ]
+
+    pipeline.push({ '$unwind': '$trades' })
+    
+    if (start_date != '' || end_date != '') {
+
+        // var unixTimestamp = Math.floor(new Date("2017-09-15 00:00:00.000").getTime() / 1000);
+        let condObj = {}
+
+        if (start_date != '') {
+            start_date += ' 00:00:00.000'
+            condObj['$gte'] = Math.floor(new Date(start_date).getTime() / 1000)
+        }
+        if (end_date != '') {
+            end_date += ' 23:59:59.000'
+            condObj['$lte'] = Math.floor(new Date(end_date).getTime() / 1000)
+        }
+    
+        if (condObj && Object.keys(condObj).length === 0 && condObj.constructor === Object){
+            //do nothing
+        }else{
+            pipeline.push({'$match':{'trades.value.time':condObj}})
+        }
+    }
+    
+    pipeline.push({ '$unwind': '$trades' })
+
+    let countPipeLine = Object.assign([], pipeline)
+    countPipeLine.push({ '$count':'totalItems' })
+    let countRes = await db.collection(collectionName).aggregate(countPipeLine).toArray()
+    countRes = countRes.length > 0 ? countRes[0].totalItems : 0
+
+    pipeline.push({ '$skip': skip })
+    pipeline.push({ '$limit': limit })
+
+    // console.log(JSON.stringify(pipeline))
+    // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
+
+    let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
+
+    let tradeIds = trades.map(item => item.trades.value.ordertxid)
+    
+    let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+    let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+
+    let whereDigie = [
+        {
+            '$match': {
+                'admin_id': user_id,
+                'application_mode': 'live',
+                '$or': [
+                    {
+                        'tradeId': { '$in': tradeIds },
+                    },
+                    {
+                        'kraken_order_id': { '$in': tradeIds },
+                    },
+                    {
+                        'sell_kraken_order_id': { '$in': tradeIds },
+                    }
+                ]
+            }
+        }
+    ]
+
+    let digieBuyTrades = await db.collection(buy_collection).aggregate(whereDigie).toArray()
+    let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
+    let digieTrades = digieBuyTrades.concat(digieSoldTrades)
+
+    // console.log(trades.length, '   ::::::::::::::   ', digieTrades.length)
+
+    trades = trades.map(item=>{
+
+        let timeZoneTime = item.trades.value.time * 1000;
+        try {
+            timeZoneTime = new Date(timeZoneTime).toLocaleString("en-US", {
+                timeZone: timezone
+            });
+            timeZoneTime = new Date(timeZoneTime);
+        } catch (e) {
+            console.log(e);
+        }
+        let date = timeZoneTime.toLocaleString() + ' ' + timezone;
+
+        item['trades']['value']['formattedDate'] = date
+        return item
+    })
+
+    let resultObj = {
+        'totalItems': countRes,
+        'kraken_trades': trades,
+        'digie_trades': digieTrades,
+    }
+
+    return resultObj
+} 
+
+router.post('/getTradeHistory', async (req, res)=>{
+
+    let where = req.body.postData
+    let timezone = req.body.timezone;
+
+    let trades = await getTradeHistory(where, 'kraken', timezone)
+    
+    res.send(trades)
+
+})
 
 module.exports = router;
