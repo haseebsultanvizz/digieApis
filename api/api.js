@@ -2297,6 +2297,7 @@ router.post('/editCostAvgOrder', async (req, resp) => {
     order = {}
     order['cost_avg_updated'] = 'admin';
     order['modified_date'] = new Date();
+    order['avg_price_all_upd'] = 'yes';
 
     var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
     delete order['orderId'];
