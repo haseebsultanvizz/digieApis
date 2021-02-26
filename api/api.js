@@ -23931,11 +23931,140 @@ async function getTradeHistory(filter, exchange, timezone) {
         return item
     })
 
+    //categorise trades that not exist
+    let checkTradesArr = []
+    let digieDuplicateTradeIdsArr = []
+    let digieDoubtTradeIdsArr = []
+    let userDoubtTradeIdsArr = []
+    
+    trades.forEach(item=>{
+
+        let krakenObj = Object.assign(item)
+        krakenObj = krakenObj.trades.value
+        let tradeId = krakenObj.ordertxid
+        
+        let digieEntry = digieTrades.find(item => item.tradeId == tradeId || item.kraken_order_id == tradeId || item.sell_kraken_order_id == tradeId ? true : false)
+
+        if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
+            
+            if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
+                // krakenObj['tradeMappType'] = 'User duplicate'
+            }else{
+                // krakenObj['_id'] = (new Date).toString() + Math.random() + Math.random() + 'fewrt45wet'
+                // krakenObj['symbol'] = typeof this.krakenPairObj[krakenObj.pair] != 'undefined' ? this.krakenPairObj[krakenObj.pair] : krakenObj.pair
+                // krakenObj['quantity'] = krakenObj.vol
+                // krakenObj['trigger_type'] = ''
+                // krakenObj['tradeMappType'] = 'Digie duplicate'
+                // krakenObj['user_id'] = krakenTrades[0]['user_id']
+                checkTradesArr.push(item)
+                // item.trades.value.ordertxid
+            }
+        }
+    })
+
+    // console.log('trades: ', trades.length, '     checkTradesArr: ', checkTradesArr.length)
+
+    if (checkTradesArr.length > 0){
+        for (let i = 0; i < checkTradesArr.length; i++){
+
+            let currTrade = checkTradesArr[i]['trades']['value']
+            let quantity = parseFloat(currTrade['vol'])
+            let pair = currTrade['pair']
+            let _3percentQuantityAbove = quantity + (quantity * 3) /100
+            let _3percentQuantityBelow = quantity - (quantity * 3) /100
+
+            // console.log(quantity, _3percentQuantityAbove)
+
+            // let tradeTime = new Date(currTrade.time * 1000);
+            let tradeTime = parseFloat(currTrade.time);
+
+            let _1minuteAbove = new Date(tradeTime * 1000)
+            _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 1); // timestamp
+            _1minuteAbove = new Date(_1minuteAbove); // Date object
+            // console.log(_1minuteAbove);
+            
+            let _1minuteBelow = new Date(tradeTime * 1000)
+            _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 1); // timestamp
+            _1minuteBelow = new Date(_1minuteBelow); // Date object
+            // console.log(_1minuteBelow);
+
+            //digie duplicate
+            var whereDigie1 = [
+                {
+                    '$match': {
+                        'admin_id': user_id,
+                        'application_mode': 'live',
+                        'quantity': quantity,
+                        'symbol': pair,
+                        'created_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove},
+                    }
+                }
+            ]
+
+            var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+            var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+            var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+
+            if (digieTrades1.length > 0){
+                //confirmed duplicate
+                digieDuplicateTradeIdsArr.push(currTrade.ordertxid)
+
+            }else{
+                //digie doubt
+                var whereDigie1 = [
+                    {
+                        '$match': {
+                            'admin_id': user_id,
+                            'application_mode': 'live',
+                            'quantity': { '$gte': _3percentQuantityBelow, '$lte': _3percentQuantityAbove },
+                            'symbol': pair,
+                            'created_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove},
+                        }
+                    }
+                ]
+    
+                var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+                var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+                var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+    
+                if (digieTrades1.length > 0){
+                    //confirmed duplicate
+                    digieDoubtTradeIdsArr.push(currTrade.ordertxid)
+                }else{
+                    userDoubtTradeIdsArr.push(currTrade.ordertxid)
+                }
+            }
+            
+        }
+    }
+    // console.log(checkTradesArr.length)
+
+    trades.forEach(item=>{
+        return item.strUnixTime = (item.trades.value.time).toString()
+    })
+
+    // console.log(trades)
+
+    trades = trades.sort(function (x, y) {
+        return y.strUnixTime - x.strUnixTime ;
+    });
+
+    // console.log(sortedKrakenTrades)
+
+    // for (let i = 0; i < sortedKrakenTrades; i++){
+    //     console.log('sortedKrakenTrades ', new Date(sortedKrakenTrades[i]['strUnixTime'] * 1000))
+    // }
+
     let resultObj = {
         'countArr': countArr,
         'kraken_trades': trades,
         'digie_trades': digieTrades,
+        'digieDuplicateTradeIdsArr': digieDuplicateTradeIdsArr,
+        'digieDoubtTradeIdsArr': digieDoubtTradeIdsArr,
+        'userDoubtTradeIdsArr': userDoubtTradeIdsArr,
     }
+
+    // console.log('digieDuplicateTradeIdsArr', digieDuplicateTradeIdsArr.length, 'digieDoubtTradeIdsArr', digieDoubtTradeIdsArr.length, 'userDoubtTradeIdsArr', userDoubtTradeIdsArr.length)
 
     return resultObj
 }
