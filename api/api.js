@@ -23819,6 +23819,19 @@ async function getTradeHistory(filter, exchange, timezone) {
 
     order_type = order_type == 'all' ? '' : order_type 
 
+    if (typeof filter.searchUsername != 'undefined' && filter.searchUsername != ''){
+        
+        let tempWhere = {}
+        tempWhere['$or'] = [{
+            username_lowercase: filter.searchUsername.toLowerCase()
+        }, {
+            email_address: filter.searchUsername
+        }]
+        let user = await db.collection('users').find(tempWhere).project({ '_id': 1 }).toArray();
+        user_id = user.length > 0 ? String(user[0]['_id']) : user_id
+        
+    }
+
     let pipeline = [
         {
             '$match': {
