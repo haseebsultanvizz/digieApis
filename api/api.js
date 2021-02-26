@@ -23817,6 +23817,8 @@ async function getTradeHistory(filter, exchange, timezone) {
     let status = filter.status
     let trigger_type = filter.trigger_type
 
+    order_type = order_type == 'all' ? '' : order_type 
+
     let pipeline = [
         {
             '$match': {
