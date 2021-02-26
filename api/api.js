@@ -24114,7 +24114,7 @@ router.post('/mapTrade', async (req, res) => {
     // user_id = '5c0912b7fc9aadaac61dd072'
 
     let payload = {
-        'user_id':user_id,
+        'userid':user_id,
         "trasectionId": tradeId,
         'exchange':exchange,
         "purchase_price": parseFloat(purchased_price),
@@ -24122,7 +24122,7 @@ router.post('/mapTrade', async (req, res) => {
         'symbol':symbol,
     }
 
-    // console.log('payload', payload)
+    console.log('payload', payload)
     // process.exit(0)
 
     let reqObj = {
@@ -24137,7 +24137,7 @@ router.post('/mapTrade', async (req, res) => {
     }
     let apiResult = await customApiRequest(reqObj)
 
-    // console.log(apiResult)
+    console.log(apiResult)
 
     let success = 'successfully created child under this userid and exchange'
     if (apiResult.status && apiResult.body && apiResult.body.status == success){
