@@ -3953,7 +3953,10 @@ function countCollection(collectionName, filter) {
 
 
 //function for calculation average profit for a user of all his sold orders
-function calculateAverageOrdersProfit(postDAta) {
+async function calculateAverageOrdersProfit(postDAta) {
+
+    let tempPostData = Object.assign({}, postDAta)
+
     var filter = {};
     filter['application_mode'] = postDAta.application_mode
     filter['admin_id'] = postDAta.admin_id
@@ -4008,25 +4011,55 @@ function calculateAverageOrdersProfit(postDAta) {
                 '$gte': start_date,
                 '$lte': end_date
             };
+
+            tempPostData.start_date = start_date 
+            tempPostData.end_date = end_date 
         }
     }
 
-    var exchange = postDAta.exchange;
+    tempPostData.skip = 0
+    tempPostData.limit = 0
+    tempPostData.status = 'sold'
 
-    var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+    let soldOrders = await listOrderListing(tempPostData)
 
-    return new Promise((resolve) => {
-        conn.then((db) => {
-            // db.collection(collectionName).find(filter).sort({ modified_date: -1 }).toArray((err, result) => {
-            db.collection(collectionName).find(filter).toArray((err, result) => {
-                if (err) {
-                    console.log(err)
-                } else {
-                    resolve(result)
-                }
-            })
-        })
-    })
+    // soldOrders = soldOrders.filter(item => String(item._id) != '5e5f008cfd4c0b001b8f74b5')
+    // console.log(soldOrders.length)
+    
+    let totalSold = soldOrders.length
+    let avg_order_ids = []
+    for (let i = 0; i < totalSold; i++){
+        if (typeof soldOrders[i]['avg_orders_ids'] != 'undefined' && soldOrders[i]['avg_orders_ids'].length > 0){
+            avg_order_ids = avg_order_ids.concat(soldOrders[i]['avg_orders_ids'])
+        }
+    }
+    const db = await conn
+    let sold_collection = postDAta.exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + postDAta.exchange
+    let cost_avg_sold_childs = await db.collection(sold_collection).find({ '_id': { '$in': avg_order_ids}}).toArray()
+    soldOrders = soldOrders.concat(cost_avg_sold_childs)
+
+    // console.log(soldOrders.length)
+    
+    return soldOrders
+
+    // var exchange = postDAta.exchange;
+
+    // var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+
+    // return new Promise((resolve) => {
+    //     conn.then((db) => {
+    //         // db.collection(collectionName).find(filter).sort({ modified_date: -1 }).toArray((err, result) => {
+    //         db.collection(collectionName).find(filter).toArray((err, result) => {
+    //             if (err) {
+    //                 console.log(err)
+    //             } else {
+
+    //                 console.log(result.length)
+    //                 resolve(result)
+    //             }
+    //         })
+    //     })
+    // })
 } //End of calculateAverageOrdersProfit
 
 //function for getting all order on the base of filters
@@ -10803,6 +10836,9 @@ router.post('/calculate_average_profit', async (req, resp) => {
     var profit_percentage_sum = 0;
     var total_trades = 0;
 
+    // var totalBuyQty = 0
+    // var totalSoldQty = 0
+
     for (let index in soldOrderArr) {
 
         var market_sold_price = (typeof soldOrderArr[index]['market_sold_price'] != 'undefined' && soldOrderArr[index]['market_sold_price'] != '') ? soldOrderArr[index]['market_sold_price'] : 0;
@@ -10829,7 +10865,13 @@ router.post('/calculate_average_profit', async (req, resp) => {
         profit_percentage_sum = parseFloat(profit_percentage_sum) + parseFloat(percentage)
         total_trades += 1
 
+        // totalBuyQty += quantity * current_order_price
+        // totalSoldQty += quantity * market_sold_price
+        // console.log('pl: ', calculate_percentage(quantity * current_order_price, quantity * market_sold_price), ' --- buyQty ', quantity * current_order_price, ' --- soldQty: ', quantity * market_sold_price)
+
     }
+
+    // console.log(totalBuyQty, totalSoldQty)
 
     let avg_per_trade = profit_percentage_sum / total_trades
 
@@ -16872,6 +16914,9 @@ async function getCostAvgBalance(user_id, exchange) {
                     currUsd = parseFloat(qtyInUsdt.toFixed(2))
                     currBtc = quantity * purchased_price * (1 / BTCUSDTPRICE)
                     onlyUsdt += !isNaN(currUsd) ? currUsd : 0
+
+                    // console.log(order._id, '  ------  ', currUsd)
+
                 } else {
                     let calculateBtc = quantity * purchased_price
                     currBtc = calculateBtc
