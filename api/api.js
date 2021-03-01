@@ -16877,7 +16877,7 @@ async function getCostAvgBalance(user_id, exchange) {
         avg_orders_ids = avg_orders_ids.filter(item => typeof item != 'undefined')
         avg_orders_ids.forEach(item=>{costAvgIds = costAvgIds.concat(item)})
 
-        where = {'_id': {'$in': costAvgIds}}
+        where = { '_id': { '$in': costAvgIds }, 'status': { '$ne': 'canceled' }}
 
         let lthOrders = await db.collection(buy_collection).find(where).toArray();
 
@@ -16996,7 +16996,7 @@ async function getCostAvgBalance_current_market(user_id, exchange) {
         avg_orders_ids = avg_orders_ids.filter(item => typeof item != 'undefined')
         avg_orders_ids.forEach(item=>{costAvgIds = costAvgIds.concat(item)})
 
-        where = {'_id': {'$in': costAvgIds}}
+        where = {'_id': {'$in': costAvgIds}, 'status':{'$ne':'canceled'}}
 
         let lthOrders = await db.collection(buy_collection).find(where).toArray();
 
