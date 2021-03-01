@@ -16847,6 +16847,7 @@ async function getCostAvgBalance(user_id, exchange) {
         var where = {
             'admin_id': user_id,
             'application_mode': 'live',
+            'status': {'$ne': 'canceled'}
         }
 
         where['$or'] = [
@@ -16965,6 +16966,7 @@ async function getCostAvgBalance_current_market(user_id, exchange) {
         var where = {
             'admin_id': user_id,
             'application_mode': 'live',
+            'status': { '$ne': 'canceled' }
         }
 
         where['$or'] = [
