@@ -2260,6 +2260,8 @@ router.post('/editCostAvgOrder', async (req, resp) => {
     var defined_sell_percentage = order['defined_sell_percentage'];
     //get order detail which you want to update
     var buyOrderArr = await listOrderById(orderId, exchange);
+
+    const db = await conn
     
     if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
 
@@ -2272,8 +2274,6 @@ router.post('/editCostAvgOrder', async (req, resp) => {
     } else if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && typeof buyOrderArr[0]['cavg_parent'] != 'undefined' && buyOrderArr[0]['cavg_parent'] == 'yes'){
         
         // console.log('2222222222222222222')
-
-        const db = await conn
 
         let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
@@ -2323,6 +2323,7 @@ router.post('/editCostAvgOrder', async (req, resp) => {
                 }
             }
         ]
+        const
         let cvgTotalBuyQty = await db.collection(collection).aggregate(cavgPipeline).toArray()
         if (cvgTotalBuyQty.length > 0){
             order['quantity_all'] = cvgTotalBuyQty[0]['quantitySum']
