@@ -2300,6 +2300,36 @@ router.post('/editCostAvgOrder', async (req, resp) => {
     order['avg_price_all_upd'] = 'yes';
 
     var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+
+    if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cavg_parent'] != 'yes'){
+        order['quantity_all'] = buyOrderArr[0]['quantity']
+
+        let cavIdsToConsider = [buyOrderArr[0]['_id']]
+        if (typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'].length > 0){
+            cavIdsToConsider = cavIdsToConsider.concat(buyOrderArr[0]['avg_orders_ids'])
+        }
+        let cavgPipeline = [
+            {
+                '$match': {
+                    '_id': { '$in': cavIdsToConsider},
+                    'status': 'FILLED',
+                    'is_sell_order': 'yes'
+                }
+            },
+            {
+                '$group': {
+                    '_id': null,
+                    'quantitySum': {'$sum': '$quantity'}
+                }
+            }
+        ]
+        let cvgTotalBuyQty = await db.collection(collection).aggregate(cavgPipeline).toArray()
+        if (cvgTotalBuyQty.length > 0){
+            order['quantity_all'] = cvgTotalBuyQty[0]['quantitySum']
+        }
+    }
+
+
     delete order['orderId'];
     
     var where = {};
@@ -24198,6 +24228,66 @@ router.post('/mapTrade', async (req, res) => {
         let set = {
             '$set': {
                 'trades.value.duplicate_mapped' : 'yes'
+            }
+        }
+        let updRes = await db.collection(collectionName).updateOne(where, set)
+    
+        res.send({'status':true})
+    }else{
+        res.send({'status':false})
+    }
+
+})
+
+router.post('/mapSoldTrade', async (req, res) => {
+    
+    let exchange = req.body.exchange
+    let user_id = req.body.data.user_id
+    let tradeId = req.body.data.ordertxid
+    let market_sold_price = req.body.data.price
+    let quantity = req.body.data.quantity
+    let symbol = req.body.data.symbol
+    
+    // user_id = '5c0912b7fc9aadaac61dd072'
+
+    let payload = {
+        "market_sold_price": market_sold_price,
+        "admin_id": user_id,
+        "trasectionId": tradeId,
+        "quantity": quantity,
+        "symbol": symbol,
+        "exchange": exchange
+    }
+
+    // console.log('payload', payload)
+    // process.exit(0)
+
+    let reqObj = {
+        'type': 'POST',
+        'url': 'https://admin.digiebot.com/admin/api_calls/mappDuplicateSellUnderUserAccount',
+        'headers': {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic ZGlnaWVib3QuY29tOllhQWxsYWg=',
+        },
+        'payload': payload,
+    }
+    let apiResult = await customApiRequest(reqObj)
+
+    console.log(apiResult)
+
+    let success = 'successfully mapped order'
+    if (apiResult.status && apiResult.body && apiResult.body.status == success){
+        
+        const db = await conn
+        let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_'+exchange 
+        let where = {
+            'user_id': user_id,
+            'trades.value.ordertxid': tradeId,
+        }
+        let set = {
+            '$set': {
+                'trades.value.duplicate_sell_mapped' : 'yes'
             }
         }
         let updRes = await db.collection(collectionName).updateOne(where, set)
