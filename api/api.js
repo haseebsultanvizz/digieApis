@@ -2323,7 +2323,6 @@ router.post('/editCostAvgOrder', async (req, resp) => {
                 }
             }
         ]
-        const
         let cvgTotalBuyQty = await db.collection(collection).aggregate(cavgPipeline).toArray()
         if (cvgTotalBuyQty.length > 0){
             order['quantity_all'] = cvgTotalBuyQty[0]['quantitySum']
