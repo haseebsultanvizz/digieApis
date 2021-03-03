@@ -24249,8 +24249,35 @@ router.post('/mapSoldTrade', async (req, res) => {
     let market_sold_price = req.body.data.price
     let quantity = req.body.data.quantity
     let symbol = req.body.data.symbol
+    let time = req.body.data.time
     
     // user_id = '5c0912b7fc9aadaac61dd072'
+
+
+    //find buy entry of this exact quantity
+    const db = await conn
+
+    let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
+    
+    let pipeline = [
+        {
+            '$match': {
+                'trades.value.pair': symbol,
+                'trades.value.vol': String(quantity),
+                'trades.value.time': { '$lte': time }
+            }
+        },
+        {
+            '$sort': {
+                'trades.value.time': -1
+            }
+        },
+        {
+            '$limit': 1
+        }
+    ]
+
+    let buyArr = await db.collection(collectionName).aggregate(pipeline).toArray()
 
     let payload = {
         "market_sold_price": market_sold_price,
@@ -24258,7 +24285,8 @@ router.post('/mapSoldTrade', async (req, res) => {
         "trasectionId": tradeId,
         "quantity": quantity,
         "symbol": symbol,
-        "exchange": exchange
+        "exchange": exchange,
+        "buyArr": buyArr,
     }
 
     // console.log('payload', payload)
@@ -24276,7 +24304,7 @@ router.post('/mapSoldTrade', async (req, res) => {
     }
     let apiResult = await customApiRequest(reqObj)
 
-    console.log(apiResult)
+    // console.log(apiResult)
 
     let success = 'successfully mapped order'
     if (apiResult.status && apiResult.body && apiResult.body.status == success){
