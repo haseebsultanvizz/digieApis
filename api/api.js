@@ -24187,6 +24187,7 @@ router.post('/mapTrade', async (req, res) => {
     let purchased_price = req.body.data.price
     let quantity = req.body.data.quantity
     let symbol = req.body.data.symbol
+    let time = req.body.data.time
     
     // user_id = '5c0912b7fc9aadaac61dd072'
 
@@ -24197,6 +24198,7 @@ router.post('/mapTrade', async (req, res) => {
         "purchase_price": parseFloat(purchased_price),
         'quantity': parseFloat(quantity),
         'symbol':symbol,
+        'created_date': time,
     }
 
     // console.log('payload', payload)
