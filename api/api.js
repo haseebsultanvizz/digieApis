@@ -1636,13 +1636,20 @@ async function listmarketPriceMinNotation(coin, exchange){
 //post call for creating manual order  
 router.post('/createManualOrder', (req, resp) => {
 
-    conn.then((db) => {
+    conn.then(async (db) => {
         let orders = req.body.orderArr;
         let tempOrder = req.body.tempOrderArr;
         let orderId = req.body.orderId;
         let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
         var price = parseFloat(orders['price']);
         let exchange = orders['exchange'];
+
+        if (typeof orders['buyRightAway'] != 'undefined' && orders['buyRightAway'] == 'yes'){
+            let tempSymbol = orders['symbol']
+            var pricesObj = await get_current_market_prices(exchange, tempSymbol)
+            price = pricesObj[tempSymbol]
+        }
+
         orders['price'] = price;
         orders['created_date'] = new Date();
         orders['modified_date'] = new Date();
@@ -24304,7 +24311,7 @@ router.post('/mapSoldTrade', async (req, res) => {
     }
     let apiResult = await customApiRequest(reqObj)
 
-    // console.log(apiResult)
+    // console.log(JSON.stringify(apiResult))
 
     let success = 'successfully mapped order'
     if (apiResult.status && apiResult.body && apiResult.body.status == success){
