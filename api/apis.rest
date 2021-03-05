@@ -509,4 +509,7 @@ GET http://localhost:3010/apiEndPoint/getComittedBalance
 GET http://localhost:3010/apiEndPoint/move_CA_ledgers
 
 ###
+GET http://localhost:3010/apiEndPoint/get_current_market_prices
+
+###
 POST http://localhost:3010/apiEndPoint/getTradeHistory

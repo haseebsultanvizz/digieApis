@@ -21230,6 +21230,10 @@ router.post('/getParentsGridData', async (req, res) => {
                         let pauseArr = result[i]['parentsArr'].filter(item => { return (item.order_level == currLevel && item.pause_status == 'pause') })
                         obj[curr_level_play_count] = playArr.length
                         obj[curr_level_pause_count] = pauseArr.length
+                        
+                        let usd_worth_key = 'usd_worth_' + currLevel
+                        obj[usd_worth_key] = result[i]['parentsArr'].filter(item => { return item.order_level == currLevel }).map(item=> '$'+item.usd_worth).join(', ')
+                        
                     }
                     resArr.push(obj)
                 }
@@ -24334,6 +24338,30 @@ router.post('/mapSoldTrade', async (req, res) => {
         res.send({'status':false})
     }
 
+})
+
+router.get('/get_current_market_prices', async (req, res)=>{
+
+    let arr = []
+    var exchange = 'binance'
+    var pricesObj = await get_current_market_prices(exchange, [])
+    var obj = {}
+    obj[exchange] = pricesObj 
+    arr.push(obj)
+    
+    var exchange = 'kraken'
+    var pricesObj = await get_current_market_prices(exchange, [])
+    var obj = {}
+    obj[exchange] = pricesObj 
+    arr.push(obj)
+    
+    var exchange = 'bam'
+    var pricesObj = await get_current_market_prices(exchange, [])
+    var obj = {}
+    obj[exchange] = pricesObj 
+    arr.push(obj)
+    
+    res.send(arr)
 })
 
 module.exports = router;
