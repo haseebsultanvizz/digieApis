@@ -24364,4 +24364,30 @@ router.get('/get_current_market_prices', async (req, res)=>{
     res.send(arr)
 })
 
+router.post('/checkBinanceApiSecret', async (req, res) => {
+
+    let APIKEY = req.body.api_key
+    let APISECRET = req.body.api_secret
+
+    let binance = require('./test-binance-api')().options({
+        APIKEY: APIKEY,
+        APISECRET: APISECRET,
+        useServerTime: true
+    });
+    binance.balance((error, balances) => {
+        if (error) {
+            let reponse = {};
+            reponse['status'] = 'error';
+            reponse['message'] = error.body;
+            res.send(reponse)
+        } else {
+            let reponse = {};
+            reponse['status'] = 'success';
+            reponse['message'] = balances;
+            res.send(reponse)
+        }
+    });
+})
+
+
 module.exports = router;

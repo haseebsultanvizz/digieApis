@@ -512,4 +512,14 @@ GET http://localhost:3010/apiEndPoint/move_CA_ledgers
 GET http://localhost:3010/apiEndPoint/get_current_market_prices
 
 ###
+ POST http://localhost:3010/apiEndPoint/checkBinanceApiSecret
+#POST https://digiapis.digiebot.com/apiEndPoint/checkBinanceApiSecret
+Content-Type: application/json
+
+{ 
+    "api_key": "z1in8ZGQwYLReFiPdsDoMtfBWhQeOOWG7VRnTMu3zVD1AV8cbsEb5FLOhRoxk79H",
+    "api_secret": "GwSqxV2qpyZw4Dm0aLSWVMjq6EKRuMQM92GbUtvIKLD7cTm9KrxHAiugqFuIqzns"
+}
+
+###
 POST http://localhost:3010/apiEndPoint/getTradeHistory
