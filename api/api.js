@@ -20540,6 +20540,7 @@ async function newAtgApiCall(payload){
         //     'dailTradeAbleBalancePercentage': dailTradeAbleBalancePercentage,
         // }
         
+        // let cron_name = 'find_available_btc_usdt_test'
         let cron_name = 'find_available_btc_usdt'
         let reqObj = {
             'type': 'POST',
