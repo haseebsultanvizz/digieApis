@@ -519,6 +519,18 @@ router.post('/resetPassword', async function (req, resp) {
 
                 let reset = await db.collection("users").updateOne(where, set);
                 if (reset.result.ok) {
+
+                    var reqObj = {
+                        'type': 'POST',
+                        'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                        'payload': {
+                            'user_id': String(user_id),
+                            'type': 'password_updated',
+                            'log': 'Trading.digiebot.com password updated',
+                        },
+                    }
+                    var apiResult = await customApiRequest(reqObj)
+
                     resp.status(200).send({
                         status: true,
                         message: 'password reset successful'
@@ -10259,9 +10271,21 @@ router.post('/update_user_info', function (req, res, next) {
 
                         db.collection("users").updateOne(search_arr, {
                             $set: update_arr
-                        }, function (err1, obj) {
+                        }, async function (err1, obj) {
                             if (err1) throw err1;
                             if (obj.result.nModified > 0) {
+
+                                var reqObj = {
+                                    'type': 'POST',
+                                    'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                                    'payload': {
+                                        'user_id': String(user_id),
+                                        'type': 'api_key_updated',
+                                        'log': 'Binance API key is updated',
+                                    },
+                                }
+                                var apiResult = await customApiRequest(reqObj)
+
                                 res.status(200).send({
                                     "success": "true",
                                     "status": 200,
@@ -10692,10 +10716,22 @@ router.post('/saveBamCredentials', (req, resp) => {
         let upsert = {
             upsert: true
         };
-        db.collection('bam_credentials').updateOne(where, set, upsert, (err, result) => {
+        db.collection('bam_credentials').updateOne(where, set, upsert, async (err, result) => {
             if (err) {
                 console.log(err);
             } else {
+
+                var reqObj = {
+                    'type': 'POST',
+                    'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                    'payload': {
+                        'user_id': String(user_id),
+                        'type': 'api_key_updated',
+                        'log': 'Bam API key is updated',
+                    },
+                }
+                var apiResult = await customApiRequest(reqObj)
+
                 let validation = validate_bam_credentials(api_key, api_secret, user_id)
                 resp.status(200).send({
                     "success": "true",
@@ -10730,10 +10766,22 @@ router.post('/saveKrakenCredentials', (req, resp) => {
         let upsert = {
             upsert: true
         };
-        db.collection('kraken_credentials').updateOne(where, set, upsert, (err, result) => {
+        db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
             if (err) {
                 console.log(err);
             } else {
+
+                var reqObj = {
+                    'type': 'POST',
+                    'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                    'payload': {
+                        'user_id': String(user_id),
+                        'type': 'api_key_updated',
+                        'log': 'kraken primary API key is updated',
+                    },
+                }
+                var apiResult = await customApiRequest(reqObj)
+
                 let validation = validate_kraken_credentials(api_key, api_secret, user_id)
                 resp.status(200).send({
                     "success": "true",
@@ -10765,10 +10813,22 @@ router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
         let upsert = {
             upsert: true
         };
-        db.collection('kraken_credentials').updateOne(where, set, upsert, (err, result) => {
+        db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
             if (err) {
                 console.log(err);
             } else {
+
+                var reqObj = {
+                    'type': 'POST',
+                    'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                    'payload': {
+                        'user_id': String(user_id),
+                        'type': 'api_key_updated',
+                        'log': 'Kraken secondary API key is updated',
+                    },
+                }
+                var apiResult = await customApiRequest(reqObj)
+
                 let validation = validate_kraken_credentials(api_key, api_secret, user_id)
                 resp.status(200).send({
                     "success": "true",
@@ -10799,10 +10859,22 @@ router.post('/saveKrakenCredentialsThirdKey', (req, resp) => {
         let upsert = {
             upsert: true
         };
-        db.collection('kraken_credentials').updateOne(where, set, upsert, (err, result) => {
+        db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
             if (err) {
                 console.log(err);
             } else {
+
+                var reqObj = {
+                    'type': 'POST',
+                    'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                    'payload': {
+                        'user_id': String(user_id),
+                        'type': 'api_key_updated',
+                        'log': 'Kraken third API key is updated',
+                    },
+                }
+                var apiResult = await customApiRequest(reqObj)
+
                 let validation = validate_kraken_credentials(api_key, api_secret, user_id)
                 resp.status(200).send({
                     "success": "true",
@@ -15098,6 +15170,17 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 dataArr['modified_date'] = new Date()
                 
                 let settings = await db.collection(collectionName).insertOne(data);
+
+                var reqObj = {
+                    'type': 'POST',
+                    'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                    'payload': {
+                        'user_id': String(user_id),
+                        'type': 'ATG',
+                        'log': 'ATG settings created ',
+                    },
+                }
+                var apiResult = await customApiRequest(reqObj)
 
                 if (application_mode == 'live') {
                     let field_name = exchange == 'binance' ? 'atg_parents_update_cron_last_run' : 'atg_parents_update_cron_last_run_' + exchange
