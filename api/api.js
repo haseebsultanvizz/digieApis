@@ -17943,7 +17943,11 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                     let currentQty = ((10 * (currentMarketPrice * quantity)) / 100);
                     let balance = (buy_currency == 'USDT' ? parseFloat(balanceObj['USDT']) : parseFloat(balanceObj['BTC']))
 
-                    // console.log(balance, ' < ', currentQty)
+                    // console.log(balance, ' > ', currentQty)
+                    // console.log('minReqQty ', minReqQty, 'quantity ', quantity)
+
+                    quantity = minReqQty > quantity ? minReqQty : quantity
+
                     if (balance > currentQty) {
                         //TODO: send for buy
                         let buyArr = {
