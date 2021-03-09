@@ -20751,7 +20751,7 @@ async function is_trade_limit_exceeded(user_id, exchange) {
             }
 
             let result = await newAtgApiCall(reqObj)
-            let data = typeof result.data != 'undefined' ? result.data : false
+            let data = typeof result != 'undefined' && typeof result.data != 'undefined' ? result.data : false
             
             if(data === false){
                 resolve(false)
