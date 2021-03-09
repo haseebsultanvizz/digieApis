@@ -24013,6 +24013,11 @@ async function getTradeHistory(filter, exchange, timezone) {
             '$match': {
                 'user_id': user_id,
             }
+        },
+        {
+            '$sort': {
+                'trades.value.time': -1,
+            }
         }
     ]
 
