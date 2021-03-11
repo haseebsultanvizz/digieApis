@@ -23950,8 +23950,9 @@ async function getCoinName(symbol){
 
 async function getTradeHistory(filter, exchange, timezone) {
 
+    console.log(new Date())
     const db = await conn
-    exchange = 'kraken'
+    // exchange = 'kraken'
     let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
 
     // let coinPairsObj = {
@@ -24061,10 +24062,12 @@ async function getTradeHistory(filter, exchange, timezone) {
     pipeline.push({ '$skip': skip })
     pipeline.push({ '$limit': limit })
 
-    // console.log(JSON.stringify(pipeline))
+    console.log(JSON.stringify(pipeline))
     // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
 
     let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
+
+    console.log(new Date())
 
     let tradeIds = trades.map(item => item.trades.value.ordertxid)
 
@@ -24095,9 +24098,14 @@ async function getTradeHistory(filter, exchange, timezone) {
     let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
     let digieTrades = digieBuyTrades.concat(digieSoldTrades)
 
+    let timeMultiplyer = 1;
+    if(exchange == 'kraken'){
+        timeMultiplyer = 1000
+    }
+
     trades = trades.map(item => {
 
-        let timeZoneTime = item.trades.value.time * 1000;
+        let timeZoneTime = item.trades.value.time * timeMultiplyer;
         try {
             timeZoneTime = new Date(timeZoneTime).toLocaleString("en-US", {
                 timeZone: timezone
@@ -24156,15 +24164,15 @@ async function getTradeHistory(filter, exchange, timezone) {
 
             // console.log(quantity, _3percentQuantityAbove)
 
-            // let tradeTime = new Date(currTrade.time * 1000);
+            // let tradeTime = new Date(currTrade.time * timeMultiplyer);
             let tradeTime = parseFloat(currTrade.time);
 
-            let _1minuteAbove = new Date(tradeTime * 1000)
+            let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
             _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 1); // timestamp
             _1minuteAbove = new Date(_1minuteAbove); // Date object
             // console.log(_1minuteAbove);
             
-            let _1minuteBelow = new Date(tradeTime * 1000)
+            let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
             _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 1); // timestamp
             _1minuteBelow = new Date(_1minuteBelow); // Date object
             // console.log(_1minuteBelow);
@@ -24230,12 +24238,6 @@ async function getTradeHistory(filter, exchange, timezone) {
         return y.strUnixTime - x.strUnixTime ;
     });
 
-    // console.log(sortedKrakenTrades)
-
-    // for (let i = 0; i < sortedKrakenTrades; i++){
-    //     console.log('sortedKrakenTrades ', new Date(sortedKrakenTrades[i]['strUnixTime'] * 1000))
-    // }
-
     let resultObj = {
         'countArr': countArr,
         'kraken_trades': trades,
@@ -24276,8 +24278,9 @@ router.post('/getTradeHistory', async (req, res)=>{
 
     let where = req.body.postData
     let timezone = req.body.timezone;
+    let exchange = req.body.postData.exchange;
 
-    let trades = await getTradeHistory(where, 'kraken', timezone)
+    let trades = await getTradeHistory(where, exchange, timezone)
     
     res.send(trades)
 
@@ -24368,7 +24371,8 @@ router.post('/mapSoldTrade', async (req, res) => {
             '$match': {
                 'trades.value.pair': symbol,
                 'trades.value.vol': String(quantity),
-                'trades.value.time': { '$lte': time }
+                'trades.value.time': { '$lte': time },
+                'trades.value.type': 'buy'
             }
         },
         {
@@ -24393,9 +24397,6 @@ router.post('/mapSoldTrade', async (req, res) => {
         "buyArr": buyArr,
     }
 
-    // console.log('payload', payload)
-    // process.exit(0)
-
     let reqObj = {
         'type': 'POST',
         'url': 'https://admin.digiebot.com/admin/api_calls/mappDuplicateSellUnderUserAccount',
@@ -24408,7 +24409,6 @@ router.post('/mapSoldTrade', async (req, res) => {
     }
     let apiResult = await customApiRequest(reqObj)
 
-    // console.log(JSON.stringify(apiResult))
 
     let success = 'successfully mapped order'
     if (apiResult.status && apiResult.body && apiResult.body.status == success){
