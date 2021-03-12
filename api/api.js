@@ -10732,6 +10732,8 @@ router.post('/saveBamCredentials', (req, resp) => {
                 }
                 var apiResult = await customApiRequest(reqObj)
 
+                let updateWallet = update_user_balance(user_id)
+
                 let validation = validate_bam_credentials(api_key, api_secret, user_id)
                 resp.status(200).send({
                     "success": "true",
@@ -10782,6 +10784,8 @@ router.post('/saveKrakenCredentials', (req, resp) => {
                 }
                 var apiResult = await customApiRequest(reqObj)
 
+                let updateWallet = update_user_balance(user_id)
+
                 let validation = validate_kraken_credentials(api_key, api_secret, user_id)
                 resp.status(200).send({
                     "success": "true",
@@ -10829,6 +10833,8 @@ router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
                 }
                 var apiResult = await customApiRequest(reqObj)
 
+                let updateWallet = update_user_balance(user_id)
+
                 let validation = validate_kraken_credentials(api_key, api_secret, user_id)
                 resp.status(200).send({
                     "success": "true",
@@ -10874,6 +10880,8 @@ router.post('/saveKrakenCredentialsThirdKey', (req, resp) => {
                     },
                 }
                 var apiResult = await customApiRequest(reqObj)
+
+                let updateWallet = update_user_balance(user_id)
 
                 let validation = validate_kraken_credentials(api_key, api_secret, user_id)
                 resp.status(200).send({
