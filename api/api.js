@@ -23958,7 +23958,7 @@ async function getCoinName(symbol){
 
 async function getTradeHistory(filter, exchange, timezone) {
 
-    console.log(new Date())
+    // console.log(new Date())
     const db = await conn
     // exchange = 'kraken'
     let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
@@ -24070,12 +24070,12 @@ async function getTradeHistory(filter, exchange, timezone) {
     pipeline.push({ '$skip': skip })
     pipeline.push({ '$limit': limit })
 
-    console.log(JSON.stringify(pipeline))
+    // console.log(JSON.stringify(pipeline))
     // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
 
     let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
 
-    console.log(new Date())
+    // console.log(new Date(), '=================================')
 
     let tradeIds = trades.map(item => item.trades.value.ordertxid)
 
@@ -24235,6 +24235,8 @@ async function getTradeHistory(filter, exchange, timezone) {
         }
     }
     // console.log(checkTradesArr.length)
+
+    // console.log(new Date())
 
     trades.forEach(item=>{
         return item.strUnixTime = (item.trades.value.time).toString()
