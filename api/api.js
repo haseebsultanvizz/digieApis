@@ -4709,6 +4709,7 @@ router.post('/mergeAndMigrate', async (req, res)=>{
                 new_order['order_level'] = 'level_'+new_order['order_level'].split(' ')[1]
                 new_order['lth_functionality'] = 'no'
                 new_order['lth_profi'] = ''
+                new_order['is_sell_order'] = 'yes'
                 new_order['is_lth_order'] = ''
                 new_order['cavg_parent'] = 'yes'
                 new_order['cost_avg'] = 'yes'
@@ -4733,6 +4734,11 @@ router.post('/mergeAndMigrate', async (req, res)=>{
                 new_order['ca_merge_migrated_order'] = 'yes'
 
                 new_order['avg_orders_ids'] = temp_avg_orders_ids
+                
+                delete new_order['trading_status']
+                delete new_order['market_sold_price']
+                delete new_order['sell_date']
+                delete new_order['exchange']
 
                 //insert new order in kraken
                 let insertBuyNew = await db.collection(buy_collection_kraken).insertOne(new_order)
@@ -17833,6 +17839,9 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                     // console.log(error)
                 } else {
                     if (body.success == 'true') {
+
+                        // console.log(body)
+
                         //Save Buy History
                         // saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
                         // conn.then((db) => {
@@ -18031,13 +18040,13 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                 if (avaialableUsdWorth < parseFloat(trigger_buy_usdt_worth)){
                     //TODO: check if balance available to buy more
                     //Add 10% extr over current quantity trying to purchase 
+                    quantity = minReqQty > quantity ? minReqQty : quantity
+
                     let currentQty = ((10 * (currentMarketPrice * quantity)) / 100);
                     let balance = (buy_currency == 'USDT' ? parseFloat(balanceObj['USDT']) : parseFloat(balanceObj['BTC']))
 
                     // console.log(balance, ' > ', currentQty)
                     // console.log('minReqQty ', minReqQty, 'quantity ', quantity)
-
-                    quantity = minReqQty > quantity ? minReqQty : quantity
 
                     if (balance > currentQty) {
                         //TODO: send for buy
@@ -24102,6 +24111,17 @@ async function getTradeHistory(filter, exchange, timezone) {
         }
     ]
 
+    if (exchange == 'binance') {
+        whereDigie[0]['$match']['$or'] = [
+            {
+                'binance_order_id': { '$in': tradeIds },
+            },
+            {
+                'binance_order_id_sell': { '$in': tradeIds },
+            }
+        ]
+    }
+
     let digieBuyTrades = await db.collection(buy_collection).aggregate(whereDigie).toArray()
     let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
     let digieTrades = digieBuyTrades.concat(digieSoldTrades)
@@ -24134,30 +24154,59 @@ async function getTradeHistory(filter, exchange, timezone) {
     let digieDoubtTradeIdsArr = []
     let userDoubtTradeIdsArr = []
     
-    trades.forEach(item=>{
+    if(exchange == 'binance'){
+        trades.forEach(item => {
 
-        let krakenObj = Object.assign(item)
-        krakenObj = krakenObj.trades.value
-        let tradeId = krakenObj.ordertxid
-        
-        let digieEntry = digieTrades.find(item => item.tradeId == tradeId || item.kraken_order_id == tradeId || item.sell_kraken_order_id == tradeId ? true : false)
+            let krakenObj = Object.assign(item)
+            krakenObj = krakenObj.trades.value
+            let tradeId = krakenObj.ordertxid
 
-        if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
-            
-            if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
-                // krakenObj['tradeMappType'] = 'User duplicate'
-            }else{
-                // krakenObj['_id'] = (new Date).toString() + Math.random() + Math.random() + 'fewrt45wet'
-                // krakenObj['symbol'] = typeof this.krakenPairObj[krakenObj.pair] != 'undefined' ? this.krakenPairObj[krakenObj.pair] : krakenObj.pair
-                // krakenObj['quantity'] = krakenObj.vol
-                // krakenObj['trigger_type'] = ''
-                // krakenObj['tradeMappType'] = 'Digie duplicate'
-                // krakenObj['user_id'] = krakenTrades[0]['user_id']
-                checkTradesArr.push(item)
-                // item.trades.value.ordertxid
+            let digieEntry = digieTrades.find(item => item.binance_order_id == tradeId || item.binance_order_id_sell == tradeId ? true : false)
+
+            if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
+
+                if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
+                    // krakenObj['tradeMappType'] = 'User duplicate'
+                } else {
+                    // krakenObj['_id'] = (new Date).toString() + Math.random() + Math.random() + 'fewrt45wet'
+                    // krakenObj['symbol'] = typeof this.krakenPairObj[krakenObj.pair] != 'undefined' ? this.krakenPairObj[krakenObj.pair] : krakenObj.pair
+                    // krakenObj['quantity'] = krakenObj.vol
+                    // krakenObj['trigger_type'] = ''
+                    // krakenObj['tradeMappType'] = 'Digie duplicate'
+                    // krakenObj['user_id'] = krakenTrades[0]['user_id']
+                    checkTradesArr.push(item)
+                    // item.trades.value.ordertxid
+                }
             }
-        }
-    })
+        })
+    }
+
+    if(exchange == 'kraken'){
+        trades.forEach(item=>{
+    
+            let krakenObj = Object.assign(item)
+            krakenObj = krakenObj.trades.value
+            let tradeId = krakenObj.ordertxid
+            
+            let digieEntry = digieTrades.find(item => item.tradeId == tradeId || item.kraken_order_id == tradeId || item.sell_kraken_order_id == tradeId ? true : false)
+    
+            if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
+                
+                if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
+                    // krakenObj['tradeMappType'] = 'User duplicate'
+                }else{
+                    // krakenObj['_id'] = (new Date).toString() + Math.random() + Math.random() + 'fewrt45wet'
+                    // krakenObj['symbol'] = typeof this.krakenPairObj[krakenObj.pair] != 'undefined' ? this.krakenPairObj[krakenObj.pair] : krakenObj.pair
+                    // krakenObj['quantity'] = krakenObj.vol
+                    // krakenObj['trigger_type'] = ''
+                    // krakenObj['tradeMappType'] = 'Digie duplicate'
+                    // krakenObj['user_id'] = krakenTrades[0]['user_id']
+                    checkTradesArr.push(item)
+                    // item.trades.value.ordertxid
+                }
+            }
+        })
+    }
 
     // console.log('trades: ', trades.length, '     checkTradesArr: ', checkTradesArr.length)
 

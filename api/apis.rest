@@ -241,15 +241,40 @@ Content-Type: application/json
 
 ###
 
-# POST http://localhost:3010/apiEndPoint/hit_auto_buy_cron
-POST http://34.205.124.51:3010/apiEndPoint/hit_auto_buy_cron
+POST http://localhost:3010/apiEndPoint/hit_auto_buy_cron
+# POST http://34.205.124.51:3010/apiEndPoint/hit_auto_buy_cron
+Content-Type: application/json
+
+{ 
+    "user_id": "603879831cf9cf055f4d7af7",
+    "exchange": "binance"
+}
+
+
+###
+
+POST http://52.7.57.119:3600/buyBNBPost
 Content-Type: application/json
 
 { 
     "user_id": "",
-    "exchange": "binance"
+    "coin": "BNB",
+    "quantity": ,
+    "currency": "BTC"
 }
 
+###
+
+POST http://52.7.57.119:3600/buySellPost
+Content-Type: application/json
+
+{ 
+    "user_id": "",
+    "symbol": "BNBBTC",
+    "quantity": ,
+    "exchange": "binance",
+    "action": "sell"
+}
 
 ###
 
@@ -523,3 +548,6 @@ Content-Type: application/json
 
 ###
 POST http://localhost:3010/apiEndPoint/getTradeHistory
+
+###
+GET http://localhost:3010/apiEndPoint/fixCostAvgOrders
