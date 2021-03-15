@@ -483,7 +483,7 @@ POST http://localhost:3010/apiEndPoint/hit_auto_buy_cron
 Content-Type: application/json
 
 { 
-    "user_id": "5c0912b7fc9aadaac61dd072",
+    "user_id": "603879831cf9cf055f4d7af7",
     "exchange": "binance"   
 }
 

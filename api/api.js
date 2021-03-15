@@ -15163,7 +15163,11 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
 
                 await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode)
                 
-                await createAutoTradeParents(autoTradeData)
+                if(application_mode == 'live'){
+                    await createAutoTradeParents(autoTradeData)
+                }else{
+                    await createAutoTradeParents_test(autoTradeData)
+                }
                 
                 res.send({
                     status: true,
@@ -15207,7 +15211,11 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
 
                 await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode)
 
-                await createAutoTradeParents(autoTradeData)
+                if (application_mode == 'live') {
+                    await createAutoTradeParents(autoTradeData)
+                } else {
+                    await createAutoTradeParents_test(autoTradeData)
+                }
 
                 res.send({
                     status: true,
@@ -15597,7 +15605,7 @@ async function createAutoTradeParents(settings){
         let user_remaining_usd_limit = await getUserRemainingLimit(user_id, exchange)
         let user_remaining_limit = 0
 
-        console.log('user_remaining_usd_limit ', user_remaining_usd_limit)
+        // console.log('user_remaining_usd_limit ', user_remaining_usd_limit)
 
         for(let i=0; i<coninsCount; i++){
 
@@ -15909,6 +15917,355 @@ async function createAutoTradeParents(settings){
 
         resolve(true)
         
+    })
+}
+
+async function createAutoTradeParents_test(settings) {
+    return new Promise(async (resolve) => {
+        // resolve(true)
+
+        console.log('createAutoTradeParents_test')
+
+        var db = await conn
+
+        let user_id = settings.user_id
+        let application_mode = settings.application_mode
+        let exchange = settings.settings.step_1.exchange
+        let coins = settings.settings.step_2.coins
+        let bots = settings.settings.step_3.bots
+        let step4 = settings.settings.step_4
+
+        // let btcPerTrade = step4.dailyTradeableBTC / step4.noOfDailyBTCTrades
+        // let usdtPerTrade = step4.dailyTradeableUSDT / step4.noOfDailyUSDTTrades
+
+        let btcPerTrade = step4.dailyTradeableBTC
+        let usdtPerTrade = step4.dailyTradeableUSDT
+
+        let profit_percentage = step4.profit_percentage
+        let stop_loss = step4.stop_loss
+        let loss_percentage = step4.loss_percentage
+        let lth_profit = step4.lth_profit
+        let lth_functionality = step4.lth_functionality
+        let cancel_previous_parents = step4.cancel_previous_parents
+        let remove_duplicates = step4.remove_duplicates
+
+        let coinsWorthArr = await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
+        // console.log('coinsWorthArr ', coinsWorthArr)
+        // process.exit(0)
+
+        let whereCoins = { '$in': coins }
+        let coinData = await listmarketPriceMinNotationCoinArr(whereCoins, exchange)
+        let btcCoinObj = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
+        let BTCUSDTPRICE = parseFloat(btcCoinObj['BTCUSDT']['currentmarketPrice'])
+
+        let coninsCount = coins.length
+        let keepParentIdsArr = []
+
+        var db = await conn
+        var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        var level = ''
+
+        let user_remaining_limit = 7000
+
+        for (let i = 0; i < coninsCount; i++) {
+
+            let coin = coins[i]
+
+            let currentMarketPrice = coinData[coin]['currentmarketPrice']
+            let marketMinNotation = coinData[coin]['marketMinNotation']
+            let marketMinNotationStepSize = coinData[coin]['marketMinNotationStepSize']
+            var toFixedNum = 6
+
+            //find min required quantity
+            var extra_qty_percentage = 40;
+            var extra_qty_val = 0;
+            extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
+            var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
+            var minReqQty = 0;
+            minReqQty = (calculatedMinNotation / currentMarketPrice);
+
+            if (exchange == 'kraken') {
+                minReqQty = calculatedMinNotation
+                toFixedNum = 6
+            } else {
+                toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+            }
+
+            minReqQty += marketMinNotationStepSize
+            minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
+
+            //TODO: find one usd worth of quantity
+            let selectedCoin = coin;
+            let currCoin = coinsWorthArr.filter(item => { return item.coin == selectedCoin })
+
+            let splitArr = selectedCoin.split('USDT');
+            let oneUsdWorthQty = 0;
+            var usdWorthQty = 0
+            var quantity = 0
+            var usd_worth = currCoin.length > 0 ? currCoin[0]['worth'] : 5
+
+            if (splitArr[1] == '') {
+                oneUsdWorthQty = 1 / currentMarketPrice
+            } else {
+                oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
+            }
+
+            usd_worth = parseFloat(usd_worth.toFixed(2))
+            usdWorthQty = usd_worth * oneUsdWorthQty
+            quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
+            // console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth, ' :::: ', oneUsdWorthQty, ' price ', currentMarketPrice, 'btcusdt_price', BTCUSDTPRICE)
+
+            if (quantity < minReqQty) {
+                //Create trades with minReqQty
+                for (let index in bots) {
+
+                    level = bots[index]
+
+                    let where1 = {
+                        'auto_trade_generator': 'yes',
+                        'admin_id': user_id,
+                        'order_mode': application_mode,
+                        'application_mode': application_mode,
+                        'order_level': level,
+                        'symbol': coin,
+                        'parent_status': 'parent',
+                        'order_type': 'market_order',
+                        'trigger_type': 'barrier_percentile_trigger',
+                        'exchange': exchange,
+                        'status': { '$ne': 'canceled' },
+                    }
+                    let set1 = {
+                        '$set': {
+                            'market_value': '',
+                            'price': '',
+                            'quantity': minReqQty,
+                            'usd_worth': usd_worth,
+                            'pick_parent': (digie_admin_ids.includes(user_id) || (user_remaining_limit > usd_worth) ? 'yes' : 'no'),
+                            'defined_sell_percentage': profit_percentage,
+                            'sell_profit_percent': profit_percentage,
+                            'current_market_price': currentMarketPrice,
+                            'stop_loss_rule': typeof stop_loss != 'undefined' && stop_loss == 'yes' ? 'custom_stop_loss' : '',
+                            'custom_stop_loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
+                            'loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
+                            'activate_stop_loss_profit_percentage': 100,
+                            'lth_functionality': typeof lth_functionality != 'undefined' ? lth_functionality : '',
+                            'lth_profit': typeof lth_profit != 'undefined' ? lth_profit : '',
+                            'stop_loss': typeof stop_loss != 'undefined' ? stop_loss : '',
+                            'un_limit_child_orders': 'no',
+                            'modified_date': new Date(),
+                            'is_sell_order': 'no',
+                            'sell_price': '',
+                            'randomize_sort': (Math.floor(Math.random() * (1000 - 0 + 1)) + 0),
+                        }
+                    }
+
+                    if (typeof user_id != 'undefined' && digie_admin_ids.includes(user_id)) {
+                        set1['$set']['pick_parent'] = 'yes';
+                    }
+
+                    let upsert1 = {
+                        'upsert': true
+                    }
+                    // continue
+                    db.collection(collectionName).updateOne(where1, set1, upsert1, async function (err, result) {
+                        if (err) throw err;
+                        if (result.upsertedCount > 0) {
+                            let remainingFields = {
+                                'market_value': '',
+                                'price': '',
+                                'status': 'new',
+                                'pause_status': 'play',
+                                'created_date': set1['$set']['modified_date'],
+                            }
+                            //get Id and update remaining fields
+                            // console.log('Inserted_id ', result.upsertedId._id)
+                            db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields })
+
+                            //TODO: insert parent creation log
+                            let show_hide_log = 'yes'
+                            let type = 'parent_created_by_ATG'
+                            let log_msg = 'Parent created from auto trade generator.'
+                            let order_mode = application_mode
+                            create_orders_history_log(result.upsertedId._id, log_msg, type, show_hide_log, exchange, order_mode, remainingFields['created_date'])
+
+                            keepParentIdsArr.push(result.upsertedId._id)
+
+                        } else if (result.modifiedCount > 0) {
+
+                            db.collection(collectionName).find(where1).limit(1).toArray(async function (err, result2) {
+                                if (err) throw err;
+                                if (result2.length > 0) {
+                                    // console.log('modified_id ', String(result2[0]['_id']))
+
+                                    db.collection(collectionName).updateOne({ '_id': result2[0]['_id'], 'pause_manually': { '$ne': 'yes' } }, { '$set': { 'pause_status': 'play' } })
+
+                                    //TODO: insert parent creation log
+                                    let show_hide_log = 'yes'
+                                    let type = 'parent_updated_by_ATG_manually'
+                                    let log_msg = 'Parent updated from auto trade generator manually.'
+                                    let order_mode = application_mode
+                                    create_orders_history_log(result2[0]['_id'], log_msg, type, show_hide_log, exchange, order_mode, result2[0]['created_date'])
+
+                                    keepParentIdsArr.push(result2[0]['_id'])
+                                }
+                            })
+
+                        }
+                    })
+
+                }
+            } else {
+                //Create trades with defined quantity
+                for (let index in bots) {
+
+                    level = bots[index]
+
+                    let where1 = {
+                        'auto_trade_generator': 'yes',
+                        'admin_id': user_id,
+                        'order_mode': application_mode,
+                        'application_mode': application_mode,
+                        'order_level': level,
+                        'symbol': coin,
+                        'parent_status': 'parent',
+                        'order_type': 'market_order',
+                        'trigger_type': 'barrier_percentile_trigger',
+                        'exchange': exchange,
+                        'status': { '$ne': 'canceled' },
+                    }
+                    let set1 = {
+                        '$set': {
+                            'market_value': '',
+                            'price': '',
+                            'quantity': quantity,
+                            'usd_worth': usd_worth,
+                            'pick_parent': (digie_admin_ids.includes(user_id) || (user_remaining_limit > usd_worth) ? 'yes' : 'no'),
+                            'defined_sell_percentage': profit_percentage,
+                            'sell_profit_percent': profit_percentage,
+                            'current_market_price': currentMarketPrice,
+                            'stop_loss_rule': typeof stop_loss != 'undefined' && stop_loss == 'yes' ? 'custom_stop_loss' : '',
+                            'custom_stop_loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
+                            'loss_percentage': typeof loss_percentage != 'undefined' ? loss_percentage : '',
+                            'activate_stop_loss_profit_percentage': 100,
+                            'lth_functionality': typeof lth_functionality != 'undefined' ? lth_functionality : '',
+                            'lth_profit': typeof lth_profit != 'undefined' ? lth_profit : '',
+                            'stop_loss': typeof stop_loss != 'undefined' ? stop_loss : '',
+                            'un_limit_child_orders': 'no',
+                            'modified_date': new Date(),
+                            'is_sell_order': 'no',
+                            'sell_price': '',
+                            'randomize_sort': (Math.floor(Math.random() * (1000 - 0 + 1)) + 0),
+                        }
+                    }
+
+                    if (typeof user_id != 'undefined' && digie_admin_ids.includes(user_id)) {
+                        set1['$set']['pick_parent'] = 'yes';
+                    }
+
+                    let upsert1 = {
+                        'upsert': true
+                    }
+
+                    db.collection(collectionName).updateOne(where1, set1, upsert1, async function (err, result) {
+                        if (err) throw err;
+                        if (result.upsertedCount > 0) {
+                            let remainingFields = {
+                                'market_value': '',
+                                'price': '',
+                                'status': 'new',
+                                'pause_status': 'play',
+                                'created_date': set1['$set']['modified_date'],
+                            }
+                            //get Id and update remaining fields
+                            // console.log('Inserted_id ', result.upsertedId._id)
+                            db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields })
+
+                            //TODO: insert parent creation log
+                            let show_hide_log = 'yes'
+                            let type = 'parent_created_by_ATG'
+                            let log_msg = 'Parent created from auto trade generator.'
+                            let order_mode = application_mode
+                            create_orders_history_log(result.upsertedId._id, log_msg, type, show_hide_log, exchange, order_mode, remainingFields['created_date'])
+
+                            keepParentIdsArr.push(result.upsertedId._id)
+
+                        } else if (result.modifiedCount > 0) {
+                            db.collection(collectionName).find(where1).limit(1).toArray(async function (err, result2) {
+                                if (err) throw err;
+                                if (result2.length > 0) {
+                                    // console.log('modified_id ', String(result2[0]['_id']))
+
+                                    db.collection(collectionName).updateOne({ '_id': result2[0]['_id'], 'pause_manually': { '$ne': 'yes' } }, { '$set': { 'pause_status': 'play' } })
+
+                                    //TODO: insert parent creation log
+                                    let show_hide_log = 'yes'
+                                    let type = 'parent_updated_by_ATG_manually'
+                                    let log_msg = 'Parent updated from auto trade generator manually.'
+                                    let order_mode = application_mode
+                                    create_orders_history_log(result2[0]['_id'], log_msg, type, show_hide_log, exchange, order_mode, result2[0]['created_date'])
+
+                                    keepParentIdsArr.push(result2[0]['_id'])
+
+                                }
+                            })
+
+                        }
+                    })
+
+                }
+            }
+
+        }
+
+
+        //sleep 7 seconds before sending call next()
+        await new Promise(r => setTimeout(r, 7000));
+        // console.log('after sleep parents processed: ', keepParentIdsArr.length)
+
+        //cancel previous parent orders
+        var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        //TODO: if delete previous order selected then delete all previous parents
+        if (typeof cancel_previous_parents != 'undefined' && cancel_previous_parents == 'yes' && (coins.length * bots.length) == keepParentIdsArr.length && keepParentIdsArr.length > 0) {
+            let filter = {
+                '_id': { '$nin': keepParentIdsArr },
+                'auto_trade_generator': 'yes',
+                'admin_id': user_id,
+                'application_mode': application_mode,
+                'parent_status': 'parent',
+                'status': { '$ne': 'canceled' },
+            };
+            let set = {};
+            set['$set'] = {
+                'status': 'canceled',
+                'pause_status': 'pause',
+                'pick_parent': 'no',
+                'pause_by_script': 'no',
+                'modified_date': new Date()
+            };
+            let parents = await db.collection(collectionName).find(filter).project({ '_id': 1, 'application_mode': 1, 'created_date': 1 }).toArray()
+            if (parents.length > 0) {
+                let deleted = await db.collection(collectionName).updateMany(filter, set)
+
+                parents.map(item => {
+                    // TODO: set vars to create log
+                    let show_hide_log = 'yes';
+                    let type = 'canceled_by_auto_trade_generator';
+                    let order_mode = item['application_mode'];
+                    let order_created_date = item['created_date'];
+                    let log_msg = 'Parent canceled becuase of auto trade generator cancel previous.'
+                    //Save LOG
+                    create_orders_history_log(item['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                })
+            }
+        }
+
+        //TODO: cancel duplicate orders if loop end here
+        if (typeof remove_duplicates != 'undefined' && remove_duplicates == 'yes' && (coins.length * bots.length) == keepParentIdsArr.length) {
+            removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode, keepParentIdsArr)
+        }
+
+        resolve(true)
+
     })
 }
 
