@@ -3467,6 +3467,12 @@ router.post('/listOrderListing', async (req, resp) => {
             }
         } //End of profit loss Percentage
 
+        if (trigger_type == 'no' && status == 'new' && typeof orderListing[index].deep_price_on_off != 'undefined' && orderListing[index].deep_price_on_off == 'yes' && typeof orderListing[index].expecteddeepPrice != 'undefined' && orderListing[index].expecteddeepPrice != ''){
+            let expecteddeepPrice = orderListing[index].expecteddeepPrice
+            let profitLossPercentage = calculate_percentage(parseFloat(expecteddeepPrice), currentMarketPrice);
+            // resumePL = parseFloat(resumePL) + parseFloat(profitLossPercentage)
+            profitLossPercentageHtml = '<span class="text-default"><b>' + Math.abs(profitLossPercentage) + '%</b></span>';
+        }
 
         order['profitLossPercentageHtml'] = profitLossPercentageHtml;
 
