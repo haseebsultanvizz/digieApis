@@ -3790,6 +3790,31 @@ router.post('/listOrderListing', async (req, resp) => {
         order['childProfitLossPercentageHtml'] = childProfitLossPercentageHtml
 
 
+        if (postDAta.status == 'parent' && status != 'canceled' && typeof orderListing[index].parent_status != 'undefined' && orderListing[index].parent_status == 'parent') {
+            
+            htmlStatus = ''
+            htmlStatusArr = []
+
+            if (typeof orderListing[index].auto_trade_generator != 'undefined' && orderListing[index].auto_trade_generator == 'yes') {
+                htmlStatus += '<span class="badge badge-info ml-1" style="margin-left:4px;">ATG</span>';
+                htmlStatusArr.push('ATG')
+            }
+
+            //add parent label
+            htmlStatus += '<span class="badge badge-success ml-1" style="margin-left:4px;">Parent</span>';
+            htmlStatusArr.push('Parent')
+            
+            if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes') {
+                htmlStatus += '<span class="badge badge-primary ml-1" style="margin-left:4px;">Cost Avg</span>';
+                htmlStatusArr.push('Cost Avg')
+            }
+
+            if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes') {
+                htmlStatus += '<span class="badge badge-warning ml-1" style="margin-left:4px;">Child Order in Progress</span>';
+                htmlStatusArr.push('Child Order in Progress')
+            }
+        }
+
         order['htmlStatus'] = htmlStatus;
         order['htmlStatusArr'] = htmlStatusArr;
         customOrderListing.push(order)
