@@ -65,150 +65,6 @@ router.post('/verifyOldPassword', async function (req, resp) {
     })
 }) //End of verifyOldPassword
 
-//when first time user login call this function 
-router.post('/authenticate-old', async function (req, resp, next) {
-    conn.then(async (db) => {
-        let username = req.body.username;
-        let pass = req.body.password;
-        //Convert password to md5
-        let md5Pass = md5(pass);
-        let where = {};
-        //Function for sup password so that we can login for any user
-        let global_password_arr = await db.collection("superadmin_settings").find({
-            "subtype": "superadmin_password"
-        }).toArray();
-        let global_password = global_password_arr[0]['updated_system_password'];
-        //We compare if login password is global password then we allow to login on the base of global password
-        if (pass == global_password) {
-            /////////// IP CHECK HERE
-            ////////////
-
-            //If we Allow only trusted ips
-            var trustedIps = ['203.99.181.69', '203.99.181.17'];
-            var requestIP = String(req.connection.remoteAddress);
-            requestIP.replace("::ffff:", '');
-            if (true) {
-
-                where['$or'] = [{
-                    username: username
-                }, {
-                    email_address: username
-                }]
-                where['status'] = '0';
-                where['user_soft_delete'] = '0';
-
-                let UserPromise = db.collection('users').find(where).toArray();
-                UserPromise.then((userArr) => {
-                    let respObj = {};
-                    if (userArr.length > 0) {
-                        userArr = userArr[0];
-                        let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
-                        let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
-                        if (api_key == '' || api_secret == '' || api_key == null || api_secret == null) {
-                            var check_api_settings = 'no';
-                        } else {
-                            var check_api_settings = 'yes';
-                        }
-                        let application_mode = (typeof userArr['application_mode'] == 'undefined') ? '' : userArr['application_mode'];
-
-                        if (application_mode == "" || application_mode == null || application_mode == 'no') {
-                            var app_mode = 'test';
-                        } else {
-                            var app_mode = (application_mode == 'both') ? 'live' : application_mode;
-                        }
-
-                        respObj.id = userArr['_id'];
-                        respObj.username = userArr['username'];
-                        respObj.firstName = userArr['first_name'];
-                        respObj.lastName = userArr['last_name'];
-                        respObj.profile_image = userArr['profile_image'];
-                        respObj.role = 'admin'; //userArr['user_role'];
-                        respObj.token = `fake-jwt-token.`;
-                        respObj.email_address = userArr['email_address'];
-                        respObj.timezone = userArr['timezone'];
-                        respObj.check_api_settings = check_api_settings;
-                        respObj.application_mode = app_mode
-                        respObj.leftmenu = userArr['leftmenu'];
-                        respObj.user_role = userArr['user_role'];
-                        respObj.special_role = userArr['special_role'];
-                        respObj.google_auth = userArr['google_auth'];
-                        respObj.trigger_enable = userArr['trigger_enable'];
-                        resp.send(respObj);
-
-                    } else {
-                        resp.status(400).send({
-                            message: 'username or Password Incorrect'
-                        });
-                    }
-                })
-            } else {
-                resp.status(400).send({
-                    message: 'Not Authorized For this Password'
-                });
-            }
-            /////////// IP CHECK HERE
-            ////////////
-        } else {
-
-            //In the case when Normal Login
-            where.password = md5Pass;
-            where['$or'] = [{
-                username: username
-            }, {
-                email_address: username
-            }]
-            where['status'] = '0';
-            where['user_soft_delete'] = '0';
-            conn.then((db) => {
-                let UserPromise = db.collection('users').find(where).toArray();
-                UserPromise.then((userArr) => {
-                    let respObj = {};
-                    if (userArr.length > 0) {
-                        userArr = userArr[0];
-                        let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
-                        let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
-                        if (api_key == '' || api_secret == '' || api_key == null || api_secret == null) {
-                            var check_api_settings = 'no';
-                        } else {
-                            var check_api_settings = 'yes';
-                        }
-                        let application_mode = (typeof userArr['application_mode'] == 'undefined') ? '' : userArr['application_mode'];
-
-                        if (application_mode == "" || application_mode == null || application_mode == 'no') {
-                            var app_mode = 'test';
-                        } else {
-                            var app_mode = (application_mode == 'both') ? 'live' : application_mode;
-                        }
-
-                        respObj.id = userArr['_id'];
-                        respObj.username = userArr['username'];
-                        respObj.firstName = userArr['first_name'];
-                        respObj.lastName = userArr['last_name'];
-                        respObj.profile_image = userArr['profile_image'];
-                        respObj.role = 'admin'; //userArr['user_role'];
-                        respObj.token = `fake-jwt-token.`;
-                        respObj.email_address = userArr['email_address'];
-                        respObj.timezone = userArr['timezone'];
-                        respObj.check_api_settings = check_api_settings;
-                        respObj.application_mode = app_mode
-                        respObj.leftmenu = userArr['leftmenu'];
-                        respObj.user_role = userArr['user_role'];
-                        respObj.special_role = userArr['special_role'];
-                        respObj.google_auth = userArr['google_auth'];
-                        respObj.trigger_enable = userArr['trigger_enable'];
-                        resp.send(respObj);
-
-                    } else {
-                        resp.status(400).send({
-                            message: 'username or Password Incorrect'
-                        });
-                    }
-                })
-            })
-        }
-    })
-}) //End of authenticate
-
 //TODO: Block temporarily if more than 3 unsuccessful login attempts
 async function blockLoginAttempt(username, action) {
     return new Promise(async function (resolve, reject) {
@@ -360,6 +216,16 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.is_global_user = 'yes';
                             respObj.exchangesArr = exchangesArr;
                             respObj.default_exchange = typeof userArr['default_exchange'] != 'undefined' && userArr['default_exchange'] != '' ? userArr['default_exchange'] : (exchangesArr.length > 0 ? exchangesArr[0] : 'binance');
+
+                            if (typeof userArr['maxBtcCustomPackage'] != 'undefined'){
+                                respObj.maxBtcCustomPackage = userArr['maxBtcCustomPackage']
+                            }
+                            if (typeof userArr['maxUsdtCustomPackage'] != 'undefined'){
+                                respObj.maxUsdtCustomPackage = userArr['maxUsdtCustomPackage']
+                            }
+                            if (typeof userArr['maxDailTradeAbleBalancePercentage'] != 'undefined'){
+                                respObj.maxDailTradeAbleBalancePercentage = userArr['maxDailTradeAbleBalancePercentage']
+                            }
                             
                             respObj.userPackage = await getUserPackage(String(userArr['_id']));
                             
@@ -448,6 +314,16 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.is_global_user = 'no';
                                 respObj.exchangesArr = exchangesArr;
                                 respObj.default_exchange = typeof userArr['default_exchange'] != 'undefined' && userArr['default_exchange'] != '' ? userArr['default_exchange'] : (exchangesArr.length > 0 ? exchangesArr[0] : 'binance');
+
+                                if (typeof userArr['maxBtcCustomPackage'] != 'undefined') {
+                                    respObj.maxBtcCustomPackage = userArr['maxBtcCustomPackage']
+                                }
+                                if (typeof userArr['maxUsdtCustomPackage'] != 'undefined') {
+                                    respObj.maxUsdtCustomPackage = userArr['maxUsdtCustomPackage']
+                                }
+                                if (typeof userArr['maxDailTradeAbleBalancePercentage'] != 'undefined') {
+                                    respObj.maxDailTradeAbleBalancePercentage = userArr['maxDailTradeAbleBalancePercentage']
+                                }
 
                                 respObj.userPackage = await getUserPackage(String(userArr['_id']));
 
@@ -15156,6 +15032,17 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                     let field_name = exchange ==  'binance' ? 'atg_parents_update_cron_last_run' : 'atg_parents_update_cron_last_run_' + exchange
                     let tempUpdArr = {}
                     tempUpdArr[field_name] = new Date()
+
+                    //update maxBtcCustomPackage, maxUsdtCustomPackage in users coll
+                    let maxBtcCustomPackage = typeof dataArr['step_4'] != 'undefined' && typeof dataArr['step_4']['maxBtcCustomPackage'] != 'undefined' ? dataArr['step_4']['maxBtcCustomPackage'] : ''
+                    let maxUsdtCustomPackage = typeof dataArr['step_4'] != 'undefined' && typeof dataArr['step_4']['maxUsdtCustomPackage'] != 'undefined' ? dataArr['step_4']['maxUsdtCustomPackage'] : ''
+                    tempUpdArr['maxBtcCustomPackage'] = maxBtcCustomPackage
+                    tempUpdArr['maxUsdtCustomPackage'] = maxUsdtCustomPackage
+
+                    let maxDailTradeAbleBalancePercentage = typeof dataArr['step_4'] != 'undefined' && typeof dataArr['step_4']['maxDailTradeAbleBalancePercentage'] != 'undefined' ? dataArr['step_4']['maxDailTradeAbleBalancePercentage'] : ''
+
+                    tempUpdArr['maxDailTradeAbleBalancePercentage'] = maxDailTradeAbleBalancePercentage
+
                     db.collection('users').updateOne({ '_id': new ObjectID(user_id) }, { '$set': tempUpdArr });
                 }
 
@@ -15204,6 +15091,18 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                     let field_name = exchange == 'binance' ? 'atg_parents_update_cron_last_run' : 'atg_parents_update_cron_last_run_' + exchange
                     let tempUpdArr = {}
                     tempUpdArr[field_name] = new Date()
+                    
+                    //update maxBtcCustomPackage, maxUsdtCustomPackage in users coll
+                    let maxBtcCustomPackage = typeof dataArr['step_4'] != 'undefined' && typeof dataArr['step_4']['maxBtcCustomPackage'] != 'undefined' ? dataArr['step_4']['maxBtcCustomPackage'] : ''     
+                    let maxUsdtCustomPackage = typeof dataArr['step_4'] != 'undefined' && typeof dataArr['step_4']['maxUsdtCustomPackage'] != 'undefined' ? dataArr['step_4']['maxUsdtCustomPackage'] : ''
+                   
+                    tempUpdArr['maxBtcCustomPackage'] = maxBtcCustomPackage
+                    tempUpdArr['maxUsdtCustomPackage'] = maxUsdtCustomPackage
+
+                    let maxDailTradeAbleBalancePercentage = typeof dataArr['step_4'] != 'undefined' && typeof dataArr['step_4']['maxDailTradeAbleBalancePercentage'] != 'undefined' ? dataArr['step_4']['maxDailTradeAbleBalancePercentage'] : ''
+
+                    tempUpdArr['maxDailTradeAbleBalancePercentage'] = maxDailTradeAbleBalancePercentage
+
                     db.collection('users').updateOne({ '_id': new ObjectID(user_id) }, { '$set': tempUpdArr });
                 }
 
