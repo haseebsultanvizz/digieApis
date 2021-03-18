@@ -9608,7 +9608,7 @@ router.post('/updateManualOrder', async (req, resp) => {
 
         //set profit percentage if sell price is fixed
         if (sellOrderArr['profit_type'] == 'fixed_price') {
-            let purchased_price = !isNaN(parseFloat(sellOrderArr['purchased_price'])) ? parseFloat(sellOrderArr['purchased_price']) : ''
+            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : ''
             let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
             updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
             updArr['profit_percent'] = updArr['sell_profit_percent']
