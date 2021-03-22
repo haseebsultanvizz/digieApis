@@ -2324,7 +2324,7 @@ function createAutoOrder(OrderArr) {
                     //TODO: insert parent error log
                     var show_hide_log = 'yes'
                     var type = 'parent_created'
-                    var log_msg = 'Auto order parent created' + interfaceType
+                    var log_msg = 'Auto order parent created ' + interfaceType
                     var order_mode = OrderArr['application_mode']
                     create_orders_history_log(result.insertedId, log_msg, type, show_hide_log, exchange, order_mode, OrderArr['created_date'])
 
