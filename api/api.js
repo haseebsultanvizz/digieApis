@@ -2328,6 +2328,10 @@ function createAutoOrder(OrderArr) {
                     var order_mode = OrderArr['application_mode']
                     create_orders_history_log(result.insertedId, log_msg, type, show_hide_log, exchange, order_mode, OrderArr['created_date'])
 
+                    //Send Notification
+                    let notification_msg = log_msg
+                    send_notification(OrderArr['admin_id'], 'news_alerts', 'medium', notification_msg, orderId, exchange, OrderArr['symbol'], order_mode, '')
+
                     resolve(result)
                 }
             })
