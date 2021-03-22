@@ -2320,7 +2320,7 @@ function createAutoOrder(OrderArr) {
                     resolve(err);
                 } else {
 
-                    let interfaceType = (typeof OrderArr.interface != 'undefined' && OrderArr.interface != '' ? ' from ' + OrderArr.interface : '');
+                    let interfaceType = (typeof OrderArr.interface != 'undefined' && OrderArr.interface != '' ? OrderArr.interface : '');
                     //TODO: insert parent error log
                     var show_hide_log = 'yes'
                     var type = 'parent_created'
