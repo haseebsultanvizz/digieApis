@@ -1892,6 +1892,10 @@ router.post('/makeManualOrderSetForSell', async (req, resp) => {
 
 //Post call from angular component for creating parent order
 router.post('/createAutoOrder', async (req, resp) => {
+
+    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+    order['interface'] = interfaceType
+
     let order = req.body.orderArr;
 
     order['created_date'] = new Date()
@@ -2315,6 +2319,15 @@ function createAutoOrder(OrderArr) {
                 if (err) {
                     resolve(err);
                 } else {
+
+                    let interfaceType = (typeof OrderArr.interface != 'undefined' && OrderArr.interface != '' ? ' from ' + OrderArr.interface : '');
+                    //TODO: insert parent error log
+                    var show_hide_log = 'yes'
+                    var type = 'parent_created'
+                    var log_msg = 'Auto order parent created' + interfaceType
+                    var order_mode = OrderArr['application_mode']
+                    create_orders_history_log(result.insertedId, log_msg, type, show_hide_log, exchange, order_mode, OrderArr['created_date'])
+
                     resolve(result)
                 }
             })
