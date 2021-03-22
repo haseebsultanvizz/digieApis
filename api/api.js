@@ -1894,9 +1894,9 @@ router.post('/makeManualOrderSetForSell', async (req, resp) => {
 router.post('/createAutoOrder', async (req, resp) => {
 
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
-    order['interface'] = interfaceType
-
+    
     let order = req.body.orderArr;
+    order['interface'] = interfaceType
 
     order['created_date'] = new Date()
     order['modified_date'] = new Date()
