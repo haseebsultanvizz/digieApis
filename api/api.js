@@ -3472,6 +3472,13 @@ router.post('/listOrderListing', async (req, resp) => {
             let profitLossPercentage = calculate_percentage(parseFloat(expecteddeepPrice), currentMarketPrice);
             let PLCls = (currentMarketPrice <= expecteddeepPrice) ? 'success' : 'default'
             profitLossPercentageHtml = '<span class="text-' + PLCls + '"><b>' + Math.abs(profitLossPercentage) + '%</b></span>';
+        
+        } else if (trigger_type == 'no' && status == 'new' && (typeof orderListing[index].deep_price_on_off == 'undefined' || orderListing[index].deep_price_on_off != 'yes') && typeof orderListing[index].price != 'undefined' && orderListing[index].price != ''){
+
+            let expecteddeepPrice = orderListing[index].price
+            let profitLossPercentage = calculate_percentage(parseFloat(expecteddeepPrice), currentMarketPrice);
+            let PLCls = (currentMarketPrice <= expecteddeepPrice) ? 'success' : 'default'
+            profitLossPercentageHtml = '<span class="text-' + PLCls + '"><b>' + Math.abs(profitLossPercentage) + '%</b></span>';
         }
 
         order['profitLossPercentageHtml'] = profitLossPercentageHtml;
