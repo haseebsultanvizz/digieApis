@@ -24859,9 +24859,9 @@ router.all('/getAllGlobalCoins', async (req, res) => {
 
     let where_symbols = { '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC'] }
 
-    let binance = await db.collection('coins').find({ 'symbol': where_symbols, 'user_id': { '$in': ['global', 'new_coins'] }, 'exchange_type': 'binance' }).toArray()
-    let bam = await db.collection('coins_bam').find({ 'symbol': where_symbols, 'user_id': { '$in': ['global', 'new_coins'] } }).toArray()
-    let kraken = await db.collection('coins_kraken').find({ 'symbol': where_symbols, 'user_id': { '$in': ['global', 'new_coins'] } }).toArray()
+    let binance = await db.collection('coins').find({ 'symbol': where_symbols, 'user_id': 'global', 'exchange_type': 'binance' }).toArray()
+    let bam = await db.collection('coins_bam').find({ 'symbol': where_symbols, 'user_id': 'global' }).toArray()
+    let kraken = await db.collection('coins_kraken').find({ 'symbol': where_symbols, 'user_id': 'global' }).toArray()
 
     // let binance_symbols = binance.map(item=> item.symbol)
     // let bam_symbols = bam.map(item=> item.symbol)
