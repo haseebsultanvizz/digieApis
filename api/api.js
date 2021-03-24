@@ -24853,5 +24853,42 @@ router.post('/checkBinanceApiSecret', async (req, res) => {
     });
 })
 
+router.post('/getAllGlobalCoins', async (req, res) => {
+    
+    const db = await conn
+
+    let where_symbols = { '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC'] }
+
+    let binance = await db.collection('coins').find({ 'symbol': where_symbols, 'user_id': { '$in': ['global', 'new_coins'] }, 'exchange_type': 'binance' }).toArray()
+    let bam = await db.collection('coins_bam').find({ 'symbol': where_symbols, 'user_id': { '$in': ['global', 'new_coins'] } }).toArray()
+    let kraken = await db.collection('coins_kraken').find({ 'symbol': where_symbols, 'user_id': { '$in': ['global', 'new_coins'] } }).toArray()
+
+    let binance_symbols = binance.map(item=> item.symbol)
+    let bam_symbols = bam.map(item=> item.symbol)
+    let kraken_symbols = kraken.map(item=> item.symbol)
+    console.log(binance_symbols.length, bam_symbols.length, kraken_symbols.length)
+
+    if (binance.length > 0 || bam.length > 0 || kraken.length > 0){
+        
+        let data = {
+            'binance': binance,
+            'bam': bam,
+            'kraken': kraken,
+        }
+
+        res.send({
+            'status': false,
+            'data': data,
+            'message': 'data found'
+        })
+
+    }else{
+        res.send({ 
+            'status': false,
+            'message': 'data not found' 
+        })
+    }
+
+})
 
 module.exports = router;
