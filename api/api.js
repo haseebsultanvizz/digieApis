@@ -24853,7 +24853,7 @@ router.post('/checkBinanceApiSecret', async (req, res) => {
     });
 })
 
-router.post('/getAllGlobalCoins', async (req, res) => {
+router.all('/getAllGlobalCoins', async (req, res) => {
     
     const db = await conn
 
@@ -24863,10 +24863,10 @@ router.post('/getAllGlobalCoins', async (req, res) => {
     let bam = await db.collection('coins_bam').find({ 'symbol': where_symbols, 'user_id': { '$in': ['global', 'new_coins'] } }).toArray()
     let kraken = await db.collection('coins_kraken').find({ 'symbol': where_symbols, 'user_id': { '$in': ['global', 'new_coins'] } }).toArray()
 
-    let binance_symbols = binance.map(item=> item.symbol)
-    let bam_symbols = bam.map(item=> item.symbol)
-    let kraken_symbols = kraken.map(item=> item.symbol)
-    console.log(binance_symbols.length, bam_symbols.length, kraken_symbols.length)
+    // let binance_symbols = binance.map(item=> item.symbol)
+    // let bam_symbols = bam.map(item=> item.symbol)
+    // let kraken_symbols = kraken.map(item=> item.symbol)
+    // console.log(binance_symbols.length, bam_symbols.length, kraken_symbols.length)
 
     if (binance.length > 0 || bam.length > 0 || kraken.length > 0){
         
