@@ -24877,7 +24877,7 @@ router.all('/getAllGlobalCoins', async (req, res) => {
         }
 
         res.send({
-            'status': false,
+            'status': true,
             'data': data,
             'message': 'data found'
         })
