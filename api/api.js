@@ -13903,7 +13903,10 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
                 //loop all childs and send sell API call
                 let ids = []
                 ids.push(order_id)
-                ids = ids.concat(order['avg_orders_ids'])
+                if (typeof order['avg_orders_ids'] != 'undefined'){
+                    ids = ids.concat(order['avg_orders_ids'])
+                }
+                
                 let childsCount = ids.length
 
                 if (typeof tab != 'undefined' && tab == 'costAvgTab'){
