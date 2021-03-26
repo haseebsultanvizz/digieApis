@@ -552,4 +552,4 @@ Content-Type: application/json
 POST http://localhost:3010/apiEndPoint/getTradeHistory
 
 ###
-GET http://localhost:3010/apiEndPoint/fixCostAvgOrders
+GET http://localhost:3010/apiEndPoint/getAllGlobalCoins

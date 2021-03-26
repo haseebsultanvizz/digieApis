@@ -24319,6 +24319,7 @@ async function getTradeHistory(filter, exchange, timezone) {
     let coins = filter.coins
     let end_date = filter.end_date
     let limit = filter.limit
+    // let limit = 1
     let order_level = filter.order_level
     let order_type = filter.order_type
     let skip = filter.skip
@@ -24399,6 +24400,11 @@ async function getTradeHistory(filter, exchange, timezone) {
 
     let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
 
+    // console.log(trades)
+    // console.log(trades[0]['trades']['value'])
+
+    // process.exit(1)
+
     // console.log(new Date(), '=================================')
 
     let tradeIds = trades.map(item => item.trades.value.ordertxid)
@@ -24433,9 +24439,17 @@ async function getTradeHistory(filter, exchange, timezone) {
             },
             {
                 'binance_order_id_sell': { '$in': tradeIds },
-            }
+            },
+            {
+                'tradeId': { '$in': tradeIds },
+            },
+            {
+                'tradeId_sell': { '$in': tradeIds },
+            },
         ]
     }
+
+    // console.log(JSON.stringify(whereDigie))
 
     let digieBuyTrades = await db.collection(buy_collection).aggregate(whereDigie).toArray()
     let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
@@ -24476,7 +24490,9 @@ async function getTradeHistory(filter, exchange, timezone) {
             krakenObj = krakenObj.trades.value
             let tradeId = krakenObj.ordertxid
 
-            let digieEntry = digieTrades.find(item => item.binance_order_id == tradeId || item.binance_order_id_sell == tradeId ? true : false)
+            let digieEntry = digieTrades.find(item => item.binance_order_id == tradeId || item.binance_order_id_sell == tradeId || item.tradeId == tradeId || item.tradeId_sell == tradeId ? true : false)
+
+            // console.log(digieEntry)
 
             if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
 
@@ -24522,8 +24538,6 @@ async function getTradeHistory(filter, exchange, timezone) {
             }
         })
     }
-
-    // console.log('trades: ', trades.length, '     checkTradesArr: ', checkTradesArr.length)
 
     if (checkTradesArr.length > 0){
         for (let i = 0; i < checkTradesArr.length; i++){
@@ -24621,7 +24635,7 @@ async function getTradeHistory(filter, exchange, timezone) {
         'userDoubtTradeIdsArr': userDoubtTradeIdsArr,
     }
 
-    // console.log('digieDuplicateTradeIdsArr', digieDuplicateTradeIdsArr.length, 'digieDoubtTradeIdsArr', digieDoubtTradeIdsArr.length, 'userDoubtTradeIdsArr', userDoubtTradeIdsArr.length)
+    // console.log('kraken_trades', trades.length, ' digieTrades ', digieTrades.length, ' digieDuplicateTradeIdsArr ', digieDuplicateTradeIdsArr.length, ' digieDoubtTradeIdsArr ', digieDoubtTradeIdsArr.length, ' userDoubtTradeIdsArr ', userDoubtTradeIdsArr.length)
 
     return resultObj
 }
