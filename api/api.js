@@ -14341,7 +14341,7 @@ router.post('/readNotifications', (req, res) => {
 
                 let ids = [];
                 await Promise.all(notification_ids.map(id=>{ids.push(new ObjectID(id))}));
-                console.log(ids);
+                // console.log(ids);
 
                 let set = {};
                 set['$set'] = {
