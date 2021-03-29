@@ -3833,7 +3833,7 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatusArr.push('Cost Avg')
             }
 
-            if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes') {
+            if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].status == 'takingOrder') {
                 htmlStatus += '<span class="badge badge-warning ml-1" style="margin-left:4px;">Child Order in Progress</span>';
                 htmlStatusArr.push('Child Order in Progress')
             }
