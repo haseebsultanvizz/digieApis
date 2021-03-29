@@ -5350,8 +5350,8 @@ router.post('/makeCostAvg', async (req, resp) => {
                 let tttttorder = {}
                 await update_cost_avg_fields_shahzad(order_id, tttttorder, exchange)
 
-                await updateAvgSellFullTransactionPrice(order_id, exchange, order['symbol'])
-                await updateAvgSellThreeTransactionPrice(order_id, exchange, order['symbol'])
+                await updateAvgSellFullTransactionPrice(order_id, exchange, getBuyOrder['symbol'])
+                await updateAvgSellThreeTransactionPrice(order_id, exchange, getBuyOrder['symbol'])
 
             } else if (tab == 'soldTab'){
                 tabName = 'Sold '
