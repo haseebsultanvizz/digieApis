@@ -13712,7 +13712,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 costAvgObj['profitLoss'] = profitLoss
                 costAvgObj['plColor'] = (profitLoss > 0 ? 'success' : 'danger')
 
-                totalQuantity += typeof obj['quantity'] != 'undefined' && !isNaN(parseFloat(obj['quantity'])) ? parseFloat(obj['quantity']) : 0
+                totalQuantity += typeof obj['is_sell_order'] != 'undefined' && obj['is_sell_order'] == 'yes' && typeof obj['quantity'] != 'undefined' && !isNaN(parseFloat(obj['quantity'])) ? parseFloat(obj['quantity']) : 0
                 
                 costAvgArr.push(costAvgObj)
             }
