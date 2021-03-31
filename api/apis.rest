@@ -458,8 +458,8 @@ Content-Type: application/json
 
 ###
 
-#POST http://34.205.124.51:3010/apiEndPoint/getAllGlobalCoins
-GET http://localhost:3010/apiEndPoint/getAllGlobalCoins
+POST http://34.205.124.51:3010/apiEndPoint/getAllGlobalCoins
+# GET http://localhost:3010/apiEndPoint/getAllGlobalCoins
 
 ###
 

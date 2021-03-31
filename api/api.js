@@ -13703,7 +13703,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 // console.log(obj['_id'], obj['symbol'], obj['sell_price'], obj['market_sold_price'], obj['purchased_price'], typeof obj['purchased_price'])
 
                 costAvgObj['buy_price'] = obj['purchased_price'].toFixed(8)
-                costAvgObj['sell_price'] = obj['is_sell_order'] == 'sold' ? obj['market_sold_price'].toFixed(8) : obj['sell_price'].toFixed(8)
+                costAvgObj['sell_price'] = obj['is_sell_order'] == 'sold' ? parseFloat(obj['market_sold_price']).toFixed(8) : parseFloat(obj['sell_price']).toFixed(8)
                 costAvgObj['type'] = type
                 costAvgObj['targetProfit'] = target11Profit
                 costAvgObj['status'] = obj['status']
