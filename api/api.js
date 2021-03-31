@@ -1093,11 +1093,10 @@ router.post('/listManualOrderComponent', async (req, resp) => {
 }) //End of listManualOrderComponent	
 
 //Api post call for getting user coins directly
-router.post('/listUserCoinsApi', async (req, resp) => {
+router.post('/listUserCoinsApi', async (req, resp) => {    
 
-   
     var urserCoinsArr = await listUserCoins(req.body.admin_id)
- 
+    
     resp.status(200).send({
         message: urserCoinsArr
     });
@@ -24870,40 +24869,120 @@ router.post('/checkBinanceApiSecret', async (req, res) => {
     });
 })
 
-router.all('/getAllGlobalCoins', async (req, res) => {
-    
-    const db = await conn
+async function candleCoins() {
+    return new Promise(async (resolve) => {
 
-    let where_symbols = { '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC'] }
+        let coinsArr = []
 
-    let binance = await db.collection('coins').find({ 'symbol': where_symbols, 'user_id': 'global', 'exchange_type': 'binance' }).toArray()
-    let bam = await db.collection('coins_bam').find({ 'symbol': where_symbols, 'user_id': 'global' }).toArray()
-    let kraken = await db.collection('coins_kraken').find({ 'symbol': where_symbols, 'user_id': 'global' }).toArray()
+        const db = await conn
 
-    // let binance_symbols = binance.map(item=> item.symbol)
-    // let bam_symbols = bam.map(item=> item.symbol)
-    // let kraken_symbols = kraken.map(item=> item.symbol)
-    // console.log(binance_symbols.length, bam_symbols.length, kraken_symbols.length)
-
-    if (binance.length > 0 || bam.length > 0 || kraken.length > 0){
-        
-        let data = {
-            'binance': binance,
-            'bam': bam,
-            'kraken': kraken,
+        let symbols = {
+            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC']
         }
 
-        res.send({
-            'status': true,
-            'data': data,
-            'message': 'data found'
-        })
+        let where = {
+            'user_id': 'global',
+            'symbol': symbols,
+            'exchange_type': 'binance'
+        }
 
-    }else{
-        res.send({ 
-            'status': false,
-            'message': 'data not found' 
-        })
+        let binance_coins = await db.collection('coins').aggregate([
+            {
+                '$match': where,
+            },
+            {
+                '$addFields': {
+                    'exchange_type': 'binance'
+                }
+            }
+        ]).toArray()
+        coinsArr = coinsArr.concat(binance_coins)
+
+        where = {
+            'user_id': 'global',
+            'symbol': symbols
+        }
+        let bam_coins = await db.collection('coins_bam').aggregate([
+            {
+                '$match': where,
+            },
+            {
+                '$addFields': {
+                    'exchange_type': 'bam'
+                }
+            }
+        ]).toArray()
+        coinsArr = coinsArr.concat(bam_coins)
+
+        where = {
+            'user_id': 'global',
+            'symbol': symbols
+        }
+        let kraken_coins = await db.collection('coins_kraken').aggregate([
+            {
+                '$match': where,
+            },
+            {
+                '$addFields': {
+                    'exchange_type': 'kraken'
+                }
+            }
+        ]).toArray()
+        coinsArr = coinsArr.concat(kraken_coins)
+
+        resolve(coinsArr)
+
+    })
+}
+
+router.all('/getAllGlobalCoins', async (req, res) => {
+
+    console.log(req.body)
+
+    if (typeof req.body.candleCoins != 'undefined' && req.body.candleCoins == 'candleCoins') {
+
+        var urserCoinsArr = await candleCoins()
+
+        res.status(200).send({
+            message: urserCoinsArr
+        });
+
+    } else {
+
+        const db = await conn
+
+        let where_symbols = { '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC'] }
+
+        let binance = await db.collection('coins').find({ 'symbol': where_symbols, 'user_id': 'global', 'exchange_type': 'binance' }).toArray()
+        let bam = await db.collection('coins_bam').find({ 'symbol': where_symbols, 'user_id': 'global' }).toArray()
+        let kraken = await db.collection('coins_kraken').find({ 'symbol': where_symbols, 'user_id': 'global' }).toArray()
+
+        // let binance_symbols = binance.map(item=> item.symbol)
+        // let bam_symbols = bam.map(item=> item.symbol)
+        // let kraken_symbols = kraken.map(item=> item.symbol)
+        // console.log(binance_symbols.length, bam_symbols.length, kraken_symbols.length)
+
+        if (binance.length > 0 || bam.length > 0 || kraken.length > 0){
+            
+            let data = {
+                'binance': binance,
+                'bam': bam,
+                'kraken': kraken,
+            }
+
+            res.send({
+                'status': true,
+                'data': data,
+                'message': 'data found'
+            })
+
+        }else{
+            res.send({ 
+                'status': false,
+                'message': 'data not found' 
+            })
+        }
+
     }
 
 })

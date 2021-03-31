@@ -544,3 +544,16 @@ POST http://localhost:3010/apiEndPoint/getTradeHistory
 
 ###
 GET http://localhost:3010/apiEndPoint/getAllGlobalCoins
+Content-Type: application/json
+
+{ 
+    "candleCoins": "candleCoins"
+}
+
+###
+POST http://34.205.124.51:3010/apiEndPoint/listUserCoinsApi
+Content-Type: application/json
+
+{ 
+    "admin_id": "global"
+}
