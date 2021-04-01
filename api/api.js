@@ -13643,6 +13643,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
             // console.log('totalCount: ',orders.length , currPrice, BTCUSDTPrice)
 
             let totalQuantity = 0
+            let temp_totalQuantity = 0
 
             for (let i = 0; i < totalOrders; i++) {
 
@@ -13713,11 +13714,17 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
 
                 totalQuantity += typeof obj['is_sell_order'] != 'undefined' && obj['is_sell_order'] == 'yes' && typeof obj['quantity'] != 'undefined' && !isNaN(parseFloat(obj['quantity'])) ? parseFloat(obj['quantity']) : 0
                 
+                temp_totalQuantity += parseFloat(obj['quantity'])
+                
                 costAvgArr.push(costAvgObj)
             }
 
             sold_avg_order_count = orders.filter(x => (x['is_sell_order'] == 'sold')).length
             remaining_avg_order_count = orders.filter(x => (x['is_sell_order'] == 'yes' && (x['status'] == 'FILLED' || x['status'] == 'LTH'))).length
+
+            if (sold_avg_order_count == orders.length){
+                totalQuantity = temp_totalQuantity
+            }
 
             let avgProfit = 0
             let soldProfit = 0
