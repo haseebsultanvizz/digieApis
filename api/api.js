@@ -5308,6 +5308,17 @@ router.post('/makeCostAvg', async (req, resp) => {
                 update['$set']['cost_avg_buy'] = 'yes'
                 update['$set']['move_to_cost_avg'] = 'yes'
                 
+                update['$set']['avg_price_three_upd'] = ''
+                update['$set']['avg_sell_price_three'] = ''
+                update['$set']['last_three_ids'] = ''
+                update['$set']['quantity_three'] = ''
+
+                update['$set']['avg_price_all_upd'] = ''
+                update['$set']['avg_sell_price'] = ''
+                update['$set']['all_buy_ids'] = ''
+                update['$set']['quantity_all'] = ''
+
+
                 //Unset Fields
                 update['$unset'] = {};
                 update['$unset']['direct_child_order_id'] = '';
