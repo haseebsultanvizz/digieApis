@@ -15187,6 +15187,9 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode)
 
                 if (application_mode == 'live') {
+                    
+                    autoTradeData['make_higher_sort_priority'] = 'yes'
+
                     await createAutoTradeParents(autoTradeData)
                 } else {
                     await createAutoTradeParents_test(autoTradeData)
@@ -15675,7 +15678,7 @@ async function createAutoTradeParents(settings){
                             'modified_date': new Date(),
                             'is_sell_order': 'no',
                             'sell_price': '',
-                            'randomize_sort': (Math.floor(Math.random() * (1000 - 0 + 1)) + 0),
+                            'randomize_sort': (typeof settings.make_higher_sort_priority != 'undefined' && settings.make_higher_sort_priority == 'yes' ? (Math.floor(Math.random() * (1000 - 900 + 1)) + 900) : (Math.floor(Math.random() * (1000 - 0 + 1)) + 0)),
                         }
                     }
 
@@ -15774,7 +15777,7 @@ async function createAutoTradeParents(settings){
                             'modified_date': new Date(),
                             'is_sell_order': 'no',
                             'sell_price': '',
-                            'randomize_sort': (Math.floor(Math.random() * (1000 - 0 + 1)) + 0),
+                            'randomize_sort': (typeof settings.make_higher_sort_priority != 'undefined' && settings.make_higher_sort_priority == 'yes' ? (Math.floor(Math.random() * (1000 - 900 + 1)) + 900) : (Math.floor(Math.random() * (1000 - 0 + 1)) + 0)),
                         }
                     }
 
