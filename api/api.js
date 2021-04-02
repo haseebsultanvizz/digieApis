@@ -5314,7 +5314,6 @@ router.post('/makeCostAvg', async (req, resp) => {
                 update['$set']['quantity_three'] = ''
 
                 update['$set']['avg_price_all_upd'] = ''
-                update['$set']['avg_sell_price'] = ''
                 update['$set']['all_buy_ids'] = ''
                 update['$set']['quantity_all'] = ''
 
