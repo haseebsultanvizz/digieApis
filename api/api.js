@@ -23212,17 +23212,21 @@ router.post('/disable_exchange_key', async (req, res) => {
         if(exchange == 'binance'){
             await db.collection('users').updateOne({ _id: new ObjectID(user_id) }, { '$unset': { 'api_key': '', 'api_secret': ''}})
 
-            await db.collection('user_wallet').deleteMany({'user_id': user_id})
+            // await db.collection('user_wallet').deleteMany({'user_id': user_id})
             await db.collection('buy_orders').updateMany({'application_mode':'live', 'admin_id': user_id, 'parent_status':'parent', 'status':{'$ne':'canceled'}}, {'$set':{'pick_parent':'no', 'pick_parent_no':'api_key_removed'}})
 
             actionSuccess = true
         } else if (exchange == 'kraken'){
-            if(keyNo == ''){
+            if (keyNo == 'primary'){
                 await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': '' } })
 
                 actionSuccess = true
-            }else if(keyNo == 'key_2'){
+            } else if (keyNo == 'secondary'){
                 await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_secondary': '', 'api_secret_secondary': '' } })
+
+                actionSuccess = true
+            } else if (keyNo == 'third'){
+                await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_third_key': '', 'api_secret_third_key': '' } })
 
                 actionSuccess = true
             }
@@ -23234,7 +23238,7 @@ router.post('/disable_exchange_key', async (req, res) => {
 
             await db.collection(collection_name).updateOne({ 'user_id': user_id }, { '$unset': { 'api_key': '', 'api_secret': '' } })
 
-            await db.collection(wallet_collection).deleteMany({ 'user_id': user_id })
+            // await db.collection(wallet_collection).deleteMany({ 'user_id': user_id })
             await db.collection(buy_collection).updateMany({ 'application_mode': 'live', 'admin_id': user_id, 'parent_status': 'parent', 'status': { '$ne': 'canceled' } }, { '$set': { 'pick_parent': 'no', 'pick_parent_no': 'api_key_removed' } })
 
             actionSuccess = true
