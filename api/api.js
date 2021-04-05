@@ -1616,19 +1616,27 @@ router.post('/createManualOrder', (req, resp) => {
             orders['buy_trail_interval'] = parseFloat(orders['buy_trail_interval_temp'])
             orders['buy_trail_price'] = 0
         }else{
-            orders['buy_trail_check_temp'] = ''
-            orders['buy_trail_interval_temp'] = ''
-            orders['buy_trail_price_temp'] = 0
+            orders['buy_trail_check'] = ''
+            orders['buy_trail_interval'] = ''
+            orders['buy_trail_price'] = 0
         }
         if (typeof orders['sell_trail_check_temp'] != 'undefined' && orders['sell_trail_check_temp'] == 'yes') {
             orders['sell_trail_check'] = 'yes'
             orders['sell_trail_interval'] = parseFloat(orders['sell_trail_interval_temp'])
             orders['sell_trail_price'] = 0
         }else{
-            orders['sell_trail_check_temp'] = ''
-            orders['sell_trail_interval_temp'] = ''
-            orders['sell_trail_price_temp'] = 0
+            orders['sell_trail_check'] = ''
+            orders['sell_trail_interval'] = ''
+            orders['sell_trail_price'] = 0
         }
+        
+        //remove temp keys
+        delete orders['buy_trail_check_temp']
+        delete orders['buy_trail_interval_temp']
+        delete orders['buy_trail_price_temp']
+        delete orders['sell_trail_check_temp']
+        delete orders['sell_trail_interval_temp']
+        delete orders['sell_trail_price_temp']
 
 
         //add these fields in kraken order array
