@@ -1606,6 +1606,31 @@ router.post('/createManualOrder', (req, resp) => {
             delete orders['cancel_hour']
         }
 
+        //new fields for hassan
+        if (typeof orders['buyRightAway'] != 'undefined' && orders['buyRightAway'] == 'yes') {
+            orders['cancel_hour_time'] = new Date((new Date).getTime() + 10 * 60000)
+        }
+        
+        if (typeof orders['buy_trail_check_temp'] != 'undefined' && orders['buy_trail_check_temp'] == 'yes') {
+            orders['buy_trail_check'] = 'yes'
+            orders['buy_trail_interval'] = parseFloat(orders['buy_trail_interval_temp'])
+            orders['buy_trail_price'] = 0
+        }else{
+            orders['buy_trail_check_temp'] = ''
+            orders['buy_trail_interval_temp'] = ''
+            orders['buy_trail_price_temp'] = 0
+        }
+        if (typeof orders['sell_trail_check_temp'] != 'undefined' && orders['sell_trail_check_temp'] == 'yes') {
+            orders['sell_trail_check'] = 'yes'
+            orders['sell_trail_interval'] = parseFloat(orders['sell_trail_interval_temp'])
+            orders['sell_trail_price'] = 0
+        }else{
+            orders['sell_trail_check_temp'] = ''
+            orders['sell_trail_interval_temp'] = ''
+            orders['sell_trail_price_temp'] = 0
+        }
+
+
         //add these fields in kraken order array
         if(exchange == 'kraken'){
             orders['defined_sell_percentage'] = typeof orders['sell_profit_percent'] != 'undefined' ? orders['sell_profit_percent'] : ''
