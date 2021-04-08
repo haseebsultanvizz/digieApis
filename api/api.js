@@ -13,6 +13,7 @@ var compare = require('tsscmp')
 var googleAuthenticator = require('authenticator');
 
 const Bowser = require("bowser");
+const { ObjectId } = require('bson');
 
 var digie_admin_ids = [
     '5c0912b7fc9aadaac61dd072', //admin
@@ -14265,7 +14266,7 @@ async function update_user_balance(user_id) {
     };
     request(options, function (error, response, body) { });
 
-    // //Update Bam Balance
+    // //Update kraken Balance
     // var options = {
     //     method: 'POST',
     //     url: 'http://52.22.53.12:2607/apiEndPoint/updateBalance',
@@ -14284,17 +14285,23 @@ async function update_user_balance(user_id) {
     //     }
     // };
     // request(options, function (error, response, body) { });
+
     
+    //get user IP for sending request
+    const db = await conn
+    let user = await db.collection('users').find({ '_id': new ObjectID(String(user_id)) }).project({ trading_ip:1}).toArray();
+    let ip = '35.153.9.225'
+    let port = ':3006'
 
-
-    //Update Kraken Balance
-    // await update_user_wallet_kraken(user_id)
+    if (user.length > 0 && typeof user[0]['trading_ip'] != 'undefined' && user[0]['trading_ip'] != ''){
+        ip = user[0]['trading_ip']
+    }
+    let url = 'http://' + ip + port + '/updateUserBalance'
 
     //Update Kraken Balance
     var options = {
         method: 'POST',
-        // url: 'http://52.22.53.12:3100/updateUserBalanceKraken',
-        url: 'http://35.153.9.225:3006/updateUserBalance',
+        url: url,
         headers: {
             'cache-control'   : 'no-cache',
             'Connection'      : 'keep-alive',
@@ -18228,7 +18235,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                         update_user_balance(buyArr.user_id)
 
                     }else{
-                        // console.log(body)
+                        // console.log(buyArr.user_id, '  -----------  ' ,body)
                     }
                 }
             })
