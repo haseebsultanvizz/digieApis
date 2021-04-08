@@ -3870,6 +3870,30 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatus += '<span class="badge badge-warning ml-1" style="margin-left:4px;">Child Order in Progress</span>';
                 htmlStatusArr.push('Child Order in Progress')
             }
+        } else if (exchange == 'kraken' && typeof postDAta.is_global_user != 'undefined' && postDAta.is_global_user === true && (postDAta.status == 'open' || postDAta.status == 'sold') && typeof orderListing[index].transaction_logs != 'undefined' && orderListing[index]['transaction_logs'].length > 1) {
+
+            let buy_duplicate_arr = orderListing[index]['transaction_logs'].filter(item => { return item.type == 'buy' && item.errorString == 'No Error' ? true : false; })
+            let sell_duplicate_arr = orderListing[index]['transaction_logs'].filter(item => { return item.type == 'sell' && item.errorString == 'No Error' ? true : false; })
+            
+            buy_duplicate_arr = buy_duplicate_arr.filter((thing, index, self) =>
+                index === self.findIndex((t) => (
+                    t.txid === thing.txid 
+                ))
+            )
+            
+            sell_duplicate_arr = buy_duplicate_arr.filter((thing, index, self) =>
+                index === self.findIndex((t) => (
+                    t.txid === thing.txid 
+                ))
+            )
+
+            let buy_duplicate = buy_duplicate_arr.length > 1 ? true : false;
+            let sell_duplicate = sell_duplicate_arr.length > 1 ? true : false;
+
+            if (buy_duplicate || sell_duplicate) {
+                htmlStatus += '<span class="badge badge-danger">Doubt</span>';
+                htmlStatusArr.push('Doubt')
+            }
         }
 
         order['htmlStatus'] = htmlStatus;
