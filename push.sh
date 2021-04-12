@@ -1,4 +1,4 @@
 git add .
-git commit -m "developer is working"
+git commit -m "Huzaifa COMMIT"
 git pull
 git push
