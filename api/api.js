@@ -9433,6 +9433,7 @@ router.post('/updateManualOrder', async (req, resp) => {
 
 
         // check Added By Huzaifa to Convert Value Into Float
+        console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=IF=-=-=-=-=')
         buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
         buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
         buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
@@ -9497,6 +9498,7 @@ router.post('/updateManualOrder', async (req, resp) => {
 
 
         // check Added By Huzaifa to Convert Value Into Float
+        console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'])
         buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
         buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
         buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
