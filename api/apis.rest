@@ -241,12 +241,16 @@ Content-Type: application/json
 
 ###
 
+GET http://localhost:3010/apiEndPoint/getBnbUsers
+
+###
+
 POST http://localhost:3010/apiEndPoint/hit_auto_buy_cron
 # POST http://34.205.124.51:3010/apiEndPoint/hit_auto_buy_cron
 Content-Type: application/json
 
 { 
-    "user_id": "603879831cf9cf055f4d7af7",
+    "user_id": "605af996a3027744205f6369",
     "exchange": "binance"
 }
 
@@ -269,10 +273,10 @@ POST http://52.7.57.119:3600/buySellPost
 Content-Type: application/json
 
 { 
-    "user_id": "",
-    "symbol": "BNBBTC",
-    "quantity": ,
-    "exchange": "binance",
+    "user_id": "5c09156cfc9aadaac61dd192",
+    "symbol": "LTCUSDT",
+    "quantity": 0.140043,
+    "exchange": "kraken",
     "action": "sell"
 }
 
@@ -373,10 +377,8 @@ POST http://35.153.9.225:3006/updateUserBalance
 Content-Type: application/json
 
 { 
-    "user_id": "5c0912b7fc9aadaac61dd072",
-    "validating": false,
-    "api_key": "lKe4YhcP9p6A2TgaWizyLRnXr1c/bfImVrXaezwgm0In5ad5JPxWUfaZ",
-    "api_secret": "yFMACoiyIKulnfcEOvPOtYjbidCKhhzK4+xHfqjnfLezR02Jo1sHOgj9PHkwCBiMHG7Pm5MJLKeMY5GS++9g+w=="
+    "user_id": "5c09156cfc9aadaac61dd192",
+    "validating": false
 }
 
 ###
@@ -543,7 +545,7 @@ Content-Type: application/json
 POST http://localhost:3010/apiEndPoint/getTradeHistory
 
 ###
-GET http://localhost:3010/apiEndPoint/getAllGlobalCoins
+GET http://34.205.124.51:3010/apiEndPoint/getAllGlobalCoins
 Content-Type: application/json
 
 { 
@@ -555,5 +557,5 @@ POST http://34.205.124.51:3010/apiEndPoint/listUserCoinsApi
 Content-Type: application/json
 
 { 
-    "admin_id": "global"
+    "candleCoins": "candleCoins"
 }

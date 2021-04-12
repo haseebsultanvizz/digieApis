@@ -13,6 +13,7 @@ var compare = require('tsscmp')
 var googleAuthenticator = require('authenticator');
 
 const Bowser = require("bowser");
+const { ObjectId } = require('bson');
 
 var digie_admin_ids = [
     '5c0912b7fc9aadaac61dd072', //admin
@@ -3867,6 +3868,30 @@ router.post('/listOrderListing', async (req, resp) => {
             if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].status == 'takingOrder') {
                 htmlStatus += '<span class="badge badge-warning ml-1" style="margin-left:4px;">Child Order in Progress</span>';
                 htmlStatusArr.push('Child Order in Progress')
+            }
+        } else if (exchange == 'kraken' && typeof postDAta.is_global_user != 'undefined' && postDAta.is_global_user === true && (postDAta.status == 'open' || postDAta.status == 'sold') && typeof orderListing[index].transaction_logs != 'undefined' && orderListing[index]['transaction_logs'].length > 1) {
+
+            let buy_duplicate_arr = orderListing[index]['transaction_logs'].filter(item => { return item.type == 'buy' && item.errorString == 'No Error' ? true : false; })
+            let sell_duplicate_arr = orderListing[index]['transaction_logs'].filter(item => { return item.type == 'sell' && item.errorString == 'No Error' ? true : false; })
+
+            buy_duplicate_arr = buy_duplicate_arr.filter((thing, index, self) =>
+                index === self.findIndex((t) => (
+                    t.txid === thing.txid
+                ))
+            )
+
+            sell_duplicate_arr = buy_duplicate_arr.filter((thing, index, self) =>
+                index === self.findIndex((t) => (
+                    t.txid === thing.txid
+                ))
+            )
+
+            let buy_duplicate = buy_duplicate_arr.length > 1 ? true : false;
+            let sell_duplicate = sell_duplicate_arr.length > 1 ? true : false;
+
+            if (buy_duplicate || sell_duplicate) {
+                htmlStatus += '<span class="badge badge-danger">Doubt</span>';
+                htmlStatusArr.push('Doubt')
             }
         }
 
@@ -14269,7 +14294,7 @@ async function update_user_balance(user_id) {
     };
     request(options, function (error, response, body) { });
 
-    // //Update Bam Balance
+    // //Update kraken Balance
     // var options = {
     //     method: 'POST',
     //     url: 'http://52.22.53.12:2607/apiEndPoint/updateBalance',
@@ -14290,15 +14315,21 @@ async function update_user_balance(user_id) {
     // request(options, function (error, response, body) { });
 
 
+    //get user IP for sending request
+    const db = await conn
+    let user = await db.collection('users').find({ '_id': new ObjectID(String(user_id)) }).project({ trading_ip:1}).toArray();
+    let ip = '35.153.9.225'
+    let port = ':3006'
 
-    //Update Kraken Balance
-    // await update_user_wallet_kraken(user_id)
+    if (user.length > 0 && typeof user[0]['trading_ip'] != 'undefined' && user[0]['trading_ip'] != ''){
+        ip = user[0]['trading_ip']
+    }
+    let url = 'http://' + ip + port + '/updateUserBalance'
 
     //Update Kraken Balance
     var options = {
         method: 'POST',
-        // url: 'http://52.22.53.12:3100/updateUserBalanceKraken',
-        url: 'http://35.153.9.225:3006/updateUserBalance',
+        url: url,
         headers: {
             'cache-control'   : 'no-cache',
             'Connection'      : 'keep-alive',
@@ -18232,7 +18263,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                         update_user_balance(buyArr.user_id)
 
                     }else{
-                        // console.log(body)
+                        // console.log(buyArr.user_id, '  -----------  ' ,body)
                     }
                 }
             })
