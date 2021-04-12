@@ -9756,15 +9756,15 @@ router.post('/updateManualOrder', async (req, resp) => {
         }
 
 
-        if(upArr){
-          upArr['buy_trail_interval'] =(typeof upArr['buy_trail_interval'] != 'undefined' && upArr['buy_trail_interval'] != '') ? parseFloat(upArr['buy_trail_interval']) : ''
-          upArr['sell_trail_interval'] = (typeof upArr['sell_trail_interval'] != 'undefined' && upArr['sell_trail_interval'] != '') ? parseFloat(upArr['sell_trail_interval']) : ''
-          upArr['sell_trail_price'] = (typeof upArr['sell_trail_price'] != 'undefined' && upArr['sell_trail_price'] != '') ? parseFloat(upArr['sell_trail_price']) : ''
-          upArr['buy_trail_price'] = (typeof upArr['buy_trail_price'] != 'undefined' && upArr['buy_trail_price'] != '') ? parseFloat(upArr['buy_trail_price']) : ''
-          upArr['sell_price'] = (typeof upArr['sell_price'] != 'undefined' && upArr['sell_price'] != '') ? parseFloat(upArr['sell_price']) : ''
-          upArr['iniatial_trail_stop'] = (typeof upArr['iniatial_trail_stop'] != 'undefined' && upArr['iniatial_trail_stop'] != '') ? parseFloat(upArr['iniatial_trail_stop']) : ''
-          upArr['lth_profit'] = (typeof upArr['lth_profit'] != 'undefined' && upArr['lth_profit'] != '') ? parseFloat(upArr['lth_profit']) : ''
-          upArr['expecteddeepPrice'] = (typeof upArr['expecteddeepPrice'] != 'undefined' && upArr['expecteddeepPrice'] != '') ? parseFloat(upArr['expecteddeepPrice']) : ''
+        if(updArr){
+          updArr['buy_trail_interval'] =(typeof updArr['buy_trail_interval'] != 'undefined' && updArr['buy_trail_interval'] != '') ? parseFloat(updArr['buy_trail_interval']) : ''
+          updArr['sell_trail_interval'] = (typeof updArr['sell_trail_interval'] != 'undefined' && updArr['sell_trail_interval'] != '') ? parseFloat(updArr['sell_trail_interval']) : ''
+          updArr['sell_trail_price'] = (typeof updArr['sell_trail_price'] != 'undefined' && updArr['sell_trail_price'] != '') ? parseFloat(updArr['sell_trail_price']) : ''
+          updArr['buy_trail_price'] = (typeof updArr['buy_trail_price'] != 'undefined' && updArr['buy_trail_price'] != '') ? parseFloat(updArr['buy_trail_price']) : ''
+          updArr['sell_price'] = (typeof updArr['sell_price'] != 'undefined' && updArr['sell_price'] != '') ? parseFloat(updArr['sell_price']) : ''
+          updArr['iniatial_trail_stop'] = (typeof updArr['iniatial_trail_stop'] != 'undefined' && updArr['iniatial_trail_stop'] != '') ? parseFloat(updArr['iniatial_trail_stop']) : ''
+          updArr['lth_profit'] = (typeof updArr['lth_profit'] != 'undefined' && updArr['lth_profit'] != '') ? parseFloat(updArr['lth_profit']) : ''
+          updArr['expecteddeepPrice'] = (typeof updArr['expecteddeepPrice'] != 'undefined' && updArr['expecteddeepPrice'] != '') ? parseFloat(updArr['expecteddeepPrice']) : ''
         }
 
         var updPrmise = updateOne(where, updArr, collection);
