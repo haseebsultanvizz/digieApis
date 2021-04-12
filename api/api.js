@@ -9433,14 +9433,14 @@ router.post('/updateManualOrder', async (req, resp) => {
 
 
         // check Added By Huzaifa to Convert Value Into Float
-        buyOrderArr['buy_trail_interval'] =(typeof buyOrderArr['buy_trail_interval'] != 'undefined' && buyOrderArr['buy_trail_interval'] != '') ? parseFloat(buyOrderArr['buy_trail_interval']) : ''
-        buyOrderArr['sell_trail_interval'] = (typeof buyOrderArr['sell_trail_interval'] != 'undefined' && buyOrderArr['sell_trail_interval'] != '') ? parseFloat(buyOrderArr['sell_trail_interval']) : ''
-        buyOrderArr['sell_trail_price'] = (typeof buyOrderArr['sell_trail_price'] != 'undefined' && buyOrderArr['sell_trail_price'] != '') ? parseFloat(buyOrderArr['sell_trail_price']) : ''
-        buyOrderArr['buy_trail_price'] = (typeof buyOrderArr['buy_trail_price'] != 'undefined' && buyOrderArr['buy_trail_price'] != '') ? parseFloat(buyOrderArr['buy_trail_price']) : ''
-        buyOrderArr['sell_price'] = (typeof buyOrderArr['sell_price'] != 'undefined' && buyOrderArr['sell_price'] != '') ? parseFloat(buyOrderArr['sell_price']) : ''
-        buyOrderArr['iniatial_trail_stop'] = (typeof buyOrderArr['iniatial_trail_stop'] != 'undefined' && buyOrderArr['iniatial_trail_stop'] != '') ? parseFloat(buyOrderArr['iniatial_trail_stop']) : ''
-        buyOrderArr['lth_profit'] = (typeof buyOrderArr['lth_profit'] != 'undefined' && buyOrderArr['lth_profit'] != '') ? parseFloat(buyOrderArr['lth_profit']) : ''
-        buyOrderArr['expecteddeepPrice'] = (typeof buyOrderArr['expecteddeepPrice'] != 'undefined' && buyOrderArr['expecteddeepPrice'] != '') ? parseFloat(buyOrderArr['expecteddeepPrice']) : ''
+        buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
+        buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
+        buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
+        buyorderArr['buy_trail_price'] = (typeof buyorderArr['buy_trail_price'] != 'undefined' && buyorderArr['buy_trail_price'] != '') ? parseFloat(buyorderArr['buy_trail_price']) : ''
+        buyorderArr['sell_price'] = (typeof buyorderArr['sell_price'] != 'undefined' && buyorderArr['sell_price'] != '') ? parseFloat(buyorderArr['sell_price']) : ''
+        buyorderArr['iniatial_trail_stop'] = (typeof buyorderArr['iniatial_trail_stop'] != 'undefined' && buyorderArr['iniatial_trail_stop'] != '') ? parseFloat(buyorderArr['iniatial_trail_stop']) : ''
+        buyorderArr['lth_profit'] = (typeof buyorderArr['lth_profit'] != 'undefined' && buyorderArr['lth_profit'] != '') ? parseFloat(buyorderArr['lth_profit']) : ''
+        buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
 
 
     } else {
@@ -9497,14 +9497,14 @@ router.post('/updateManualOrder', async (req, resp) => {
 
 
         // check Added By Huzaifa to Convert Value Into Float
-        buyOrderArr['buy_trail_interval'] =(typeof buyOrderArr['buy_trail_interval'] != 'undefined' && buyOrderArr['buy_trail_interval'] != '') ? parseFloat(buyOrderArr['buy_trail_interval']) : ''
-        buyOrderArr['sell_trail_interval'] = (typeof buyOrderArr['sell_trail_interval'] != 'undefined' && buyOrderArr['sell_trail_interval'] != '') ? parseFloat(buyOrderArr['sell_trail_interval']) : ''
-        buyOrderArr['sell_trail_price'] = (typeof buyOrderArr['sell_trail_price'] != 'undefined' && buyOrderArr['sell_trail_price'] != '') ? parseFloat(buyOrderArr['sell_trail_price']) : ''
-        buyOrderArr['buy_trail_price'] = (typeof buyOrderArr['buy_trail_price'] != 'undefined' && buyOrderArr['buy_trail_price'] != '') ? parseFloat(buyOrderArr['buy_trail_price']) : ''
-        buyOrderArr['sell_price'] = (typeof buyOrderArr['sell_price'] != 'undefined' && buyOrderArr['sell_price'] != '') ? parseFloat(buyOrderArr['sell_price']) : ''
-        buyOrderArr['iniatial_trail_stop'] = (typeof buyOrderArr['iniatial_trail_stop'] != 'undefined' && buyOrderArr['iniatial_trail_stop'] != '') ? parseFloat(buyOrderArr['iniatial_trail_stop']) : ''
-        buyOrderArr['lth_profit'] = (typeof buyOrderArr['lth_profit'] != 'undefined' && buyOrderArr['lth_profit'] != '') ? parseFloat(buyOrderArr['lth_profit']) : ''
-        buyOrderArr['expecteddeepPrice'] = (typeof buyOrderArr['expecteddeepPrice'] != 'undefined' && buyOrderArr['expecteddeepPrice'] != '') ? parseFloat(buyOrderArr['expecteddeepPrice']) : ''
+        buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
+        buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
+        buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
+        buyorderArr['buy_trail_price'] = (typeof buyorderArr['buy_trail_price'] != 'undefined' && buyorderArr['buy_trail_price'] != '') ? parseFloat(buyorderArr['buy_trail_price']) : ''
+        buyorderArr['sell_price'] = (typeof buyorderArr['sell_price'] != 'undefined' && buyorderArr['sell_price'] != '') ? parseFloat(buyorderArr['sell_price']) : ''
+        buyorderArr['iniatial_trail_stop'] = (typeof buyorderArr['iniatial_trail_stop'] != 'undefined' && buyorderArr['iniatial_trail_stop'] != '') ? parseFloat(buyorderArr['iniatial_trail_stop']) : ''
+        buyorderArr['lth_profit'] = (typeof buyorderArr['lth_profit'] != 'undefined' && buyorderArr['lth_profit'] != '') ? parseFloat(buyorderArr['lth_profit']) : ''
+        buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
     }
 
     buyorderArr['modified_date'] = new Date();
