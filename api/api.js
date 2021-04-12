@@ -24808,7 +24808,7 @@ router.post('/checkBinanceDuplicatesForTradeHistory', async (req, res)=>{
             diff /= 60;
             diff = Math.abs(Math.round(diff));
     
-            if(diff > 30){
+            if(diff > 60){
                 //remove old entry and start the cron
                 await db.collection(progressCollectionName).deleteMany({})
                 run_script = true
