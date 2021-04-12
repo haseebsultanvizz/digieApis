@@ -9444,6 +9444,10 @@ router.post('/updateManualOrder', async (req, resp) => {
         buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
 
 
+
+        console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=After IF=-=-=-=-=')
+
+
     } else {
         //set profit percentage if sell price is fixed
         if (buyorderArr['profit_type'] == 'fixed_price') {
