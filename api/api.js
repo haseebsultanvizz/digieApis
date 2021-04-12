@@ -9430,6 +9430,19 @@ router.post('/updateManualOrder', async (req, resp) => {
             buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
         }
 
+
+
+        // check Added By Huzaifa to Convert Value Into Float
+        buyOrderArr['buy_trail_interval'] =(typeof buyOrderArr['buy_trail_interval'] != 'undefined' && buyOrderArr['buy_trail_interval'] != '') ? parseFloat(buyOrderArr['buy_trail_interval']) : ''
+        buyOrderArr['sell_trail_interval'] = (typeof buyOrderArr['sell_trail_interval'] != 'undefined' && buyOrderArr['sell_trail_interval'] != '') ? parseFloat(buyOrderArr['sell_trail_interval']) : ''
+        buyOrderArr['sell_trail_price'] = (typeof buyOrderArr['sell_trail_price'] != 'undefined' && buyOrderArr['sell_trail_price'] != '') ? parseFloat(buyOrderArr['sell_trail_price']) : ''
+        buyOrderArr['buy_trail_price'] = (typeof buyOrderArr['buy_trail_price'] != 'undefined' && buyOrderArr['buy_trail_price'] != '') ? parseFloat(buyOrderArr['buy_trail_price']) : ''
+        buyOrderArr['sell_price'] = (typeof buyOrderArr['sell_price'] != 'undefined' && buyOrderArr['sell_price'] != '') ? parseFloat(buyOrderArr['sell_price']) : ''
+        buyOrderArr['iniatial_trail_stop'] = (typeof buyOrderArr['iniatial_trail_stop'] != 'undefined' && buyOrderArr['iniatial_trail_stop'] != '') ? parseFloat(buyOrderArr['iniatial_trail_stop']) : ''
+        buyOrderArr['lth_profit'] = (typeof buyOrderArr['lth_profit'] != 'undefined' && buyOrderArr['lth_profit'] != '') ? parseFloat(buyOrderArr['lth_profit']) : ''
+        buyOrderArr['expecteddeepPrice'] = (typeof buyOrderArr['expecteddeepPrice'] != 'undefined' && buyOrderArr['expecteddeepPrice'] != '') ? parseFloat(buyOrderArr['expecteddeepPrice']) : ''
+
+
     } else {
         //set profit percentage if sell price is fixed
         if (buyorderArr['profit_type'] == 'fixed_price') {
@@ -9481,6 +9494,17 @@ router.post('/updateManualOrder', async (req, resp) => {
             buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
         }
 
+
+
+        // check Added By Huzaifa to Convert Value Into Float
+        buyOrderArr['buy_trail_interval'] =(typeof buyOrderArr['buy_trail_interval'] != 'undefined' && buyOrderArr['buy_trail_interval'] != '') ? parseFloat(buyOrderArr['buy_trail_interval']) : ''
+        buyOrderArr['sell_trail_interval'] = (typeof buyOrderArr['sell_trail_interval'] != 'undefined' && buyOrderArr['sell_trail_interval'] != '') ? parseFloat(buyOrderArr['sell_trail_interval']) : ''
+        buyOrderArr['sell_trail_price'] = (typeof buyOrderArr['sell_trail_price'] != 'undefined' && buyOrderArr['sell_trail_price'] != '') ? parseFloat(buyOrderArr['sell_trail_price']) : ''
+        buyOrderArr['buy_trail_price'] = (typeof buyOrderArr['buy_trail_price'] != 'undefined' && buyOrderArr['buy_trail_price'] != '') ? parseFloat(buyOrderArr['buy_trail_price']) : ''
+        buyOrderArr['sell_price'] = (typeof buyOrderArr['sell_price'] != 'undefined' && buyOrderArr['sell_price'] != '') ? parseFloat(buyOrderArr['sell_price']) : ''
+        buyOrderArr['iniatial_trail_stop'] = (typeof buyOrderArr['iniatial_trail_stop'] != 'undefined' && buyOrderArr['iniatial_trail_stop'] != '') ? parseFloat(buyOrderArr['iniatial_trail_stop']) : ''
+        buyOrderArr['lth_profit'] = (typeof buyOrderArr['lth_profit'] != 'undefined' && buyOrderArr['lth_profit'] != '') ? parseFloat(buyOrderArr['lth_profit']) : ''
+        buyOrderArr['expecteddeepPrice'] = (typeof buyOrderArr['expecteddeepPrice'] != 'undefined' && buyOrderArr['expecteddeepPrice'] != '') ? parseFloat(buyOrderArr['expecteddeepPrice']) : ''
     }
 
     buyorderArr['modified_date'] = new Date();
