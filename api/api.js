@@ -9755,6 +9755,18 @@ router.post('/updateManualOrder', async (req, resp) => {
             updArr['custom_stop_loss_percentage'] = typeof updArr['loss_percentage'] != 'undefined' ? updArr['loss_percentage'] : ''
         }
 
+
+        if(upArr){
+          upArr['buy_trail_interval'] =(typeof upArr['buy_trail_interval'] != 'undefined' && upArr['buy_trail_interval'] != '') ? parseFloat(upArr['buy_trail_interval']) : ''
+          upArr['sell_trail_interval'] = (typeof upArr['sell_trail_interval'] != 'undefined' && upArr['sell_trail_interval'] != '') ? parseFloat(upArr['sell_trail_interval']) : ''
+          upArr['sell_trail_price'] = (typeof upArr['sell_trail_price'] != 'undefined' && upArr['sell_trail_price'] != '') ? parseFloat(upArr['sell_trail_price']) : ''
+          upArr['buy_trail_price'] = (typeof upArr['buy_trail_price'] != 'undefined' && upArr['buy_trail_price'] != '') ? parseFloat(upArr['buy_trail_price']) : ''
+          upArr['sell_price'] = (typeof upArr['sell_price'] != 'undefined' && upArr['sell_price'] != '') ? parseFloat(upArr['sell_price']) : ''
+          upArr['iniatial_trail_stop'] = (typeof upArr['iniatial_trail_stop'] != 'undefined' && upArr['iniatial_trail_stop'] != '') ? parseFloat(upArr['iniatial_trail_stop']) : ''
+          upArr['lth_profit'] = (typeof upArr['lth_profit'] != 'undefined' && upArr['lth_profit'] != '') ? parseFloat(upArr['lth_profit']) : ''
+          upArr['expecteddeepPrice'] = (typeof upArr['expecteddeepPrice'] != 'undefined' && upArr['expecteddeepPrice'] != '') ? parseFloat(upArr['expecteddeepPrice']) : ''
+        }
+
         var updPrmise = updateOne(where, updArr, collection);
         updPrmise.then((callback) => { })
 
