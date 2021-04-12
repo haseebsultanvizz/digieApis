@@ -24781,6 +24781,8 @@ async function countTradeHistory(pipeline, collectionName) {
 
 router.post('/checkBinanceDuplicatesForTradeHistory', async (req, res)=>{
 
+    console.log(req.body)
+
     let user_id = req.body.user_id
     let exchange = req.body.exchange
     
