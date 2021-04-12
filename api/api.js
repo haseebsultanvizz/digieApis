@@ -4359,7 +4359,7 @@ async function listOrderListing(postDAta3, dbConnection) {
 
 
 
-        console.log(filter_all_2, pagination, limit, skip, '=================')
+        // console.log(filter_all_2, pagination, limit, skip, '=================')
 
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter_all_2, pagination, limit, skip);
         var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter_all_2, pagination, limit, skip);
@@ -4381,7 +4381,7 @@ async function listOrderListing(postDAta3, dbConnection) {
     } else {
         var orderArr = await list_orders_by_filter(collectionName, filter, pagination, limit, skip);
     }
-    console.log(orderArr.length)
+    // console.log(orderArr.length)
     return orderArr;
 } //End of listOrderListing
 
