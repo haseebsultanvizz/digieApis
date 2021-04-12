@@ -129,13 +129,12 @@ async function blockLoginAttempt(username, action) {
         })
     })
 } //end blockLoginAttempt
-
-//when first time user login call this function 
+//when first time user login call this function
 router.post('/authenticate', async function (req, resp, next) {
     conn.then(async (db) => {
         var credentials = auth(req)
-       
-        
+
+
         if (!credentials || !check(credentials.name, credentials.pass)) {
             resp.status(403).send({
                 "message": "You are not Authorized"
@@ -227,9 +226,9 @@ router.post('/authenticate', async function (req, resp, next) {
                             if (typeof userArr['maxDailTradeAbleBalancePercentage'] != 'undefined'){
                                 respObj.maxDailTradeAbleBalancePercentage = userArr['maxDailTradeAbleBalancePercentage']
                             }
-                            
+
                             respObj.userPackage = await getUserPackage(String(userArr['_id']));
-                            
+
                             resp.send(respObj);
 
                         } else {
@@ -331,7 +330,7 @@ router.post('/authenticate', async function (req, resp, next) {
                                 if (typeof userArr['package_id'] != 'undefined' && userArr['package_id'] != ''){
                                     let myPackage = await db.collection('dynamic_packages').find({ '_id': userArr['package_id']}).toArray();
                                     if (myPackage.length > 0){
-                                        respObj['myPackage'] = myPackage[0] 
+                                        respObj['myPackage'] = myPackage[0]
                                     }
                                 }
 
@@ -350,7 +349,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             }
                         } else {
                             if (await blockLoginAttempt(username, 'increment')) {
-                                
+
                                 let email = sendTempBlockEmail(req)
 
                                 resp.status(400).send({
@@ -441,14 +440,14 @@ router.get('/myTest2', async (req,res)=>{
     const db = await conn
 
     // let result = await db.collection('buy_orders').aggregate([
-    //     { '$match': { 'application_mode': 'live', 'parent_status': 'parent', 'status': { '$ne': 'canceled' } } }, 
-    //     { '$sort': { 'created_date': -1 } }, 
-    //     { '$group': { '_id': { 'admin_id': '$admin_id', 'coin': '$symbol', 'level': '$order_level' }, 'data': { '$push': '$$ROOT' }, 'sum': { '$sum': 1 } } }, 
-    //     { '$match': { 'sum': { '$gt': 1 } } }, 
-    //     { '$project': { '_id': 0, 'data': { '$slice': ["$data", 1, { '$subtract': [{ '$size': "$data" }, 1] }] } } }, 
-    //     { '$unwind': '$data' }, 
+    //     { '$match': { 'application_mode': 'live', 'parent_status': 'parent', 'status': { '$ne': 'canceled' } } },
+    //     { '$sort': { 'created_date': -1 } },
+    //     { '$group': { '_id': { 'admin_id': '$admin_id', 'coin': '$symbol', 'level': '$order_level' }, 'data': { '$push': '$$ROOT' }, 'sum': { '$sum': 1 } } },
+    //     { '$match': { 'sum': { '$gt': 1 } } },
+    //     { '$project': { '_id': 0, 'data': { '$slice': ["$data", 1, { '$subtract': [{ '$size': "$data" }, 1] }] } } },
+    //     { '$unwind': '$data' },
     //     { '$project': { '_id': '$data._id' } },
-    //     {'$group': { '_id': null, 'parent_ids':{'$push':'$_id'} } }, 
+    //     {'$group': { '_id': null, 'parent_ids':{'$push':'$_id'} } },
     //     // { '$count': 'total' }
     // ]).toArray()
 
@@ -483,7 +482,7 @@ router.get('/myTest2', async (req,res)=>{
     ], {allowDiskUse: true}).toArray()
 
     // res.send({ 'count': result[0]['log_ids'].length, 'data': result[0]['log_ids'] })
-    
+
     console.log(result[0]['log_ids'].length)
 
     res.send({ 'count': result[0]['log_ids'].length })
@@ -494,7 +493,7 @@ router.get('/deleteLogsTest', async (req,res)=>{
     // console.log(await getClientInfo(req))
 
     //testing pull/push
-    
+
     const db = await conn
 
     //To improve logs collections
@@ -512,7 +511,7 @@ router.get('/deleteLogsTest', async (req,res)=>{
     ], {allowDiskUse: true}).toArray()
 
     // res.send({ 'count': result[0]['log_ids'].length, 'data': result[0]['log_ids'] })
-    
+
     console.log(result[0]['log_ids'].length)
 
     // let result111 = await db.collection('orders_history_log_kraken_live_2020_10').deleteMany({ '_id': { '$in': result[0]['log_ids']}})
@@ -525,7 +524,7 @@ router.get('/deleteLogsTest', async (req,res)=>{
 router.get('/test_test', async (req,res)=>{
 
     // let result = await getSubscription('5c09134cfc9aadaac61dd01c')
-    
+
     // let result = await get_all_users_current_trading_points()
 
     // let abc = '<div>Waleed Bhai ki frmaish!</div>'
@@ -588,7 +587,7 @@ router.get('/test_test', async (req,res)=>{
     var krakenCoins = ['ADABTC', 'BTCUSDT', 'DASHBTC', 'EOSBTC', 'ETCBTC', 'ETHBTC', 'LINKBTC', 'LTCUSDT', 'QTUMBTC', 'TRXBTC', 'XLMBTC', 'XMRBTC', 'XRPBTC', 'XRPUSDT']
 
     // var result = await db.collection('buy_orders_kraken').updateMany({ 'pause_parent_cancel':{'$exists':true}}, {'$set':{'pause_parent_cancel': new Date(), 'status':'canceled'}})
-    
+
     var result = await db.collection('buy_orders_kraken').aggregate([
         // { '$match': { 'admin_id':'5c0915befc9aadaac61dd1b8', 'application_mode': 'live', 'parent_status': 'parent'} },
         { '$match': { 'application_mode': 'live', 'status': 'canceled', 'parent_status': 'parent'} },
@@ -614,7 +613,7 @@ router.get('/test_test', async (req,res)=>{
 
 
     // let whereqqq = {
-    //     'application_mode': 'live', 
+    //     'application_mode': 'live',
     //     'parent_status': 'parent',
     //     'pause_status': 'pause',
     // }
@@ -634,14 +633,14 @@ async function get_all_users_current_trading_points(){
 
         let users = await db.collection('users').find({ 'application_mode': 'both'}).project({'_id':1}).toArray()
 
-        let total_users = users.length 
+        let total_users = users.length
         if (total_users > 0){
             let obj = {}
 
             for (let i = 0; i < total_users; i++){
 
                 let user_id = String(users[i]['_id'])
-                obj['user_id'] = user_id 
+                obj['user_id'] = user_id
 
                 var options = {
                     method: 'POST',
@@ -715,7 +714,7 @@ router.get('/test_internal_function', async (req,res)=>{
 
     console.log(coinsWorthArr)
 
-}) 
+})
 
 async function getClientInfo(req){
     return new Promise(resolve=>{
@@ -1008,7 +1007,7 @@ async function setGoogleAuthSecret(admin_id, secret, enable = false) {
 
 /****************** End Google Authentication *******************/
 
-//Function call for dashboard data 
+//Function call for dashboard data
 router.post('/listDashboardData', async (req, resp) => {
     //Function to get all user coins
     let userCoinsArr = await listUserCoins(req.body._id);
@@ -1091,13 +1090,13 @@ router.post('/listManualOrderComponent', async (req, resp) => {
     resp.status(200).send({
         message: listUserCoinsArr
     });
-}) //End of listManualOrderComponent	
+}) //End of listManualOrderComponent
 
 //Api post call for getting user coins directly
-router.post('/listUserCoinsApi', async (req, resp) => {    
+router.post('/listUserCoinsApi', async (req, resp) => {
 
     var urserCoinsArr = await listUserCoins(req.body.admin_id)
-    
+
     resp.status(200).send({
         message: urserCoinsArr
     });
@@ -1194,7 +1193,7 @@ router.post('/listCurrentmarketPrice', async (req, resp) => {
     });
 }) //End of listCurrentmarketPrice
 
-//function for getting current market price 
+//function for getting current market price
 function listCurrentMarketPrice(coin, exchange) {
     return new Promise((resolve) => {
         let where = {};
@@ -1438,13 +1437,13 @@ router.post('/listAutoOrderDetail', async (req, resp) => {
 router.post('/listmarketPriceMinNotation', async (req, resp) => {
     //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
     // var marketMinNotationPromise = marketMinNotation(req.body.coin);
-    
+
     let coin = req.body.coin;
     let exchange = req.body.exchange;
 
     var marketMinNotationPromise = marketMinNotation_with_step_size(coin, exchange);
     var currentMarketPricePromise = listCurrentMarketPrice(coin, exchange);
-    
+
     var promisesResult = await Promise.all([marketMinNotationPromise, currentMarketPricePromise]);
     var responseReslt = {};
     responseReslt['marketMinNotation'] = promisesResult[0].min_notation;
@@ -1461,7 +1460,7 @@ router.post('/getPricesArr', async (req, resp) => {
     let exchange = req.body.exchange;
 
     let result = await getPricesArr(exchange, coinArr)
-    
+
     if (result){
         resp.status(200).send({
             status: true,
@@ -1472,7 +1471,7 @@ router.post('/getPricesArr', async (req, resp) => {
             status: false
         });
     }
-    
+
 }) //End of getPricesArr
 
 async function getPricesArr(exchange, coinArr=[]){
@@ -1512,7 +1511,7 @@ async function listmarketPriceMinNotation(coin, exchange){
     // var marketMinNotationPromise = marketMinNotation(req.body.coin);
     var marketMinNotationPromise = marketMinNotation_with_step_size(coin, exchange);
     var currentMarketPricePromise = listCurrentMarketPrice(coin, exchange);
-    
+
     var promisesResult = await Promise.all([marketMinNotationPromise, currentMarketPricePromise]);
     var responseReslt = {};
     responseReslt['marketMinNotation'] = promisesResult[0].min_notation;
@@ -1521,7 +1520,7 @@ async function listmarketPriceMinNotation(coin, exchange){
     return responseReslt
 } //End of listmarketPriceMinNotation
 
-//post call for creating manual order  
+//post call for creating manual order
 router.post('/createManualOrder', (req, resp) => {
 
     conn.then(async (db) => {
@@ -1558,7 +1557,7 @@ router.post('/createManualOrder', (req, resp) => {
             orders['sell_price'] = ''
             orders['profit_price'] = ''
         }
-        
+
         if (typeof orders['auto_sell'] != 'undefined' && orders['auto_sell'] == 'yes') {
             orders['is_sell_order'] = 'yes'
         }
@@ -1569,7 +1568,7 @@ router.post('/createManualOrder', (req, resp) => {
             orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
         }
 
-        //set sell profit percentage 
+        //set sell profit percentage
         if (orders['profit_type'] == 'percentage' && typeof tempOrder['profit_percent'] != 'undefined') {
             let sell_profit_percent = parseFloat(parseFloat(tempOrder['profit_percent']).toFixed(1))
             orders['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
@@ -1581,7 +1580,7 @@ router.post('/createManualOrder', (req, resp) => {
         } else {
             orders['iniatial_trail_stop'] = ''
         }
-         
+
         if (typeof tempOrder['stop_loss'] != 'undefined' && tempOrder['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrder['loss_percentage']))) {
             orders['stop_loss'] = 'yes'
             orders['loss_percentage'] = parseFloat(parseFloat(tempOrder['loss_percentage']).toFixed(1))
@@ -1590,7 +1589,7 @@ router.post('/createManualOrder', (req, resp) => {
             orders['loss_percentage'] = ''
         }
 
-        //set lth profit 
+        //set lth profit
         if (typeof orders['lth_functionality'] != 'undefined' && orders['lth_functionality'] == 'yes' && !isNaN(parseFloat(orders['lth_profit']))) {
             orders['lth_functionality'] = 'yes'
             orders['lth_profit'] = parseFloat(parseFloat(orders['lth_profit']).toFixed(1))
@@ -1599,7 +1598,7 @@ router.post('/createManualOrder', (req, resp) => {
             orders['lth_profit'] = ''
         }
 
-        //cancel_hour 
+        //cancel_hour
         if (typeof orders['cancel_hour'] != 'undefined' && orders['cancel_hour'] != '' && orders['cancel_hour'] > 0) {
             let currTime = new Date()
             orders['cancel_hour_time'] = new Date(currTime.setTime(currTime.getTime() + (orders['cancel_hour'] * 60 * 60 * 1000)))
@@ -1611,7 +1610,7 @@ router.post('/createManualOrder', (req, resp) => {
         if (typeof orders['buyRightAway'] != 'undefined' && orders['buyRightAway'] == 'yes') {
             orders['cancel_hour_time'] = new Date((new Date).getTime() + 10 * 60000)
         }
-        
+
         if (typeof orders['buy_trail_check_temp'] != 'undefined' && orders['buy_trail_check_temp'] == 'yes') {
             orders['buy_trail_check'] = 'yes'
             orders['buy_trail_interval'] = parseFloat(orders['buy_trail_interval_temp'])
@@ -1630,7 +1629,7 @@ router.post('/createManualOrder', (req, resp) => {
             orders['sell_trail_interval'] = ''
             orders['sell_trail_price'] = 0
         }
-        
+
         //remove temp keys
         delete orders['buy_trail_check_temp']
         delete orders['buy_trail_interval_temp']
@@ -1712,13 +1711,13 @@ router.post('/createManualOrder', (req, resp) => {
                         tempOrder['profit_percent'] = tempOrder['sell_profit_percent']
                     }
 
-                    //set sell profit percentage 
+                    //set sell profit percentage
                     if (orders['profit_type'] == 'percentage' && typeof tempOrder['profit_percent'] != 'undefined') {
                         let sell_profit_percent = parseFloat(parseFloat(tempOrder['profit_percent']).toFixed(1))
                         tempOrder['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
                     }
 
-                    //set stop loss 
+                    //set stop loss
                     if (typeof tempOrder['stop_loss'] != 'undefined' && tempOrder['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrder['loss_percentage']))) {
                         tempOrder['stop_loss'] = 'yes'
                         tempOrder['loss_percentage'] = parseFloat(parseFloat(tempOrder['loss_percentage']).toFixed(1))
@@ -1727,7 +1726,7 @@ router.post('/createManualOrder', (req, resp) => {
                         tempOrder['loss_percentage'] = ''
                     }
 
-                    //set lth profit 
+                    //set lth profit
                     if (typeof tempOrder['lth_functionality'] != 'undefined' && tempOrder['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrder['lth_profit']))) {
                         tempOrder['lth_functionality'] = 'yes'
                         tempOrder['lth_profit'] = parseFloat(parseFloat(tempOrder['lth_profit']).toFixed(1))
@@ -1748,11 +1747,11 @@ router.post('/createManualOrder', (req, resp) => {
 
                     //add these fields in kraken order array
                     if (exchange == 'kraken') {
-                        tempOrder['defined_sell_percentage'] = typeof tempOrder['sell_profit_percent'] != 'undefined' ? tempOrder['sell_profit_percent'] : '' 
-                        tempOrder['custom_stop_loss_percentage'] = typeof tempOrder['loss_percentage'] != 'undefined' ? tempOrder['loss_percentage'] : '' 
+                        tempOrder['defined_sell_percentage'] = typeof tempOrder['sell_profit_percent'] != 'undefined' ? tempOrder['sell_profit_percent'] : ''
+                        tempOrder['custom_stop_loss_percentage'] = typeof tempOrder['loss_percentage'] != 'undefined' ? tempOrder['loss_percentage'] : ''
                     }
 
-                    //Temp sell order collection on the base of exchange 
+                    //Temp sell order collection on the base of exchange
                     var tempCollection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
 
                     db.collection(tempCollection).insertOne(tempOrder, (err, result) => {
@@ -1799,7 +1798,7 @@ router.post('/createManualOrderByChart', (req, resp) => {
         orders['created_date'] = new Date();
         orders['modified_date'] = new Date();
         var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        //create buy-orders 
+        //create buy-orders
         db.collection(collectionName).insertOne(orders, (err, result) => {
             if (err) {
                 resp.status(403).send({
@@ -1897,7 +1896,7 @@ router.post('/makeManualOrderSetForSell', async (req, resp) => {
                 updArr['sell_order_id'] = new ObjectID(sellOrderId);
                 updArr['is_sell_order'] = 'yes';
                 updArr['auto_sell'] = 'yes';
-                //update buy_orders collection 
+                //update buy_orders collection
                 var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
                 var where = {};
                 where['_id'] = new ObjectID(orderId);
@@ -1918,7 +1917,7 @@ router.post('/makeManualOrderSetForSell', async (req, resp) => {
                     message: 'Order successfully Ready for buy'
                 });
 
-            } //End of success result	
+            } //End of success result
         })
     })
 }) //End of makeManualOrderSetForSell
@@ -1927,17 +1926,17 @@ router.post('/makeManualOrderSetForSell', async (req, resp) => {
 router.post('/createAutoOrder', async (req, resp) => {
 
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
-    
+
     let order = req.body.orderArr;
     order['interface'] = interfaceType
 
     order['created_date'] = new Date()
     order['modified_date'] = new Date()
 
-    order['randomize_sort'] = Math.floor(Math.random() * (1000 - 0 + 1)) + 0; 
+    order['randomize_sort'] = Math.floor(Math.random() * (1000 - 0 + 1)) + 0;
 
     if (typeof order['admin_id'] != 'undefined' && digie_admin_ids.includes(order['admin_id'])){
-        order['pick_parent'] = 'yes'; 
+        order['pick_parent'] = 'yes';
     }else{
         let  user_remaining_usd_limit = await getUserRemainingLimit(order['admin_id'], order['exchange'])
         let user_remaining_limit = 0
@@ -1972,7 +1971,7 @@ router.post('/editAutoOrder', async (req, resp) => {
     var buyOrderArr = await listOrderById(orderId, exchange);
 
     let isParent = false
-    let unsetParentFields = [] 
+    let unsetParentFields = []
     if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent') {
         isParent = true
         if (order['cost_avg'] != 'undefined' && order['cost_avg'] == ''){
@@ -1996,7 +1995,7 @@ router.post('/editAutoOrder', async (req, resp) => {
 
     var purchased_price = (typeof buyOrderArr[0]['purchased_price'] != 'undefined' && buyOrderArr[0]['purchased_price'] != '' ? buyOrderArr[0]['purchased_price'] : buyOrderArr[0]['price']);
     var status = buyOrderArr[0]['status'];
-    //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
+    //The order which you want to update if in LTH then update the sell_price on the base of lth profit
     if (status == 'LTH') {
         var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
         order['sell_price'] = sell_price;
@@ -2010,7 +2009,7 @@ router.post('/editAutoOrder', async (req, resp) => {
         }
     }
 
-    //set sell profit percentage 
+    //set sell profit percentage
     if (order['defined_sell_percentage'] != 'undefined' || typeof order['sell_profit_percent'] != 'undefined') {
 
         let sell_profit_percent = parseFloat(parseFloat(order['sell_profit_percent']).toFixed(1))
@@ -2024,7 +2023,7 @@ router.post('/editAutoOrder', async (req, resp) => {
         order['is_sell_order'] = 'yes';
     }
 
-    //set stop loss 
+    //set stop loss
     if (typeof order['stop_loss_rule'] != 'undefined' && order['stop_loss_rule'] == 'custom_stop_loss' && !isNaN(parseFloat(order['custom_stop_loss_percentage']))) {
         order['stop_loss'] = 'yes'
         order['loss_percentage'] = parseFloat(parseFloat(order['custom_stop_loss_percentage']).toFixed(1))
@@ -2037,7 +2036,7 @@ router.post('/editAutoOrder', async (req, resp) => {
         }else{
             if (typeof order['iniatial_trail_stop'] != 'undefined'){
                 if (ttt_is_custom_stop_loss_possitive){
-                    order['iniatial_trail_stop'] = parseFloat(purchased_price) + parseFloat(loss_price);    
+                    order['iniatial_trail_stop'] = parseFloat(purchased_price) + parseFloat(loss_price);
                 }else{
                     order['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
                 }
@@ -2049,7 +2048,7 @@ router.post('/editAutoOrder', async (req, resp) => {
         order['custom_stop_loss_percentage'] = ''
     }
 
-    //set lth profit 
+    //set lth profit
     if (typeof order['lth_functionality'] != 'undefined' && order['lth_functionality'] == 'yes' && !isNaN(parseFloat(order['lth_profit']))) {
         order['lth_functionality'] = 'yes'
         order['lth_profit'] = parseFloat(parseFloat(order['lth_profit']).toFixed(1))
@@ -2069,17 +2068,17 @@ router.post('/editAutoOrder', async (req, resp) => {
 
     var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
     delete order['orderId'];
-    
+
     // if custom_stop_loss positive then only update target profit and sell price fields
     let tttOrder = {}
     if (buyOrderArr.length > 0){
         if (ttt_is_custom_stop_loss_possitive && typeof order['custom_stop_loss_percentage'] != 'undefined'){
-            
+
             let tt_CSLP = parseFloat(parseFloat(order['custom_stop_loss_percentage']).toFixed(1))
             if (!isNaN(tt_CSLP)){
                 //update initial_trail_price from order array CSL percentage
                 let loss_price = (parseFloat(buyOrderArr[0]['purchased_price']) * tt_CSLP) / 100;
-                
+
                 if (typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent') {
                     //Do nothing
                 } else {
@@ -2096,9 +2095,9 @@ router.post('/editAutoOrder', async (req, resp) => {
                 }
 
                 if (typeof order['stop_loss_type'] != 'undefined'){
-                    tttOrder['stop_loss_type'] = order['stop_loss_type']  
+                    tttOrder['stop_loss_type'] = order['stop_loss_type']
                 }
-                tttOrder['sell_price'] =  order['sell_price'] 
+                tttOrder['sell_price'] =  order['sell_price']
                 tttOrder['sell_profit_percent'] = order['sell_profit_percent']
                 tttOrder['defined_sell_percentage'] = order['defined_sell_percentage']
                 tttOrder['modified_date'] = new Date()
@@ -2107,7 +2106,7 @@ router.post('/editAutoOrder', async (req, resp) => {
             }
         }
 
-    
+
     if(isParent){
         delete order['is_sell_order']
         delete order['is_lth_order']
@@ -2127,7 +2126,7 @@ router.post('/editAutoOrder', async (req, resp) => {
         let sell_order = {
             'sell_price': order['sell_price']
         }
-        
+
         // if custom_stop_loss positive then only update target profit and sell price fields
         if (ttt_is_custom_stop_loss_possitive){
             sell_order = {}
@@ -2157,7 +2156,7 @@ router.post('/editAutoOrder', async (req, resp) => {
             }
         }
     }
-    var log_msg = log_message.replace(/,\s*$/, "."); // to remove the last comma 
+    var log_msg = log_message.replace(/,\s*$/, "."); // to remove the last comma
 
     // var log_msg = "Order Was <b style='color:yellow'>Updated</b>";
     let show_hide_log = 'yes';
@@ -2167,9 +2166,9 @@ router.post('/editAutoOrder', async (req, resp) => {
     var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
     var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
     var promiseLog = create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-    
+
     if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['parent_status'] != 'undefined' && buyOrderArr[0]['parent_status'] == 'parent' && order['cost_avg'] != 'undefined' && order['cost_avg'] == '') {
-            
+
     }
 
     //Send Notification
@@ -2194,7 +2193,7 @@ router.post('/editCostAvgOrder', async (req, resp) => {
     var buyOrderArr = await listOrderById(orderId, exchange);
 
     const db = await conn
-    
+
     if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
 
         // console.log('11111111111111111111111')
@@ -2202,22 +2201,22 @@ router.post('/editCostAvgOrder', async (req, resp) => {
         // await update_cost_avg_fields(orderId, order, exchange)
 
         await updateCostAvgChildOrders(orderId, order, exchange)
-    
+
     } else if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && typeof buyOrderArr[0]['cavg_parent'] != 'undefined' && buyOrderArr[0]['cavg_parent'] == 'yes'){
-        
+
         // console.log('2222222222222222222')
 
         let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-        
-        let buyOrder = await db.collection(buy_collection).find({ '_id': new ObjectID(String(orderId))}).toArray() 
-        let soldOrder = await db.collection(sold_collection).find({ '_id': new ObjectID(String(orderId))}).toArray() 
+
+        let buyOrder = await db.collection(buy_collection).find({ '_id': new ObjectID(String(orderId))}).toArray()
+        let soldOrder = await db.collection(sold_collection).find({ '_id': new ObjectID(String(orderId))}).toArray()
 
         //update avg sell price and purchased prices array
         if (buyOrder.length > 0){
-        
+
             await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(orderId)) }, { '$set': { 'avg_sell_price': buyOrder[0]['sell_price'], 'avg_purchase_price': [{ 'purchased_price': buyOrder[0]['purchased_price'] }], 'cost_avg_updated': 'admin', 'modified_date': new Date() } })
-            
+
         } else if (soldOrder.length > 0){
 
             await db.collection(sold_collection).updateOne({ '_id': new ObjectID(String(orderId)) }, { '$set': { 'avg_sell_price': soldOrder[0]['market_sold_price'], 'avg_purchase_price': [{ 'purchased_price': soldOrder[0]['purchased_price'] }], 'cost_avg_updated': 'admin', 'modified_date': new Date() } })
@@ -2263,7 +2262,7 @@ router.post('/editCostAvgOrder', async (req, resp) => {
 
 
     delete order['orderId'];
-    
+
     var where = {};
     where['_id'] = new ObjectID(orderId);
     var updPrmise = updateOne(where, order, collection);
@@ -2289,7 +2288,7 @@ router.post('/editCostAvgOrder', async (req, resp) => {
             }
         }
     }
-    var log_msg = log_message.replace(/,\s*$/, "."); // to remove the last comma 
+    var log_msg = log_message.replace(/,\s*$/, "."); // to remove the last comma
 
     // var log_msg = "Order Was <b style='color:yellow'>Updated</b>";
     let show_hide_log = 'yes';
@@ -2309,7 +2308,7 @@ router.post('/editCostAvgOrder', async (req, resp) => {
 //Function for creating parent order
 function createAutoOrder(OrderArr) {
 
-    //set sell profit percentage 
+    //set sell profit percentage
     if (OrderArr['defined_sell_percentage'] != 'undefined' || typeof OrderArr['sell_profit_percent'] != 'undefined') {
 
         let sell_profit_percent = parseFloat(parseFloat(OrderArr['sell_profit_percent']).toFixed(1))
@@ -2322,7 +2321,7 @@ function createAutoOrder(OrderArr) {
         OrderArr['defined_sell_percentage'] = sell_profit_percent != '' ? sell_profit_percent : defined_sell_percentage
     }
 
-    //set stop loss 
+    //set stop loss
     if (typeof OrderArr['stop_loss_rule'] != 'undefined' && OrderArr['stop_loss_rule'] == 'custom_stop_loss' && !isNaN(parseFloat(OrderArr['custom_stop_loss_percentage']))) {
         OrderArr['stop_loss'] = 'yes'
         OrderArr['loss_percentage'] = parseFloat(parseFloat(OrderArr['custom_stop_loss_percentage']).toFixed(1))
@@ -2333,7 +2332,7 @@ function createAutoOrder(OrderArr) {
         OrderArr['custom_stop_loss_percentage'] = ''
     }
 
-    //set lth profit 
+    //set lth profit
     if (typeof OrderArr['lth_functionality'] != 'undefined' && OrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(OrderArr['lth_profit']))) {
         OrderArr['lth_functionality'] = 'yes'
         OrderArr['lth_profit'] = parseFloat(parseFloat(OrderArr['lth_profit']).toFixed(1))
@@ -2379,7 +2378,7 @@ function getCostAvgChildOrderNotSoldIds(ids, exchange){
         const db = await conn
         let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
         let result = await db.collection(buy_collection).find({ _id: {$in: ids}}).project({_id:1}).toArray()
-    
+
         if (result.length > 0){
             ids = result.map(item=>item['_id'])
             resolve(ids)
@@ -2448,7 +2447,7 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
 
 
         var status = buyOrderArr[0]['status'];
-        //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
+        //The order which you want to update if in LTH then update the sell_price on the base of lth profit
         if (status == 'LTH') {
             sell_price_sum += ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
         } else {
@@ -2478,7 +2477,7 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                 avg_purchase_price.push({ 'purchased_price': purchased_price })
 
                 var status = buyOrderArr[0]['status'];
-                //The order which you want to update if in LTH then update the sell_price on the base of lth profit 
+                //The order which you want to update if in LTH then update the sell_price on the base of lth profit
                 if (status == 'LTH') {
                     var sell_price = ((parseFloat(purchased_price) * lth_profit) / 100) + parseFloat(purchased_price);
                     order['sell_price'] = sell_price;
@@ -2492,7 +2491,7 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                     }
                 }
 
-                //set sell profit percentage 
+                //set sell profit percentage
                 if (order['defined_sell_percentage'] != 'undefined' || typeof order['sell_profit_percent'] != 'undefined') {
 
                     let sell_profit_percent = parseFloat(parseFloat(order['sell_profit_percent']).toFixed(1))
@@ -2546,7 +2545,7 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                         }
                     }
                 }
-                var log_msg = log_message.replace(/,\s*$/, "."); // to remove the last comma 
+                var log_msg = log_message.replace(/,\s*$/, "."); // to remove the last comma
 
                 let show_hide_log = 'yes';
                 let type = 'order_updated'
@@ -2555,7 +2554,7 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
                 var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
                 create_orders_history_log(orderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
             }
-        
+
         }
 
         var collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
@@ -2581,7 +2580,7 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
         } else if (soldOrder11.length > 0) {
 
             // await db.collection(sold_collection11).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price, 'cost_avg_updated': 'admin', 'modified_date': new Date() } })
-            
+
             await db.collection(sold_collection11).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': avg_purchase_price, 'cost_avg_updated': 'admin', 'modified_date': new Date() } })
 
         }
@@ -2596,11 +2595,11 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
 async function update_cost_avg_fields(order_id, order, exchange){
 
     const db = await conn
-    
+
     var ids = []
-    
+
     var buyOrderArr = await listOrderById(order_id, exchange);
-    
+
     if (buyOrderArr.length > 0){
 
         var defined_sell_percentage = order['defined_sell_percentage'];
@@ -2616,21 +2615,21 @@ async function update_cost_avg_fields(order_id, order, exchange){
         let avg_purchase_price_arr = [];
 
         let ledger_ids = typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'].length > 0 ? buyOrderArr[0]['avg_orders_ids'] : []
-        
-        ledger_ids.push(new ObjectID(String(order_id))) 
+
+        ledger_ids.push(new ObjectID(String(order_id)))
 
         let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-        
+
         let sold_orders = await db.collection(sold_collection).find({ '_id': { $in: ledger_ids } }).toArray()
         let buy_orders = await db.collection(buy_collection).find({ '_id': { $in: ledger_ids } }).toArray()
-    
+
         if (sold_orders.length > 0){
-            sold_orders.map(item => { 
+            sold_orders.map(item => {
                 avg_purchase_price_arr.push({ 'purchased_price': item['purchased_price'] })
-                sold_pl_sum += parseFloat(calculate_percentage(item['purchased_price'], item['market_sold_price'])) 
-                // sell_price_sum += item['market_sold_price'] 
-                // purchase_price_sum += item['purchased_price'] 
+                sold_pl_sum += parseFloat(calculate_percentage(item['purchased_price'], item['market_sold_price']))
+                // sell_price_sum += item['market_sold_price']
+                // purchase_price_sum += item['purchased_price']
             })
         }
 
@@ -2639,23 +2638,23 @@ async function update_cost_avg_fields(order_id, order, exchange){
         let actualDsiredGet = 0
         if (buy_orders.length > 0){
 
-            remaining_additional_pl = -((sold_target_pl_sum - sold_pl_sum ) / buy_orders.length) 
+            remaining_additional_pl = -((sold_target_pl_sum - sold_pl_sum ) / buy_orders.length)
             console.log('remaininf sdsadsadsad', remaining_additional_pl)
             actualDsiredGet = (defined_sell_percentage - remaining_additional_pl);
 
             console.log('actual TP', actualDsiredGet)
 
-        
-            // remaining_additional_pl = (sold_target_pl_sum - sold_pl_sum) / buy_orders.length 
 
-            buy_orders.map(item => { 
+            // remaining_additional_pl = (sold_target_pl_sum - sold_pl_sum) / buy_orders.length
+
+            buy_orders.map(item => {
                 avg_purchase_price_arr.push({ 'purchased_price': item['purchased_price'] })
-                purchase_price_sum += item['purchased_price'] 
+                purchase_price_sum += item['purchased_price']
             })
         }
 
         if (buy_orders.length > 0 || sold_orders.length > 0){
-            purchase_price_avg = purchase_price_sum / buy_orders.length  
+            purchase_price_avg = purchase_price_sum / buy_orders.length
         }
         let avgSellPrice = ((purchase_price_avg * actualDsiredGet) / 100) + purchase_price_avg
 
@@ -2665,7 +2664,7 @@ async function update_cost_avg_fields(order_id, order, exchange){
 
             // let sell_price = ((parseFloat(purchase_price_avg) * ((buy_orders.length*defined_sell_percentage) + (-1 * remaining_additional_pl))) / 100) + parseFloat(purchase_price_avg);
                 // sell_price_sum += sell_price
-            
+
             // avg_sell_price = sell_price_sum / buy_orders.length
         // }
 
@@ -2705,7 +2704,7 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
     let parent_sold = false
     let objPurchArr = []
 
-  
+
     var OverAllSellPrice = 0
     countOrderBuy = 0
     var byyOrderArrsIdToSell = [];
@@ -2737,7 +2736,7 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
         overAllSoldPercentage += (-1)*definedSellPercentageSold;
         // console.log('overAllSoldPercentage ', overAllSoldPercentage)
         // console.log('parent sold P/L ', definedSellPercentage)
-        
+
     } else {
          countOrderBuy = 1;
         var parentActiveOrderArr = await db.collection(buy_collection).find({ '_id': new ObjectID(String(order_id)) }).toArray();
@@ -2745,7 +2744,7 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
         objPurchArr.push(ObjPurch)
         await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
         var parentActiveOrderArr = await db.collection(buy_collection).find({ '_id': new ObjectID(String(order_id)) }).toArray();
-        
+
 
         var purchasePrice = parseFloat(parentActiveOrderArr[0]['purchased_price']);// Get purchasePrice
         var definedSellPercentage = parseFloat(parentActiveOrderArr[0]['defined_sell_percentage']);// Get Defined Sell Percentage
@@ -2753,7 +2752,7 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
         overAllpurchasedPrice += purchasePrice;
         // For parent Order we have
         overAllBuyPercentage += definedSellPercentage;
-        
+
         // console.log('parent buy P/L ', definedSellPercentage)
 
     }
@@ -2913,13 +2912,13 @@ async function updateAvgSellFullTransactionPrice(order_id, exchange, coinSymbol)
         if (typeof parentActiveOrderArr !== 'undefined' && parentActiveOrderArr != '') {
             for (let orderIndex in parentActiveOrderArr) {
                 var countOrderBuy = 1;
-                var quantity = parentActiveOrderArr[orderIndex]['quantity'];// Get quantity 
-                var costParentOrderId = parentActiveOrderArr[orderIndex]['_id'];// Get _id 
-                var parentpurchasedPrice = parentActiveOrderArr[orderIndex]['purchased_price'];// Get Purchased 
-                var avg_orders_ids = parentActiveOrderArr[orderIndex]['avg_orders_ids'];// Get avg_orders_ids 
+                var quantity = parentActiveOrderArr[orderIndex]['quantity'];// Get quantity
+                var costParentOrderId = parentActiveOrderArr[orderIndex]['_id'];// Get _id
+                var parentpurchasedPrice = parentActiveOrderArr[orderIndex]['purchased_price'];// Get Purchased
+                var avg_orders_ids = parentActiveOrderArr[orderIndex]['avg_orders_ids'];// Get avg_orders_ids
                 var definedSellPercentage = parentActiveOrderArr[orderIndex]['defined_sell_percentage'];// Get Defined Sell Percentage
 
-                // We will run Loop to multiple 0.5 on each iteration 
+                // We will run Loop to multiple 0.5 on each iteration
                 for (let i = 1; i < 5000; i++) {
                     // Formula Goes Here
                     var XPrice = 0;
@@ -2928,7 +2927,7 @@ async function updateAvgSellFullTransactionPrice(order_id, exchange, coinSymbol)
                     var IncrePercnt = (currentMarketPrice * incrementVal) / 100
                     var XPrice = (currentMarketPrice + IncrePercnt);
                     var finalValOverAll = ((XPrice - parentpurchasedPrice) / parentpurchasedPrice) * 100;
-                    
+
                     var response = ''
 
                     if(i == 1){
@@ -2944,11 +2943,11 @@ async function updateAvgSellFullTransactionPrice(order_id, exchange, coinSymbol)
                         break;
                     } // END of if(response==false)
                     countOrderBuy = 1
-                }// END of Iteration loop 
+                }// END of Iteration loop
             }// END of for(let orderIndex in parentActiveOrderArr){
         }// END of if (typeof parentActiveOrderArr!=='undefined' && parentActiveOrderArr !== '')
-        
-    })// END of  conn.then(async (db) => 
+
+    })// END of  conn.then(async (db) =>
 }// END of updateAvgSellFullTransactionPrice
 
 async function updateAvgSellThreeTransactionPrice(order_id, exchange, coinSymbol){
@@ -2958,20 +2957,20 @@ async function updateAvgSellThreeTransactionPrice(order_id, exchange, coinSymbol
         var order_mode = 'live';
         var pricesObj = await get_current_market_prices(exchange, [coinSymbol])
         var currentMarketPrice = pricesObj[coinSymbol]
-        //List all order for which deep price meet           
+        //List all order for which deep price meet
         var parentActiveOrderArr = await getCostAverageParentOrdes(order_id, exchange, coinSymbol, order_mode, type);
         if (typeof parentActiveOrderArr !== 'undefined' && parentActiveOrderArr != '') {
             for (let orderIndex in parentActiveOrderArr) {
-                // According to sir we need 5% profit on last three orders                    
+                // According to sir we need 5% profit on last three orders
                 var countOrderBuy = 1;
                 var definedSellPercentage = 5
-                var quantity = parentActiveOrderArr[orderIndex]['quantity'];// Get quantity 
-                var costParentOrderId = parentActiveOrderArr[orderIndex]['_id'];// Get _id 
-                var avg_orders_ids = parentActiveOrderArr[orderIndex]['avg_orders_ids'];// Get avg_orders_ids 
-                var parentpurchasedPrice = parentActiveOrderArr[orderIndex]['purchased_price'];// Get purchased_price 
+                var quantity = parentActiveOrderArr[orderIndex]['quantity'];// Get quantity
+                var costParentOrderId = parentActiveOrderArr[orderIndex]['_id'];// Get _id
+                var avg_orders_ids = parentActiveOrderArr[orderIndex]['avg_orders_ids'];// Get avg_orders_ids
+                var parentpurchasedPrice = parentActiveOrderArr[orderIndex]['purchased_price'];// Get purchased_price
                 var definedSellPercentage = parentActiveOrderArr[orderIndex]['defined_sell_percentage'];// Get Defined Sell Percentage
 
-                // We will run Loop to multiple 0.5 on each iteration 
+                // We will run Loop to multiple 0.5 on each iteration
                 if (typeof avg_orders_ids !== "undefined" && avg_orders_ids !== "") {
                     console.log("costParentOrderId IST ::: ", costParentOrderId)
                     for (let i = 1; i < 500; i++) {
@@ -2997,12 +2996,12 @@ async function updateAvgSellThreeTransactionPrice(order_id, exchange, coinSymbol
                             break;
                         }// END of if(response==false)
                         countOrderBuy = 1
-                    }// END of Iteration loop 
+                    }// END of Iteration loop
                 }// END of if(typeof avg_orders_ids!=="undefined" && avg_orders_ids!=="")
             }// END of for(let orderIndex in parentActiveOrderArr){
         }// END of if (typeof parentActiveOrderArr!=='undefined' && parentActiveOrderArr !== '')
 
-    })// END of conn.then(async (db) => 
+    })// END of conn.then(async (db) =>
 }// END of costAvgSellOverAllOrders
 
 async function sumChildOrders(exchange, avg_orders_ids, XPrice, countOrderBuy, definedSellPercentage, finalValOverAll, costParentOrderId, quantityAll){
@@ -3013,12 +3012,12 @@ async function sumChildOrders(exchange, avg_orders_ids, XPrice, countOrderBuy, d
             var type = "all";
             var buyOrderArrsIds = []
             for (let avgIndex in avg_orders_ids) {
-                // Here we Get the orders from Buy order collection 
+                // Here we Get the orders from Buy order collection
                 var childBuyOrderId = avg_orders_ids[avgIndex];
                 var childOrderArr = await getOrderBuyOrder(exchange, childBuyOrderId)
                 if (typeof childOrderArr !== 'undefined' && childOrderArr["_id"] !== "" && childOrderArr["_id"] !== 'undefined') {
                     if (childOrderArr["status"] !== "canceled") {
-                        // *countOrderBuy* used for to count the buy orders  
+                        // *countOrderBuy* used for to count the buy orders
                         countOrderBuy++;
                         buyOrderArrsIds.push(childOrderArr["_id"])
                         var quantityChild = parseFloat(childOrderArr['quantity']);
@@ -3030,7 +3029,7 @@ async function sumChildOrders(exchange, avg_orders_ids, XPrice, countOrderBuy, d
                         finalValOverAll += singleOrderPercentage;
                     }// END of childOrderArr["status"]!=="canceled"
                 } else {
-                    // ELSE we get the orders from sold_buy_order collection 
+                    // ELSE we get the orders from sold_buy_order collection
                     var childOrderArr = await getOrderSoldBuyOrder(exchange, childBuyOrderId)
                     countOrderBuy++;
                     if (typeof childOrderArr !== 'undefined' && childOrderArr["_id"] !== "" && childOrderArr["_id"] !== 'undefined') {
@@ -3047,7 +3046,7 @@ async function sumChildOrders(exchange, avg_orders_ids, XPrice, countOrderBuy, d
             //console.log("finalValOverAll ::::", finalValOverAll)
             //console.log("profitPercAndNoOrder ::::", profitPercAndNoOrder)
             if (finalValOverAll > profitPercAndNoOrder) {
-                await updateaverageSellprice(exchange, costParentOrderId, XPrice, type, buyOrderArrsIds, quantityAll); //Status submitted_for_sell 
+                await updateaverageSellprice(exchange, costParentOrderId, XPrice, type, buyOrderArrsIds, quantityAll); //Status submitted_for_sell
                 console.log("XPRICE ::::", XPrice)
                 var response = false;
                 resolve(response);
@@ -3138,11 +3137,11 @@ async function sumLastThreeChildOrders(exchange, costParentOrderId, avg_orders_i
             var byyOrderArrsIds = []
             for (let avgIndex = 0; avgIndex <= avg_orders_ids.length; avgIndex++) {
                 var childBuyOrderId = avg_orders_ids[avgIndex];
-                // Here we Get the orders from Buy order collection 
+                // Here we Get the orders from Buy order collection
                 var childOrderArr = await module.exports.getOrderBuyOrder(exchange, childBuyOrderId)
                 if (typeof childOrderArr !== 'undefined' && childOrderArr["_id"] !== "" && childOrderArr["_id"] !== 'undefined') {
                     if (childOrderArr["status"] !== "canceled") {
-                        // *countOrderBuy* used for to count the buy orders  
+                        // *countOrderBuy* used for to count the buy orders
                         console.log("childOrderArr ::::", childOrderArr["_id"])
                         countOrderBuy++;
                         onlyCountBuyOrder++;
@@ -3177,7 +3176,7 @@ async function sumLastThreeChildOrders(exchange, costParentOrderId, avg_orders_i
                 console.log("profitPercAndNoOrder ::::", profitPercAndNoOrder)
                 console.log("finalValOverAll ::::", finalValOverAll)
 
-                await module.exports.updateaverageSellprice(exchange, costParentOrderId, XPrice, type, byyOrderArrsIds, quantityAll); // 
+                await module.exports.updateaverageSellprice(exchange, costParentOrderId, XPrice, type, byyOrderArrsIds, quantityAll); //
                 console.log("Response is going GOOD here :::: XPrice", XPrice)
                 var response = false;
                 resolve(response);
@@ -3245,7 +3244,7 @@ async function unsetCostAvgParent(order_id, exchange) {
     })
 }
 
-//function which have all prerequisite for buying or selling any order 
+//function which have all prerequisite for buying or selling any order
 function marketMinNotation(symbol) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -3266,7 +3265,7 @@ function marketMinNotation(symbol) {
     })
 } //End of marketMinNotation
 
-//function which have all prerequisite for buying or selling any order, returns step size with min notation 
+//function which have all prerequisite for buying or selling any order, returns step size with min notation
 function marketMinNotation_with_step_size(symbol, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -3290,7 +3289,7 @@ function marketMinNotation_with_step_size(symbol, exchange) {
     })
 } //End of marketMinNotation_with_step_size
 
-//function which have all prerequisite for buying or selling any order, returns step size with min notation 
+//function which have all prerequisite for buying or selling any order, returns step size with min notation
 function marketMinNotation_with_step_size_arr(symbol, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -3311,7 +3310,7 @@ function marketMinNotation_with_step_size_arr(symbol, exchange) {
                             obj['symbol'] = item.symbol
                             obj['min_notation'] = item.min_notation
                             obj['step_size'] = item.stepSize
-                            arr.push(obj) 
+                            arr.push(obj)
                         })
                     }
                     resolve(arr)
@@ -3321,9 +3320,9 @@ function marketMinNotation_with_step_size_arr(symbol, exchange) {
     })
 } //End of marketMinNotation_with_step_size
 
-//function for getting current market price 
+//function for getting current market price
 function listCurrentMarketPriceArr(coin, exchange) {
-    //get market price on the base of exchange 
+    //get market price on the base of exchange
     if (exchange == 'bam') {
         return new Promise(function (resolve, reject) {
             conn.then((db) => {
@@ -3365,7 +3364,7 @@ function listCurrentMarketPriceArr(coin, exchange) {
 
 } //End of listCurrentMarketPriceArr
 
-//function for getting order list from order-list angular  component 
+//function for getting order list from order-list angular  component
 router.post('/listOrderListing', async (req, resp) => {
 
     var admin_id = req.body.postData.admin_id;
@@ -3387,14 +3386,14 @@ router.post('/listOrderListing', async (req, resp) => {
     var customOrderListing = [];
 
     var currentMarketPrice = 0;
-    
+
     for (let index in orderListing) {
-        
+
         // if(index >= 1){break}
 
-        let currSymbol = orderListing[index].symbol 
+        let currSymbol = orderListing[index].symbol
         currentMarketPrice = pricesObj[currSymbol]
-        
+
         if (orderListing[index].status == 'new') {
             var convertToBtc = orderListing[index].quantity * currentMarketPrice;
             let splitArr = orderListing[index].symbol.split('USDT');
@@ -3478,7 +3477,7 @@ router.post('/listOrderListing', async (req, resp) => {
 
         // var orderSellPrice = (typeof orderListing[index].market_sold_price == 'undefined' || orderListing[index].market_sold_price == '') ? '' : orderListing[index].market_sold_price;
         // var orderPurchasePrice = (typeof orderListing[index].purchased_price == 'undefined' || orderListing[index].purchased_price == '') ? 0 : orderListing[index].purchased_price;
-        
+
         var orderSellPrice = (typeof orderListing[index].market_sold_price != 'undefined' && orderListing[index].market_sold_price != '' && !isNaN(parseFloat(orderListing[index].market_sold_price))) ? parseFloat(orderListing[index].market_sold_price) : '';
 
         var orderPurchasePrice = (typeof orderListing[index].purchased_price != 'undefined' && orderListing[index].purchased_price != '' && !isNaN(parseFloat(orderListing[index].purchased_price))) ? parseFloat(orderListing[index].purchased_price) : 0;
@@ -3492,9 +3491,9 @@ router.post('/listOrderListing', async (req, resp) => {
             }))
         }
 
-        //part for calculating profit loss percentage 
+        //part for calculating profit loss percentage
         if (orderSellPrice != '') {
-            //function for calculating percentage 
+            //function for calculating percentage
             let profitLossPercentage = calculate_percentage(orderPurchasePrice, orderSellPrice);
             // resumePL = parseFloat(resumePL) + parseFloat(profitLossPercentage)
             let profitLossCls = (orderSellPrice > orderPurchasePrice) ? 'success' : 'danger';
@@ -3522,7 +3521,7 @@ router.post('/listOrderListing', async (req, resp) => {
             let profitLossPercentage = calculate_percentage(parseFloat(expecteddeepPrice), currentMarketPrice);
             let PLCls = (currentMarketPrice <= expecteddeepPrice) ? 'success' : 'default'
             profitLossPercentageHtml = '<span class="text-' + PLCls + '"><b>' + Math.abs(profitLossPercentage) + '%</b></span>';
-        
+
         } else if (trigger_type == 'no' && status == 'new' && (typeof orderListing[index].deep_price_on_off == 'undefined' || orderListing[index].deep_price_on_off != 'yes') && typeof orderListing[index].price != 'undefined' && orderListing[index].price != ''){
 
             let expecteddeepPrice = orderListing[index].price
@@ -3631,10 +3630,10 @@ router.post('/listOrderListing', async (req, resp) => {
         } else {
 
             let errorStatusArr = [
-                'error', 
-                'LTH_ERROR', 
-                'FILLED_ERROR', 
-                'submitted_ERROR', 
+                'error',
+                'LTH_ERROR',
+                'FILLED_ERROR',
+                'submitted_ERROR',
                 'new_ERROR',
                 'canceled_ERROR',
                 'SELL_ID_ERROR',
@@ -3660,13 +3659,13 @@ router.post('/listOrderListing', async (req, resp) => {
             htmlStatus += '<span class="badge badge-warning" style="margin-left:4px;">Buy Fraction</span>';
             htmlStatusArr.push('Buy Fraction')
         }
-        
-        order['resume_order_id_exists'] = false 
+
+        order['resume_order_id_exists'] = false
         order['resumeStopped'] = false
         order['showResume'] = true
         if (typeof orderListing[index].resume_order_id != 'undefined') {
-            order['showResume'] = false 
-            order['resume_order_id_exists'] = true 
+            order['showResume'] = false
+            order['resume_order_id_exists'] = true
 
             if (front_status_arr.length > 0){
                 //Do nothing
@@ -3707,7 +3706,7 @@ router.post('/listOrderListing', async (req, resp) => {
                     pl = !isNaN(pl) ? pl : 0
 
                 }
-                
+
                 resumePL = parseFloat(resumePL) + parseFloat(pl)
                 resumePlClass = resumePL > 0 ? 'success' : 'danger'
 
@@ -3723,14 +3722,14 @@ router.post('/listOrderListing', async (req, resp) => {
             htmlStatus += ' <span class="text-' + resumePlClass + '" style="margin-left:4px;" ><b>' + resumePL + '%</b></span>'
             htmlStatusArr.push(resumePL)
         }
-        
+
         if (typeof orderListing[index].secondary_resume_level != 'undefined') {
             order['order_level'] = orderListing[index].secondary_resume_level
         }
-        
+
         if (typeof orderListing[index].resume_status != 'undefined' && orderListing[index].resume_status == 'completed') {
 
-            resumePL = parseFloat(resumePL) 
+            resumePL = parseFloat(resumePL)
             resumePlClass = resumePL > 0 ? 'success' : 'danger'
             order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"> <b>' + resumePL.toFixed(2) + '%</b></span>'
 
@@ -3775,7 +3774,7 @@ router.post('/listOrderListing', async (req, resp) => {
             htmlStatus += '<span class="badge badge-info">' + orderListing[index]['shifted_order_label'] + '</span>';
             htmlStatusArr.push(orderListing[index]['shifted_order_label'])
         }
-        
+
         // if(postDAta.status == 'new'){
         //     if (typeof orderListing[index].deep_price_on_off != 'undefined' && orderListing[index].deep_price_on_off == 'yes'){
         //         htmlStatus += '<span class="badge badge-info">Deep buy price</span>';
@@ -3820,9 +3819,9 @@ router.post('/listOrderListing', async (req, resp) => {
                     let cost_avg_order_ids_count = cost_avg_order_ids.length
                     for (let i = 0; i < cost_avg_order_ids_count; i++){cost_avg_order_ids[i] = String(cost_avg_order_ids[i])}
                     cost_avg_order_ids.push(String(orderListing[index]['_id']))
-    
+
                     let costAvgData = await getCostAvgPLandUsdWorth(cost_avg_order_ids, exchange)
-    
+
                     if (Object.keys(costAvgData).length >0){
                         order['profitLossPercentageHtml'] = '<span class="text-' + costAvgData['curr_avg_profit_color'] + '"><b>' + costAvgData['curr_avg_profit'] + '%</b> (' + cost_avg_order_ids.length + ')</span>';
                         order['coinPriceInBtc'] = costAvgData['total_usd_worth']
@@ -3848,7 +3847,7 @@ router.post('/listOrderListing', async (req, resp) => {
 
 
         if (postDAta.status == 'parent' && status != 'canceled' && typeof orderListing[index].parent_status != 'undefined' && orderListing[index].parent_status == 'parent') {
-            
+
             htmlStatus = ''
             htmlStatusArr = []
 
@@ -3860,7 +3859,7 @@ router.post('/listOrderListing', async (req, resp) => {
             //add parent label
             htmlStatus += '<span class="badge badge-success ml-1" style="margin-left:4px;">Parent</span>';
             htmlStatusArr.push('Parent')
-            
+
             if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes') {
                 htmlStatus += '<span class="badge badge-primary ml-1" style="margin-left:4px;">Cost Avg</span>';
                 htmlStatusArr.push('Cost Avg')
@@ -3874,16 +3873,16 @@ router.post('/listOrderListing', async (req, resp) => {
 
             let buy_duplicate_arr = orderListing[index]['transaction_logs'].filter(item => { return item.type == 'buy' && item.errorString == 'No Error' ? true : false; })
             let sell_duplicate_arr = orderListing[index]['transaction_logs'].filter(item => { return item.type == 'sell' && item.errorString == 'No Error' ? true : false; })
-            
+
             buy_duplicate_arr = buy_duplicate_arr.filter((thing, index, self) =>
                 index === self.findIndex((t) => (
-                    t.txid === thing.txid 
+                    t.txid === thing.txid
                 ))
             )
-            
+
             sell_duplicate_arr = buy_duplicate_arr.filter((thing, index, self) =>
                 index === self.findIndex((t) => (
-                    t.txid === thing.txid 
+                    t.txid === thing.txid
                 ))
             )
 
@@ -4049,8 +4048,8 @@ async function calculateAverageOrdersProfit(postDAta) {
                 '$lte': end_date
             };
 
-            tempPostData.start_date = start_date 
-            tempPostData.end_date = end_date 
+            tempPostData.start_date = start_date
+            tempPostData.end_date = end_date
         }
     }
 
@@ -4062,7 +4061,7 @@ async function calculateAverageOrdersProfit(postDAta) {
 
     // soldOrders = soldOrders.filter(item => String(item._id) != '5e5f008cfd4c0b001b8f74b5')
     // console.log(soldOrders.length)
-    
+
     let totalSold = soldOrders.length
     let avg_order_ids = []
     for (let i = 0; i < totalSold; i++){
@@ -4076,7 +4075,7 @@ async function calculateAverageOrdersProfit(postDAta) {
     soldOrders = soldOrders.concat(cost_avg_sold_childs)
 
     // console.log(soldOrders.length)
-    
+
     return soldOrders
 
     // var exchange = postDAta.exchange;
@@ -4202,7 +4201,7 @@ async function listOrderListing(postDAta3, dbConnection) {
 
     if (postDAta.status == 'sold') {
         // filter['$or'] = [
-        //     { 'resume_status': 'completed', 'trading_status': 'complete' }, 
+        //     { 'resume_status': 'completed', 'trading_status': 'complete' },
         //     { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
         // ];
         // filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
@@ -4221,7 +4220,7 @@ async function listOrderListing(postDAta3, dbConnection) {
 
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
-    
+
     if (postDAta.status == 'costAvgTab') {
         // // filter['is_sell_order'] = 'sold'
         // filter['cost_avg'] = { '$exists': true }
@@ -4274,7 +4273,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         };
         filter['resume_status'] = { '$ne': 'completed' }
         filter['show_order'] = { '$ne': 'no' };
-        
+
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
 
@@ -4307,7 +4306,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         filter['status'] = 'canceled';
         // filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };
     }
-    
+
     if (postDAta.status == 'errors') {
         filter['parent_status'] = { '$exists': false };
         filter['status'] = { '$nin': ['new', 'FILLED', 'fraction_submitted_buy', 'canceled', 'LTH', 'submitted', 'submitted_for_sell', 'fraction_submitted_sell'] }
@@ -4320,7 +4319,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };
     }
 
-    //if status is all the get from both buy_orders and sold_buy_orders 
+    //if status is all the get from both buy_orders and sold_buy_orders
     if (postDAta.status == 'all') {
 
 
@@ -4357,20 +4356,24 @@ async function listOrderListing(postDAta3, dbConnection) {
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         // var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter, pagination, limit, skip);
         // var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter, pagination, limit, skip);
-        
+
+
+
+        console.log(filter_all_2, pagination, limit, skip, '=================')
+
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter_all_2, pagination, limit, skip);
         var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter_all_2, pagination, limit, skip);
-      
+
         // var returnArr = mergeOrdersArrays(SoldOrderArr, buyOrderArr);
         var returnArr = SoldOrderArr.concat(buyOrderArr);
         var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
     } else if (postDAta.status == 'costAvgTab') {
-        
+
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter, pagination, limit, skip);
         var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter, pagination, limit, skip);
-        
+
         // console.log(SoldOrderArr.length, buyOrderArr.length)
         var returnArr = SoldOrderArr.concat(buyOrderArr);
         var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
@@ -4378,10 +4381,11 @@ async function listOrderListing(postDAta3, dbConnection) {
     } else {
         var orderArr = await list_orders_by_filter(collectionName, filter, pagination, limit, skip);
     }
+    console.log(orderArr.length)
     return orderArr;
 } //End of listOrderListing
 
-//function for merging both buy_orders and sold_buy_orders 
+//function for merging both buy_orders and sold_buy_orders
 function mergeOrdersArrays(SoldOrderArr, buyOrderArr) {
     let merged = [];
     let index1 = 0;
@@ -4438,16 +4442,16 @@ router.post('/getMergeOrders', async (req, res)=>{
 
         const db = await conn
         var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+ exchange
-    
+
         let where = {}
-    
+
         where['admin_id'] = user_id
         where['symbol'] = symbol
         where['application_mode'] = 'live'
         where['trigger_type'] = 'barrier_percentile_trigger'
         // where['order_level'] = ''
         where['$or'] = []
-    
+
         // if (tab == 'openTab') {
             let openTab = {}
             openTab['$or'] = [
@@ -4471,7 +4475,7 @@ router.post('/getMergeOrders', async (req, res)=>{
 
             where['$or'].push(openTab)
         // }
-    
+
         // if (tab == 'lthTab') {
 
             let lthTab = {}
@@ -4483,11 +4487,11 @@ router.post('/getMergeOrders', async (req, res)=>{
 
             where['$or'].push(lthTab)
         // }
-    
+
         // if (tab == 'costAvgTab') {
 
             let costAvgTab = {}
-    
+
             costAvgTab['$or'] = [
                 {
                     'cost_avg': { '$in': ['taking_child', 'yes'] },
@@ -4506,14 +4510,14 @@ router.post('/getMergeOrders', async (req, res)=>{
             costAvgTab['status'] = { '$ne': 'canceled' }
 
             where['$or'].push(costAvgTab)
-    
+
             var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         // }
-    
+
         // if (tab == 'soldTab') {
 
-            let soldTab = {} 
-    
+            let soldTab = {}
+
             soldTab['$or'] = [
                 { 'resume_status': 'completed', 'trading_status': 'complete' },
                 { 'cost_avg': 'completed', 'cavg_parent': 'yes', 'show_order': 'yes' },
@@ -4521,13 +4525,13 @@ router.post('/getMergeOrders', async (req, res)=>{
             ];
             soldTab['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
             soldTab['trade_history_issue'] = { '$exists': true }
-    
+
             // if (!digie_admin_ids.includes(user_id)) {
                 soldTab['$or'][0]['show_order'] = 'yes'
             // }
 
             where['$or'].push(soldTab)
-    
+
             var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         // }
 
@@ -4543,14 +4547,14 @@ router.post('/getMergeOrders', async (req, res)=>{
         // } else {
         //     var orderArr = await db.collection(collectionName).find(where).toArray();
         // }
-    
+
         // console.log(where)
         // console.log('tab: ', tab, '  -----  total orders: ', orderArr.length)
 
         if (orderArr.length > 0){
             res.send({
                 'status': true,
-                'data': orderArr, 
+                'data': orderArr,
                 'message': 'data found'
             })
         }else{
@@ -4576,16 +4580,16 @@ router.post('/mergeAndMigrate', async (req, res)=>{
     let tab = req.body.tab
     let exchange = req.body.exchange
 
-    
-    
+
+
     if (typeof user_id != 'undefined' && user_id != '' && typeof tab != 'undefined' && tab != '' && typeof exchange != 'undefined' && exchange != '', typeof mergedOrder != 'undefined' && mergedOrder.length > 0){
-        
+
         const db = await conn
         var buy_collection = 'buy_orders'
         var sell_collection = 'sold_buy_orders'
         var buy_collection_kraken = 'buy_orders_kraken'
         var sell_collection_kraken = 'orders_kraken'
-        
+
         // console.log(req.body)
         await db.collection('tempMergeTrades_testing').insertOne(req.body)
         // process.exit(1)
@@ -4596,8 +4600,8 @@ router.post('/mergeAndMigrate', async (req, res)=>{
         mergedOrder[0]['merge_ids'] = mergedOrder[0]['merge_ids'].filter(item => {return item != new_order._id})
 
         let temp_all_merge_orders = mergedOrder[0]['all_merge_orders']
-        
-        let all_merge_orders = temp_all_merge_orders.map(item=>{ 
+
+        let all_merge_orders = temp_all_merge_orders.map(item=>{
             let obj = item
             obj['created_date'] = new Date(obj['created_date'])
             obj['modified_date'] = new Date(obj['modified_date'])
@@ -4712,7 +4716,7 @@ router.post('/mergeAndMigrate', async (req, res)=>{
                 // new_order['avg_sell_price'] = resultingFields['sell_price']
                 // new_order['iniatial_trail_stop'] = resultingFields['iniatial_trail_stop']
                 new_order['merge_migrated_order'] = 'yes'
-                
+
                 new_order['buy_date'] = new Date()
                 new_order['created_date'] = new Date()
                 new_order['modified_date'] = new Date()
@@ -4722,7 +4726,7 @@ router.post('/mergeAndMigrate', async (req, res)=>{
                 new_order['ca_merge_migrated_order'] = 'yes'
 
                 new_order['avg_orders_ids'] = temp_avg_orders_ids
-                
+
                 delete new_order['trading_status']
                 delete new_order['market_sold_price']
                 delete new_order['sell_date']
@@ -4730,7 +4734,7 @@ router.post('/mergeAndMigrate', async (req, res)=>{
 
                 //insert new order in kraken
                 let insertBuyNew = await db.collection(buy_collection_kraken).insertOne(new_order)
-                
+
                 if (typeof insertBuyNew.insertedId != 'undefined') {
                     //insert sell order
                     let newSellOrder = {
@@ -4756,7 +4760,7 @@ router.post('/mergeAndMigrate', async (req, res)=>{
                     let insertSellNew = await db.collection(sell_collection_kraken).insertOne(newSellOrder)
                     //insert sell order id in buy order
                     if (typeof insertSellNew.insertedId != 'undefined') {
-                        await db.collection(buy_collection_kraken).updateOne({ '_id': insertBuyNew.insertedId }, { '$set': { 'sell_order_id': insertSellNew.insertedId } })    
+                        await db.collection(buy_collection_kraken).updateOne({ '_id': insertBuyNew.insertedId }, { '$set': { 'sell_order_id': insertSellNew.insertedId } })
                     }
                     //insert log in new order
                     //save log
@@ -4860,7 +4864,7 @@ router.post('/mergeAndMigrate', async (req, res)=>{
 
                             let insertttttt = await db.collection(sell_collection).insertOne(tempInsert)
                             if (typeof insertttttt.insertedId != 'undefined'){
-                                //delete from buy_collection 
+                                //delete from buy_collection
                                 await db.collection(buy_collection).deleteOne({ '_id': all_merge_orders[i]['_id'] })
                             }
                         }else{
@@ -4891,7 +4895,7 @@ router.post('/mergeAndMigrate', async (req, res)=>{
 
                         let insertttttt = await db.collection('sold_buy_orders').insertOne(tempInsert)
                         if (typeof insertttttt.insertedId != 'undefined') {
-                            //delete from buy_collection 
+                            //delete from buy_collection
                             await db.collection('buy_orders').deleteOne({ '_id': new_order['_id'] })
                         }
                     } else {
@@ -4927,7 +4931,7 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
             let sell_price = 0
             let initial_trail_stop = 0
 
-            // let totalPL = 0; 
+            // let totalPL = 0;
 
             merge_migrate_orders.map(item=>{
                 purchase_prices_sum += parseFloat(item.purchased_price)
@@ -4941,13 +4945,13 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
             // totalPL = totalPL / merge_migrate_orders.length
 
             let defined_sell_percentage = parseFloat(merge_migrate_orders[0]['defined_sell_percentage'])
-            
+
             // let stop_loss = typeof merge_migrate_orders[0]['stop_loss_rule'] != 'undefined' && merge_migrate_orders[0]['stop_loss_rule'] == 'custom_stop_loss' && !isNaN(parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage'])) ? parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage']) : false
-            
+
             // let custom_stop_loss_percentage = parseFloat(merge_migrate_orders[0]['custom_stop_loss_percentage'])
-            
+
             sell_price = ((parseFloat(avg_purchase_price) * defined_sell_percentage) / 100) + parseFloat(avg_purchase_price);
-             
+
             // if (stop_loss){
             //     initial_trail_stop = parseFloat(avg_purchase_price) - ((parseFloat(avg_purchase_price) * custom_stop_loss_percentage) / 100);
             // }else{
@@ -4956,9 +4960,9 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
 
             // let purchased_price_by_pl = 0
             // if (totalPL > 0){
-            //     purchased_price_by_pl = currentMarketPrice - ((totalPL/100) * currentMarketPrice)  
+            //     purchased_price_by_pl = currentMarketPrice - ((totalPL/100) * currentMarketPrice)
             // } else if (totalPL == 0){
-            //     purchased_price_by_pl = currentMarketPrice  
+            //     purchased_price_by_pl = currentMarketPrice
             // }else{
             //     purchased_price_by_pl = currentMarketPrice + ((totalPL / 100) * currentMarketPrice)
             // }
@@ -4971,7 +4975,7 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
                 // 'totalPL': totalPL,
                 // 'purchased_price_by_pl': purchased_price_by_pl
             }
-            
+
             // console.log(result11)
 
             if (!isNaN(avg_purchase_price) && !isNaN(sell_price) && !isNaN(initial_trail_stop)){
@@ -4983,7 +4987,7 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
             resolve(false)
         }
     })
-} 
+}
 
 //post call from manage coins component
 router.post('/manageCoins', async (req, resp) => {
@@ -5079,7 +5083,7 @@ router.post('/playOrder', async (req, resp) => {
     });
 }) //End of playOrder
 
-//pause play parent order form orders listings 
+//pause play parent order form orders listings
 function pausePlayParentOrder(orderId, status, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -5102,7 +5106,7 @@ function pausePlayParentOrder(orderId, status, exchange) {
 } //End of listGlobalCoins
 
 
-//post order for play and pause parent orders 
+//post order for play and pause parent orders
 router.post('/togglePausePlayOrder', async (req, resp) => {
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     var playPromise = togglePausePlayOrder(req.body.orderId, req.body.status, req.body.exchange);
@@ -5212,7 +5216,7 @@ router.post('/listOrderDetail', async (req, resp) => {
 }) //End of listOrderDetail
 //*********************************************************== */
 
-//function for getting order from buy_order or buy_sold_orders 
+//function for getting order from buy_order or buy_sold_orders
 function listOrderById(orderId, exchange) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -5266,7 +5270,7 @@ router.post('/deleteOrder', async (req, resp) => {
         var parentOrder = await listOrderById(String(getBuyOrder[0]['buy_parent_id']), req.body.exchange);
 
         if ((parentOrder.length > 0) && typeof parentOrder[0]['status'] != 'undefined' && parentOrder[0]['status'] != 'canceled') {
-    
+
             let where = {};
             where['_id'] = new ObjectID(String(getBuyOrder[0]['buy_parent_id']));
             where['pause_manually'] = {'$ne': 'yes'};
@@ -5307,7 +5311,7 @@ router.post('/deleteOrderPermanently', async (req, resp) => {
 
         let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
         delete_order_history_logs(order_id, exchange);
-        
+
         resp.status(200).send({
             status: true
         });
@@ -5336,23 +5340,23 @@ router.post('/makeCostAvg', async (req, resp) => {
 
         //insert log
         var getBuyOrder = await listOrderById(order_id, exchange);
-        
+
         if (getBuyOrder.length > 0){
 
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
-    
+
             if (tab == 'lthTab' || tab == 'openTab'){
                 var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
             }else if(tab == 'soldTab'){
                 var collectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange
             }
 
-            let where = { 
+            let where = {
                 '_id': new ObjectID(String(order_id))
             }
             let update = {
-                '$set': { 
-                    'cost_avg': 'yes', 
+                '$set': {
+                    'cost_avg': 'yes',
                     'show_order': 'yes',
                     'cavg_parent': 'yes',
                     'modified_date': new Date()
@@ -5361,11 +5365,11 @@ router.post('/makeCostAvg', async (req, resp) => {
 
             // let temp = {'cost_avg': 'yes', 'show_order': 'yes', 'cavg_parent': 'yes', 'modified_date': ISODate(), 'cost_avg_buy': 'yes', 'move_to_cost_avg' : 'yes'}
             // let temp1 = { 'direct_child_order_id': '', 'direct_parent_child_id': '', 'ist_parent_child_buy_id': '', 'cost_avg_percentage': '', 'avg_sell_price': ''}
-            
+
             if (tab == 'soldTab') {
                 update['$set']['cost_avg_buy'] = 'yes'
                 update['$set']['move_to_cost_avg'] = 'yes'
-                
+
                 update['$set']['avg_price_three_upd'] = ''
                 update['$set']['avg_sell_price_three'] = ''
                 update['$set']['last_three_ids'] = ''
@@ -5401,7 +5405,7 @@ router.post('/makeCostAvg', async (req, resp) => {
             }
 
             let result = await db.collection(collectionName).updateOne(where, update)
-            
+
             if (tab == 'openTab' && result.modifiedCount > 0){
                 //Revert CA parent
                 let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
@@ -5431,7 +5435,7 @@ router.post('/makeCostAvg', async (req, resp) => {
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             create_orders_history_log(req.body.orderId, log_msg, type, show_hide_log, req.body.exchange, order_mode, order_created_date)
         }
-        
+
         resp.status(200).send({
             status: true
         });
@@ -5450,7 +5454,7 @@ function delete_order_history_logs(order_id, exchange) {
 
         const db = await conn
 
-        //get order 
+        //get order
         let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         let sell_collection = exchange == 'binance' ? 'orders' : 'orders_' + exchange
         let resume_collection = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
@@ -5482,17 +5486,17 @@ function delete_order_history_logs(order_id, exchange) {
             // //Count Logs
             // let logs_count = await db.collection(full_collection_name).find({ 'order_id': { '$in': [order_id, new ObjectID(order_id)] } }).count()
             // console.log('logs_count ::::', logs_count)
-            
+
             //Delete Logs
             db.collection(full_collection_name).deleteMany({ 'order_id': { '$in': [order_id, new ObjectID(order_id)] } })
             // let res = await db.collection(full_collection_name).deleteMany({ 'order_id': { '$in': [order_id, new ObjectID(order_id)] } })
             // console.log(res)
-            
+
             //Delete order
             db.collection(buy_collection).deleteOne({ '_id': new ObjectID(order_id) })
             // let res2 = await db.collection(buy_collection).deleteOne({ '_id': new ObjectID(order_id) })
             // console.log(res2)
-            
+
         }
 
         resolve(true)
@@ -5589,7 +5593,7 @@ router.post('/orderMoveToLth', async (req, resp) => {
 
 }) //End of orderMoveToLth
 
-//function for moving order to lth 
+//function for moving order to lth
 function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -5625,10 +5629,10 @@ router.post('/listOrderById', async (req, resp) => {
     let orderId = req.body.orderId;
     let exchange = req.body.exchange;
     var timezone = req.body.timezone;
-    //promise for  getting order by id 
+    //promise for  getting order by id
     var ordeArr = await listOrderById(orderId, exchange);
 
-    let show_special_logs = typeof req.body.show_special_logs != 'undefined' ? req.body.show_special_logs : false  
+    let show_special_logs = typeof req.body.show_special_logs != 'undefined' ? req.body.show_special_logs : false
 
     if (ordeArr.length > 0){
         var orderObj = ordeArr[0];
@@ -5737,7 +5741,7 @@ router.post('/listOrderLogById', async (req, resp) => {
     });
 }) //End of listOrderLogById
 
-//get order log on the base of order id 
+//get order log on the base of order id
 async function listOrderLog(orderId, exchange, order_mode, order_created_date, show_special_logs=false) {
     return new Promise((resolve) => {
         conn.then(async (db) => {
@@ -5809,9 +5813,9 @@ router.post('/costAvgChildLogs', async (req, resp) => {
         // var ordeArr = await listOrderById(orderId, exchange);
         let promiseArr = []
         orderIds.map(item => { promiseArr.push(listOrderById(item, exchange)) })
-        
+
         let promiseResponseArr = await Promise.all(promiseArr)
-        
+
         let promiseArr2 = []
         promiseResponseArr.map(item => {
             if(item.length > 0){
@@ -5821,32 +5825,32 @@ router.post('/costAvgChildLogs', async (req, resp) => {
                 promiseArr2.push(costAvgChildLogs(itemObj['_id'], exchange, order_mode, order_created_date))
             }
         })
-    
+
         let childOrderLogsArr = []
         let promiseResponseArr2 = await Promise.all(promiseArr2)
-        
+
         promiseResponseArr2 = promiseResponseArr2.map(item =>{
             childOrderLogsArr = childOrderLogsArr.concat(item)
         })
-        
+
         let childOrderLogs = {}
 
         if (childOrderLogsArr.length > 0) {
             for (let row in childOrderLogsArr) {
-    
+
                 let child_order_id = String(childOrderLogsArr[row].order_id)
-    
+
                 if (child_order_id in childOrderLogs) {
                     childOrderLogs[child_order_id].push(childOrderLogsArr[row])
                 } else {
                     childOrderLogs[child_order_id] = []
                     childOrderLogs[child_order_id].push(childOrderLogsArr[row])
                 }
-    
+
             }
-    
+
         }
-    
+
         resp.status(200).send({
             'status': true,
             'data': childOrderLogs,
@@ -5863,7 +5867,7 @@ router.post('/costAvgChildLogs', async (req, resp) => {
 
 }) //End of listOrderById
 
-//get costAvgChildLogs 
+//get costAvgChildLogs
 async function costAvgChildLogs(orderId, exchange, order_mode, order_created_date) {
     return new Promise(async (resolve) => {
         let db = await conn
@@ -5923,7 +5927,7 @@ async function costAvgChildLogs(orderId, exchange, order_mode, order_created_dat
     })
 } //End of costAvgChildLogs
 
-//post call for sell order manually from order listing page 
+//post call for sell order manually from order listing page
 router.post('/sellOrderManually', async (req, resp) => {
 
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
@@ -5933,7 +5937,7 @@ router.post('/sellOrderManually', async (req, resp) => {
 
     let costAvgParent = typeof req.body.costAvgParent != 'undefined' ? req.body.costAvgParent : false;
     let costAvgParentAddedQty = typeof req.body.costAvgParentAddedQty != 'undefined' ? req.body.costAvgParentAddedQty : false;
-    
+
     let action = typeof req.body.action != 'undefined' && req.body.action != '' ? req.body.action : '';
     let tab = typeof req.body.tab != 'undefined' && req.body.tab != '' ? req.body.tab : '';
     let sellNow = true
@@ -5972,7 +5976,7 @@ router.post('/sellOrderManually', async (req, resp) => {
                         responseMessage = 'Order migrated successfully'
                     }else{
                         responseMessage = 'Order could not be migrated Because of min qty issue'
-                        sellNow = false    
+                        sellNow = false
                     }
                 }else{
                     make_migrated_parent(orderId)
@@ -5989,12 +5993,12 @@ router.post('/sellOrderManually', async (req, resp) => {
         //get buy order detail by id
         var ordeResp = await listOrderById(orderId, exchange);
         if (ordeResp.length > 0) {
-    
+
             let buyOrderArr = ordeResp[0];
             let sell_order_id = (typeof buyOrderArr['sell_order_id'] == undefined) ? '' : buyOrderArr['sell_order_id'];
             let buyOrderStatus = (typeof buyOrderArr['status'] == undefined) ? '' : buyOrderArr['status'];
             var buyParentOrderId = (typeof buyOrderArr['buy_parent_id'] == undefined) ? '' : buyOrderArr['buy_parent_id'];
-    
+
             console.log("sell_order_id ", sell_order_id)
             if (typeof sell_order_id != 'undefined' && sell_order_id != '') {
                 let application_mode = (typeof buyOrderArr['application_mode'] == undefined) ? '' : buyOrderArr['application_mode'];
@@ -6013,24 +6017,24 @@ router.post('/sellOrderManually', async (req, resp) => {
                 let trigger_type = (typeof buyOrderArr['trigger_type'] == undefined) ? '' : buyOrderArr['trigger_type'];
                 //getting user ip for trading
                 var trading_ip = await listUsrIp(admin_id);
-    
+
                 console.log("trading_ip ", trading_ip)
-    
-    
+
+
                 var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now ' + interfaceType;
                 // var logPromise = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
                 var getBuyOrder = await listOrderById(buy_order_id, exchange);
                 var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
                 var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
                 var logPromise = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
-    
+
                 //Send Notification
                 send_notification(getBuyOrder[0]['admin_id'], 'sell_alerts', 'medium', log_msg, buy_order_id, exchange, getBuyOrder[0]['symbol'], order_mode, '')
-    
+
                 var log_msg = 'Send Market Orde for sell by Ip: <b>' + trading_ip + '</b> ';
                 // var logPromise_2 = recordOrderLog(buy_order_id, log_msg, 'order_ip', 'no', exchange);
                 var logPromise_2 = create_orders_history_log(buy_order_id, log_msg, 'order_ip', 'no', exchange, order_mode, order_created_date)
-    
+
                 var update_1 = {};
                 update_1['modified_date'] = new Date();
                 update_1['is_manual_sold'] = 'yes';
@@ -6038,48 +6042,48 @@ router.post('/sellOrderManually', async (req, resp) => {
                 filter_1['_id'] = {
                     $in: [orderId, new ObjectID(orderId)]
                 }
-    
+
                 var collectionName_1 = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-    
-    
+
+
                 var updatePromise_1 = updateOne(filter_1, update_1, collectionName_1);
-    
+
                 var collectionName_2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;;
                 // update_1['status'] = 'FILLED';
-    
+
                 //By Ali to avoid showing in open tab [16-1-20]
                 // update_1['status'] = buyOrderStatus + '_submitted_for_sell';
                 update_1['status'] = 'submitted_for_sell';
-    
+
                 var updatePromise_2 = updateOne(filter_1, update_1, collectionName_2);
                 var resolvePromise = Promise.all([updatePromise_1, updatePromise_2, logPromise, logPromise_2]);
                 //in case of live order move it to specified api for selling
                 if (application_mode == 'live') {
-    
-    
+
+
                     var log_msg = "Market Order Send For Sell On:  " + parseFloat(currentMarketPrice).toFixed(8);
                     // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
                     var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
-    
+
                     logPromise_1.then((resp) => {})
                     //send order for sell on specific ip
                     var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, trigger_type, 'sell_market_order', exchange);
                     // console.log("SellOrderResolve ", SellOrderResolve)
-    
+
                     SellOrderResolve.then((resp) => {})
                 } else {
-                    //if test order 
+                    //if test order
                     var log_msg = "Market Order Send For Sell On **:  " + parseFloat(currentMarketPrice).toFixed(8);
                     // var logPromise_1 = recordOrderLog(buy_order_id, log_msg, 'sell_manually', 'yes', exchange);
                     var logPromise_1 = create_orders_history_log(buy_order_id, log_msg, 'sell_manually', 'yes', exchange, order_mode, order_created_date)
-    
+
                     logPromise_1.then((resp) => {})
                     //call function for selling orders
                     sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange,buyParentOrderId);
-    
+
                 }
-            } //End of if sell order id not empty	
-        } //Order Arr End 
+            } //End of if sell order id not empty
+        } //Order Arr End
     }
 
     if (responseMessage == 'Order shifted successfully'){
@@ -6088,7 +6092,7 @@ router.post('/sellOrderManually', async (req, resp) => {
 
     let responseObj = {
         'status': sellNow ? true : false,
-        'message': responseMessage != '' ? responseMessage : (action == '' ? ordeResp : 'Action successful'), 
+        'message': responseMessage != '' ? responseMessage : (action == '' ? ordeResp : 'Action successful'),
         'showAlert': responseMessage != '' ? true : false
     }
 
@@ -6180,7 +6184,7 @@ async function checkQuanity(order_id, tab=''){
         }else{
             resolve(false)
         }
-        
+
     })
 }
 
@@ -6193,12 +6197,12 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
         if (action == 'isResumeExchange' && tab == 'soldTab') {
             collection_name = 'sold_buy_orders'
         }
-    
+
         let where = {
             '_id': new ObjectID(String(order_id))
         }
         let buy_order = await db.collection(collection_name).find(where).toArray()
-    
+
         if (buy_order.length > 0){
 
             //insert processed field flag ==> 'trade_migrated': 'yes'
@@ -6224,11 +6228,11 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
             let pricesObj = await get_current_market_prices(exchange, [])
             let currSymbol = buy_order[0]['symbol']
             let currentMarketPrice = pricesObj[currSymbol]
-            let orderPurchasePrice = buy_order[0]['purchased_price'] 
+            let orderPurchasePrice = buy_order[0]['purchased_price']
             //save pl before migration
-            let pl_before_migration = calculate_percentage(orderPurchasePrice, currentMarketPrice) 
+            let pl_before_migration = calculate_percentage(orderPurchasePrice, currentMarketPrice)
             let pl_status_before_migration = (currentMarketPrice > orderPurchasePrice) ? 'positive' : 'negative'
-            
+
             buy_order[0]['pl_before_migration'] = parseFloat(pl_before_migration)
             buy_order[0]['pl_status_before_migration'] = pl_status_before_migration
             buy_order[0]['shifted_order'] = 'yes'
@@ -6299,11 +6303,11 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
             var order_mode = ((buy_order.length > 0) ? buy_order[0]['application_mode'] : 'test')
             await create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'kraken', order_mode, order_created_date)
             //end save log
-    
+
             if (typeof buy_order[0]['sell_order_id'] != 'undefined' && buy_order[0]['sell_order_id'] != ''){
-                
+
                 let sell_order = await db.collection('orders').find({ '_id': new ObjectID(String(buy_order[0]['sell_order_id']))}).toArray()
-                
+
                 if (sell_order.length > 0){
                     let insSellOrder = Object.assign(sell_order[0])
                     insSellOrder['exchange'] = 'kraken'
@@ -6321,21 +6325,21 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
                     //Create sellArr
                     let insSellOrder = {
                         'admin_id': insData['admin_id'],
-                        'application_mode': insData['application_mode'], 
-                        'buy_order_id': insData['_id'], 
-                        'custom_stop_loss_percentage': insData['custom_stop_loss_percentage'], 
-                        'iniatial_trail_stop': insData['iniatial_trail_stop'],  
-                        'order_level': insData['order_level'], 
-                        'order_mode': insData['order_mode'], 
+                        'application_mode': insData['application_mode'],
+                        'buy_order_id': insData['_id'],
+                        'custom_stop_loss_percentage': insData['custom_stop_loss_percentage'],
+                        'iniatial_trail_stop': insData['iniatial_trail_stop'],
+                        'order_level': insData['order_level'],
+                        'order_mode': insData['order_mode'],
                         'order_type': insData['order_type'],
                         'purchased_price': insData['purchased_price'],
                         'quantity': insData['quantity'],
-                        'sell_price': insData['sell_price'], 
-                        'defined_sell_percentage': insData['defined_sell_percentage'], 
-                        'sell_profit_percent': insData['defined_sell_percentage'], 
+                        'sell_price': insData['sell_price'],
+                        'defined_sell_percentage': insData['defined_sell_percentage'],
+                        'sell_profit_percent': insData['defined_sell_percentage'],
                         'status': 'new',
                         'trigger_type': insData['trigger_type'],
-                        'created_date': new Date(), 
+                        'created_date': new Date(),
                         'modified_date': new Date()
                     }
 
@@ -6357,7 +6361,7 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
 
                 //update fields and move order to sold then delete from buy collection
                 let pricesObj = await get_current_market_prices('binance', [])
-                let symbol = buy_order[0]['symbol'] 
+                let symbol = buy_order[0]['symbol']
                 buy_order[0]['is_sell_order'] = 'sold'
                 buy_order[0]['status'] = 'FILLED'
                 buy_order[0]['market_sold_price'] = pricesObj[symbol]
@@ -6375,9 +6379,9 @@ async function migrate_order(order_id, exchange='', action='', tab=''){
                 await db.collection('buy_orders').deleteOne({ '_id': buy_order[0]['_id'] })
 
             }
-    
+
         }
-    
+
         resolve(true)
     })
 
@@ -6411,17 +6415,17 @@ async function make_migrated_parent(order_id, action=''){
             //set new fields to add in parent
             var pricesObj = await get_current_market_prices('binance', [])
             var currSymbol = buy_order[0]['symbol']
-            var orderSellPrice = order_status == 'open' ? pricesObj[currSymbol] : buy_order[0]['market_sold_price'] 
+            var orderSellPrice = order_status == 'open' ? pricesObj[currSymbol] : buy_order[0]['market_sold_price']
             var orderPurchasePrice = buy_order[0]['purchased_price']
             //save pl before migration
-            var pl_before_migration = calculate_percentage(orderPurchasePrice, orderSellPrice) 
+            var pl_before_migration = calculate_percentage(orderPurchasePrice, orderSellPrice)
             var pl_status_before_migration = (orderSellPrice > orderPurchasePrice) ? 'positive' : 'negative'
 
             last_trade_buy_price = parseFloat(orderPurchasePrice)
             last_trade_sell_price = parseFloat(orderSellPrice)
             last_trade_pl = parseFloat(pl_before_migration)
             last_trade_pl_status = pl_status_before_migration
-            
+
             //try to get parent of this order
             let parentOrder = []
             if (typeof buy_order[0]['buy_parent_id'] != 'undefined' && buy_order[0]['buy_parent_id'] != ''){
@@ -6505,7 +6509,7 @@ async function make_migrated_parent(order_id, action=''){
                         }
                         await db.collection('buy_orders_kraken').updateOne({ '_id': kraken_parent[0]['_id'] }, { '$set': updateParent})
 
-                        
+
                         //TODO: insert parent error log
                         var show_hide_log = 'yes'
                         var type = 'migrated_parent'
@@ -6557,7 +6561,7 @@ async function make_migrated_parent(order_id, action=''){
                     parentOrder[0]['modified_date'] = new Date()
 
                     var newObj = Object.assign(parentOrder[0])
-                    delete newObj['_id'] 
+                    delete newObj['_id']
 
                     await db.collection('buy_orders_kraken').insertOne(newObj, async (err, result) => {
                         if (err) {
@@ -6677,7 +6681,7 @@ async function make_migrated_parent(order_id, action=''){
                             create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, buy_order[0]['created_date'])
 
                         } else if (result.modifiedCount > 0) {
-                            
+
                             db.collection('buy_orders_kraken').find(where1).limit(1).toArray(async function (err, result2) {
                                 if (err) throw err;
                                 if (result2.length > 0) {
@@ -6745,15 +6749,15 @@ async function make_migrated_parent(order_id, action=''){
                     var order_mode = buy_order[0]['application_mode']
                     create_orders_history_log(buy_order[0]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, buy_order[0]['created_date'])
                 }
-                
-            } 
 
-            
-            let updddtemp = { 
-                '$set': { 
+            }
+
+
+            let updddtemp = {
+                '$set': {
                     'migrated_parent': 'yes',
                     'modified_date': new Date(),
-                } 
+                }
             }
             if (minQtyMigrationIssue){
                 updddtemp['$set']['minQtyMigrationIssue'] = 'yes'
@@ -6762,7 +6766,7 @@ async function make_migrated_parent(order_id, action=''){
             buy_order = await db.collection('buy_orders').find({ '_id': new ObjectID(String(order_id)) }).toArray()
             if (buy_order.length > 0) {
                 //add field so button not show again
-                await db.collection('buy_orders').updateOne({ '_id': new ObjectID(String(order_id)) }, updddtemp) 
+                await db.collection('buy_orders').updateOne({ '_id': new ObjectID(String(order_id)) }, updddtemp)
             } else {
                 buy_order = await db.collection('sold_buy_orders').find({ '_id': new ObjectID(String(order_id)) }).toArray()
                 //add field so button not show again
@@ -6801,7 +6805,7 @@ async function is_sell_migrate_order_normally(order_id){
         buy_order = await db.collection('buy_orders').find({ '_id': new ObjectID(String(order_id)) }).toArray()
         if (buy_order.length > 0) {
             order_status = 'open'
-         
+
             //check this order owner api key if valid then send response true to sell normally else move order to sold collection from here
             if (await verify_migrate_user_api_key(buy_order[0]['admin_id'])){
                 resolve(true)
@@ -6823,7 +6827,7 @@ async function is_sell_migrate_order_normally(order_id){
                 //move to sold collection
                 buy_order = await db.collection('buy_orders').find({ '_id': buy_order[0]['_id'] }).toArray()
                 await db.collection('sold_buy_orders').insertOne(buy_order[0])
-                
+
                 //delete from buy collection
                 // await db.collection('buy_orders').deleteOne({ '_id': buy_order[0]['_id'] })
 
@@ -6860,7 +6864,7 @@ function updateOne(filter, update, collectionName) {
     })
 } //End of updateCollection
 
-//get user ip for trading 
+//get user ip for trading
 function listUsrIp(admin_id) {
     return new Promise((resolve, reject) => {
         conn.then((db) => {
@@ -6906,7 +6910,7 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
             // console.log('insert_arr', insert_arr);
             let where = {
                 'order_id': { '$in': [new ObjectID(String(order_id)), String(order_id)]},
-                'buy_orders_id': { '$in': [new ObjectID(String(buy_orders_id)), String(buy_orders_id)]}, 
+                'buy_orders_id': { '$in': [new ObjectID(String(buy_orders_id)), String(buy_orders_id)]},
             }
             db.collection(collection).updateOne(where, {'$set':insert_arr}, {'upsert':true}, (err, result) => {
 
@@ -6922,7 +6926,7 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
         })
     })
 } //End of readySellOrderbyIp
-//function for selling test order 
+//function for selling test order
 function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange,buyParentOrderId) {
 
     (async () => {
@@ -6965,7 +6969,7 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
             var commissionAsset = 'BTC';
             var commission_value = parseFloat(quantity) * (0.001);
             var commission = commission_value * currentMarketPrice;
-          
+
 
             let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
             var USDCURRENTVALUE = await listCurrentMarketPrice(globalCoin, exchange);
@@ -7018,7 +7022,7 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
 
             // Update parent order to NEW to take new order .
             if (buyParentOrderId != '' && buyParentOrderId != 'undefined') {
-                var where = {};  
+                var where = {};
                 var updBuyOrder = {}
                 let collection_name = (exchange == 'binance') ? 'buy_orders' : 'buy_orders' + exchange;
                 updBuyOrder.status = 'new';
@@ -7036,7 +7040,7 @@ function sellTestOrder(sell_order_id, currentMarketPrice, buy_order_id, exchange
         }
     })()
 } //End of sellTestOrder
-//function to find from a collection on the base for search 
+//function to find from a collection on the base for search
 function find(collectionName, search) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -7051,7 +7055,7 @@ function find(collectionName, search) {
     })
 } //End of findOne
 
-//post call from order listing to buy order 
+//post call from order listing to buy order
 router.post('/buyOrderManually', async (req, resp) => {
 
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
@@ -7070,14 +7074,14 @@ router.post('/buyOrderManually', async (req, resp) => {
         let symbol = (typeof orderArr['symbol'] == undefined) ? '' : orderArr['symbol'];
 
         let buy_trigger_type = (typeof orderArr['trigger_type'] == undefined) ? '' : orderArr['trigger_type'];
-        //geting trading ip 
+        //geting trading ip
         var trading_ip = await listUsrIp(admin_id);
 
         if (status == 'new') {
             var update = {};
             update['modified_date'] = new Date();
             update['is_manual_buy'] = 'yes';
-            update['buyRightAway'] == 'yes' 
+            update['buyRightAway'] == 'yes'
             var filter = {};
             filter['_id'] = new ObjectID(orderId);
             let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -7120,7 +7124,7 @@ router.post('/buyOrderManually', async (req, resp) => {
             message: 'response comming'
         });
 
-    } //End of Order length 
+    } //End of Order length
 }) //End of buyOrderManually
 
 
@@ -7247,7 +7251,7 @@ function buyTestOrder(orders, market_value, exchange) {
                 createOrderFromAutoSell(orders, exchange);
             } //if auto sell is yes
 
-            //End of Crate Auto Sell 
+            //End of Crate Auto Sell
 
 
 
@@ -7362,7 +7366,7 @@ function createOrderFromAutoSell(orderArr, exchange) {
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             var logPromise = create_orders_history_log(buy_order_id, log_msg, 'market_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise.then((callback) => {})
-        } // if($auto_sell =='yes')	
+        } // if($auto_sell =='yes')
         ////////////////////////////////////////////////////////////////////////
     })()
 
@@ -7426,8 +7430,8 @@ function orderReadyForBuy(buy_order_id, buy_quantity, market_value, coin_symbol,
             let collection = (exchange == 'binance') ? 'ready_orders_for_buy_ip_based' : 'ready_orders_for_buy_ip_based_' + exchange;
 
 
-            let where = { 
-                'buy_order_id': { '$in': [new ObjectID(String(buy_order_id)), String(buy_order_id)] } 
+            let where = {
+                'buy_order_id': { '$in': [new ObjectID(String(buy_order_id)), String(buy_order_id)] }
             }
 
             db.collection(collection).updateOne(where, {'$set':insert_arr}, {'upsert':true}, (err, result) => {
@@ -7533,7 +7537,7 @@ function updateSingle(collection, searchQuery, updateQuery, upsert) {
     })
 } //End of update
 
-//post call frol listing order on chart 
+//post call frol listing order on chart
 router.post('/listOrdersForChart', async (req, resp) => {
     var admin_id = req.body.admin_id;
     var exchange = req.body.exchange;
@@ -7750,7 +7754,7 @@ router.post('/listOrdersForChart', async (req, resp) => {
     })
 
 })
-//function for getting order to show on chart 
+//function for getting order to show on chart
 function listOrdersForChart(admin_id, exchange, application_mode, coin) {
     return new Promise((resolve) => {
         let filter = {};
@@ -7776,7 +7780,7 @@ function listOrdersForChart(admin_id, exchange, application_mode, coin) {
     }) //End of Promise
 } //End of listOrdersForChart
 
-//get sell order detail by id 
+//get sell order detail by id
 function listSellOrderById(ID, exchange) {
     return new Promise((resolve) => {
         let filter = {};
@@ -7986,13 +7990,13 @@ router.post('/updateOrderfromdraging', async (req, resp) => {
             var buy_order_binance_id = (typeof orderArr[index]['buy_order_binance_id'] == 'undefined') ? '' : orderArr[index]['buy_order_binance_id'];
 
 
-            //:::::: Auto Trigger Part :::::::::: 
-            //check order is auto order 
+            //:::::: Auto Trigger Part ::::::::::
+            //check order is auto order
             if (trigger_type != 'no') {
 
                 console.log('3 == auto order')
 
-                //In case of auto order if loss percentage is updated the change the value of initial order 
+                //In case of auto order if loss percentage is updated the change the value of initial order
                 let iniatial_trail_stop = (typeof orderArr[index]['iniatial_trail_stop'] == 'undefined') ? 0 : orderArr[index]['iniatial_trail_stop'];
 
                 let sell_profit_percent = (typeof orderArr[index]['sell_profit_percent'] == 'undefined') ? 0 : orderArr[index]['sell_profit_percent'];
@@ -8283,7 +8287,7 @@ router.post('/updateOrderfromdraging', async (req, resp) => {
                         //::::::::::: End of temp arr exist ::::::::::::::
                     }
                     //::::::::::::-:-:-: End of set for sell :-:-:-:-:-:
-                } else { //End of if sell order Exist 
+                } else { //End of if sell order Exist
                     let tempArrResp = await listselTempOrders(orderId, exchange);
 
                     console.log('12 == else sell_order_id')
@@ -8723,7 +8727,7 @@ router.post('/updateLthProfitChart', async (req, resp) => {
             purchased_price = parseFloat(parseFloat(purchased_price).toFixed(8));
             purchased_price = (!isNaN(purchased_price) ? purchased_price : 0)
 
-            //we if obj is new purchased_price is 0 so use buy_price instead 
+            //we if obj is new purchased_price is 0 so use buy_price instead
             var price = (purchased_price != 0 ? purchased_price : buy_price)
 
             //Check if Sell order exists then use it's values on priority
@@ -8841,7 +8845,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
             purchased_price = parseFloat(parseFloat(purchased_price).toFixed(8));
             purchased_price = (!isNaN(purchased_price) ? purchased_price : 0)
 
-            //we if order is new purchased_price is 0 so use buy_price instead 
+            //we if order is new purchased_price is 0 so use buy_price instead
             var price = (purchased_price != 0 ? purchased_price : buy_price)
 
             var previous_sell_price = order['sell_price']
@@ -8852,7 +8856,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
             previous_profit_price = parseFloat(parseFloat(previous_profit_price).toFixed(8));
             previous_profit_price = (!isNaN(previous_profit_price) ? previous_profit_price : 0)
 
-            //Some where profit_price field was being updated instead of sell_price so here we set a priority 
+            //Some where profit_price field was being updated instead of sell_price so here we set a priority
             previous_sell_price = (previous_sell_price != 0 ? previous_sell_price : previous_profit_price)
 
             var sell_profit_percent = order['sell_profit_percent']
@@ -8905,7 +8909,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                 s_market_value = parseFloat(parseFloat(s_market_value).toFixed(8));
                 s_market_value = (!isNaN(s_market_value) ? s_market_value : 0)
 
-                //if sellArr is new purchased_price is 0 so use buy_price instead 
+                //if sellArr is new purchased_price is 0 so use buy_price instead
                 var s_price = (s_purchased_price != 0 ? s_purchased_price : s_market_value)
                 price = (s_price != 0 ? s_price : price)
 
@@ -8917,7 +8921,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                 s_previous_profit_price = parseFloat(parseFloat(s_previous_profit_price).toFixed(8));
                 s_previous_profit_price = (!isNaN(s_previous_profit_price) ? s_previous_profit_price : 0)
 
-                //Some where profit_price field was being updated instead of sell_price so here we set a priority 
+                //Some where profit_price field was being updated instead of sell_price so here we set a priority
                 s_previous_sell_price = (s_previous_sell_price != 0 ? s_previous_sell_price : s_previous_profit_price)
                 previous_sell_price = (s_previous_sell_price != 0 ? previous_sell_price : s_previous_profit_price)
 
@@ -8968,7 +8972,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                 })
             } else {
 
-                //price calculation 
+                //price calculation
                 var diff_price = updated_price - price;
                 diff_price = Math.abs(diff_price)
                 var new_percentage = (diff_price * 100 / price);
@@ -9198,7 +9202,7 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
             }
 
             // //compare new-old
-            // var oldArr = orderArr 
+            // var oldArr = orderArr
             // var orderArr = await listOrderById(orderId, exchange);
             // var oldSellArr = SellArr
             // var SellArr = await get_sell_order(orderId, exchange);
@@ -9299,7 +9303,7 @@ router.post('/lisEditManualOrderById', async (req, resp) => {
     var tempSellArr = [];
     // if (auto_sell == 'yes' && (typeof buyOrderArr['is_sell_order'] != 'undefined' && buyOrderArr['is_sell_order'] != 'sold')) {
     if (auto_sell == 'yes') {
-        //if sell order Exist the get value from sell order 
+        //if sell order Exist the get value from sell order
         if (sell_order_id != '') {
             var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
             var sellArr = sellOrderResp[0];
@@ -9369,13 +9373,13 @@ router.post('/updateManualOrder', async (req, resp) => {
             buyorderArr['profit_percent'] = buyorderArr['sell_profit_percent']
         }
 
-        //set sell profit percentage 
+        //set sell profit percentage
         if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
             let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
             buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
         }
 
-        //set stop loss 
+        //set stop loss
         if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
             buyorderArr['stop_loss'] = 'yes'
             buyorderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
@@ -9389,7 +9393,7 @@ router.post('/updateManualOrder', async (req, resp) => {
             buyorderArr['loss_percentage'] = ''
         }
 
-        //set lth profit 
+        //set lth profit
         if (typeof buyorderArr['lth_functionality'] != 'undefined' && buyorderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(buyorderArr['lth_profit']))) {
             buyorderArr['lth_functionality'] = 'yes'
             buyorderArr['lth_profit'] = parseFloat(parseFloat(buyorderArr['lth_profit']).toFixed(1))
@@ -9400,8 +9404,8 @@ router.post('/updateManualOrder', async (req, resp) => {
             if (getBuyOrder[0]['status'] == 'LTH'){
                 let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
                 buyorderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
-                buyorderArr['is_lth_order'] = 'no' 
-                buyorderArr['status'] = 'FILLED' 
+                buyorderArr['is_lth_order'] = 'no'
+                buyorderArr['status'] = 'FILLED'
             }
 
         }
@@ -9421,13 +9425,13 @@ router.post('/updateManualOrder', async (req, resp) => {
             buyorderArr['profit_price'] = buyorderArr['sell_price']
         }
 
-        //set sell profit percentage 
+        //set sell profit percentage
         if (buyorderArr['profit_type'] == 'percentage' && typeof tempOrderArr['sell_profit_percent'] != 'undefined') {
             let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['sell_profit_percent']).toFixed(1))
             buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
         }
 
-        //set stop loss 
+        //set stop loss
         if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
             buyorderArr['stop_loss'] = 'yes'
             buyorderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
@@ -9441,7 +9445,7 @@ router.post('/updateManualOrder', async (req, resp) => {
             buyorderArr['loss_percentage'] = ''
         }
 
-        //set lth profit 
+        //set lth profit
         if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
             buyorderArr['lth_functionality'] = 'yes'
             buyorderArr['lth_profit'] = parseFloat(parseFloat(tempOrderArr['lth_profit']).toFixed(1))
@@ -9469,7 +9473,7 @@ router.post('/updateManualOrder', async (req, resp) => {
     };
 
 
-    //cancel_hour 
+    //cancel_hour
     if (typeof buyorderArr['update_cancel_hour'] != 'undefined' && buyorderArr['update_cancel_hour'] == 'yes' && typeof buyorderArr['cancel_hour'] != 'undefined' && buyorderArr['cancel_hour'] != '' && buyorderArr['cancel_hour'] > 0) {
         let currTime = new Date()
         buyorderArr['cancel_hour_time'] = new Date(currTime.setTime(currTime.getTime() + (buyorderArr['cancel_hour'] * 60 * 60 * 1000)))
@@ -9502,13 +9506,13 @@ router.post('/updateManualOrder', async (req, resp) => {
             sellOrderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
         }
 
-        //set sell profit percentage 
+        //set sell profit percentage
         if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
             let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
             sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
         }
 
-        //set stop loss 
+        //set stop loss
         if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
             sellOrderArr['stop_loss'] = 'yes'
             sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
@@ -9522,7 +9526,7 @@ router.post('/updateManualOrder', async (req, resp) => {
             sellOrderArr['loss_percentage'] = ''
         }
 
-        //set lth profit 
+        //set lth profit
         if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
             sellOrderArr['lth_functionality'] = 'yes'
             sellOrderArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
@@ -9571,13 +9575,13 @@ router.post('/updateManualOrder', async (req, resp) => {
             tempOrderArr['profit_price'] = tempOrderArr['sell_price']
         }
 
-        //set sell profit percentage 
+        //set sell profit percentage
         if (buyorderArr['profit_type'] == 'percentage' && typeof tempOrderArr['sell_profit_percent'] != 'undefined') {
             let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['sell_profit_percent']).toFixed(1))
             tempOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
         }
 
-        //set stop loss 
+        //set stop loss
         if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
             tempOrderArr['stop_loss'] = 'yes'
             tempOrderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
@@ -9590,15 +9594,15 @@ router.post('/updateManualOrder', async (req, resp) => {
             tempOrderArr['stop_loss'] = 'no'
             tempOrderArr['loss_percentage'] = ''
         }
-        
-        //set lth profit 
+
+        //set lth profit
         if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
             tempOrderArr['lth_functionality'] = 'yes'
             tempOrderArr['lth_profit'] = parseFloat(parseFloat(tempOrderArr['lth_profit']).toFixed(1))
         } else {
             tempOrderArr['lth_functionality'] = 'no'
             tempOrderArr['lth_profit'] = ''
-            
+
             if (getBuyOrder[0]['status'] == 'LTH') {
                 let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
                 tempOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
@@ -9643,13 +9647,13 @@ router.post('/updateManualOrder', async (req, resp) => {
             sellOrderArr['sell_price'] = !isNaN(parseFloat(sellOrderArr['sell_price'])) ? parseFloat(sellOrderArr['sell_price']) : ''
         }
 
-        //set sell profit percentage 
+        //set sell profit percentage
         if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
             let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
             sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
         }
 
-        //set stop loss 
+        //set stop loss
         if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
             sellOrderArr['stop_loss'] = 'yes'
             sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
@@ -9663,7 +9667,7 @@ router.post('/updateManualOrder', async (req, resp) => {
             sellOrderArr['loss_percentage'] = ''
         }
 
-        //set lth profit 
+        //set lth profit
         if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
             sellOrderArr['lth_functionality'] = 'yes'
             sellOrderArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
@@ -9705,13 +9709,13 @@ router.post('/updateManualOrder', async (req, resp) => {
             updArr['profit_percent'] = updArr['sell_profit_percent']
         }
 
-        //set sell profit percentage 
+        //set sell profit percentage
         if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
             let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
             updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
         }
 
-        //set stop loss 
+        //set stop loss
         if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
             updArr['stop_loss'] = 'yes'
             updArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
@@ -9720,7 +9724,7 @@ router.post('/updateManualOrder', async (req, resp) => {
             updArr['loss_percentage'] = ''
         }
 
-        //set lth profit 
+        //set lth profit
         if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
             updArr['lth_functionality'] = 'yes'
             updArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
@@ -9751,6 +9755,18 @@ router.post('/updateManualOrder', async (req, resp) => {
             updArr['custom_stop_loss_percentage'] = typeof updArr['loss_percentage'] != 'undefined' ? updArr['loss_percentage'] : ''
         }
 
+
+        if(upArr){
+          upArr['buy_trail_interval'] =(typeof upArr['buy_trail_interval'] != 'undefined' && upArr['buy_trail_interval'] != '') ? parseFloat(upArr['buy_trail_interval']) : ''
+          upArr['sell_trail_interval'] = (typeof upArr['sell_trail_interval'] != 'undefined' && upArr['sell_trail_interval'] != '') ? parseFloat(upArr['sell_trail_interval']) : ''
+          upArr['sell_trail_price'] = (typeof upArr['sell_trail_price'] != 'undefined' && upArr['sell_trail_price'] != '') ? parseFloat(upArr['sell_trail_price']) : ''
+          upArr['buy_trail_price'] = (typeof upArr['buy_trail_price'] != 'undefined' && upArr['buy_trail_price'] != '') ? parseFloat(upArr['buy_trail_price']) : ''
+          upArr['sell_price'] = (typeof upArr['sell_price'] != 'undefined' && upArr['sell_price'] != '') ? parseFloat(upArr['sell_price']) : ''
+          upArr['iniatial_trail_stop'] = (typeof upArr['iniatial_trail_stop'] != 'undefined' && upArr['iniatial_trail_stop'] != '') ? parseFloat(upArr['iniatial_trail_stop']) : ''
+          upArr['lth_profit'] = (typeof upArr['lth_profit'] != 'undefined' && upArr['lth_profit'] != '') ? parseFloat(upArr['lth_profit']) : ''
+          upArr['expecteddeepPrice'] = (typeof upArr['expecteddeepPrice'] != 'undefined' && upArr['expecteddeepPrice'] != '') ? parseFloat(upArr['expecteddeepPrice']) : ''
+        }
+
         var updPrmise = updateOne(where, updArr, collection);
         updPrmise.then((callback) => { })
 
@@ -9770,7 +9786,7 @@ router.post('/updateManualOrder', async (req, resp) => {
 
 }) //End of updateManualOrder
 
-//post call for set manual order  
+//post call for set manual order
 router.post('/setForSell', async (req, resp) => {
     let sellOrderArr = req.body.sellOrderArr;
     var buy_order_id = (typeof sellOrderArr['buy_order_id'] == 'undefined') ? '' : sellOrderArr['buy_order_id'];
@@ -9787,13 +9803,13 @@ router.post('/setForSell', async (req, resp) => {
         sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
     }
 
-    //set sell profit percentage 
+    //set sell profit percentage
     if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
         let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
         sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
     }
 
-    //set stop loss 
+    //set stop loss
     if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
         sellOrderArr['stop_loss'] = 'yes'
         sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
@@ -9802,7 +9818,7 @@ router.post('/setForSell', async (req, resp) => {
         sellOrderArr['loss_percentage'] = ''
     }
 
-    //set lth profit 
+    //set lth profit
     if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
         sellOrderArr['lth_functionality'] = 'yes'
         sellOrderArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
@@ -9842,13 +9858,13 @@ router.post('/setForSell', async (req, resp) => {
         updArr['profit_percent'] = updArr['sell_profit_percent']
     }
 
-    //set sell profit percentage 
+    //set sell profit percentage
     if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
         let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
         updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
     }
 
-    //set stop loss 
+    //set stop loss
     if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
         updArr['stop_loss'] = 'yes'
         updArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
@@ -9857,7 +9873,7 @@ router.post('/setForSell', async (req, resp) => {
         updArr['loss_percentage'] = ''
     }
 
-    //set lth profit 
+    //set lth profit
     if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
         updArr['lth_functionality'] = 'yes'
         updArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
@@ -9902,7 +9918,7 @@ router.post('/setForSell', async (req, resp) => {
     });
 })
 
-//function to set manual sell for sell 
+//function to set manual sell for sell
 function setForSell(sellOrderArr, exchange, buy_order_id) {
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -10192,8 +10208,8 @@ router.post('/get_user_info', function (req, res, next) {
                         if (Object.keys(data).length > 0) {
 
                             let fieldsArr = [
-                                'api_key', 
-                                'api_secret', 
+                                'api_key',
+                                'api_secret',
                                 'pass_phrase',
                                 'first_name',
                                 'last_name',
@@ -10204,13 +10220,13 @@ router.post('/get_user_info', function (req, res, next) {
                                 'timezone',
                                 'default_exchange',
                             ]
-                            
+
                             for (let [key, value] of Object.entries(data)) {
                                 if (!fieldsArr.includes(key)) {
                                     delete data[key]
                                 }
                             }
-                            
+
                             data['profile_image'] = "data:image/gif;base64,R0lGODlhPQBEAPeoAJosM//AwO/AwHVYZ/z595kzAP/s7P+goOXMv8+fhw/v739/f+8PD98fH/8mJl+fn/9ZWb8/PzWlwv///6wWGbImAPgTEMImIN9gUFCEm/gDALULDN8PAD6atYdCTX9gUNKlj8wZAKUsAOzZz+UMAOsJAP/Z2ccMDA8PD/95eX5NWvsJCOVNQPtfX/8zM8+QePLl38MGBr8JCP+zs9myn/8GBqwpAP/GxgwJCPny78lzYLgjAJ8vAP9fX/+MjMUcAN8zM/9wcM8ZGcATEL+QePdZWf/29uc/P9cmJu9MTDImIN+/r7+/vz8/P8VNQGNugV8AAF9fX8swMNgTAFlDOICAgPNSUnNWSMQ5MBAQEJE3QPIGAM9AQMqGcG9vb6MhJsEdGM8vLx8fH98AANIWAMuQeL8fABkTEPPQ0OM5OSYdGFl5jo+Pj/+pqcsTE78wMFNGQLYmID4dGPvd3UBAQJmTkP+8vH9QUK+vr8ZWSHpzcJMmILdwcLOGcHRQUHxwcK9PT9DQ0O/v70w5MLypoG8wKOuwsP/g4P/Q0IcwKEswKMl8aJ9fX2xjdOtGRs/Pz+Dg4GImIP8gIH0sKEAwKKmTiKZ8aB/f39Wsl+LFt8dgUE9PT5x5aHBwcP+AgP+WltdgYMyZfyywz78AAAAAAAD///8AAP9mZv///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAKgALAAAAAA9AEQAAAj/AFEJHEiwoMGDCBMqXMiwocAbBww4nEhxoYkUpzJGrMixogkfGUNqlNixJEIDB0SqHGmyJSojM1bKZOmyop0gM3Oe2liTISKMOoPy7GnwY9CjIYcSRYm0aVKSLmE6nfq05QycVLPuhDrxBlCtYJUqNAq2bNWEBj6ZXRuyxZyDRtqwnXvkhACDV+euTeJm1Ki7A73qNWtFiF+/gA95Gly2CJLDhwEHMOUAAuOpLYDEgBxZ4GRTlC1fDnpkM+fOqD6DDj1aZpITp0dtGCDhr+fVuCu3zlg49ijaokTZTo27uG7Gjn2P+hI8+PDPERoUB318bWbfAJ5sUNFcuGRTYUqV/3ogfXp1rWlMc6awJjiAAd2fm4ogXjz56aypOoIde4OE5u/F9x199dlXnnGiHZWEYbGpsAEA3QXYnHwEFliKAgswgJ8LPeiUXGwedCAKABACCN+EA1pYIIYaFlcDhytd51sGAJbo3onOpajiihlO92KHGaUXGwWjUBChjSPiWJuOO/LYIm4v1tXfE6J4gCSJEZ7YgRYUNrkji9P55sF/ogxw5ZkSqIDaZBV6aSGYq/lGZplndkckZ98xoICbTcIJGQAZcNmdmUc210hs35nCyJ58fgmIKX5RQGOZowxaZwYA+JaoKQwswGijBV4C6SiTUmpphMspJx9unX4KaimjDv9aaXOEBteBqmuuxgEHoLX6Kqx+yXqqBANsgCtit4FWQAEkrNbpq7HSOmtwag5w57GrmlJBASEU18ADjUYb3ADTinIttsgSB1oJFfA63bduimuqKB1keqwUhoCSK374wbujvOSu4QG6UvxBRydcpKsav++Ca6G8A6Pr1x2kVMyHwsVxUALDq/krnrhPSOzXG1lUTIoffqGR7Goi2MAxbv6O2kEG56I7CSlRsEFKFVyovDJoIRTg7sugNRDGqCJzJgcKE0ywc0ELm6KBCCJo8DIPFeCWNGcyqNFE06ToAfV0HBRgxsvLThHn1oddQMrXj5DyAQgjEHSAJMWZwS3HPxT/QMbabI/iBCliMLEJKX2EEkomBAUCxRi42VDADxyTYDVogV+wSChqmKxEKCDAYFDFj4OmwbY7bDGdBhtrnTQYOigeChUmc1K3QTnAUfEgGFgAWt88hKA6aCRIXhxnQ1yg3BCayK44EWdkUQcBByEQChFXfCB776aQsG0BIlQgQgE8qO26X1h8cEUep8ngRBnOy74E9QgRgEAC8SvOfQkh7FDBDmS43PmGoIiKUUEGkMEC/PJHgxw0xH74yx/3XnaYRJgMB8obxQW6kL9QYEJ0FIFgByfIL7/IQAlvQwEpnAC7DtLNJCKUoO/w45c44GwCXiAFB/OXAATQryUxdN4LfFiwgjCNYg+kYMIEFkCKDs6PKAIJouyGWMS1FSKJOMRB/BoIxYJIUXFUxNwoIkEKPAgCBZSQHQ1A2EWDfDEUVLyADj5AChSIQW6gu10bE/JG2VnCZGfo4R4d0sdQoBAHhPjhIB94v/wRoRKQWGRHgrhGSQJxCS+0pCZbEhAAOw=="
                             res.status(200).send({
                                 "success": "true",
@@ -10412,7 +10428,7 @@ router.post('/createManualOrderGlobally', (req, resp) => {
                     message: err
                 })
             } else {
-                // Add logs in orders logs table 
+                // Add logs in orders logs table
                 var buyOrderId = result.insertedId
                 var log_msg = "Buy Order was Created at Price " + parseFloat(price).toFixed(8);
                 let profit_percent = req.body.tempOrderArr.profit_percent;
@@ -10675,7 +10691,7 @@ function listBamCurrentMarketPrice(coin) {
 } //End of listBamCurrentMarketPrice
 
 
-//function for listing user bam coins from 
+//function for listing user bam coins from
 function listBamUserCoins(admin_id) {
     return new Promise(function (resolve, reject) {
         request.post({
@@ -10818,7 +10834,7 @@ router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
         let set = {};
         set['$set'] = insertArr;
         let where = {};
-        where['user_id'] = user_id; 
+        where['user_id'] = user_id;
         let upsert = {
             upsert: true
         };
@@ -10866,7 +10882,7 @@ router.post('/saveKrakenCredentialsThirdKey', (req, resp) => {
         let set = {};
         set['$set'] = insertArr;
         let where = {};
-        where['user_id'] = user_id; 
+        where['user_id'] = user_id;
         let upsert = {
             upsert: true
         };
@@ -11181,7 +11197,7 @@ async function update_user_wallet_kraken(user_id){
         let api_secret_arr = await db.collection('kraken_credentials').find({ 'user_id': user_id, 'api_key': { '$ne': '' }, 'api_secret':{ '$ne': '' }}).toArray()
         if (api_secret_arr.length > 0){
 
-            
+
             let key = api_secret_arr[0]['api_key']
             let secret = api_secret_arr[0]['api_secret']
 
@@ -11192,9 +11208,9 @@ async function update_user_wallet_kraken(user_id){
             }else{
 
                 const KrakenClient = require('kraken-api');
-                
+
                 const kraken = new KrakenClient(key, secret);
-                
+
                 var balanceArr = await kraken.api('Balance');
 
                 if (balanceArr['error'].length > 0){
@@ -11220,15 +11236,15 @@ async function update_user_wallet_kraken(user_id){
                             // console.log(symbol, currBalance, typeof currBalance)
 
                             // let allCoins = [ 'ZUSD', 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', 'USDT', 'EOS', 'ADA', 'QTUM', 'LINK', 'TRX' ]
-                            
+
                             let changeCoinArr = [ 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', ]
 
                             if (changeCoinArr.includes(key)){
                                 symbol = key == 'XXBT' ? 'BTC' : key.substring(1)
                             }
-                            
+
                             let where = {
-                                'user_id': user_id, 
+                                'user_id': user_id,
                                 'coin_symbol': symbol
                             }
 
@@ -11331,7 +11347,7 @@ router.post('/remove_error', async (req, resp) => {
     conn.then(async (db) => {
 
         //delete sell order from ready_orders_for_sell_ip_based
-        let ready_for_sell_collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange  
+        let ready_for_sell_collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange
         await db.collection(ready_for_sell_collection).deleteOne({ 'buy_order_id': { '$in': [order_id, new ObjectID(order_id)]}});
 
         //get buy order
@@ -11359,19 +11375,19 @@ router.post('/remove_error', async (req, resp) => {
                 update_buy_status = 'new'
                 error_type = buy_status
             } else if (temp_buy_status_arr[0] == 'new') {
-                
+
                 //remove new error
                 update_buy_status = 'canceled'
                 error_type = temp_buy_status_arr.join(' ')
 
             } else if (temp_buy_status_arr[0] == 'buy' || temp_buy_status_arr[0] == 'BUY') {
-                
+
                 //remove buy error
                 update_buy_status = 'canceled'
                 error_type = temp_buy_status_arr.join(' ')
 
             } else if (temp_buy_status_arr[0] == 'FILLED' || temp_buy_status_arr[0] == 'LTH') {
-                
+
                 //remove FILLED or LTH error
                 update_buy_status = 'FILLED'
                 error_type = temp_buy_status_arr.join(' ')
@@ -11387,7 +11403,7 @@ router.post('/remove_error', async (req, resp) => {
 
             if (update_buy_status != '') {
 
-                //skip buy status update if error only exist in sell order 
+                //skip buy status update if error only exist in sell order
                 if (update_buy_status != 'skip'){
 
 
@@ -11589,7 +11605,7 @@ router.post('/removeOrderManually', async (req, resp) => {
 
 
     /*
-    @ Explode Status from here 
+    @ Explode Status from here
     */
     var buyOrderStatus = getBuyOrder[0]['status'];
     var res = buyOrderStatus.split("_");
@@ -11672,7 +11688,7 @@ router.get('/delete_log', async (req, resp) => {
     // 		if(!is_order_exist){
     // 			var del_arr = await delete_log(order_id);
     // 			console.log(del_arr)
-    // 			//resp_obj[order_id] = del_arr; 
+    // 			//resp_obj[order_id] = del_arr;
     // 		}
     // 	}
 
@@ -11703,7 +11719,7 @@ function is_buy_order_exist(order_id) {
             })
         })
     })
-} //End of is_buy_order_exist 
+} //End of is_buy_order_exist
 
 
 function list_logs(limit, skip) {
@@ -11874,12 +11890,12 @@ function listUserBalancebyCoin(admin_id, symbol, exchange) {
     })
 } //End of listUserBalancebyCoin
 
-//function if bnb balance is enough 
+//function if bnb balance is enough
 router.post('/is_bnb_balance_enough', async (req, resp) => {
     var admin_id = req.body.admin_id;
     var symbol = req.body.symbol;
     var exchange = req.body.exchange;
-    //function for getting user balance 
+    //function for getting user balance
     var user_balance_arr = await listUserBalancebyCoin(admin_id, symbol, exchange);
 
     let globalCoin = (exchange == 'coinbasepro') ? 'BTCUSD' : 'BTCUSDT';
@@ -11934,7 +11950,7 @@ router.post('/is_trading_points_exceeded', async (req, resp) => {
 
         resp.send({
             'status': true,
-            'tradingPoints': tradingPoints 
+            'tradingPoints': tradingPoints
         });
 
     } else {
@@ -11989,13 +12005,13 @@ function create_orders_history_log(order_id, log_msg, type, show_hide_log, excha
                                 'order_id': 1,
                             };
                             create_index(full_collection_name, order_index);
-                            
+
                             var order_index = {
                                 'order_id': 1,
                                 'type': 1,
                             };
                             create_index(full_collection_name, order_index);
-                            
+
                             resolve(true);
                         } else {
                             resolve(success.result)
@@ -12111,10 +12127,10 @@ router.post('/umer', async (req, resp) => {
     })
 })
 /**
- * 
- * @param {username} "digiebot" 
+ *
+ * @param {username} "digiebot"
  * @param {password} "digiebot"
- * Helpers Functions 
+ * Helpers Functions
  */
 function check(name, pass) {
     var valid = true
@@ -12427,10 +12443,10 @@ router.post('/resume_order', (req, res) => {
                 if (await isMinQtyValid(obj.symbol, obj.quantity, exchange)){
 
                     let update = db.collection(sold_collection).updateOne(where, set);
-    
+
                     // // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
                     // // let ins = await db.collection(pause_collection).insertOne(obj);
-    
+
                     let show_hide_log = 'yes';
                     let type = 'resume_order';
                     let order_mode = obj.application_mode;
@@ -12438,7 +12454,7 @@ router.post('/resume_order', (req, res) => {
                     var order_created_date = obj.created_date
                     var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
                     promiseLog.then((callback) => { })
-    
+
                     res.send({
                         'status': true,
                         'message': 'Order resumed successfully'
@@ -12477,7 +12493,7 @@ router.post('/resume_order_minQty', (req, res) => {
             if (typeof updateData['lth_pause_resume'] != 'undefined' && updateData['lth_pause_resume'] == 'yes'){
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_'+exchange
                 var buyCollectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
-                
+
                 if (typeof updateData['resumeOrderType'] != 'undefined' && updateData['resumeOrderType'] == 'lth_pause') {
                     buyCollectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
                 }
@@ -12526,7 +12542,7 @@ router.post('/resume_order_minQty', (req, res) => {
 
                             if (typeof updateData['resumeOrderType'] != 'undefined' && updateData['lth_pause_resume'] == 'yes') {
                                 set['$set']['is_sell_order'] = 'resume_pause'
-                                set['$set']['modified_date'] = new Date()  
+                                set['$set']['modified_date'] = new Date()
                             }
 
                             var update = db.collection(buyCollectionName).updateOne(filter, set)
@@ -12622,21 +12638,21 @@ router.post('/resume_order_minQty', (req, res) => {
                         '_id': new ObjectID(order_id),
                         'is_sell_order': 'pause'
                     }
-        
+
                     let sold_collection = (exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange)
-        
+
                     let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
-        
+
                     if (data1.length > 0) {
                         obj = data1[0];
-        
+
                         updateData['is_sell_order'] = 'resume_pause'
                         updateData['modified_date'] = new Date()
                         updateData['resume_date'] = typeof updateData['resume_date'] != 'undefined' && updateData['resume_date'] != '' ? new Date(updateData['resume_date']) : new Date()
-        
+
                         let set = {};
                         set['$set'] = updateData
-                        
+
                         // set['$set'] = {
                         //     'is_sell_order': 'resume_pause',
                         //     'modified_date': new Date()
@@ -12644,12 +12660,12 @@ router.post('/resume_order_minQty', (req, res) => {
                         let where = {
                             '_id': obj._id
                         }
-        
+
                         let update = db.collection(sold_collection).updateOne(where, set);
-        
+
                         // // let pause_collection = (exchange == 'binance' ? 'pause_orders' : 'pause_orders_'+exchange)
                         // // let ins = await db.collection(pause_collection).insertOne(obj);
-        
+
                         let show_hide_log = 'yes';
                         let type = 'resume_order';
                         let order_mode = obj.application_mode;
@@ -12657,7 +12673,7 @@ router.post('/resume_order_minQty', (req, res) => {
                         var order_created_date = obj.created_date
                         var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
                         promiseLog.then((callback) => { })
-        
+
                         res.send({
                             'status': true,
                             'message': 'Order resumed successfully'
@@ -12798,7 +12814,7 @@ router.post('/resume_order_test', (req, res) => {
                             'stop_loss_rule',
                             'custom_stop_loss_percentage',
                             'stop_loss',
-                            'loss_percentage', 
+                            'loss_percentage',
                         ]
 
                         //insert resume id in sold collection order
@@ -12840,10 +12856,10 @@ router.post('/resume_order_test', (req, res) => {
                 let show_hide_log = 'yes';
                 let type = 'resume_order';
                 let order_mode = obj.application_mode;
-                let log_msg = 'Order resumed manually ' + if_direct_resume 
+                let log_msg = 'Order resumed manually ' + if_direct_resume
                 var order_created_date = obj.created_date
                 var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
-                promiseLog.then((callback) => { }) 
+                promiseLog.then((callback) => { })
 
                 res.send({
                     'status': true,
@@ -12971,7 +12987,7 @@ router.post('/resume_already_paused_test', (req, res) => {
                             'stop_loss_rule',
                             'custom_stop_loss_percentage',
                             'stop_loss',
-                            'loss_percentage', 
+                            'loss_percentage',
                         ]
 
                         var set = {};
@@ -13008,13 +13024,13 @@ router.post('/resume_already_paused_test', (req, res) => {
                 let show_hide_log = 'yes';
                 let type = 'resume_continue';
                 let order_mode = obj.application_mode;
-                let log_msg = 'Paused order was resumed again manually ' + if_direct_resume 
+                let log_msg = 'Paused order was resumed again manually ' + if_direct_resume
                 var order_created_date = obj.created_date
-                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date) 
-                
+                var promiseLog = create_orders_history_log(obj._id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+
                 if (typeof obj['order_level'] != 'undefined' && typeof tempOrder['order_level'] != 'undefined' && obj['order_level'] != tempOrder['order_level']){
                     let msg22 = 'Order level was updated from ' + obj['order_level'] + ' to ' + tempOrder['order_level']
-                    create_orders_history_log(obj._id, msg22, type, show_hide_log, exchange, order_mode, order_created_date) 
+                    create_orders_history_log(obj._id, msg22, type, show_hide_log, exchange, order_mode, order_created_date)
                 }
 
                 res.send({
@@ -13058,7 +13074,7 @@ router.post('/pause_lth_order_test', (req, res) => {
 
                 let tempOrder = Object.assign({}, obj)
 
-                //update new edit fields 
+                //update new edit fields
                 var count = 0;
                 var i;
                 for (i in updateArr) {
@@ -13208,7 +13224,7 @@ router.post('/pause_sold_order_test', (req, res) => {
                 let obj = data1[0];
                 let tempOrder = Object.assign({}, obj)
 
-                //Update new edit fields 
+                //Update new edit fields
                 var count = 0;
                 var i;
                 for (i in updateArr) {
@@ -13310,7 +13326,7 @@ router.post('/pause_sold_order_test', (req, res) => {
                         updArr['resume_order_id'] = insert_id
                         updArr['is_sell_order'] = 'pause'
                         updArr['resume_status'] = 'resume'
-                        updArr['is_sell_order'] = 'resume_pause' 
+                        updArr['is_sell_order'] = 'resume_pause'
                         updArr['modified_date'] = new Date()
 
                         var set = {};
@@ -13364,8 +13380,8 @@ router.post('/genral_order_update', (req, res) => {
             let data1 = await db.collection(sold_collection).find(filter).limit(1).toArray();
 
             if (data1.length > 0) {
-                let updateStatus = false 
-                
+                let updateStatus = false
+
                 let obj = data1[0];
 
                 // console.log(obj['resume_order_id'])
@@ -13377,7 +13393,7 @@ router.post('/genral_order_update', (req, res) => {
                         '$set':updateArr
                     }
                     if (typeof updateArr['direct_resume'] != 'undefined' && updateArr['direct_resume'] == 'yes'){
-                        set['$set']['order_level'] = 'direct_resume' 
+                        set['$set']['order_level'] = 'direct_resume'
                     }
                     let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                     let update = db.collection(resumeCollectionName).updateOne(where, set, async (err, result) => {
@@ -13402,10 +13418,10 @@ router.post('/genral_order_update', (req, res) => {
                             var order_created_date = obj['created_date']
                             var promiseLog = create_orders_history_log(obj['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
                             promiseLog.then((callback) => { })
-                            
+
                             res.send({
                                 'status': updateStatus,
-                                'message': updateStatus == true ? 'Order Updated successfully' : 'Unable to Update' 
+                                'message': updateStatus == true ? 'Order Updated successfully' : 'Unable to Update'
                             });
 
                         }
@@ -13442,7 +13458,7 @@ router.post('/pauseAlreadyResumedOrder', (req, res) => {
                 'message': 'order_id and exchange are required'
             });
         } else {
-            
+
             let filter = {
                 '_id': new ObjectID(order_id),
             }
@@ -13510,7 +13526,7 @@ router.post('/resumeAlreadyPausedOrder', (req, res) => {
                 'message': 'order_id and exchange are required'
             });
         } else {
-            
+
             let filter = {
                 '_id': new ObjectID(order_id),
             }
@@ -13567,10 +13583,10 @@ router.post('/resumeAlreadyPausedOrder', (req, res) => {
 //End resumeAlreadyPausedOrder
 
 
-// ******************* End Resume / Pause APIs **************** //  
+// ******************* End Resume / Pause APIs **************** //
 
 
-// ******************* Cost Avg APIs ******************** //  
+// ******************* Cost Avg APIs ******************** //
 
 router.post('/getCostAvgOrders', async (req, res) => {
 
@@ -13581,7 +13597,7 @@ router.post('/getCostAvgOrders', async (req, res) => {
 
         let ordersArr = await getCostAvgOrders(order_ids, exchange)
         let last3ordersArr = await getLast3CostAvgOpenOrders(order_ids, exchange)
-        
+
         // var ordersArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
 
         res.send({
@@ -13605,41 +13621,41 @@ async function getCostAvgOrders(order_ids, exchange){
 
     return new Promise( async (resolve) =>{
         if (typeof order_ids != 'undefined' && order_ids.length > 0 && typeof exchange != 'undefined' && exchange != '') {
-    
+
             let db = await conn
 
             let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
             let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-    
+
             let ids_arr = []
             let totalItems = order_ids.length
-            
+
             for (let i = 0; i < totalItems; i++){
                 ids_arr.push(new ObjectID(order_ids[i]))
             }
-    
+
             let where = {
                 '_id': { '$in': ids_arr }
             }
-    
+
             let p1 = db.collection(buy_collection).find(where).toArray()
             let p2 = db.collection(sold_collection).find(where).toArray()
-    
+
             let promiseResult = await Promise.all([p1, p2])
-    
+
             let buy_orders = promiseResult[0]
             let sold_orders = promiseResult[1]
-    
+
             let ordersArr = buy_orders.concat(sold_orders);
             delete buy_orders
             delete sold_orders
             delete promiseResult
             delete p1
             delete p2
-    
+
             // var ordersArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
             resolve(ordersArr)
-    
+
         } else {
             resolve ([])
         }
@@ -13666,11 +13682,11 @@ async function getLast3CostAvgOpenOrders(order_ids, exchange) {
             }
 
             let p1 = await db.collection(buy_collection).find(where).sort({'created_date':-1}).limit(3).toArray()
-            
+
             let buy_orders = p1
 
             let ordersArr = buy_orders
-            
+
             resolve(ordersArr)
 
         } else {
@@ -13682,7 +13698,7 @@ async function getLast3CostAvgOpenOrders(order_ids, exchange) {
 async function getCostAvgPLandUsdWorth(order_ids, exchange) {
 
     return new Promise(async (resolve) => {
-        
+
         let totalUsdWorth = 0
         let sold_avg_order_count = 0
         let remaining_avg_order_count = 0
@@ -13719,8 +13735,8 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 let costAvgObj = {}
                 // let profitLoss = obj['is_sell_order'] == 'sold' ? obj['cost_avg_profit'] : getPercentageDiff(currPrice, obj['purchased_price'])
                 let profitLoss = obj['is_sell_order'] == 'sold' ? getPercentageDiff(obj['market_sold_price'], obj['purchased_price']) : getPercentageDiff(currPrice, obj['purchased_price'])
-                let usd_worth = 0 
-                
+                let usd_worth = 0
+
                 //sold usd worth
                 if (obj['is_sell_order'] == 'sold' && typeof obj['market_sold_price_usd'] != 'undefined' && obj['market_sold_price_usd'] != '' && !isNaN(parseFloat(obj['market_sold_price_usd']))){
                     usd_worth = (splitArr[1] == '' ? obj['quantity'] * obj['market_sold_price'] : obj['market_sold_price_usd'])
@@ -13781,9 +13797,9 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 costAvgObj['plColor'] = (profitLoss > 0 ? 'success' : 'danger')
 
                 totalQuantity += typeof obj['is_sell_order'] != 'undefined' && obj['is_sell_order'] == 'yes' && typeof obj['quantity'] != 'undefined' && !isNaN(parseFloat(obj['quantity'])) ? parseFloat(obj['quantity']) : 0
-                
+
                 temp_totalQuantity += parseFloat(obj['quantity'])
-                
+
                 costAvgArr.push(costAvgObj)
             }
 
@@ -13817,7 +13833,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                     targetProfitCount++
                     targetProfit += parseFloat(costAvgArr[i].targetProfit)
                 }
-                
+
                 if (costAvgArr[i].type != 'canceled') {
                     // if (costAvgArr[i].profitLoss != 0) {
                     //     currCount++
@@ -13831,17 +13847,17 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
 
             if (costAvgArr.length > 0) {
                 avgProfit = parseFloat((avgProfit / costAvgArr.length).toFixed(1))
-                
+
                 cost_avg_profit = avgProfit
                 cost_avg_profit_color = (avgProfit > 0 ? 'success' : 'danger')
-                
+
                 sold_avg_profit = !isNaN(parseFloat((soldProfit / soldCount).toFixed(1))) ? parseFloat((soldProfit / soldCount).toFixed(1)) : 0
                 sold_avg_profit_color = (soldProfit > 0 ? 'success' : 'danger')
-                
+
                 // curr_avg_profit = !isNaN(parseFloat((currProfit / currCount).toFixed(1))) ? parseFloat((currProfit / currCount).toFixed(1)) : 0
                 curr_avg_profit = !isNaN(parseFloat((currProfit / (currCount - (currCount == soldCount ? 0 : soldCount))).toFixed(1))) ? parseFloat((currProfit / (currCount - (currCount == soldCount ? 0 : soldCount))).toFixed(1)) : 0
                 curr_avg_profit_color = (curr_avg_profit > 0 ? 'success' : 'danger')
-                
+
                 target_avg_profit = !isNaN(parseFloat((targetProfit / targetProfitCount).toFixed(1))) ? parseFloat((targetProfit / targetProfitCount).toFixed(1)) : 0
                 target_avg_profit_color = (targetProfit > 0 ? 'success' : 'danger')
 
@@ -13855,7 +13871,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
 
             // console.log('sold_avg_order_count ', this.sold_avg_order_count)
             // console.log('remaining_avg_order_count ', this.remaining_avg_order_count)
-            
+
             // this.costAvgLedgerExists = true;
             // this.costAvgLedger = costAvgArr;
             resolve({
@@ -13889,7 +13905,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
             //     delete costAvgArr
             //     delete orders
             // })
-            
+
 
         } else {
             resolve({})
@@ -13908,7 +13924,7 @@ function getPercentageDiff(currentMarketPrice, purchased_price) {
 }
 
 
-//sellCostAvgOrder 
+//sellCostAvgOrder
 router.post('/sellCostAvgOrder', async (req, resp) => {
 
     let orderType = req.body.orderType
@@ -13917,7 +13933,7 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
     let tab = req.body.tab
     let action = typeof req.body.action != 'undefined' && req.body.action != '' ? req.body.action : '';
 
-    let sellNow = true 
+    let sellNow = true
 
     if (typeof orderType != 'undefined' && orderType != '' && typeof exchange != 'undefined' && exchange != '' && typeof order_id != 'undefined' && order_id != '') {
 
@@ -13938,7 +13954,7 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
                     if (action == 'isResumeExchange') {
                         //only move
                         await migrate_order(order_id, exchange, action)
-                        sellNow = false 
+                        sellNow = false
                     } else if (action == 'isResume'){
                         //move then sell
                         await migrate_order(order_id, exchange, action)
@@ -13966,7 +13982,7 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
                             'currentMarketPriceByCoin': currentmarketPrice,
                         }
                     };
-                    request(options, function (error, response, body) { });                
+                    request(options, function (error, response, body) { });
                 }
 
             } else if (orderType == 'costAvgParent') {
@@ -13980,7 +13996,7 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
                 if (typeof order['avg_orders_ids'] != 'undefined'){
                     ids = ids.concat(order['avg_orders_ids'])
                 }
-                
+
                 let childsCount = ids.length
 
                 if (typeof tab != 'undefined' && tab == 'costAvgTab'){
@@ -14059,7 +14075,7 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
                                 'exchange': exchange,
                                 'currentMarketPriceByCoin': currentmarketPrice,
                                 'costAvgParent': true,
-                                'costAvgParentAddedQty': totalCostAvgQty, 
+                                'costAvgParentAddedQty': totalCostAvgQty,
                             }
                         };
                         request(options, function (error, response, body) { });
@@ -14087,7 +14103,7 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
 
 }) //End of sellCostAvgOrder
 
-// ******************* End Cost Avg APIs **************** //  
+// ******************* End Cost Avg APIs **************** //
 
 
 
@@ -14106,20 +14122,20 @@ router.post('/latest_user_activity', (req, res) => {
 
             let binancePromise = latest_user_activity(user_id, 'binance')
             let bamPromise = latest_user_activity(user_id, 'bam')
-            
+
             let myPrmises = await Promise.all([binancePromise, bamPromise]);
 
             let latest_activity = { ...myPrmises[0], ...myPrmises[1] }
-            
+
             let user = await db.collection('users').aggregate([{
                 $match: {
                     '_id': new ObjectID(user_id)
                 }
             }]).toArray();
-            
+
             let last_login = (user.length > 0 && user[0].last_login_datetime != 'undefined' ? user[0].last_login_datetime : '');
             last_login = typeof last_login != 'undefined' ? last_login : ''
-            
+
             res.send({
                 'last_login': last_login,
                 'latest_orders': latest_activity,
@@ -14148,14 +14164,14 @@ async function latest_user_activity(user_id, exchange){
                 $limit: 1
             }
             ]).toArray();
-    
+
             var filter = {
                 'admin_id': user_id,
                 'application_mode': 'live',
                 'status': 'FILLED'
             }
             var buy_order_count_promise = countCollection(buy_order_collection, filter);
-    
+
             var filter = {
                 'admin_id': user_id,
                 'application_mode': 'live',
@@ -14165,12 +14181,12 @@ async function latest_user_activity(user_id, exchange){
                 }
             }
             var buy_parent_order_count_promise = countCollection(buy_order_collection, filter);
-    
+
             let btc_balance_arr = listUserBalancebyCoin(user_id, 'BTC', exchange)
             let usdt_balance_arr = listUserBalancebyCoin(user_id, 'USDT', exchange)
-    
+
             let myPrmises = await Promise.all([buy_order, buy_order_count_promise, buy_parent_order_count_promise, btc_balance_arr, usdt_balance_arr]);
-            
+
             // console.log(buy_order)
             // console.log(myPrmises[0].length > 0)
 
@@ -14178,14 +14194,14 @@ async function latest_user_activity(user_id, exchange){
             obj[exchange] = myPrmises[0].length > 0 ? myPrmises[0][0] : {}
             obj[exchange + '_buy_order_count'] = myPrmises[1]
             obj[exchange + '_parent_order_count'] = myPrmises[2]
-            
+
             obj[exchange + '_BTC'] = myPrmises[3].length > 0 ? Number(myPrmises[3][0]['coin_balance']) : 0
             obj[exchange + '_USDT'] = myPrmises[4].length > 0 ? Number(myPrmises[4][0]['coin_balance']) : 0
-            
+
             resolve(obj)
 
         })
-    })            
+    })
 }
 
 async function send_notification(admin_id, type, priority, message, order_id = '', exchange = '', symbol = '', application_mode = '', interface = '') {
@@ -14271,7 +14287,7 @@ async function update_user_balance(user_id) {
         json: {}
     };
     request(options, function (error, response, body) { });
-    
+
     //Update Binance Bam
     var options = {
         method: 'GET',
@@ -14310,7 +14326,7 @@ async function update_user_balance(user_id) {
     // };
     // request(options, function (error, response, body) { });
 
-    
+
     //get user IP for sending request
     const db = await conn
     let user = await db.collection('users').find({ '_id': new ObjectID(String(user_id)) }).project({ trading_ip:1}).toArray();
@@ -14369,7 +14385,7 @@ router.post('/getNotifications', (req, res) => {
 
             if (typeof load_more == 'undefined' || load_more == '' || load_more != 'yes'){
                 let MS_PER_MINUTE = 60000;
-                let durationInMinutes = 15; 
+                let durationInMinutes = 15;
                 let end_date = new Date();
                 let start_date = new Date(new Date() - durationInMinutes * MS_PER_MINUTE);
                 where['created_date'] = {
@@ -14467,7 +14483,7 @@ router.post('/getSubscription', async (req, res) => {
                 'handshake': token,
             }
         };
-        
+
         request(options, function (error, response, body) {
             if (error){
                 res.send({
@@ -14475,7 +14491,7 @@ router.post('/getSubscription', async (req, res) => {
                     'message': 'some thing went wrong'
                 });
             }else{
-                res.send(body);    
+                res.send(body);
             }
         })
     }else{
@@ -14487,11 +14503,11 @@ router.post('/getSubscription', async (req, res) => {
 })
 
 async function getSubscription(user_id){
-    
+
     return new Promise(async resolve=>{
 
         let token = await get_temp_req_token('users')
-    
+
         var options = {
             method: 'POST',
             url: 'https://users.digiebot.com/cronjob/GetUserSubscriptionDetails/',
@@ -14512,7 +14528,7 @@ async function getSubscription(user_id){
         };
 
         let package_limit = 1000
-    
+
         request(options, function (error, response, body) {
             if (error) {
                 resolve(package_limit)
@@ -14537,7 +14553,7 @@ router.post('/updateUserPackage', async (req, res)=>{
         // 'manualPackage'
 
         let updatedItems = await  updateUserPackage(user_id, userPackage)
-        
+
         // console.log(updatedItems == userPackage.length ? 'added' : 'error')
 
         res.send({
@@ -14576,12 +14592,12 @@ async function updateUserPackage(user_id, userPackage=[]){
     let db = await conn
 
     return new Promise(async resolve => {
-        //remove all 
+        //remove all
         await db.collection('users').updateOne({'_id': new ObjectID(String(user_id))}, {'$unset':{'userPackage':''}})
-        
+
         let totalModules = 0
         //add new
-        await Promise.all([userPackage.map(item=>{ 
+        await Promise.all([userPackage.map(item=>{
             let where = {
                 '_id': new ObjectID(String(user_id)),
                 'userPackage': { '$ne': item }
@@ -14592,7 +14608,7 @@ async function updateUserPackage(user_id, userPackage=[]){
             db.collection('users').updateOne(where, set)
             totalModules++
         })])
-    
+
         resolve(totalModules)
     })
 }
@@ -14600,14 +14616,14 @@ async function updateUserPackage(user_id, userPackage=[]){
 async function getUserPackage(user_id){
     return new Promise(async (resolve) =>{
         const db = await conn
-        
+
         let defaultModules = [
             'autoTrading',
             'manualTrading'
         ]
 
         let user = await db.collection('users').find({'_id':new ObjectID(String(user_id))}).toArray()
-        let userPackage = user.length > 0 && typeof user[0]['userPackage'] != 'undefined' && user[0]['userPackage'] != '' ? user[0]['userPackage'] : defaultModules 
+        let userPackage = user.length > 0 && typeof user[0]['userPackage'] != 'undefined' && user[0]['userPackage'] != '' ? user[0]['userPackage'] : defaultModules
         resolve(userPackage)
     })
 }
@@ -14639,7 +14655,7 @@ async function get_temp_req_token(type){
         '63cdf744b7d76f27357ba1722da51ee6',
     ];
 
-    return token_arr[Math.floor(Math.random() * token_arr.length)] 
+    return token_arr[Math.floor(Math.random() * token_arr.length)]
 
     return new Promise((resolve) => {
         conn.then((db) => {
@@ -14785,9 +14801,9 @@ router.post('/listCurrentUserExchanges', async (req, res) => {
     let user_id = req.body.user_id
     let application_mode = req.body.application_mode
     let exchangesArr = ['binance', 'bam', 'kraken']
-    
+
     if (typeof application_mode != 'undefined' && application_mode == 'test' && typeof user_id != 'undefined' && user_id != ''){
-        
+
         res.send({
             status: true,
             data: exchangesArr,
@@ -14824,13 +14840,13 @@ router.post('/listCurrentUserExchanges', async (req, res) => {
             }else{
 
                 let available_exchanges = []
-                
+
                 let binance = false
                 if (myPromises[0].length) {
                     binance = myPromises[0][0]
-                    binance = typeof binance.api_key != 'undefined' && binance.api_key != '' && typeof binance.api_secret != 'undefined' && binance.api_secret != '' ? true : false 
+                    binance = typeof binance.api_key != 'undefined' && binance.api_key != '' && typeof binance.api_secret != 'undefined' && binance.api_secret != '' ? true : false
                 }
-                let bam = false 
+                let bam = false
                 if (myPromises[1].length){
                     bam = myPromises[1][0]
                     bam = typeof bam.api_key != 'undefined' && bam.api_key != '' && typeof bam.api_secret != 'undefined' && bam.api_secret != '' ? true : false
@@ -14879,7 +14895,7 @@ router.post('/listCurrentUserExchanges', async (req, res) => {
                     });
                 }
             }
-            
+
         })
     } else {
         res.send({
@@ -14932,7 +14948,7 @@ async function getUserExchangesWithAPISet(user_id){
                     kraken = myPromises[2][0]
                     kraken = typeof kraken.api_key != 'undefined' && kraken.api_key != '' && typeof kraken.api_secret != 'undefined' && kraken.api_secret != '' ? true : false
                 }
-    
+
                 if (binance) {
                     available_exchanges.push('binance')
                 }
@@ -14970,7 +14986,7 @@ router.post('/getAutoTradeSettings', async (req, res) => {
 
     let user_id = req.body.user_id
     let application_mode = req.body.application_mode
-    
+
     if (typeof user_id != 'undefined' && user_id != '' && typeof application_mode != 'undefined' && application_mode != '') {
 
         conn.then(async (db) => {
@@ -15004,7 +15020,7 @@ router.post('/getAutoTradeSettings', async (req, res) => {
                     message: 'Settings found successfully.'
                 });
             }
-            
+
         })
     } else {
         res.send({
@@ -15060,7 +15076,7 @@ router.post('/getAutoTradeParents', async (req, res) => {
     let exchange = req.body.exchange
 
     if (typeof user_id != 'undefined' && user_id != '' && typeof application_mode != 'undefined' && application_mode != '' && typeof exchange != 'undefined' && exchange != '') {
-        
+
         let parentTrades = await getAutoTradeParents(user_id, exchange, application_mode)
         if (parentTrades.length > 0){
 
@@ -15090,7 +15106,7 @@ router.post('/getAutoTradeParents', async (req, res) => {
                         ]
                     },
                     'buy_date': {
-                        '$gte': startTime, 
+                        '$gte': startTime,
                         '$lte': endTime
                     },
                 }
@@ -15105,7 +15121,7 @@ router.post('/getAutoTradeParents', async (req, res) => {
                     { "$project": { "buy_parent_id": 1, "count": 1 } }
                 ]).toArray();
                 myPromises = await Promise.all([p1, p2])
-              
+
                 res.send({
                     status: true,
                     data: {
@@ -15140,22 +15156,22 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
     // let exchangesArr = ['binance', 'bam', 'kraken']
 
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != '') {
-        
+
         dataArr['step_1'] = {'exchange': exchange}
         let autoTradeData = {
             'user_id': user_id,
             'exchange': exchange,
             'settings': dataArr,
-            'application_mode': application_mode 
+            'application_mode': application_mode
         }
-        
+
         conn.then(async (db) => {
             let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
             var where = {
                 'user_id': user_id,
                 'application_mode': application_mode,
             }
-            let userSettings = await db.collection(collectionName).find(where).toArray(); 
+            let userSettings = await db.collection(collectionName).find(where).toArray();
             //update settings I already exist for this user
             if (userSettings.length > 0){
                 delete dataArr._id
@@ -15188,31 +15204,31 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 saveATGLog(user_id, exchange, 'update', 'Auto trade settings update manually successful', application_mode)
 
                 await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode)
-                
+
                 if(application_mode == 'live'){
                     await createAutoTradeParents(autoTradeData)
                 }else{
                     await createAutoTradeParents_test(autoTradeData)
                 }
-                
+
                 res.send({
                     status: true,
                     message: 'Auto trade settings updated successfully'
                 })
-                
+
             }else{
-                
+
                 //Insert auto trade settings
                 let data = dataArr
                 data['user_id'] = user_id
                 data['application_mode'] = application_mode
-                data['usedDailyTrades'] = 0 
-                data['weeklyTrades'] = 35  
-                data['usedWeeklyTrades'] = 0  
+                data['usedDailyTrades'] = 0
+                data['weeklyTrades'] = 35
+                data['usedWeeklyTrades'] = 0
                 data['week_start_date'] = new Date()
                 dataArr['created_date'] = new Date()
                 dataArr['modified_date'] = new Date()
-                
+
                 let settings = await db.collection(collectionName).insertOne(data);
 
                 var reqObj = {
@@ -15230,11 +15246,11 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                     let field_name = exchange == 'binance' ? 'atg_parents_update_cron_last_run' : 'atg_parents_update_cron_last_run_' + exchange
                     let tempUpdArr = {}
                     tempUpdArr[field_name] = new Date()
-                    
+
                     //update maxBtcCustomPackage, maxUsdtCustomPackage in users coll
-                    let maxBtcCustomPackage = typeof dataArr['step_4'] != 'undefined' && typeof dataArr['step_4']['maxBtcCustomPackage'] != 'undefined' ? dataArr['step_4']['maxBtcCustomPackage'] : ''     
+                    let maxBtcCustomPackage = typeof dataArr['step_4'] != 'undefined' && typeof dataArr['step_4']['maxBtcCustomPackage'] != 'undefined' ? dataArr['step_4']['maxBtcCustomPackage'] : ''
                     let maxUsdtCustomPackage = typeof dataArr['step_4'] != 'undefined' && typeof dataArr['step_4']['maxUsdtCustomPackage'] != 'undefined' ? dataArr['step_4']['maxUsdtCustomPackage'] : ''
-                   
+
                     tempUpdArr['maxBtcCustomPackage'] = maxBtcCustomPackage
                     tempUpdArr['maxUsdtCustomPackage'] = maxUsdtCustomPackage
 
@@ -15250,7 +15266,7 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode)
 
                 if (application_mode == 'live') {
-                    
+
                     autoTradeData['make_higher_sort_priority'] = 'yes'
 
                     await createAutoTradeParents(autoTradeData)
@@ -15264,7 +15280,7 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 })
 
             }
-            
+
         })
     } else {
         res.send({
@@ -15284,7 +15300,7 @@ async function checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode){
             if (bnbAutoBuySetting.length == 0) {
                 //set Auto buy bnb for very minimum val
                 //by default use BTC as base currency
-                //Insert CoinAutoBuy settings 
+                //Insert CoinAutoBuy settings
                 let buyArr = {
                     'admin_id': user_id,
                     'application_mode': 'live',
@@ -15344,7 +15360,7 @@ router.get('/checkBnbMissingUsers', async (req, res)=>{
     // console.log(result)
 
     res.send({})
-    
+
 })
 
 //getBtcUsdtBalance
@@ -15458,22 +15474,22 @@ async function runDailyLimitUpdateCron(user_id, exchange){
             // console.log(ATG_settings[0]['step_4']['dailyTradeableBTC'], ATG_settings[0]['step_4']['dailyTradeableUSDT'])
 
             if (ATG_settings.length > 0){
-                
+
                 if (typeof ATG_settings[0]['step_4'] != 'undefined'){
-                     
+
                     if (typeof ATG_settings[0]['step_4']['dailyTradeableBTC'] != 'undefined' && typeof ATG_settings[0]['step_4']['dailyTradeableUSDT'] != 'undefined'){
-                        
+
                         var pricesObj = await get_current_market_prices(exchange, ['BTCUSDT'])
                         var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
-                        
+
                         var dailyTradeableBTC = ATG_settings[0]['step_4']['dailyTradeableBTC']
                         var dailyTradeableUSDT = ATG_settings[0]['step_4']['dailyTradeableUSDT']
                         var dailyTradeableBTC_usd_worth = parseFloat((ATG_settings[0]['step_4']['dailyTradeableBTC'] * BTCUSDTPRICE).toFixed(2))
                         var dailyTradeableUSDT_usd_worth = parseFloat((ATG_settings[0]['step_4']['dailyTradeableUSDT']).toFixed(2))
                         var daily_buy_usd_limit = parseFloat((dailyTradeableBTC_usd_worth + dailyTradeableUSDT_usd_worth).toFixed(2))
-    
+
                         // console.log('CRONE ============================ ', ATG_settings[0]['step_4']['dailyTradeableBTC'], ATG_settings[0]['step_4']['dailyTradeableUSDT'])
-        
+
 
                         //user_id not equal to admin and vizzdeveloper
                         if (user_id != '5c0912b7fc9aadaac61dd072' && user_id != '5c0915befc9aadaac61dd1b8'){
@@ -15484,12 +15500,12 @@ async function runDailyLimitUpdateCron(user_id, exchange){
                                     'dailyTradeableUSDT': !isNaN(dailyTradeableUSDT) ? dailyTradeableUSDT : 0,
                                     'dailyTradeableBTC_usd_worth': !isNaN(dailyTradeableBTC_usd_worth) ? dailyTradeableBTC_usd_worth : 0,
                                     'dailyTradeableUSDT_usd_worth': !isNaN(dailyTradeableUSDT_usd_worth) ? dailyTradeableUSDT_usd_worth : 0,
-                                    'daily_buy_usd_limit': !isNaN(daily_buy_usd_limit) ? daily_buy_usd_limit : 0, 
-                                    'modified_date': new Date()                         
+                                    'daily_buy_usd_limit': !isNaN(daily_buy_usd_limit) ? daily_buy_usd_limit : 0,
+                                    'modified_date': new Date()
                                 }
                             })
                         }
-    
+
                         //set pick parent to yes
                         let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
                         await db.collection(buy_collection).updateMany({ 'application_mode': 'live', 'admin_id': user_id, 'parent_status': 'parent', 'status': { '$ne': 'canceled' } }, { '$set': { 'pick_parent': 'yes'} })
@@ -15501,8 +15517,8 @@ async function runDailyLimitUpdateCron(user_id, exchange){
             // resolve(false)
         }else{
             //Hit Cron
-            var cron_name = exchange == 'binance' ? 'update_daily_buy_limit' : 'update_daily_buy_limit_'+exchange 
-            var save_history = 'no' 
+            var cron_name = exchange == 'binance' ? 'update_daily_buy_limit' : 'update_daily_buy_limit_'+exchange
+            var save_history = 'no'
             var reqObj = {
                 'type': 'GET',
                 'url': 'http://app.digiebot.com/admin/trading_reports/cronjob/' + cron_name + '/' + user_id + '/' + save_history,
@@ -15510,7 +15526,7 @@ async function runDailyLimitUpdateCron(user_id, exchange){
             }
             var apiResult = await customApiRequest(reqObj)
         }
-        
+
         //Hit Cron2
         var cron_name = exchange == 'binance' ? 'unset_pick_parent_based_on_base_currency_daily_limit' : 'unset_pick_parent_based_on_base_currency_daily_limit_' + exchange
         var save_history = 'no'
@@ -15553,7 +15569,7 @@ async function getUserRemainingLimit(user_id, exchange){
                 }
             }
         ]).toArray()
-        
+
         let remaining_btc_usd_limit = (result.length > 0 && !isNaN(result[0]['remaining_btc_usd_limit'])) ? result[0]['remaining_btc_usd_limit'] : 0
         let remaining_usdt_usd_limit = (result.length > 0 && !isNaN(result[0]['remaining_usdt_usd_limit'])) ? result[0]['remaining_usdt_usd_limit'] : 0
 
@@ -15581,7 +15597,7 @@ async function listmarketPriceMinNotationCoinArr(coin, exchange) {
 
         var marketMinNotationPromise = marketMinNotation_with_step_size_arr(coin, exchange);
         var currentMarketPricePromise = listCurrentMarketPriceArr(coin, exchange);
-    
+
         var promisesResult = await Promise.all([marketMinNotationPromise, currentMarketPricePromise]);
         if (promisesResult[0].length > 0 && promisesResult[1].length > 0){
             let coinObjArr = {}
@@ -15589,7 +15605,7 @@ async function listmarketPriceMinNotationCoinArr(coin, exchange) {
                 coinObjArr[item.coin] = {}
                 coinObjArr[item.coin]['currentmarketPrice'] = item.price
                 let notationObj =  promisesResult[0].find(item2=>{return item2.symbol == item.coin ? true : false })
-        
+
                 coinObjArr[item.coin]['marketMinNotation'] = notationObj.min_notation
                 coinObjArr[item.coin]['marketMinNotationStepSize'] = notationObj.step_size
             })
@@ -15615,10 +15631,10 @@ async function createAutoTradeParents(settings){
 
         // let btcPerTrade = step4.dailyTradeableBTC / step4.noOfDailyBTCTrades
         // let usdtPerTrade = step4.dailyTradeableUSDT / step4.noOfDailyUSDTTrades
-        
+
         let btcPerTrade = step4.dailyTradeableBTC
         let usdtPerTrade = step4.dailyTradeableUSDT
-        
+
         let profit_percentage = step4.profit_percentage
         let stop_loss = step4.stop_loss
         let loss_percentage = step4.loss_percentage
@@ -15630,15 +15646,15 @@ async function createAutoTradeParents(settings){
         let coinsWorthArr = await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
         // console.log('coinsWorthArr ', coinsWorthArr)
         // process.exit(0)
-        
+
         let whereCoins = { '$in': coins}
         let coinData = await listmarketPriceMinNotationCoinArr(whereCoins, exchange)
         let btcCoinObj = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
         let BTCUSDTPRICE = parseFloat(btcCoinObj['BTCUSDT']['currentmarketPrice'])
-        
+
         let coninsCount = coins.length
         let keepParentIdsArr = []
-        
+
         var db = await conn
         var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         var level = ''
@@ -15684,7 +15700,7 @@ async function createAutoTradeParents(settings){
             var usdWorthQty = 0
             var quantity = 0
             var usd_worth = currCoin.length > 0 ? currCoin[0]['worth'] : 5
-            
+
             if (splitArr[1] == '') {
                 oneUsdWorthQty = 1 / currentMarketPrice
 
@@ -15701,12 +15717,12 @@ async function createAutoTradeParents(settings){
             quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
             // console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth, ' :::: ', oneUsdWorthQty, ' price ', currentMarketPrice, 'btcusdt_price', BTCUSDTPRICE)
 
-            if (quantity < minReqQty) {                
+            if (quantity < minReqQty) {
                 //Create trades with minReqQty
                 for (let index in bots){
 
                     level = bots[index]
-                    
+
                     let where1 = {
                         'auto_trade_generator': 'yes',
                         'admin_id': user_id,
@@ -15796,9 +15812,9 @@ async function createAutoTradeParents(settings){
                                 }
                             })
 
-                        } 
+                        }
                     })
-                    
+
                 }
             } else {
                 //Create trades with defined quantity
@@ -15894,7 +15910,7 @@ async function createAutoTradeParents(settings){
 
                                 }
                             })
-                            
+
                         }
                     })
 
@@ -15946,7 +15962,7 @@ async function createAutoTradeParents(settings){
                 })
             }
         }
-        
+
         //TODO: cancel duplicate orders if loop end here
         if (typeof remove_duplicates != 'undefined' && remove_duplicates == 'yes' && (coins.length * bots.length) == keepParentIdsArr.length) {
             removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode, keepParentIdsArr)
@@ -15957,7 +15973,7 @@ async function createAutoTradeParents(settings){
         let runDailyCron = await runDailyLimitUpdateCron(user_id, exchange)
 
         resolve(true)
-        
+
     })
 }
 
@@ -16312,11 +16328,11 @@ async function createAutoTradeParents_test(settings) {
 
 async function removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode){
 
-    //TODO: Remove duplicate parents and only keep these parents 
+    //TODO: Remove duplicate parents and only keep these parents
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != 'undefined') {
         conn.then(async (db) => {
-            
-            let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange 
+
+            let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
 
             let where = {
                 // 'auto_trade_generator': 'yes',
@@ -16326,7 +16342,7 @@ async function removeDuplicateParentsOtherThanThese(user_id, exchange, applicati
                 'status': { '$ne': 'canceled' },
             }
             let result = await db.collection(collectionName).find(where).sort({ 'modified_date': -1 }).project({ '_id': 1, 'order_level': 1, 'symbol': 1 }).toArray()
-            
+
             let duplicateTestObj = {}
             let parentIdsToDelete = []
             result.map(item => {
@@ -16337,7 +16353,7 @@ async function removeDuplicateParentsOtherThanThese(user_id, exchange, applicati
                     parentIdsToDelete.push(item._id)
                 }
             })
-            
+
             let filter = {
                 '_id': { '$in': parentIdsToDelete},
                 // 'auto_trade_generator': 'yes',
@@ -16378,7 +16394,7 @@ async function removeDuplicateParentsOtherThanThese(user_id, exchange, applicati
 async function get_active_parent_coins_arr(user_id, exchange, application_mode) {
     return new Promise( (resolve) => {
         conn.then(async (db) => {
-            let collection_name = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange  
+            let collection_name = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
             let coins = await db.collection(collection_name).aggregate([
                 {
                     $match: {
@@ -16584,9 +16600,9 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
     return new Promise(async resolve =>{
         let defined_min_usd_worth = 5
         let BTCUSDTPrice = 0
-    
+
         if (coinsArr.length > 0) {
-    
+
             //TODO: get pricesArr
             let btcCoinObj = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
             BTCUSDTPrice = parseFloat(btcCoinObj['BTCUSDT']['currentmarketPrice'])
@@ -16601,7 +16617,7 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
                     if (typeof coinData[coin] == 'undefined'){
                         console.log(coin, '  currentmarketPrice ', coinData[coin])
                     }
-                    
+
                     pricesArr.push({
                         'coin': coin,
                         'price': parseFloat(coinData[coin]['currentmarketPrice']),
@@ -16609,7 +16625,7 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
                         'marketMinNotationStepSize': parseFloat(coinData[coin]['marketMinNotationStepSize']),
                     })
                 }))
-                
+
                 let btcCoinsMinQty = []
                 let usdtCoinsMinQty = []
                 if (pricesArr.length > 0) {
@@ -16640,10 +16656,10 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
                                 'usd_worth': parseFloat(minUsdWorth.toFixed(2)),
                             })
                         }
-        
+
                     }))
                 }
-        
+
                 let coinsMinQtyArr = btcCoinsMinQty.concat(usdtCoinsMinQty)
 
                 // let coinsWorthArr = await calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBTC, dailyTradeableUSDT, BTCUSDTPrice, coinsMinQtyArr)
@@ -16660,15 +16676,15 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
 async function calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBTC, dailyTradeableUSDT, BTCUSDTPrice, coinsMinQtyArr) {
     return new Promise(async resolve =>{
         let coinsCategoryWorth = []
-    
+
         dailyTradeableBTC = dailyTradeableBTC * BTCUSDTPrice
         dailyTradeableUSDT = dailyTradeableUSDT;
         let dailyTradeable = 0;
-    
+
         // let minQtyUsd = 10
         let minQtyUsd = 5
         let tradeCategory = await makeTradeCategory()
-    
+
         let packageArr = [
             {
                 'limit': 1000,
@@ -16697,23 +16713,23 @@ async function calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBT
         ]
         if (coinsMinQtyArr.length > 0){
             await Promise.all(coinsMinQtyArr.map(async coin => {
-        
+
                 let splitArr = coin['coin'].split('USDT')
                 dailyTradeable = splitArr[1] == '' ? dailyTradeableUSDT : dailyTradeableBTC
-        
+
                 minQtyUsd = coin['usd_worth']
-        
+
                 let pkg = packageArr.find(item => { return item.limit == totalTradeAbleInUSD ? true : false })
                 let tArr = []
                 // pkg['arr'].sort((a, b) => (a - b));
                 tArr = pkg['arr']
                 let count = tArr.length
-        
+
                 let perTradeUsd = 0
-        
+
                 for (let i = 0; i < count; i++) {
                     perTradeUsd = dailyTradeable / tArr[i]
-        
+
                     perTradeUsd = parseFloat(perTradeUsd.toFixed(2))
                     if (perTradeUsd > minQtyUsd && perTradeUsd <= dailyTradeable) {
                         // console.log(perTradeUsd, ' <<<< ', minQtyUsd, coin['coin'])
@@ -16739,7 +16755,7 @@ async function calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBT
                         continue
                     }
                 }
-        
+
                 // check if coin not saved then set the minimum req qty for that coin
                 let currCoin = coinsCategoryWorth.filter(item => { return item.coin == coin['coin'] })
                 if (currCoin.length == 0) {
@@ -16752,7 +16768,7 @@ async function calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBT
                         })
                     }
                 }
-        
+
             }))
 
             resolve(coinsCategoryWorth)
@@ -16934,7 +16950,7 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
                     tradeCount = 1
                 }
             }
-    
+
             let result = {}
 
             trade_usd_worth = parseFloat(trade_usd_worth.toFixed(2))
@@ -17016,7 +17032,7 @@ async function resetAutoTradeGenerator(user_id, exchange, application_mode) {
                     promiseLog.then((callback) => { })
                 })
             }
-            
+
             //TODO: Delete auto trade generator settings
             let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
             var where = {
@@ -17065,7 +17081,7 @@ router.post('/getRemainingTestBalance', async (req, res) => {
 async function getRemainingTestBalance(user_id, exchange, application_mode) {
     return new Promise(async (resolve) => {
         conn.then(async (db) => {
-            //TODO: ATG settings created date 
+            //TODO: ATG settings created date
             let atgSettings = await getAutoTradeSettings(user_id, exchange, application_mode)
             if (atgSettings){
                 if (typeof atgSettings[0]['created_date'] != 'undefined' && atgSettings[0]['created_date'] != ''){
@@ -17082,9 +17098,9 @@ async function getRemainingTestBalance(user_id, exchange, application_mode) {
                     where['created_date'] = { '$gte': created_date }
                     var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
                     var orderArr = await db.collection(collectionName).find(where).project({ 'symbol': 1, 'market_sold_price': 1}).toArray()
-                    
+
                     console.log('total orders', orderArr.length)
-                    
+
                     if(orderArr.length > 0){
                         let count = orderArr.length
 
@@ -17177,7 +17193,7 @@ async function getOpenBalance(user_id, exchange) {
 
                 // let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
                 // let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
-                
+
                 let pricesObj = await get_current_market_prices(exchange, [])
                 var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
 
@@ -17295,7 +17311,7 @@ async function getOpenBalance_current_market(user_id, exchange) {
 
                 // let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
                 // let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
-                
+
                 let pricesObj = await get_current_market_prices(exchange, [])
                 var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
 
@@ -17400,7 +17416,7 @@ async function getCostAvgBalance(user_id, exchange) {
 
         let p1 = db.collection(buy_collection).find(where).toArray();
         let p2 = db.collection(sold_collection).find(where).toArray();
-        
+
         let myPromises = await Promise.all([p1, p2])
 
         let trades = myPromises[0].concat(myPromises[1])
@@ -17519,7 +17535,7 @@ async function getCostAvgBalance_current_market(user_id, exchange) {
 
         let p1 = db.collection(buy_collection).find(where).toArray();
         let p2 = db.collection(sold_collection).find(where).toArray();
-        
+
         let myPromises = await Promise.all([p1, p2])
 
         let trades = myPromises[0].concat(myPromises[1])
@@ -17812,7 +17828,7 @@ async function getOpenLTHBTCUSDTBalance(user_id, exchange) {
                 'application_mode': 'live',
                 'symbol': 'BTCUSDT',
             }
-            
+
             where['$or'] = [
                 {
                     'cost_avg': { '$in': ['taking_child', 'yes'] },
@@ -17917,7 +17933,7 @@ async function getOpenLTHBTCUSDTBalance_current_market(user_id, exchange) {
                 'application_mode': 'live',
                 'symbol': 'BTCUSDT',
             }
-            
+
             where['$or'] = [
                 {
                     'cost_avg': { '$in': ['taking_child', 'yes'] },
@@ -18104,11 +18120,11 @@ router.post('/buyCoin', (req, res) => {
         let created_date = new Date()
         let updated_date = new Date()
 
-        if (typeof exchange == 'undefined' || exchange == '' 
-        || typeof application_mode == 'undefined' || application_mode == '' 
-        || typeof admin_id == 'undefined' || admin_id == '' 
-        || typeof symbol == 'undefined' || symbol == '' 
-        || typeof buy_currency == 'undefined' || buy_currency == '' 
+        if (typeof exchange == 'undefined' || exchange == ''
+        || typeof application_mode == 'undefined' || application_mode == ''
+        || typeof admin_id == 'undefined' || admin_id == ''
+        || typeof symbol == 'undefined' || symbol == ''
+        || typeof buy_currency == 'undefined' || buy_currency == ''
         || typeof buy_now == 'undefined' || buy_now == ''
         || typeof auto_buy == 'undefined' || auto_buy == '') {
             res.send({
@@ -18137,7 +18153,7 @@ router.post('/buyCoin', (req, res) => {
                     'updated_date': updated_date,
                 }
 
-                //Update or Insert CoinAutoBuy settings 
+                //Update or Insert CoinAutoBuy settings
                 if (await coinAutoBuy(buyArr, exchange)){
                     hit_auto_buy_cron(admin_id, exchange)
                     res.send({
@@ -18219,7 +18235,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
             'quantity': buyArr.quantity,
             'currency': buyArr.currency,
         }
-        
+
         if(exchange == 'binance'){
             // console.log(exchange)
             var options = {
@@ -18252,7 +18268,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                         //     db.collection(collectionName).insertOne(insData)
                         // })
 
-                        
+
                         //Save Buy History
                         saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
                         //Update User Balance
@@ -18289,7 +18305,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                         //     //Insert auto_buy_history
                         //     db.collection(collectionName).insertOne(insData)
                         // })
-                        
+
                         //Save Buy History
                         saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
                         //Update User Balance
@@ -18325,7 +18341,7 @@ async function coinAutoBuy(buyArr, exchange) {
                         var set = {};
                         set['$set'] = buyArr
 
-                        //Update AutoBuy setting  
+                        //Update AutoBuy setting
                         db.collection(collectionName).updateOne(where, set, async (err, result) => {
                             if (err) {
                                 console.log(err)
@@ -18370,14 +18386,14 @@ async function hit_auto_buy_cron(user_id='', exchange) {
     conn.then(async (db) => {
         //updated_date 2 days before
         let updated_date = new Date(new Date().setDate(new Date().getDate() - 2))
-        var where = { 
+        var where = {
             'updated_date': { '$lte': updated_date}
         }
         if(user_id != ''){
             where = {}
-            where['admin_id'] = user_id 
+            where['admin_id'] = user_id
         }
-    
+
         let collectionName = exchange == 'binance' ? 'auto_buy' : 'auto_buy_' + exchange
         let autoBuyUsers = await db.collection(collectionName).find(where).limit(5).toArray()
         if (autoBuyUsers.length > 0){
@@ -18389,12 +18405,12 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                 let auto_buy = obj['auto_buy']
                 let trigger_buy_usdt_worth = obj['trigger_buy_usdt_worth']
                 let auto_buy_usdt_worth = obj['auto_buy_usdt_worth']
-                
+
                 //TODO: get balance
                 let balanceArr = await getBtcUsdtBalance(obj['admin_id'], exchange)
                 let balanceObj = {}
                 balanceArr.map(item => { balanceObj[item.coin_symbol] = item.coin_balance })
-                
+
                 //TODO: check if balance usd worth is less than trigger
                 let promise1 = listmarketPriceMinNotation('BTCUSDT', exchange)
                 let promise2 = listmarketPriceMinNotation(obj['symbol'], exchange)
@@ -18425,10 +18441,10 @@ async function hit_auto_buy_cron(user_id='', exchange) {
 
                 if (splitArr[1] == '') {
                     oneUsdWorthQty = 1 / currentMarketPrice
-                    avaialableUsdWorth = parseFloat(balanceObj['BNB']) * currentMarketPrice 
+                    avaialableUsdWorth = parseFloat(balanceObj['BNB']) * currentMarketPrice
                 } else {
                     oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
-                    avaialableUsdWorth = parseFloat(balanceObj['BNB']) * currentMarketPrice * BTCUSDTPRICE 
+                    avaialableUsdWorth = parseFloat(balanceObj['BNB']) * currentMarketPrice * BTCUSDTPRICE
                 }
                 //TODO: find qty from usd worth
                 usdWorthQty = parseFloat(auto_buy_usdt_worth) * oneUsdWorthQty
@@ -18437,7 +18453,7 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                 // console.log(avaialableUsdWorth, ' < ', parseFloat(trigger_buy_usdt_worth))
                 if (avaialableUsdWorth < parseFloat(trigger_buy_usdt_worth)){
                     //TODO: check if balance available to buy more
-                    //Add 10% extr over current quantity trying to purchase 
+                    //Add 10% extr over current quantity trying to purchase
                     quantity = minReqQty > quantity ? minReqQty : quantity
 
                     let currentQty = ((10 * (currentMarketPrice * quantity)) / 100);
@@ -18461,11 +18477,11 @@ async function hit_auto_buy_cron(user_id='', exchange) {
 
                 //sleep 2 seconds before sending call next
                 await new Promise(r => setTimeout(r, 2000));
-                
+
                 //update the cron time for this user
                 let where1 = {
-                    'admin_id': obj['admin_id'] 
-                } 
+                    'admin_id': obj['admin_id']
+                }
                 let set1 = {
                     '$set': {
                         'updated_date': new Date
@@ -18550,7 +18566,7 @@ router.post('/getBnbBuySettings', async (req, res) => {
 async function getBnbBuySettings(user_id, exchange) {
     return new Promise((resolve) => {
         conn.then(async (db) => {
-            let where = { 
+            let where = {
                 'admin_id': user_id,
                 'application_mode': 'live'
              }
@@ -18562,7 +18578,7 @@ async function getBnbBuySettings(user_id, exchange) {
 }
 
 async function setDafaultBnbBuy(user_id){
-    //if bnb auto buy settings exists then do nothing else set default settings 
+    //if bnb auto buy settings exists then do nothing else set default settings
 }
 
 // ****************** END BNB auto Buy ****************************** //
@@ -18604,7 +18620,7 @@ router.post('/buySellCoinBalance', (req, res) => {
                 'symbol': symbol,
                 'quantity': quantity,
             }
-            
+
             let result = await buySellCoinBalanceNow(dataArr, exchange)
             res.send(result);
         }
@@ -18613,10 +18629,10 @@ router.post('/buySellCoinBalance', (req, res) => {
 
 //buySellCoinBalanceNow
 async function buySellCoinBalanceNow(dataArr, exchange) {
-    
+
     return new Promise(async (resolve)=>{
         if (typeof dataArr.user_id != 'undefined' && dataArr.user_id != '' && typeof dataArr.symbol != 'undefined' && dataArr.symbol != '' && typeof dataArr.quantity != 'undefined' && dataArr.quantity != '' && typeof dataArr.action != 'undefined' && dataArr.action != '' && typeof exchange != 'undefined' && exchange != '')  {
-    
+
             let reqData = {
                 'user_id': dataArr.user_id,
                 'symbol': dataArr.symbol,
@@ -18624,7 +18640,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                 'exchange': exchange,
                 'action': dataArr.action,
             }
-    
+
             if (exchange == 'binance') {
                 var options = {
                     method: 'POST',
@@ -18646,13 +18662,13 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                         })
                     } else {
                         if (body.success == 'true') {
-    
+
                             body.reqData = reqData
                             //Save History
                             saveBuySellCoinBalanceHistory(dataArr.user_id, exchange, body, dataArr.action)
                             //Update User Balance
                             update_user_balance(dataArr.user_id)
-    
+
                             resolve({
                                 'status': true,
                                 'message': dataArr.action == 'buy' ? 'Balance buy successfull' : 'Balance sell successfull'
@@ -18662,7 +18678,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                             resolve({
                                 'status': false,
                                 'response': body,
-                                'message': body.msg 
+                                'message': body.msg
                             })
                         }
                     }
@@ -18751,13 +18767,13 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                             console.log(body)
                             resolve({
                                 'status': false,
-                                'response': body, 
+                                'response': body,
                                 'message': body.msg
                             })
                         }
                     }
                 })
-                
+
                 // resolve({
                 //     'status': false,
                 //     'message': 'Buy/sell comming soon on Kraken'
@@ -18781,7 +18797,7 @@ async function saveBuySellCoinBalanceHistory(user_id, exchange, response, action
             insData['action'] = action
             insData['created_date'] = new Date()
             let collectionName = exchange == 'binance' ? 'buy_sell_coin_balance_history' : 'buy_sell_coin_balance_history_' + exchange
-            //Insert 
+            //Insert
             db.collection(collectionName).insertOne(insData)
             resolve(true)
         })
@@ -18796,16 +18812,16 @@ router.post('/update_qty_from_usd_worth', (req, res) => {
     let exchange = req.body.exchange
     let symbol = req.body.symbol
 
-    let where_user = { 
-        'application_mode': { 
-            '$in': ['live', 'both', 'BOTH', 'LIVE'] 
-        } 
+    let where_user = {
+        'application_mode': {
+            '$in': ['live', 'both', 'BOTH', 'LIVE']
+        }
     }
 
     if (typeof user_id != 'undefined' && user_id != ''){
         where_user['_id'] = new ObjectID(String(user_id))
     }
-    
+
     conn.then((db) => {
         db.collection('users').find(where_user).project({ '_id': 1, 'username':1 }).toArray(async (err, result) => {
             if (err) {
@@ -18820,37 +18836,37 @@ router.post('/update_qty_from_usd_worth', (req, res) => {
                 if (user_ids.length > 0){
 
                     if (typeof exchange != 'undefined' && exchange != '' && typeof symbol != 'undefined' && symbol != '') {
-    
+
                         // for only this exchange and this symbol only
                         await update_qty_from_usd_worth(user_ids, exchange, symbol)
-                        
+
                         // console.log('for only this exchange and this symbol only')
-    
+
                     } else if (typeof exchange != 'undefined' && exchange != '') {
-    
+
                         // for only this exchange but all it's symbols
                         await update_qty_from_usd_worth(user_ids, exchange)
-                        
+
                         // console.log('for only this exchange but all its symbol')
-                        
+
                     } else if (typeof symbol != 'undefined' && symbol != '') {
-    
+
                         // for all exchange but only this symbol
                         await update_qty_from_usd_worth(user_ids, 'binance', symbol)
                         await update_qty_from_usd_worth(user_ids, 'bam', symbol)
                         await update_qty_from_usd_worth(user_ids, 'kraken', symbol)
-    
+
                         // console.log('for all exchange but only this symbol')
-                        
+
                     } else {
-    
+
                         // for all exchange and all coins
                         await update_qty_from_usd_worth(user_ids, 'binance')
                         await update_qty_from_usd_worth(user_ids, 'bam')
                         await update_qty_from_usd_worth(user_ids, 'kraken')
-    
+
                         // console.log('for all exchange and all coins')
-                        
+
                     }
 
                 }
@@ -18874,7 +18890,7 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
 
     return new Promise(async (resolve) => {
         conn.then(async (db) => {
-            
+
             //modified_date 5 days before
             let orders_modified_date = new Date(new Date().setDate(new Date().getDate() - 5))
             var where = {
@@ -18898,10 +18914,10 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                 },
                 {
                     $group: {
-                        '_id': { 
-                            'symbol': '$symbol', 
+                        '_id': {
+                            'symbol': '$symbol',
                         },
-                        'orders': { '$push': '$$ROOT' } 
+                        'orders': { '$push': '$$ROOT' }
                     }
                 },
                 {
@@ -18912,7 +18928,7 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
             let parentArrLen = parent_orders.length
             for (var i = 0; i < parentArrLen; i++) {
                 let item = parent_orders[i]
-                
+
                 if (exchange == 'kraken' && item['_id']['symbol'] == 'EOSUSDT'){
                     continue;
                 }
@@ -18961,7 +18977,7 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                     oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
                     // console.log('BTC COIN', oneUsdWorthQty);
                 }
-                
+
                 let ordersArrLen = item.orders.length
                 for (var j = 0; j < ordersArrLen; j++) {
                     let order = item['orders'][j]
@@ -18980,28 +18996,28 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                     if (quantity != order['quantity']){
 
                         //TODO: check conditions for quantity update
-                        //Condition 1: quantity drop / raise is more or equal to 5% 
+                        //Condition 1: quantity drop / raise is more or equal to 5%
 
                         let qtyDiff = quantity - order['quantity']
                         qtyDiff = Math.abs(qtyDiff)
                         let qtyDiffPercentage = (qtyDiff * 100 / order['quantity']);
                         qtyDiffPercentage = Math.abs(qtyDiffPercentage)
                         qtyDiffPercentage = parseFloat(parseFloat(qtyDiffPercentage).toFixed(0))
-                        
+
                         if (qtyDiffPercentage >= 5){
 
                             // console.log('qtyDiffPercentage  ', qtyDiffPercentage)
 
                             if (quantity < minReqQty) {
 
-                                //Condition 2: if trade updated quantity is less than 115% of the minReqQty then pause this order and save log 
+                                //Condition 2: if trade updated quantity is less than 115% of the minReqQty then pause this order and save log
                                 //calculate 115% of minReqQty
                                 let mrqPercentage = 115
                                 let mrqPercentageValue = 0
                                 mrqPercentageValue = (mrqPercentage * minReqQty) / 100
                                 let mrqCheckQty = minReqQty - Math.abs(minReqQty - mrqPercentageValue)
                                 mrqCheckQty = parseFloat(mrqCheckQty.toFixed(toFixedNum))
-                                
+
                                 if (quantity <= mrqCheckQty){
                                     // console.log(quantity , '//////////////////////' , mrqCheckQty)
 
@@ -19021,7 +19037,7 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                                     let promiseLog = create_orders_history_log(order['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
                                     promiseLog.then((callback) => { })
                                 }
-        
+
                             } else {
                                 //update quantity
                                 updateFields = {
@@ -19033,7 +19049,7 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                                 // console.log('old Qty ===== ', order['quantity'])
                                 // console.log('updatedQty ===== ', quantity)
                                 // console.log('order_id ', order['_id'], order['symbol'], collectionName, '    ||    old Qty ===== ', order['quantity'], '   ||   updatedQty ===== ', quantity, ' || USD WORTH :', order['usd_worth'])
-                                
+
                                 let log_msg = 'Quantity was updated from (' + order['quantity']+') to ('+quantity+') by usd worth calculation with the change in market price from script'
                                 //Save LOG
                                 let promiseLog = create_orders_history_log(order['_id'], log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
@@ -19065,7 +19081,7 @@ async function isMinQtyValid(symbol, qty, exchange){
     let marketMinNotation = coinData[symbol]['marketMinNotation']
     let marketMinNotationStepSize = coinData[symbol]['marketMinNotationStepSize']
     let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
-    
+
     let selectedCoin = symbol;
     let splitArr = selectedCoin.split('USDT');
     var extra_qty_percentage = 40;
@@ -19141,11 +19157,11 @@ router.post('/getUserDailyBuyTrades', async (req, res) => {
         let where = {
             'user_id': user_id,
         }
-        
+
         if (typeof application_mode != 'undefined'){
-            where['application_mode'] = application_mode  
+            where['application_mode'] = application_mode
         }else{
-            where['application_mode'] = 'live'  
+            where['application_mode'] = 'live'
         }
 
         if (typeof exchange != 'undefined'){
@@ -19195,7 +19211,7 @@ async function getUserDailyBuyTrades(where, exchange) {
                 let obj = {}
                 if (typeof res.step_4 != 'undefined'){
                     obj['noOfDailyBTCTrades'] = typeof res.step_4.noOfDailyBTCTrades != 'undefined' && res.step_4.noOfDailyBTCTrades > 0 ? res.step_4.noOfDailyBTCTrades : 0
-                    obj['noOfDailyUSDTTrades'] = typeof res.step_4.noOfDailyUSDTTrades != 'undefined' && res.step_4.noOfDailyUSDTTrades > 0 ? res.step_4.noOfDailyUSDTTrades : 0 
+                    obj['noOfDailyUSDTTrades'] = typeof res.step_4.noOfDailyUSDTTrades != 'undefined' && res.step_4.noOfDailyUSDTTrades > 0 ? res.step_4.noOfDailyUSDTTrades : 0
                 }
                 resolve(obj)
             } else {
@@ -19248,16 +19264,16 @@ async function updateUserDailyBuyTrades(where, exchange, currency, decrement) {
                 if (typeof res.step_4 != 'undefined'){
                     if (currency == 'BTC') {
                         let dailyBtc =  res.step_4.noOfDailyBTCTrades - decrement
-                        obj['noOfDailyBTCTrades'] = dailyBtc < 0 ? 0 : dailyBtc 
+                        obj['noOfDailyBTCTrades'] = dailyBtc < 0 ? 0 : dailyBtc
                     }else if(currency == 'USDT'){
                         let dailyUsdt = res.step_4.noOfDailyUSDTTrades - decrement
-                        obj['noOfDailyUSDTTrades'] = dailyUsdt < 0 ? 0 : dailyUsdt 
+                        obj['noOfDailyUSDTTrades'] = dailyUsdt < 0 ? 0 : dailyUsdt
                     }
 
                     obj['usedDailyTrades'] = res.usedDailyTrades + decrement
                     obj['usedWeeklyTrades'] = res.usedWeeklyTrades + decrement
 
-                    let set = { 
+                    let set = {
                         '$set': {
                             'step_4.noOfDailyBTCTrades': obj['noOfDailyBTCTrades'],
                             'step_4.noOfDailyUSDTTrades': obj['noOfDailyUSDTTrades'],
@@ -19285,16 +19301,16 @@ router.post('/getTradeBuyLimitCheck', async (req, res) => {
     usd_worth = !isNaN(parseFloat(usd_worth)) ? parseFloat(usd_worth) : ''
 
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof usd_worth != 'undefined' && usd_worth != '') {
-        
+
         let collectionName = exchange == 'binance' ? 'daily_trade_buy_limit' : 'daily_trade_buy_limit_'+exchange
         var db = await conn
         let result = await db.collection(collectionName).find({'user_id':user_id}).limit(1).toArray()
         if (result.length > 0){
             let daily_buy_usd_worth = parseFloat(result[0]['daily_buy_usd_worth']) + usd_worth
-            daily_buy_usd_worth = parseFloat(parseFloat(daily_buy_usd_worth).toFixed(2)) 
+            daily_buy_usd_worth = parseFloat(parseFloat(daily_buy_usd_worth).toFixed(2))
             let daily_buy_usd_limit = parseFloat(parseFloat(result[0]['daily_buy_usd_limit']).toFixed(2))
             let num_of_trades_buy_today = parseFloat(result[0]['num_of_trades_buy_today']) + 1
-            
+
             if (daily_buy_usd_worth <= daily_buy_usd_limit){
                 //Buy yes
                 db.collection(collectionName).updateOne({ 'user_id': user_id }, { '$set': { 'daily_buy_usd_worth': daily_buy_usd_worth, 'num_of_trades_buy_today': num_of_trades_buy_today}})
@@ -19370,7 +19386,7 @@ router.post('/setUserDailyBuyTrades', async (req, res) => {
             'message': 'user_id and exchange is required.'
         });
     }
-    
+
 })//End setUserDailyBuyTrades
 
 async function setUserDailyBuyTrades(user_id='', exchange){
@@ -19396,7 +19412,7 @@ async function setUserDailyBuyTrades(user_id='', exchange){
                 let settingsArrCount = settingsArr.length
                 for (let i = 0; i < settingsArrCount; i++) {
                     let obj = settingsArr[i];
-                    
+
                     let btcInvestPercentage = obj['step_4']['btcInvestPercentage']
                     let usdtInvestPercentage = obj['step_4']['usdtInvestPercentage']
 
@@ -19408,7 +19424,7 @@ async function setUserDailyBuyTrades(user_id='', exchange){
 
                         let dailyRemaining = totalDaily - dailyUsed
                         if (dailyRemaining > 0) {
-                            totalDaily = totalDaily + dailyRemaining 
+                            totalDaily = totalDaily + dailyRemaining
                         }
 
                         let btcDaily = (btcInvestPercentage * totalDaily) / 100
@@ -19549,14 +19565,14 @@ async function updateTradedBalance(user_id, exchange, balanceObj, application_mo
             let actualTradeableUSDT = 0
             if (settings.length > 0){
                 settings = settings[0]
-                tradedBtc = typeof settings.tradedBtc != 'undefined' && settings.tradedBtc != '' ? settings.tradedBtc : 0 
-                tradedUsdt = typeof settings.tradedUsdt != 'undefined' && settings.tradedUsdt != '' ? settings.tradedUsdt : 0 
-                actualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' && settings.step_4.actualTradeableBTC != '' ? settings.step_4.actualTradeableBTC : 0 
-                actualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' && settings.step_4.actualTradeableUSDT != '' ? settings.step_4.actualTradeableUSDT : 0 
+                tradedBtc = typeof settings.tradedBtc != 'undefined' && settings.tradedBtc != '' ? settings.tradedBtc : 0
+                tradedUsdt = typeof settings.tradedUsdt != 'undefined' && settings.tradedUsdt != '' ? settings.tradedUsdt : 0
+                actualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' && settings.step_4.actualTradeableBTC != '' ? settings.step_4.actualTradeableBTC : 0
+                actualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' && settings.step_4.actualTradeableUSDT != '' ? settings.step_4.actualTradeableUSDT : 0
             }
             tradedBtc += balanceObj['tradedBtc']
             tradedUsdt += balanceObj['tradedUsdt']
-            
+
             actualTradeableBTC = (actualTradeableBTC - balanceObj['tradedBtc']) < 0 ? 0 : actualTradeableBTC - balanceObj['tradedBtc']
             actualTradeableUSDT = (actualTradeableUSDT - balanceObj['tradedUsdt']) < 0 ? 0 : actualTradeableUSDT - balanceObj['tradedUsdt']
 
@@ -19596,7 +19612,7 @@ async function updateDailyTradedBalanceAndUsdWorth(user_id, exchange, data, appl
 
             let dailyTradeableBTC = (actualTradeableBTC * dailTradeAbleBalancePercentage) / 100
             let dailyTradeableUSDT = (actualTradeableUSDT * dailTradeAbleBalancePercentage) / 100
-            
+
             let btcPerTrade = 0
             let usdtPerTrade = 0
             let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
@@ -19620,14 +19636,14 @@ async function updateDailyTradedBalanceAndUsdWorth(user_id, exchange, data, appl
             if (usdtQty != 0) {
                 usdtPerTrade = usdtQty
             }
-            
+
             let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
             let where = {
                 'user_id': user_id,
                 'application_mode': application_mode,
             }
             let settings = await db.collection(collectionName).find(where).toArray();
-          
+
             let set = {
                 '$set': {
                     'step_4.noOfDailyBTCTrades': btcNumTrades,
@@ -19672,7 +19688,7 @@ async function updateAutoTradeParentUsdWorth(user_id, exchange, application_mode
             let parentCount = parents.length
             for (let i = 0; i < parentCount; i++){
                 let parentObj = parents[i]
-                let updateParent = await updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mode, coinsWorthArr) 
+                let updateParent = await updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mode, coinsWorthArr)
             }
             resolve(true)
         })
@@ -19696,34 +19712,34 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
         let marketMinNotation = coinData[coin]['marketMinNotation']
         let marketMinNotationStepSize = coinData[coin]['marketMinNotationStepSize']
         var toFixedNum = 6
-    
+
         //find min required quantity
         var extra_qty_percentage = 40;
         var extra_qty_val = 0;
         extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
         var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
         var minReqQty = (calculatedMinNotation / currentMarketPrice);
-        
+
         if (exchange == 'kraken') {
             minReqQty = calculatedMinNotation
             toFixedNum = 6
         } else {
             toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
         }
-        
+
         minReqQty += marketMinNotationStepSize
         minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
 
         //TODO: find one usd worth of quantity
         let selectedCoin = coin;
         let currCoin = coinsWorthArr.filter(item => { return item.coin == selectedCoin })
-        
+
         let splitArr = selectedCoin.split('USDT');
         let oneUsdWorthQty = 0;
         var usdWorthQty = 0
         var quantity = 0
         var usd_worth = currCoin.length > 0 ? currCoin[0]['worth'] : 5
-    
+
         if (splitArr[1] == '') {
             usd_worth = usd_worth
             oneUsdWorthQty = 1 / currentMarketPrice
@@ -19731,11 +19747,11 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
             usd_worth = usd_worth
             oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
         }
-    
+
         usd_worth = parseFloat(usd_worth.toFixed(2))
         usdWorthQty = usd_worth * oneUsdWorthQty
         quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
-    
+
         if (quantity < minReqQty) {
             //Do nothing
             // console.log('min qty issue :::::: parent_id: ', parentObj['_id'])
@@ -19773,11 +19789,11 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
 }
 
 router.post('/updateDailyTradeSettings_digie', async (req, res) => {
-    
+
     // let myIp = req.headers['x-forwarded-for']
     // console.log(req.body.user_id, '============================================================== Request Ip ::: ', JSON.stringify(req.headers))
     // console.log(req.body.user_id, '==============================================================')
-    
+
     var user_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : 'live'
@@ -19788,7 +19804,7 @@ router.post('/updateDailyTradeSettings_digie', async (req, res) => {
     // console.log('33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333     ', exchange, application_mode, JSON.stringify(user_id))
 
     if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && typeof user_id != 'object' && (user_id != '' || user_id != null || user_id != 'null')) {
-    // if (false) { 
+    // if (false) {
         // test
         //get all users with auto trade settings
         conn.then(async(db) => {
@@ -19829,7 +19845,7 @@ router.post('/updateDailyTradeSettings_digie', async (req, res) => {
             }
 
         })
-    
+
         res.send({
             'status': true,
             'message': 'Daily Auto Trade usdworth and min quantity updated successfully.'
@@ -19845,40 +19861,40 @@ router.post('/updateDailyTradeSettings_digie', async (req, res) => {
 })//End updateDailyTradeSettings
 
 async function  updateDailyTradeSettings(user_id, exchange, application_mode='live') {
-    
+
     return new Promise(async (resolve) => {
         //TODO: 5) Find actual tradeable balance (BTC, USDT)
         let settingsArr = await getAutoTradeSettings(user_id, exchange, application_mode)
         // console.log('new trade balnce settings ', settingsArr)
-    
+
         if (settingsArr.length > 0){
-    
+
             let coins = await get_active_parent_coins_arr(user_id, exchange, application_mode)
             // let coins = settingsArr[0]['step_2']['coins']
             // console.log('coins', coins)
-    
+
             if(coins.length > 0){
-    
+
                 let coinsWorthArr = await findCoinsTradeWorth(settingsArr[0]['step_4'].totalTradeAbleInUSD, settingsArr[0]['step_4'].dailyTradeableBTC, settingsArr[0]['step_4'].dailyTradeableUSDT, coins, exchange)
-        
+
                 //update coins worth category in auto trade settings collection
                 let updateCoinsWorthSettingsArr = []
                 await Promise.all(coins.map(coin=>{
                     let catObj = coinsWorthArr.filter(cat=>{ return cat.coin == coin })
                     updateCoinsWorthSettingsArr.push(catObj[0])
                 }))
-        
+
                 let updateObj = {
                     'step_4.coinsCategoryWorth': updateCoinsWorthSettingsArr,
                     'modified_date': new Date()
                 }
                 let updateATG = await updateATGSettingsArr(user_id, exchange, application_mode, updateObj)
-        
-                //TODO: 7) Update parent trades worth to this  
+
+                //TODO: 7) Update parent trades worth to this
                 let updatePrentTradeQty = await updateAutoTradeParentUsdWorth(user_id, exchange, application_mode, coinsWorthArr)
                 console.log('*********************  Update auto trade worth and balance End  ***********************')
             }
-        
+
         }
         resolve(true)
     })
@@ -19889,7 +19905,7 @@ router.post('/updateDailyTradeSettings_digie_manual_run', async (req, res) => {
 
     let exchange = 'binance'
     let application_mode = 'live'
-    
+
     let doneUsers = [
     ]
 
@@ -19988,12 +20004,12 @@ router.post('/updateDailyActualTradeAbleAutoTradeGen', async (req, res) => {
                 for (let i = 0; i < totalUsers; i++) {
                     user_id = users[i]['user_id']
                     // await updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, application_mode)
-                
+
                     // await updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, application_mode)
 
                     // await updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, application_mode)
-                    
-                    
+
+
                     await updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, application_mode)
 
                     // await findLimitExceedUsers(user_id, exchange, application_mode)
@@ -20153,15 +20169,15 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
 
             settings = settings[0]
 
-            let OldactualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' ? settings.step_4.actualTradeableBTC : 0 
-            let OldactualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' ? settings.step_4.actualTradeableUSDT : 0 
+            let OldactualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' ? settings.step_4.actualTradeableBTC : 0
+            let OldactualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' ? settings.step_4.actualTradeableUSDT : 0
 
-            let totalTradeAbleInUSD = typeof settings.step_4.totalTradeAbleInUSD != 'undefined' ? settings.step_4.totalTradeAbleInUSD : 0 
-            let btcInvestPercentage = typeof settings.step_4.btcInvestPercentage != 'undefined' ? settings.step_4.btcInvestPercentage : 0 
+            let totalTradeAbleInUSD = typeof settings.step_4.totalTradeAbleInUSD != 'undefined' ? settings.step_4.totalTradeAbleInUSD : 0
+            let btcInvestPercentage = typeof settings.step_4.btcInvestPercentage != 'undefined' ? settings.step_4.btcInvestPercentage : 0
             let usdtInvestPercentage = typeof settings.step_4.usdtInvestPercentage != 'undefined' ? settings.step_4.usdtInvestPercentage : 0
             let dailTradeAbleBalancePercentage = typeof settings.step_4.dailTradeAbleBalancePercentage != 'undefined' ? settings.step_4.dailTradeAbleBalancePercentage : 0
 
-        
+
             let availableBTC = 0
             let availableUSDT = 0
             // let availableBNB = 0
@@ -20258,9 +20274,9 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
 
                     // console.log('------------------------ ', availableBTC)
 
-                    // availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble 
+                    // availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble
 
-                    // totalTradeAbleInUSD =  
+                    // totalTradeAbleInUSD =
                 }
 
 
@@ -20302,30 +20318,30 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
                         'step_4.actualTradeableUSDT': actualTradeableUSDT,
                         'step_4.dailyTradeableBTC': dailyTradeableBTC,
                         'step_4.dailyTradeableUSDT': dailyTradeableUSDT,
-                        
+
                         // new fields,
-    
+
                         'step_4.availableBTC': availableBTC,
                         'step_4.availableUSDT': availableUSDT,
-    
+
                         'step_4.openOnlyBtc': balanceArr['openBalance']['onlyBtc'],
                         'step_4.openOnlyUsdt': balanceArr['openBalance']['onlyUsdt'],
-    
+
                         'step_4.lthOnlyBtc': balanceArr['lthBalance']['onlyBtc'],
                         'step_4.lthOnlyUsdt': balanceArr['lthBalance']['onlyUsdt'],
                     }
                 }
-    
+
                 // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
-    
+
                 let updateSettings = await db.collection(collectionName).updateOne(where, set)
-    
+
                 let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT+")]"
                 saveATGLog(user_id, exchange, 'daily_actual_tradeable_cron', 'update Daily Actual Trade Able Auto Trade Gen ' + msg, application_mode)
-    
+
                 // let upd = updateDailyTradeSettings(user_id, exchange, application_mode = 'live')
             }
-            
+
         }
         resolve(true)
 
@@ -20350,16 +20366,16 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
             settings = settings[0]
 
-            let OldactualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' ? settings.step_4.actualTradeableBTC : 0 
-            let OldactualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' ? settings.step_4.actualTradeableUSDT : 0 
+            let OldactualTradeableBTC = typeof settings.step_4.actualTradeableBTC != 'undefined' ? settings.step_4.actualTradeableBTC : 0
+            let OldactualTradeableUSDT = typeof settings.step_4.actualTradeableUSDT != 'undefined' ? settings.step_4.actualTradeableUSDT : 0
 
-            let totalTradeAbleInUSD = typeof settings.step_4.totalTradeAbleInUSD != 'undefined' ? settings.step_4.totalTradeAbleInUSD : 0 
-            let btcInvestPercentage = typeof settings.step_4.btcInvestPercentage != 'undefined' ? settings.step_4.btcInvestPercentage : 0 
+            let totalTradeAbleInUSD = typeof settings.step_4.totalTradeAbleInUSD != 'undefined' ? settings.step_4.totalTradeAbleInUSD : 0
+            let btcInvestPercentage = typeof settings.step_4.btcInvestPercentage != 'undefined' ? settings.step_4.btcInvestPercentage : 0
             let usdtInvestPercentage = typeof settings.step_4.usdtInvestPercentage != 'undefined' ? settings.step_4.usdtInvestPercentage : 0
             let dailTradeAbleBalancePercentage = typeof settings.step_4.dailTradeAbleBalancePercentage != 'undefined' ? settings.step_4.dailTradeAbleBalancePercentage : 0
             let baseCurrencyArr = typeof settings.step_4.baseCurrencyArr != 'undefined' ? settings.step_4.baseCurrencyArr : ['BTC', 'USDT']
 
-        
+
             let availableBTC = 0
             let availableUSDT = 0
             // let availableBNB = 0
@@ -20441,9 +20457,9 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                         var trraadeable = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
                     }
                     // console.log('after 70% check remainingTradddeeAble', trraadeable)
-                    
+
                     let remainingTradddeeAble = trraadeable
-                    
+
                     // let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
 
                     // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
@@ -20502,9 +20518,9 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                     // console.log('------------------------ ', availableBTC)
 
-                    // availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble 
+                    // availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble
 
-                    // totalTradeAbleInUSD =  
+                    // totalTradeAbleInUSD =
                 }
 
                 //*************** dynamic BTC/USDT percentages *************** *//
@@ -20558,7 +20574,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                     tradeableBtc = (totalTradeAbleInUSD / 2) * (1 / marketPricesArr['BTCUSDT']['currentmarketPrice'])
                     tradeableUsdt = (totalTradeAbleInUSD / 2)
 
-                    // when combined BTC and USDT balance are greater than package 
+                    // when combined BTC and USDT balance are greater than package
                 } else if ((availableBtcUsdWorth + availableUsdtUsdWorth) >= totalTradeAbleInUSD) {
                     // console.log('// when combined BTC and USDT balance are greater than package')
 
@@ -20566,7 +20582,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                     if (availableBtcUsdWorth >= totalTradeAbleInUSD) {
                         // console.log('// BTC alone is greater than package')
 
-                        //if smaller balance is greater than 50% then use 50 / 50 
+                        //if smaller balance is greater than 50% then use 50 / 50
                         if (((availableUsdtUsdWorth / totalTradeAbleInUSD) * 100) >= 50) {
                             // console.log('//if smaller balance is greater than 50% then use 50 / 50')
 
@@ -20592,7 +20608,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                     } else if (availableUsdtUsdWorth >= totalTradeAbleInUSD) {
                         // console.log('// USDT alone is greater than package')
 
-                        //if smaller balance is greater than 50% then use 50 / 50 
+                        //if smaller balance is greater than 50% then use 50 / 50
                         if (((availableBtcUsdWorth / totalTradeAbleInUSD) * 100) >= 50) {
                             // console.log('//if smaller balance is greater than 50% then use 50 / 50')
 
@@ -20636,14 +20652,14 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                     if (false && availableBtcUsdWorth <= (totalTradeAbleInUSD / 2) && availableUsdtUsdWorth <= (totalTradeAbleInUSD / 2)) {
                         // console.log('// when both BTC and USDT are less than or equal to 50% of the package')
-                        //assign the percentage of the balances avalable for both BTC and USDT 
+                        //assign the percentage of the balances avalable for both BTC and USDT
                         btcPercentage = 100
                         usdtPercentage = 100
                         tradeableBtc = availableBTC
                         tradeableUsdt = availableUSDT
                     } else {
                         // console.log('// when both BTC and/or USDT are greater than 50% of the package')
- 
+
                         //when BTC is greater than USDT balance
                         if (availableBtcUsdWorth > availableUsdtUsdWorth) {
                             // console.log('//when BTC is greater than USDT balance')
@@ -20771,17 +20787,17 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                         'step_4.actualTradeableUSDT': actualTradeableUSDT,
                         'step_4.dailyTradeableBTC': dailyTradeableBTC,
                         'step_4.dailyTradeableUSDT': dailyTradeableUSDT,
-                        
+
                         // new fields,
                         'step_4.availableBTC': availableBTC,
                         'step_4.availableUSDT': availableUSDT,
-    
+
                         'step_4.openOnlyBtc': balanceArr['openBalance']['onlyBtc'],
                         'step_4.openOnlyUsdt': balanceArr['openBalance']['onlyUsdt'],
-    
+
                         'step_4.lthOnlyBtc': balanceArr['lthBalance']['onlyBtc'],
                         'step_4.lthOnlyUsdt': balanceArr['lthBalance']['onlyUsdt'],
-                        
+
                         //new1 fields
                         'step_4.baseCurrencyArr': baseCurrencyArr,
                         'step_4.btcInvestPercentage': btcInvestPercentage,
@@ -20793,17 +20809,17 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                 // console.log("resultttttttttttttt ------------------------------------------------------------- ")
                 // console.log(set)
                 // console.log(settings['user_id'] + " dailyTradeableBTC: " + dailyTradeableBTC + " dailyTradeableUSDT: " + dailyTradeableUSDT)
-    
+
                 // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
-    
+
                 let updateSettings = await db.collection(collectionName).updateOne(where, set)
-    
+
                 let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT+")]"
                 saveATGLog(user_id, exchange, 'daily_actual_tradeable_cron', 'update Daily Actual Trade Able Auto Trade Gen ' + msg, application_mode)
-    
+
                 // let upd = updateDailyTradeSettings(user_id, exchange, application_mode = 'live')
             }
-            
+
         }
         resolve(true)
 
@@ -20857,8 +20873,8 @@ async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, ap
             let result = await newAtgApiCall(data)
 
             if (result) {
-                
-                
+
+
                 if (result.status) {
 
                     let data11 = result.data
@@ -20879,7 +20895,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, ap
                     var tradeableUSDT = data11['tradeableUSDT']
                     var availableUSDT = data11['availableUSDT']
                     var actualTradeableUSDT = data11['actualTradeableUSDT']
-                    var dailyTradeableUSDT = data11['dailyTradeableUSDT'] 
+                    var dailyTradeableUSDT = data11['dailyTradeableUSDT']
 
 
                     let coinsArr = settings.step_2.coins
@@ -20898,40 +20914,40 @@ async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, ap
                             'step_4.actualTradeableUSDT': actualTradeableUSDT,
                             'step_4.dailyTradeableBTC': dailyTradeableBTC,
                             'step_4.dailyTradeableUSDT': dailyTradeableUSDT,
-        
+
                             // new fields,
                             'step_4.availableBTC': availableBTC,
                             'step_4.availableUSDT': availableUSDT,
-        
+
                             'step_4.openOnlyBtc': balanceArr['openBalance']['onlyBtc'],
                             'step_4.openOnlyUsdt': balanceArr['openBalance']['onlyUsdt'],
-        
+
                             'step_4.lthOnlyBtc': balanceArr['lthBalance']['onlyBtc'],
                             'step_4.lthOnlyUsdt': balanceArr['lthBalance']['onlyUsdt'],
-        
+
                             //new1 fields
                             'step_4.baseCurrencyArr': baseCurrencyArr,
                             'step_4.btcInvestPercentage': btcInvestPercentage,
                             'step_4.usdtInvestPercentage': usdtInvestPercentage,
-                            
+
                             //daily expected trade count
                             'step_4.dailyTradesExpectedBtc': dailyTradesExpectedBtc,
                             'step_4.dailyTradesExpectedUsdt': dailyTradesExpectedUsdt,
-        
+
                         }
                     }
-        
+
                     // console.log("resultttttttttttttt ------------------------------------------------------------- ")
                     // console.log(set)
                     // console.log(settings['user_id'] + " dailyTradeableBTC: " + dailyTradeableBTC + " dailyTradeableUSDT: " + dailyTradeableUSDT)
-        
+
                     // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
-        
+
                     let updateSettings = await db.collection(collectionName).updateOne(where, set)
-        
+
                     let msg = "[actualTradeableBTC from (" + OldactualTradeableBTC + ") to (" + actualTradeableBTC + ") and actualTradeableUSDT from (" + OldactualTradeableUSDT + ") to (" + actualTradeableUSDT + ")]"
                     saveATGLog(user_id, exchange, 'daily_actual_tradeable_cron', 'update Daily Actual Trade Able Auto Trade Gen ' + msg, application_mode)
-        
+
                     // let upd = updateDailyTradeSettings(user_id, exchange, application_mode = 'live')
 
                 }
@@ -20953,7 +20969,7 @@ async function updateNumberOfDailyTrades(dailyTradeableBTC, dailyTradeableUSDT, 
 
         let coinsWorthArr = await findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, dailyTradeableUSDT, coinsArr, exchange)
 
-        let total = coinsWorthArr.length 
+        let total = coinsWorthArr.length
 
         if (total > 0){
 
@@ -20986,7 +21002,7 @@ async function updateNumberOfDailyTrades(dailyTradeableBTC, dailyTradeableUSDT, 
                 'usdtTradeCount': 0
             })
         }
-    
+
     })
 }
 
@@ -21032,7 +21048,7 @@ async function newAtgApiCall(payload){
 
     return new Promise(async resolve =>{
 
-        // //Sample payload        
+        // //Sample payload
         // let data = {
         //     'user_id': user_id,
         //     'exchange': exchange,
@@ -21041,7 +21057,7 @@ async function newAtgApiCall(payload){
         //     'customUsdtPackage': customUsdtPackage,
         //     'dailTradeAbleBalancePercentage': dailTradeAbleBalancePercentage,
         // }
-        
+
         // let cron_name = 'find_available_btc_usdt_test'
         let cron_name = 'find_available_btc_usdt'
         let reqObj = {
@@ -21053,7 +21069,7 @@ async function newAtgApiCall(payload){
             },
             'payload': payload,
         }
-      
+
         // console.log(payload)
         let apiResult = await customApiRequest(reqObj)
         // console.log(apiResult)
@@ -21084,7 +21100,7 @@ router.get('/findCustomPackageVal', async (req,res)=>{
         0.3,
         0.4,
         0.5, // this and next only admin can set this for user
-        0.75, 
+        0.75,
         1,
     ]
 
@@ -21102,27 +21118,27 @@ router.get('/findCustomPackageVal', async (req,res)=>{
     // atgSettings.map(item=>{
 
     for (let i = 0; i < totalItems; i++){
-        
+
         let item = atgSettings[i]
 
         console.log('-------------------------------------------------------------------')
         console.log('availableBTC  ', item.step_4['availableBTC'], '   ----   ', item.step_4['availableUSDT'])
-    
-        let customBtcPackage = 0.02 
+
+        let customBtcPackage = 0.02
         let customUsdtPackage = 1000
-    
+
         let btcGoal = item.step_4['availableBTC']
-        
+
         customBtcPackage = btcPackages.reduce(function (prev, curr) {
             return (Math.abs(curr - btcGoal) < Math.abs(prev - btcGoal) ? curr : prev);
         });
-        
+
         let usdtGoal = item.step_4['availableUSDT']
-        
+
         customUsdtPackage = usdtPackages.reduce(function (prev, curr) {
             return (Math.abs(curr - usdtGoal) < Math.abs(prev - usdtGoal) ? curr : prev);
         });
-    
+
         console.log(item._id, '  ----   customBtcPackage  ', customBtcPackage, '   ----   customUsdtPackage', customUsdtPackage)
 
         // await db.collection(atgCollection).updateOne({ '_id': item._id }, { '$set': { 'step_4.customBtcPackage': btcPackage, 'step_4.customUsdtPackage': usdtPackage }})
@@ -21167,7 +21183,7 @@ async function is_trade_limit_exceeded(user_id, exchange) {
 
             let result = await newAtgApiCall(reqObj)
             let data = typeof result != 'undefined' && typeof result.data != 'undefined' ? result.data : false
-            
+
             if(data === false){
                 resolve(false)
             }
@@ -21181,7 +21197,7 @@ async function is_trade_limit_exceeded(user_id, exchange) {
             //     responseObj['usdtStatus'] = true
             //     responseObj['usdtMessage'] = 'Your USDT trade limit has been exceeded please upgrade to a bigger package'
             // }
-            
+
             if ((data.btcLimitExceeded && baseCurrencyArr.includes('BTC')) || (data.usdtLimitExceeded && baseCurrencyArr.includes('USDT'))) {
                 resolve(true)
             }
@@ -21192,72 +21208,72 @@ async function is_trade_limit_exceeded(user_id, exchange) {
             let marketPricesArr_promise = getPricesArr(exchange, [])
             let tradeLimit_promise = getSubscription(user_id)
             let myPromises = await Promise.all([userBalancesInfo_Promise, marketPricesArr_promise, tradeLimit_promise])
-    
+
             let userBalancesInfo = myPromises[0]
             let marketPricesArr = myPromises[1]
             let tradeLimit = myPromises[2]
-    
+
             if (userBalancesInfo['status']) {
-    
+
                 let btcBalanceObj = userBalancesInfo['data']['avaiableBalance'].length > 0 ? userBalancesInfo['data']['avaiableBalance'].filter(item => item['coin_symbol'] == 'BTC') : {}
                 let usdtBalanceObj = userBalancesInfo['data']['avaiableBalance'].length > 0 ? userBalancesInfo['data']['avaiableBalance'].filter(item => item['coin_symbol'] == 'USDT') : {}
                 btcBalance = typeof btcBalanceObj[0] != 'undefined' && typeof btcBalanceObj[0]['coin_balance'] != 'undefined' ? parseFloat(btcBalanceObj[0]['coin_balance']) : 0
                 usdtBalance = typeof usdtBalanceObj[0] != 'undefined' && typeof usdtBalanceObj[0]['coin_balance'] != 'undefined' ? parseFloat(usdtBalanceObj[0]['coin_balance']) : 0
-    
+
                 // console.log('wallet BTC :: ', btcBalance, '  -------  wallet USDT :: ', usdtBalance)
-    
+
                 btcBalance = parseFloat(btcBalance.toFixed(6))
                 usdtBalance = parseFloat(usdtBalance.toFixed(2))
-    
+
                 //new formula for available from old ATG
                 let balanceArr = userBalancesInfo['data']
                 // console.log('before1 ', balanceArr)
                 let walletBalanceArr = balanceArr['avaiableBalance']
-    
+
                 let tempBalanceObj = {}
                 walletBalanceArr.map(item => { tempBalanceObj[item.coin_symbol] = item.coin_balance })
-    
+
                 availableBTC = parseFloat(parseFloat(tempBalanceObj['BTC']).toFixed(6))
                 availableUSDT = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
                 availableBNB = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
-    
+
                 availableBtc = availableBTC
                 availableUsdt = availableUSDT
-    
+
                 totalAvailableBalanceForPackageSelection = ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT']) + balanceArr['openBalance']['OpenUsdWorth'] + balanceArr['lthBalance']['LthUsdWorth'] + balanceArr['costAvgBalance']['costAvgUsdWorth']) - balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
-    
+
                 let usedUsdWorthInTrades = balanceArr['openBalance']['OpenUsdWorth'] + balanceArr['lthBalance']['LthUsdWorth'] + balanceArr['costAvgBalance']['costAvgUsdWorth'] + balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
-    
+
                 let remainaingUsdWorthForTrading = ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])) - balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
-    
+
                 // console.log('tradeLimit:  ', tradeLimit,  '   ---    wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
-    
+
                 if (tradeLimit <= totalAvailableBalanceForPackageSelection) {
-    
+
                     // console.log('Package is less than total balance  ------------------------------------ ')
-    
+
                     let _70percentOfTotal = (70 * tradeLimit) / 100;
                     // console.log('_70percentOfTotal   ', _70percentOfTotal, ' -------------    usedUsdWorthInTrades ', usedUsdWorthInTrades)
-    
+
                     if (_70percentOfTotal > usedUsdWorthInTrades) {
                         var remainingTradddeeAble = tradeLimit - _70percentOfTotal > 0 ? tradeLimit - _70percentOfTotal : 0
                     } else {
                         var remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
                     }
                     // console.log('after 70% check remainingTradddeeAble', remainingTradddeeAble)
-    
+
                     // let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
-    
+
                     // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
-    
+
                     availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
-    
+
                     availableBTC = parseFloat(availableBTC.toFixed(6))
-    
+
                     availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble
-    
+
                     availableUSDT = parseFloat(availableUSDT.toFixed(2))
-    
+
                     if (remainingTradddeeAble <= 0) {
                         // console.log('Your trade limit has been exceeded please upgrade to a bigger package', 'ERROR');
                         resolve(true)
@@ -21335,7 +21351,7 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
                     'OpenUsdWorth': 0,
                 }
             }
-            
+
             //TODO: Get LTH balance
             let lthBalanceArr = await getLTHBalance(user_id, exchange)
             if (Object.keys(lthBalanceArr).length > 0 && lthBalanceArr.constructor === Object) {
@@ -21350,10 +21366,10 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
             }
             availableBTC = parseFloat(((availableBTC + openBalanceArr['onlyBtc']) - lthBalanceArr['onlyBtc']).toFixed(6))
             availableUSDT = parseFloat(((availableUSDT + openBalanceArr['onlyUsdt']) - lthBalanceArr['onlyUsdt']).toFixed(6))
-            
+
             availableBTC = (isNaN(availableBTC) || availableBTC < 0) ? 0 : availableBTC
             availableUSDT = (isNaN(availableUSDT) || availableUSDT < 0) ? 0 : availableUSDT
-            
+
 
             //TODO: find it's actual tradeable
             let coinData = await listmarketPriceMinNotationCoinArr({ '$in': ['BTCUSDT'] }, exchange)
@@ -21400,15 +21416,15 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
             // delete tempBalanceObj
             // delete lthBalanceArr
             // delete lthBalanceArr
-            // delete OldactualTradeableBTC 
+            // delete OldactualTradeableBTC
             // delete OldactualTradeableUSDT
-            // delete totalTradeAbleInUSD 
-            // delete btcInvestPercentage 
+            // delete totalTradeAbleInUSD
+            // delete btcInvestPercentage
             // delete usdtInvestPercentage
             // delete dailTradeAbleBalancePercentage
-            // delete balanceArr 
+            // delete balanceArr
             // delete tempBalanceObj
-            // delete availableBTC 
+            // delete availableBTC
             // delete availableUSDT
             // delete openBalanceArr
             // delete lthBalanceArr
@@ -21420,7 +21436,7 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
             // delete tradeAbleUsdWorth
             // delete tradeAbleBtc
             // delete actualTradeableBTC
-            // delete tradeAbleUsd             
+            // delete tradeAbleUsd
             // delete actualTradeableUSDT
             // delete dailyTradeableBTC
             // delete dailyTradeableUSDT
@@ -21437,10 +21453,10 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
 
 
 router.post('/getBtcUsdtPackages', async (req, res)=>{
-    
+
     let user_id = req.body.user_id
     let exchange = req.body.exchange
-    
+
     const db = await conn
 
     let where = {
@@ -21474,12 +21490,12 @@ router.post('/getBtcUsdtPackages', async (req, res)=>{
 
 //get_latest_buy_sell_details
 router.post('/get_latest_buy_sell_details', async (req, res) => {
-    let exchange = req.body.exchange 
+    let exchange = req.body.exchange
     let admin_id = req.body.user_id
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
 
         conn.then(async (db) => {
-            let where1 = { 
+            let where1 = {
                 'admin_id': admin_id,
                 'application_mode': 'live',
                 'buy_date':{'$exists':true},
@@ -21495,7 +21511,7 @@ router.post('/get_latest_buy_sell_details', async (req, res) => {
             let sort1 = { 'buy_date': -1 }
             let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
             let buyPromise = db.collection(buyCollection).find(where1).sort(sort1).project(project1).limit(10).toArray()
-            
+
             let where2 = {
                 'admin_id': admin_id,
                 'application_mode': 'live',
@@ -21518,13 +21534,13 @@ router.post('/get_latest_buy_sell_details', async (req, res) => {
             let myPromise = await Promise.all([buyPromise, soldPromise])
 
             let tempOrders = myPromise[0].concat(myPromise[1])
-            
-            let orders = [] 
+
+            let orders = []
             tempOrders.map(order=>{
                 order['t_date'] = typeof order['sell_date'] != 'undefined' ? order['sell_date'] : order['buy_date']
-                orders.push(order) 
+                orders.push(order)
             })
-            
+
             orders.sort(function (a, b) {
                 return new Date(b.t_date) - new Date(a.t_date);
             });
@@ -21547,14 +21563,14 @@ router.post('/get_latest_buy_sell_details', async (req, res) => {
 
 //get_dashboard_wallet
 router.post('/get_dashboard_wallet', async (req, res) => {
-    let exchange = req.body.exchange 
+    let exchange = req.body.exchange
     let admin_id = req.body.user_id
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
 
-        let result = await get_dashboard_wallet(admin_id, exchange) 
+        let result = await get_dashboard_wallet(admin_id, exchange)
 
         res.send(result)
-        
+
     } else {
         res.send({
             status: false,
@@ -21674,18 +21690,18 @@ async function get_dashboard_wallet(admin_id, exchange){
         })
 
     })
-} 
+}
 
 //getParentsGridData
 router.post('/getParentsGridData', async (req, res) => {
     let admin_id = req.body.user_id
-    let exchange = req.body.exchange 
+    let exchange = req.body.exchange
     let application_mode = req.body.application_mode
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined' && typeof application_mode != 'undefined' && typeof application_mode != 'undefined') {
 
         conn.then(async (db) => {
-            let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange 
-            
+            let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+
             let where = {
                 'admin_id': admin_id,
                 'application_mode': application_mode,
@@ -21715,7 +21731,7 @@ router.post('/getParentsGridData', async (req, res) => {
             ]).toArray()
 
             let count = result.length
-            
+
             let resArr = []
             if(count > 0){
                 for(let i=0; i<count; i++){
@@ -21724,19 +21740,19 @@ router.post('/getParentsGridData', async (req, res) => {
                     obj['parentsArr'] = result[i]['parentsArr']
                     for(let j=1; j<=20; j++){
                         let currLevel = 'level_'+j
-                        let currLevelsArr = result[i]['levels'].filter(item => { return item == currLevel }) 
+                        let currLevelsArr = result[i]['levels'].filter(item => { return item == currLevel })
                         obj[currLevel] = currLevelsArr.length
-                        
+
                         let curr_level_play_count = currLevel + '_play'
                         let curr_level_pause_count = currLevel + '_pause'
-                        let playArr = result[i]['parentsArr'].filter(item => { return (item.order_level == currLevel && item.pause_status == 'play') }) 
+                        let playArr = result[i]['parentsArr'].filter(item => { return (item.order_level == currLevel && item.pause_status == 'play') })
                         let pauseArr = result[i]['parentsArr'].filter(item => { return (item.order_level == currLevel && item.pause_status == 'pause') })
                         obj[curr_level_play_count] = playArr.length
                         obj[curr_level_pause_count] = pauseArr.length
-                        
+
                         let usd_worth_key = 'usd_worth_' + currLevel
                         obj[usd_worth_key] = result[i]['parentsArr'].filter(item => { return item.order_level == currLevel }).map(item=> '$'+item.usd_worth).join(', ')
-                        
+
                     }
                     resArr.push(obj)
                 }
@@ -21774,12 +21790,12 @@ router.get('/req_info', async (req, res) => {
 router.get('/fixUsdWorth', async (req, res) => {
     // process.exit(0)
 
-    //Calculate usd_worth for orders that not exist 
+    //Calculate usd_worth for orders that not exist
     conn.then(async (db) => {
-        
-        var exchange = 'binance' 
-        var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange  
-        
+
+        var exchange = 'binance'
+        var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+
         let where = {
             'symbol': { '$ne': 'NCASHBTC' },
             'application_mode': 'live',
@@ -21788,32 +21804,32 @@ router.get('/fixUsdWorth', async (req, res) => {
             'usd_worth': {'$exists':false}
         }
         var queryRes = await db.collection(collectionName).find(where).toArray();
-        
+
         let queryResCount = queryRes.length
 
-        let symbols = [] 
+        let symbols = []
         await Promise.all(queryRes.map(item => { if (!symbols.includes(item.symbol) && item.symbol != 'NCASHBTC'){symbols.push(item.symbol)}}))
-        
+
         let coinData = await listmarketPriceMinNotationCoinArr({ '$in': symbols }, exchange)
-        
+
         let ids = []
         for (let i = 0; i < queryResCount; i++){
             let coin = queryRes[i]['symbol']
-            let splitArr = coin.split('USDT');   
+            let splitArr = coin.split('USDT');
             if (!isNaN(queryRes[i]['quantity'])){
-                
+
                 let usd_worth = 0
                 if (splitArr[1] == '') { //USDT
                     usd_worth = queryRes[i]['quantity'] * coinData[coin]['currentmarketPrice']
                 }else{ //BTC
                     usd_worth = queryRes[i]['quantity'] * coinData[coin]['currentmarketPrice'] * coinData['BTCUSDT']['currentmarketPrice']
                 }
-                
+
                 usd_worth = parseFloat(usd_worth.toFixed(2))
                 console.log(typeof usd_worth, usd_worth)
                 // break;
                 // process.exit(0)
-                
+
                 let where = {
                     '_id': queryRes[i]['_id']
                 }
@@ -21850,7 +21866,7 @@ router.get('/fixUsdWorth', async (req, res) => {
         ids = []
         for (let i = 0; i < queryResCount; i++) {
             let usd_worth_val = parseFloat(parseFloat(queryRes[i]['usd_worth']).toFixed(2))
-            
+
             let where = {
                 '_id': queryRes[i]['_id']
             }
@@ -21874,7 +21890,7 @@ router.get('/fixUsdWorth', async (req, res) => {
             // 'result': queryRes
         })
     })
-    
+
 
 })
 
@@ -21934,7 +21950,7 @@ async function getAllTabFilter(){
                 'cost_avg': { '$nin': ['taking_child', 'yes'] }
             },
             //one more dynamic condition at the end
-    
+
             //CostAvg
             {
                 'cost_avg': { '$in': ['taking_child', 'yes'] },
@@ -21952,7 +21968,7 @@ async function getAllTabFilter(){
                 'status': { '$ne': 'canceled' }
             },
             //one more dynamic condition at the end
-    
+
             //LthPause
             {
                 'status': { '$in': ['FILLED', 'pause'] },
@@ -21962,7 +21978,7 @@ async function getAllTabFilter(){
                 'resume_status': { '$ne': 'completed' },
                 'show_order': { '$ne': 'no' }
             },
-    
+
             //Parent
             {
                 'parent_status': 'parent',
@@ -21970,7 +21986,7 @@ async function getAllTabFilter(){
                     '$in': ['new', 'takingOrder']
                 }
             },
-    
+
             //LTH
             {
                 'status': {
@@ -21979,7 +21995,7 @@ async function getAllTabFilter(){
                 'is_sell_order': 'yes',
                 'cost_avg': { '$nin': ['taking_child', 'yes', 'completed'] }
             },
-    
+
             //New
             {
                 'status': {
@@ -21989,18 +22005,18 @@ async function getAllTabFilter(){
                     '$ne': ''
                 },
             },
-    
+
             //Canceled
             {
                 'status': 'canceled',
             },
-    
+
             //Errors
             {
                 'parent_status': { '$exists': false },
                 'status': { '$nin': ['new', 'FILLED', 'fraction_submitted_buy', 'canceled', 'LTH', 'submitted', 'submitted_for_sell', 'fraction_submitted_sell'] }
             },
-    
+
             //Submitted
             {
                 'status': {
@@ -22008,7 +22024,7 @@ async function getAllTabFilter(){
                 },
                 'cost_avg': { '$nin': ['taking_child', 'yes', 'completed'] }
             },
-    
+
         ]
 
         resolve(myAllFilter)
@@ -22020,11 +22036,11 @@ async function getOrderStats(postData2){
         // application_mode = "live"
         // admin_id = "5c0912b7fc9aadaac61dd072"
         // exchange = "binance"
-        
+
         let postData = Object.assign({}, postData2)
 
         if (typeof postData['status'] != 'undefined' && postData['status'] != ''){
-            //use values from the postData filter 
+            //use values from the postData filter
         }else{
             postData['skip'] = 0
             postData['limit'] = 20
@@ -22101,7 +22117,7 @@ async function getOrderStats(postData2){
                 filter_1[key] = value;
             }
         }
-        //:::::::::::::::::::::: End of count parent ordes Filter :::::::::::::: 
+        //:::::::::::::::::::::: End of count parent ordes Filter ::::::::::::::
         //count parent orders Promise
         var parentCountPromise = countCollection(collectionName, filter_1);
 
@@ -22218,7 +22234,7 @@ async function getOrderStats(postData2){
         // }
         // // filter_33['cost_avg'] = { '$exists': false }
         // filter_33['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
-        
+
         filter_33['$or'] = [
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
@@ -22316,7 +22332,7 @@ async function getOrderStats(postData2){
         var errorsCountPromise = countCollection(collectionName, filter_errors);
 
 
-        //::::::: filter_5  for count all error orders ::::::::::::::::::::::: 
+        //::::::: filter_5  for count all error orders :::::::::::::::::::::::
         var filter_5 = {};
         filter_5['status'] = 'error';
         filter_5['admin_id'] = admin_id;
@@ -22337,7 +22353,7 @@ async function getOrderStats(postData2){
                 filter_5[key] = value;
             }
         }
-        //::::::: End of  filter_5  for count all error orders ::::::::::::::::::::::: 
+        //::::::: End of  filter_5  for count all error orders :::::::::::::::::::::::
         //Promise for count error orders ::::::::::
         var errorCountPromise = countCollection(collectionName, filter_5);
 
@@ -22411,7 +22427,7 @@ async function getOrderStats(postData2){
         filter_8['admin_id'] = admin_id;
         filter_8['application_mode'] = application_mode;
         // filter_8['$or'] = [
-        //     { 'resume_status': 'completed', 'trading_status': 'complete' }, 
+        //     { 'resume_status': 'completed', 'trading_status': 'complete' },
         //     { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
         // ];
         // filter_8['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
@@ -22444,7 +22460,7 @@ async function getOrderStats(postData2){
             }
         }
         //::::::::::::: End of filter_8 for count all sold order :::::::::::::::::::
-        //Promise for count all sold orders 
+        //Promise for count all sold orders
         var soldCountPromise = countCollection(collectionName, filter_8);
 
 
@@ -22453,11 +22469,11 @@ async function getOrderStats(postData2){
         filter_12['admin_id'] = admin_id;
         filter_12['application_mode'] = application_mode;
 
-        // // filter_12['is_sell_order'] = 'sold'  
+        // // filter_12['is_sell_order'] = 'sold'
         // filter_12['cost_avg'] = { '$exists': true }
-        // // filter_12['cost_avg'] = { '$ne': '' } 
+        // // filter_12['cost_avg'] = { '$ne': '' }
         // filter_12['show_order'] = 'yes'
-        // // filter_12['avg_orders_ids'] = { '$exists': true } 
+        // // filter_12['avg_orders_ids'] = { '$exists': true }
         // // if (!digie_admin_ids.includes(admin_id)) {
         // //     filter_12['$or'][0]['show_order'] = 'yes'
         // // }
@@ -22484,7 +22500,7 @@ async function getOrderStats(postData2){
             },
         ]
         filter_12['status'] = {'$ne': 'canceled'}
-        
+
         if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
             filter_12['$or'][1] = {
                 'cost_avg': { '$exists': true },
@@ -22511,7 +22527,7 @@ async function getOrderStats(postData2){
             }
         }
         //::::::::::::: End of filter_12 for count all costAvgTab order :::::::::::::::::::
-        //Promise for count all costAvgTab orders 
+        //Promise for count all costAvgTab orders
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         let costAvgTabCountPromise1 = countCollection(buyOrdercollection, filter_12);
 
@@ -22573,12 +22589,12 @@ async function getOrderStats(postData2){
         let tempAllFilter = await getAllTabFilter()
         let filter_all_2 = Object.assign(tempAllFilter, filter_all)
         delete filter_all_2['cost_avg']
-         
+
         //Sold tab extra dynamic check
         if (!digie_admin_ids.includes(postDAta.admin_id)) {
             filter_all_2['$or'][4]['show_order'] = 'yes'
         }
-        
+
         //CostAvg tab extra dynamic check
         if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
             filter_all_2['$or'][8]['show_order'] = {
@@ -22586,7 +22602,7 @@ async function getOrderStats(postData2){
                 'show_order': 'yes'
             }
         }
-        
+
 
         if (!digie_admin_ids.includes(postDAta.admin_id)) {
             filter_all['is_sell_order'] = {
@@ -22607,11 +22623,11 @@ async function getOrderStats(postData2){
         var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
         // let all1Promise = countCollection(soldOrdercollection, filter_all);
         let all1Promise = countCollection(soldOrdercollection, filter_all_2);
-        
+
         // filter_all['parent_status'] = {'$exists': false}
         var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         // let all2Promise = countCollection(buyOrdercollection, filter_all);
-        
+
         let all2Promise = countCollection(buyOrdercollection, filter_all_2);
         //End count All tab
 
@@ -22669,7 +22685,7 @@ router.post('/getOrderStats', async (req, res) => {
     let admin_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = req.body.application_mode
-    
+
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined' && typeof application_mode != 'undefined' && typeof application_mode != 'undefined') {
 
         let postData = {
@@ -22697,7 +22713,7 @@ router.post('/get_user_id', async (req, res) => {
     var username = req.body.username;
     if (typeof username != 'undefined' && username != '') {
         var db = await conn
-        var where = {} 
+        var where = {}
         where['$or'] = [{
             username_lowercase: username
         }, {
@@ -22726,11 +22742,11 @@ router.post('/get_user_id', async (req, res) => {
 router.post('/check_parent_exists', async (req, res) => {
 
     let orderArr = req.body.orderArr
-    let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : '' 
-    let admin_id = typeof orderArr['admin_id'] != 'undefined' && orderArr['admin_id'] != '' ? orderArr['admin_id'] : '' 
-    let application_mode = typeof orderArr['application_mode'] != 'undefined' && orderArr['application_mode'] != '' ? orderArr['application_mode'] : '' 
-    let symbol = typeof orderArr['symbol'] != 'undefined' && orderArr['symbol'] != '' ? orderArr['symbol'] : '' 
-    let order_level = typeof orderArr['order_level'] != 'undefined' && orderArr['order_level'] != '' ? orderArr['order_level'] : '' 
+    let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
+    let admin_id = typeof orderArr['admin_id'] != 'undefined' && orderArr['admin_id'] != '' ? orderArr['admin_id'] : ''
+    let application_mode = typeof orderArr['application_mode'] != 'undefined' && orderArr['application_mode'] != '' ? orderArr['application_mode'] : ''
+    let symbol = typeof orderArr['symbol'] != 'undefined' && orderArr['symbol'] != '' ? orderArr['symbol'] : ''
+    let order_level = typeof orderArr['order_level'] != 'undefined' && orderArr['order_level'] != '' ? orderArr['order_level'] : ''
 
     if (typeof orderArr != 'undefined' && exchange != '' && admin_id != '' && application_mode != '' && symbol != '' && order_level != '') {
 
@@ -22745,7 +22761,7 @@ router.post('/check_parent_exists', async (req, res) => {
             }
         }
 
-        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange     
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
 
         let parentsArr = await db.collection(buy_collection).find(where).toArray();
         if (parentsArr.length > 0){
@@ -22857,10 +22873,10 @@ async function customApiRequest(reqObj){
 
         let url = reqObj.url
         let type = reqObj.type
-        let headers = typeof reqObj.headers != 'undefined' ? reqObj.headers : {} 
-        let payload = typeof reqObj.payload != 'undefined' ? reqObj.payload : {} 
-        
-        headers = Object.assign(default_headers, headers); 
+        let headers = typeof reqObj.headers != 'undefined' ? reqObj.headers : {}
+        let payload = typeof reqObj.payload != 'undefined' ? reqObj.payload : {}
+
+        headers = Object.assign(default_headers, headers);
 
         var options = {
             method: type,
@@ -22881,7 +22897,7 @@ async function customApiRequest(reqObj){
                 })
             }
         })
-        
+
     })
 }
 
@@ -22894,7 +22910,7 @@ router.post('/save_dashboard_settings', async (req, res) => {
         var db = await conn
         var where = {}
         where['user_id'] = user_id;
-        let dashboard_settings_collection = exchange == 'binance' ? 'dashboard_settings' : 'dashboard_settings_'+exchange 
+        let dashboard_settings_collection = exchange == 'binance' ? 'dashboard_settings' : 'dashboard_settings_'+exchange
 
         let insertData = {
             '$set': {
@@ -22910,12 +22926,12 @@ router.post('/save_dashboard_settings', async (req, res) => {
             res.send({
                 "status": true,
                 "data": insertData['$set']['settings'],
-                "message": "Settings saved successfully" 
+                "message": "Settings saved successfully"
             })
         }else{
             res.send({
                 "status": false,
-                "message": "An error occured" 
+                "message": "An error occured"
             })
         }
     } else {
@@ -22930,7 +22946,7 @@ router.post('/get_dashboard_settings', async (req, res) => {
     var user_id = req.body.user_id;
     var exchange = req.body.exchange;
     if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && user_id != '') {
-        
+
         var db = await conn
 
         var where = {
@@ -22943,7 +22959,7 @@ router.post('/get_dashboard_settings', async (req, res) => {
             res.send({
                 "status": true,
                 "data": result[0]['settings'],
-                "message": "Settings found successfully" 
+                "message": "Settings found successfully"
             })
         } else {
             res.send({
@@ -22968,7 +22984,7 @@ async function get_current_market_prices(exchange, coins=[]) {
     return new Promise(async (resolve) => {
         const db = await conn
         coins = []
-    
+
         if (coins.length == 0) {
             let coins_collection = (exchange == 'binance') ? 'coins' : 'coins_'+exchange;
             let where = {
@@ -22977,16 +22993,16 @@ async function get_current_market_prices(exchange, coins=[]) {
             if (exchange == 'binance') {
                 where['exchange_type'] = 'binance';
             }
-    
+
             coins = await db.collection(coins_collection).find(where).toArray();
 
             if (coins.length > 0) {
                 coins = coins.map(item=>item.symbol);
             }
         }
-    
+
         let prices_collection = (exchange == 'binance') ? 'market_prices' : 'market_prices_'+exchange;
-    
+
         let pipeline = [
             {
                 '$match': {
@@ -23005,7 +23021,7 @@ async function get_current_market_prices(exchange, coins=[]) {
                 },
             },
         ];
-    
+
         let prices_arr = await db.collection(prices_collection).aggregate(pipeline).toArray();
 
         let pricesObj = {}
@@ -23098,7 +23114,7 @@ router.post('/validateApiKeys', async (req, res)=>{
                 }
                 //wait for 1 second
                 await new Promise(r => setTimeout(r, 1000));
-                
+
                 //key2 validity
                 if (typeof settings[0]['api_key_secondary'] != 'undefined' && settings[0]['api_key_secondary'] != '' && settings[0]['api_key_secondary'] != null && typeof settings[0]['api_secret_secondary'] != 'undefined' && settings[0]['api_secret_secondary'] != '' && settings[0]['api_secret_secondary'] != null){
                     let resKey2 = await validate_kraken_credentials(settings[0]['api_key_secondary'], settings[0]['api_secret_secondary'], user_id = '');
@@ -23114,7 +23130,7 @@ router.post('/validateApiKeys', async (req, res)=>{
                 }
                 //wait for 1 second
                 await new Promise(r => setTimeout(r, 1000));
-                
+
                 //key3 validity
                 if (typeof settings[0]['api_key_third_key'] != 'undefined' && settings[0]['api_key_third_key'] != '' && settings[0]['api_key_third_key'] != null && typeof settings[0]['api_secret_third_key'] != 'undefined' && settings[0]['api_secret_third_key'] != '' && settings[0]['api_secret_third_key'] != null){
                     let resKey3 = await validate_kraken_credentials(settings[0]['api_key_third_key'], settings[0]['api_secret_third_key'], user_id = '');
@@ -23144,7 +23160,7 @@ router.post('/validateApiKeys', async (req, res)=>{
                 'message': ''
             }
             // console.log(responseObj)
-            
+
             res.send(responseObj)
 
         } else if (exchange == 'binance'){
@@ -23171,12 +23187,12 @@ router.post('/validateApiKeys', async (req, res)=>{
             // console.log(responseObj)
 
             res.send(responseObj)
-        
+
         } else if (exchange == 'bam'){
 
             //key1 validity
             if (settings.length > 0 && typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && settings[0]['api_key'] != null && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '' && settings[0]['api_secret'] != null) {
-                
+
                 let resKey1 = await validate_bam_credentials_app(settings[0]['api_key'], settings[0]['api_secret']);
 
                 if (resKey1) {
@@ -23245,7 +23261,7 @@ router.post('/disable_exchange_key', async (req, res) => {
 
     if (user_id != '' && exchange != '') {
 
-        const db = await conn 
+        const db = await conn
         let actionSuccess = false
 
         if(exchange == 'binance'){
@@ -23271,7 +23287,7 @@ router.post('/disable_exchange_key', async (req, res) => {
             }
         }else{
             let collection_name = exchange+'_credentials'
-            
+
             let wallet_collection = 'user_wallet_'+exchange
             let buy_collection = 'buy_orders_'+exchange
 
@@ -23305,7 +23321,7 @@ router.post('/disable_exchange_key', async (req, res) => {
 
 
 router.get('/testKrakenBuyApi', async (req, res)=>{
-    
+
 
     const KrakenClient = require('kraken-api');
 
@@ -23321,21 +23337,21 @@ router.get('/testKrakenBuyApi', async (req, res)=>{
     let secret = 'haGQwnH5tdQS6cQLqm97QTyQwdu/4gjcS/nb+fxlIPIWlu9yZIzHHSnsV6WPq5zIjfpjWZifsRqm5PNL9SRQYw=='
 
     const kraken = new KrakenClient(key, secret);
-    
+
     // let allCoins = [ 'ZUSD', 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', 'USDT', 'EOS', 'ADA', 'QTUM', 'LINK', 'TRX' ]
     // let changeCoinArr = ['XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR']
 
     let params = {
         'ordertype': 'market',
         'pair': 'XRPXBT',
-        'type': 'sell', 
+        'type': 'sell',
         'volume': 40.000345
     }
 
     var krakenReqResult = await kraken.api('AddOrder', params);
 
     console.log(krakenReqResult)
-    
+
     res.send({})
 })
 
@@ -23558,9 +23574,9 @@ router.post('/swap_kraken_api_keys', async (req, res)=>{
     ]
 
     let where = {
-        'user_id': { '$in': secondary_key_user_ids_Arr},  
-        'api_key': {'$ne':''},  
-        'api_secret': {'$ne':''},  
+        'user_id': { '$in': secondary_key_user_ids_Arr},
+        'api_key': {'$ne':''},
+        'api_secret': {'$ne':''},
     }
 
     let usersArr = await db.collection('kraken_credentials').find(where).toArray()
@@ -23568,7 +23584,7 @@ router.post('/swap_kraken_api_keys', async (req, res)=>{
     let totalUsers = usersArr.length
 
     console.log(totalUsers)
-    
+
     if (false && totalUsers > 0){
 
         for(let i=0; i<totalUsers; i++){
@@ -23594,14 +23610,14 @@ router.post('/swap_kraken_api_keys', async (req, res)=>{
             console.log(usersArr[i]['user_id'], apiResult)
 
             if(apiResult.status){
-                
+
                 if (apiResult['body']['status']){
-                    //is valid 
+                    //is valid
                     //Do Nothing
                     console.log('user_id: ', usersArr[i]['user_id'], ' ----------- ', end_time)
 
                     // await db.collection('kraken_credentials').updateOne({ 'user_id': usersArr[i]['user_id']}, {'$set':{'old_secondary_key_valid':'yes'}})
-                    
+
                 } else {
 
                     console.log('Invalid key_secret user_id: ', usersArr[i]['user_id'], ' ----------- ', end_time)
@@ -23625,7 +23641,7 @@ router.post('/swap_kraken_api_keys', async (req, res)=>{
 
                 }
 
-            } 
+            }
 
             await new Promise(r => setTimeout(r, 5000));
 
@@ -23725,8 +23741,8 @@ router.get('/get_CA_shift_user_ids', async (req,res)=>{
         'jim.todd@ymail.com',
         'vickieterry.kulabrands@gmail.com'
     ]
-    
-    let users = await db.collection('users').find({ 'email_address': { '$in': emailsArr } }).project({ '_id': 1, 'email_address':1}).toArray() 
+
+    let users = await db.collection('users').find({ 'email_address': { '$in': emailsArr } }).project({ '_id': 1, 'email_address':1}).toArray()
     // let existingEmailsArr = users.map(item => item.email_address)
     let user_ids = users.map(item => String(item._id))
 
@@ -23734,7 +23750,7 @@ router.get('/get_CA_shift_user_ids', async (req,res)=>{
     // let notExistingEmailsArr = emailsArr.filter(x => !existingEmailsArr.includes(x));
     // console.log('notExistingEmailsArr ', notExistingEmailsArr.length, notExistingEmailsArr)
     // console.log(emailsArr.length, users.length)
-    
+
     res.send(user_ids)
 
 })
@@ -23749,7 +23765,7 @@ router.get('/move_CA_ledgers', async (req,res)=>{
     var buy_collection_kraken = 'buy_orders_kraken'
     var sold_collection_kraken = 'sold_buy_orders_kraken'
     var sell_orders_collection_kraken = 'orders_kraken'
-    
+
     let coinsExclude = ['ZENBTC', 'XEMBTC', 'QTUMUSDT', 'NEOUSDT', 'NEOBTC', 'EOSUSDT']
     // let user_id = '5c0912b7fc9aadaac61dd072'
     let user_id = ''
@@ -23839,7 +23855,7 @@ router.get('/move_CA_ledgers', async (req,res)=>{
     ]
 
     for (let iiii = 0; iiii < costAvgUserIds.length; iiii++){
-        
+
         continue;
 
         user_id = costAvgUserIds[iiii]
@@ -23886,7 +23902,7 @@ router.get('/move_CA_ledgers', async (req,res)=>{
                 //     continue;
                 // }
 
-                //move to Kraken 
+                //move to Kraken
 
                 //add shifted label
 
@@ -24098,7 +24114,7 @@ router.get('/move_CA_ledgers', async (req,res)=>{
 
                                 let insertttttt = await db.collection(sold_collection).insertOne(tempInsert)
                                 if (typeof insertttttt.insertedId != 'undefined') {
-                                    //delete from buy_collection 
+                                    //delete from buy_collection
                                     await db.collection(buy_collection).deleteOne({ '_id': all_merge_orders[i]['_id'] })
                                 }
                             } else {
@@ -24123,7 +24139,7 @@ router.get('/move_CA_ledgers', async (req,res)=>{
 
                                     let insertttttt = await db.collection(sold_collection).insertOne(tempInsert)
                                     if (typeof insertttttt.insertedId != 'undefined') {
-                                        //delete from buy_collection 
+                                        //delete from buy_collection
                                         await db.collection(buy_collection).deleteOne({ '_id': new_order['_id'] })
                                     }
                                 } else {
@@ -24176,8 +24192,8 @@ async function getCommittedBalance(user_id, symbol, exchange){
     return new Promise(async resolve => {
         const db = await conn
 
-        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange  
-        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange  
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange
 
         let where = {
             'admin_id': user_id,
@@ -24214,7 +24230,7 @@ async function getCommittedBalance(user_id, symbol, exchange){
             {
                 '$match': where
             },
-            { 
+            {
                 '$group': {
                     '_id': null,
                     'totalQty': { '$sum': {'$toDouble': '$quantity'} },
@@ -24305,16 +24321,16 @@ async function getCommittedBalance(user_id, symbol, exchange){
         if (result4.length > 0 && typeof result4[0]['totalQty'] != 'undefined'){
             totalComittedQty += parseFloat(result4[0]['totalQty'])
         }
-        
+
         // console.log(totalComittedQty)
-        
+
         resolve(totalComittedQty)
 
     })
 }
 
 router.get('/test_move_logs_function', async (req, res)=>{
-    
+
     let result = await move_order_logs('6022a4ed7510bb2486a02eda', 'binance', 'live', new Date('2021-02-09T15:13:40Z'), 'kraken')
 
     res.send(result)
@@ -24414,10 +24430,10 @@ async function getTradeHistory(filter, exchange, timezone) {
     let status = filter.status
     let trigger_type = filter.trigger_type
 
-    order_type = order_type == 'all' ? '' : order_type 
+    order_type = order_type == 'all' ? '' : order_type
 
     if (typeof filter.searchUsername != 'undefined' && filter.searchUsername != ''){
-        
+
         let tempWhere = {}
         tempWhere['$or'] = [{
             username_lowercase: filter.searchUsername.toLowerCase()
@@ -24426,7 +24442,7 @@ async function getTradeHistory(filter, exchange, timezone) {
         }]
         let user = await db.collection('users').find(tempWhere).project({ '_id': 1 }).toArray();
         user_id = user.length > 0 ? String(user[0]['_id']) : user_id
-        
+
     }
 
     let pipeline = [
@@ -24569,7 +24585,7 @@ async function getTradeHistory(filter, exchange, timezone) {
     let digieDuplicateTradeIdsArr = []
     let digieDoubtTradeIdsArr = []
     let userDoubtTradeIdsArr = []
-    
+
     if(exchange == 'binance'){
         trades.forEach(item => {
 
@@ -24601,15 +24617,15 @@ async function getTradeHistory(filter, exchange, timezone) {
 
     if(exchange == 'kraken'){
         trades.forEach(item=>{
-    
+
             let krakenObj = Object.assign(item)
             krakenObj = krakenObj.trades.value
             let tradeId = krakenObj.ordertxid
-            
+
             let digieEntry = digieTrades.find(item => item.tradeId == tradeId || item.kraken_order_id == tradeId || item.sell_kraken_order_id == tradeId ? true : false)
-    
+
             if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
-                
+
                 if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
                     // krakenObj['tradeMappType'] = 'User duplicate'
                 }else{
@@ -24644,7 +24660,7 @@ async function getTradeHistory(filter, exchange, timezone) {
             _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 1); // timestamp
             _1minuteAbove = new Date(_1minuteAbove); // Date object
             // console.log(_1minuteAbove);
-            
+
             let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
             _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 1); // timestamp
             _1minuteBelow = new Date(_1minuteBelow); // Date object
@@ -24698,11 +24714,11 @@ async function getTradeHistory(filter, exchange, timezone) {
                         }
                     }
                 ]
-    
+
                 var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
                 var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
                 var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
-    
+
                 if (digieTrades1.length > 0){
                     //confirmed duplicate
                     digieDoubtTradeIdsArr.push(currTrade.ordertxid)
@@ -24710,7 +24726,7 @@ async function getTradeHistory(filter, exchange, timezone) {
                     userDoubtTradeIdsArr.push(currTrade.ordertxid)
                 }
             }
-            
+
         }
     }
     // console.log(checkTradesArr.length)
@@ -25937,7 +25953,7 @@ router.post('/getTradeHistory', async (req, res)=>{
     let exchange = req.body.postData.exchange;
 
     let trades = await getTradeHistory(where, exchange, timezone)
-    
+
     res.send(trades)
 
 })
@@ -26095,7 +26111,7 @@ async function countTradeHistoryTest(pipeline, collectionName) {
 }
 
 router.post('/mapTrade', async (req, res) => {
-    
+
     let exchange = req.body.exchange
     let user_id = req.body.data.user_id
     let tradeId = req.body.data.ordertxid
@@ -26103,7 +26119,7 @@ router.post('/mapTrade', async (req, res) => {
     let quantity = req.body.data.quantity
     let symbol = req.body.data.symbol
     let time = req.body.data.time
-    
+
     // user_id = '5c0912b7fc9aadaac61dd072'
 
     let payload = {
@@ -26135,9 +26151,9 @@ router.post('/mapTrade', async (req, res) => {
 
     let success = 'successfully created child under this userid and exchange'
     if (apiResult.status && apiResult.body && apiResult.body.status == success){
-        
+
         const db = await conn
-        let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_'+exchange 
+        let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_'+exchange
         let where = {
             'user_id': user_id,
             'trades.value.ordertxid': tradeId,
@@ -26148,7 +26164,7 @@ router.post('/mapTrade', async (req, res) => {
             }
         }
         let updRes = await db.collection(collectionName).updateOne(where, set)
-    
+
         res.send({'status':true})
     }else{
         res.send({'status':false})
@@ -26157,7 +26173,7 @@ router.post('/mapTrade', async (req, res) => {
 })
 
 router.post('/mapSoldTrade', async (req, res) => {
-    
+
     let exchange = req.body.exchange
     let user_id = req.body.data.user_id
     let tradeId = req.body.data.ordertxid
@@ -26165,7 +26181,7 @@ router.post('/mapSoldTrade', async (req, res) => {
     let quantity = req.body.data.quantity
     let symbol = req.body.data.symbol
     let time = req.body.data.time
-    
+
     // user_id = '5c0912b7fc9aadaac61dd072'
 
 
@@ -26173,7 +26189,7 @@ router.post('/mapSoldTrade', async (req, res) => {
     const db = await conn
 
     let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
-    
+
     let pipeline = [
         {
             '$match': {
@@ -26220,9 +26236,9 @@ router.post('/mapSoldTrade', async (req, res) => {
 
     let success = 'successfully mapped order'
     if (apiResult.status && apiResult.body && apiResult.body.status == success){
-        
+
         const db = await conn
-        let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_'+exchange 
+        let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_'+exchange
         let where = {
             'user_id': user_id,
             'trades.value.ordertxid': tradeId,
@@ -26233,7 +26249,7 @@ router.post('/mapSoldTrade', async (req, res) => {
             }
         }
         let updRes = await db.collection(collectionName).updateOne(where, set)
-    
+
         res.send({'status':true})
     }else{
         res.send({'status':false})
@@ -26247,21 +26263,21 @@ router.get('/get_current_market_prices', async (req, res)=>{
     var exchange = 'binance'
     var pricesObj = await get_current_market_prices(exchange, [])
     var obj = {}
-    obj[exchange] = pricesObj 
+    obj[exchange] = pricesObj
     arr.push(obj)
-    
+
     var exchange = 'kraken'
     var pricesObj = await get_current_market_prices(exchange, [])
     var obj = {}
-    obj[exchange] = pricesObj 
+    obj[exchange] = pricesObj
     arr.push(obj)
-    
+
     var exchange = 'bam'
     var pricesObj = await get_current_market_prices(exchange, [])
     var obj = {}
-    obj[exchange] = pricesObj 
+    obj[exchange] = pricesObj
     arr.push(obj)
-    
+
     res.send(arr)
 })
 
@@ -26384,7 +26400,7 @@ router.all('/getAllGlobalCoins', async (req, res) => {
         // console.log(binance_symbols.length, bam_symbols.length, kraken_symbols.length)
 
         if (binance.length > 0 || bam.length > 0 || kraken.length > 0){
-            
+
             let data = {
                 'binance': binance,
                 'bam': bam,
@@ -26398,9 +26414,9 @@ router.all('/getAllGlobalCoins', async (req, res) => {
             })
 
         }else{
-            res.send({ 
+            res.send({
                 'status': false,
-                'message': 'data not found' 
+                'message': 'data not found'
             })
         }
 
