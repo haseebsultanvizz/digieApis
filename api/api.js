@@ -14338,6 +14338,8 @@ async function update_user_balance(user_id) {
     }
     let url = 'http://' + ip + port + '/updateUserBalance'
 
+    // console.log(url)
+
     //Update Kraken Balance
     var options = {
         method: 'POST',
@@ -14356,7 +14358,13 @@ async function update_user_balance(user_id) {
             'user_id': user_id
         }
     };
-    request(options, function (error, response, body) { });
+    request(options, function (error, response, body) {
+        // if(error){
+        //     // console.log(error)
+        // }else{
+        //     // console.log(body)
+        // }
+     });
 
 
 
@@ -24822,7 +24830,7 @@ router.post('/checkBinanceDuplicatesForTradeHistory', async (req, res)=>{
             //save cron in progress
             await db.collection(progressCollectionName).insertOne({ 'user_id': user_id, 'exchange': exchange, 'start_date': new Date()})
     
-            let data = checkBinanceDuplicatesForTradeHistory(user_id, exchange)
+            let data = await checkBinanceDuplicatesForTradeHistory(user_id, exchange)
         }
     }else{
         console.log('user_id, exchange required')
@@ -24844,7 +24852,7 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
 
     let where = {}
     let application_mode = 'live'
-    let coins = []
+    let coins = ['EOSUSDT']
     let order_level = ''
     let order_type = ''
     let trigger_type = ''
@@ -25071,12 +25079,12 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
                 let tradeTime = parseFloat(currTrade.time);
     
                 let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
-                _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 1); // timestamp
+                _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 2); // timestamp
                 _1minuteAbove = new Date(_1minuteAbove); // Date object
                 // console.log(_1minuteAbove);
     
                 let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
-                _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 1); // timestamp
+                _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 2); // timestamp
                 _1minuteBelow = new Date(_1minuteBelow); // Date object
                 // console.log(_1minuteBelow);
     
@@ -25172,6 +25180,8 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
         await db.collection(collectionName).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds}}, {'$set':{ 'tradesChecked': 'yes' }})
         
     }//pagination loop end
+
+    await checkFractionDuplicateTrades(user_id, exchange)
     
     //remove progress entry
     let progressCollectionName = exchange == 'binance' ? 'duplicate_trade_history_script_in_progress' : exchange + '_duplicate_trade_history_script_in_progress'
@@ -25188,6 +25198,369 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
 
     return true;
 }
+
+async function checkFractionDuplicateTrades(user_id, exchange){
+    return new Promise(async (resolve)=>{
+
+        if(exchange == 'binance'){
+            console.log('fraction duplocate code running')
+    
+            const db = await conn
+    
+            //check fraction duplicate trades script
+            let mappedCollection = exchange == 'binance' ? 'trade_history_filtered' : 'trade_history_filtered_' + exchange
+    
+            let fractionPipeline = [
+                {
+                    '$match': {
+                        'user_id': user_id,
+                        'tradeMappType': { '$in': ['User Doubtful'] },
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': '$ordertxid',
+                        'orders': { '$push': '$ordertxid' },
+                    }
+                },
+                {
+                    '$match': {
+                        '$expr': { '$gte': [{ '$size': '$orders' }, 2] }
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': null,
+                        'orderIds': { '$push': '$_id' },
+                    }
+                },
+                {
+                    '$project': {
+                        '_id': 0,
+                        'orderIds': 1,
+                    }
+                },
+            ]
+
+            console.log(JSON.stringify(fractionPipeline))
+
+            let fraction_duplicate_trades = await db.collection(mappedCollection).aggregate(fractionPipeline).toArray()
+
+            var tradeIds = []
+
+            console.log('total Ids ', fraction_duplicate_trades.length)
+            
+            if (fraction_duplicate_trades.length > 0) {
+                
+                tradeIds = typeof fraction_duplicate_trades[0]['orderIds'] != 'undefined' && fraction_duplicate_trades[0]['orderIds'].length > 0 ? fraction_duplicate_trades[0]['orderIds'] : [];
+                
+                console.log('tradeIds ', tradeIds)
+                
+                if (tradeIds.length > 0){
+                    //re run trades with quantities added
+                    await checkExchangeTrades(user_id, exchange, tradeIds)
+                }
+            }
+        }
+
+        resolve(true)
+    })
+} 
+
+async function checkExchangeTrades(user_id, exchange, tradeIds_){
+
+    return new Promise(async (resolve)=>{
+        const db = await conn
+
+        let timezone = await getUserTimezone(user_id)
+
+        let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
+
+        //check fraction duplicate trades script
+        let mappedCollection = exchange == 'binance' ? 'trade_history_filtered' : 'trade_history_filtered_' + exchange
+
+        let pipeline = [
+            {
+                '$match': {
+                    'user_id': user_id,
+                    'trades.value.ordertxid': { '$in': tradeIds_ },
+                },
+            },
+            { 
+                '$group': { 
+                    '_id': '$trades.value.ordertxid',
+                    'orders': { '$push': '$$ROOT.trades.value.vol' },
+                    'order': { '$first': '$$ROOT' }, 
+                    'tradeIds': { '$first': '$$ROOT.trades.value.ordertxid' },
+                    'qtySum': { '$sum': { '$toDouble': "$trades.value.vol" } }
+                } 
+            }, 
+            { 
+                '$match': { 
+                    '$expr': { '$gte': [{ '$size': '$orders' }, 2] } 
+                } 
+            }, 
+            { 
+                '$addFields': { 'order.vol': '$qtySum' } 
+            }, 
+            { 
+                '$project': { 
+                    'order': 1 
+                } 
+            },
+            {
+                '$replaceRoot': { newRoot: '$order' } 
+            },
+        ]
+
+        let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
+
+        console.log('fraction trades count', trades.length)
+        console.log(trades)
+
+        let tradeIds = trades.map(item => item.trades.value.ordertxid)
+
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+
+        let whereDigie = [
+            {
+                '$match': {
+                    'admin_id': user_id,
+                    'application_mode': 'live',
+                }
+            }
+        ]
+
+        if (exchange == 'binance') {
+
+            whereDigie[0]['$match']['$or'] = [
+                {
+                    'binance_order_id': { '$in': tradeIds },
+                },
+                {
+                    'binance_order_id_sell': { '$in': tradeIds },
+                },
+                {
+                    'tradeId': { '$in': tradeIds },
+                },
+                {
+                    'tradeId_sell': { '$in': tradeIds },
+                },
+            ]
+        } else if (exchange == 'kraken') {
+
+            whereDigie[0]['$match']['$or'] = [
+                {
+                    'tradeId': { '$in': tradeIds },
+                },
+                {
+                    'kraken_order_id': { '$in': tradeIds },
+                },
+                {
+                    'sell_kraken_order_id': { '$in': tradeIds },
+                }
+            ]
+        } else {
+            whereDigie[0]['$match']['do_not_pick'] = true
+        }
+
+        // console.log(JSON.stringify(whereDigie))
+
+        let digieBuyTrades = await db.collection(buy_collection).aggregate(whereDigie).toArray()
+        let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
+        let digieTrades = digieBuyTrades.concat(digieSoldTrades)
+
+        let timeMultiplyer = 1;
+        if (exchange == 'binance') {
+            timeMultiplyer = 1;
+        } else if (exchange == 'kraken') {
+            timeMultiplyer = 1000
+        }
+
+        trades = trades.map(item => {
+
+            let timeZoneTime = item.trades.value.time * timeMultiplyer;
+            try {
+                timeZoneTime = new Date(timeZoneTime).toLocaleString("en-US", {
+                    timeZone: timezone
+                });
+                timeZoneTime = new Date(timeZoneTime);
+            } catch (e) {
+                console.log(e);
+            }
+            let date = timeZoneTime.toLocaleString() + ' ' + timezone;
+
+            item['trades']['value']['formattedDate'] = date
+            return item
+        })
+
+        //categorise trades that not exist
+        let checkTradesArr = []
+        let digieDuplicateTradeIdsArr = []
+        let digieDoubtTradeIdsArr = []
+        let userDoubtTradeIdsArr = []
+
+        if (exchange == 'binance') {
+            trades.forEach(item => {
+
+                let krakenObj = Object.assign(item)
+                krakenObj = krakenObj.trades.value
+                let tradeId = krakenObj.ordertxid
+
+                let digieEntry = digieTrades.find(item => item.binance_order_id == tradeId || item.binance_order_id_sell == tradeId || item.tradeId == tradeId || item.tradeId_sell == tradeId ? true : false)
+
+                if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
+
+                    if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
+                        // krakenObj['tradeMappType'] = 'User duplicate'
+                    } else {
+                        checkTradesArr.push(item)
+                    }
+                }
+            })
+        } else if (exchange == 'kraken') {
+            trades.forEach(item => {
+
+                let krakenObj = Object.assign(item)
+                krakenObj = krakenObj.trades.value
+                let tradeId = krakenObj.ordertxid
+
+                let digieEntry = digieTrades.find(item => item.tradeId == tradeId || item.kraken_order_id == tradeId || item.sell_kraken_order_id == tradeId ? true : false)
+
+                if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
+
+                    if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
+                        // krakenObj['tradeMappType'] = 'User duplicate'
+                    } else {
+                        checkTradesArr.push(item)
+                    }
+                }
+            })
+        }
+
+        if (checkTradesArr.length > 0) {
+            for (let i = 0; i < checkTradesArr.length; i++) {
+
+                let currTrade = checkTradesArr[i]['trades']['value']
+                let quantity = parseFloat(currTrade['vol'])
+                let pair = currTrade['pair']
+                let _3percentQuantityAbove = quantity + (quantity * 3) / 100
+                let _3percentQuantityBelow = quantity - (quantity * 3) / 100
+
+                // console.log(quantity, _3percentQuantityAbove)
+
+                // let tradeTime = new Date(currTrade.time * timeMultiplyer);
+                let tradeTime = parseFloat(currTrade.time);
+
+                let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
+                _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 1); // timestamp
+                _1minuteAbove = new Date(_1minuteAbove); // Date object
+                // console.log(_1minuteAbove);
+
+                let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
+                _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 1); // timestamp
+                _1minuteBelow = new Date(_1minuteBelow); // Date object
+                // console.log(_1minuteBelow);
+
+                //digie duplicate
+                var whereDigie1 = [
+                    {
+                        '$match': {
+                            'admin_id': user_id,
+                            'application_mode': 'live',
+                            'quantity': quantity,
+                            'symbol': pair,
+                            '$or': [
+                                {
+                                    'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                },
+                                {
+                                    'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                }
+                            ]
+                        }
+                    }
+                ]
+
+                var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+                var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+                var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+
+                if (digieTrades1.length > 0) {
+                    //confirmed duplicate
+                    digieDuplicateTradeIdsArr.push(currTrade.ordertxid)
+
+                } else {
+                    //digie doubt
+                    var whereDigie1 = [
+                        {
+                            '$match': {
+                                'admin_id': user_id,
+                                'application_mode': 'live',
+                                'quantity': { '$gte': _3percentQuantityBelow, '$lte': _3percentQuantityAbove },
+                                'symbol': pair,
+                                '$or': [
+                                    {
+                                        'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                    },
+                                    {
+                                        'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+
+                    var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+                    var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+                    var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+
+                    if (digieTrades1.length > 0) {
+                        //digie doubt
+                        digieDoubtTradeIdsArr.push(currTrade.ordertxid)
+                    } else {
+                        userDoubtTradeIdsArr.push(currTrade.ordertxid)
+                    }
+                }
+
+            }
+        }
+        // console.log(checkTradesArr.length)
+
+        let resultObj = {
+            'countArr': {},
+            'kraken_trades': trades,
+            'digie_trades': digieTrades,
+            'digieDuplicateTradeIdsArr': digieDuplicateTradeIdsArr,
+            'digieDoubtTradeIdsArr': digieDoubtTradeIdsArr,
+            'userDoubtTradeIdsArr': userDoubtTradeIdsArr,
+        }
+
+        let trade_history_filtered_collection_name = exchange == 'binance' ? 'trade_history_filtered' : 'trade_history_filtered_' + exchange
+
+        //remove from filtered from previous cycle
+        await db.collection(trade_history_filtered_collection_name).deleteMany({ 'user_id': user_id, 'ordertxid': { '$in': tradeIds }})
+
+        let filteredTrades = await filterMappedAndDuplicateTrades(resultObj, exchange)
+
+        console.log(filteredTrades.length)
+
+        //save in the trade_history_view collection
+        // console.log(JSON.stringify(filteredTrades))
+
+        if (filteredTrades.length > 0) {
+            //DB Save Call
+            // console.log('save call ' + page)
+            await db.collection(trade_history_filtered_collection_name).insertMany(filteredTrades)
+        }
+
+        //Update checked trades 
+        await db.collection(collectionName).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
+
+        resolve(true)
+    })
+} 
 
 async function filterMappedAndDuplicateTrades(trades, exchange){
 
@@ -25305,6 +25678,536 @@ async function filterMappedAndDuplicateTrades(trades, exchange){
         resolve(ordersList)
 
     })
+}
+
+router.get('/checkDuplicateTrades', async (req, res)=>{
+    
+    checkDuplicateTrades()
+
+    res.send({})
+})
+
+async function checkDuplicateTrades(){
+
+    const db = await conn
+    
+    let user_id = '5eb5a5a628914a45246bacc6'
+    let exchange = 'binance'
+
+    let timeMultiplyer = 1;
+    if (exchange == 'kraken') {
+        timeMultiplyer = 1000
+    }
+
+    let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+    let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+    let trade_history_collection = exchange == 'binance' ? 'user_trade_history' : 'user_trade_history_' + exchange
+    let temp_trade_history_duplicate_filter_col = exchange == 'binance' ? 'trade_history_duplicate_filter_col' : 'trade_history_duplicate_filter_col_' + exchange
+    let filtered_trade_history = exchange == 'binance' ? 'filtered_trade_history' : 'filtered_trade_history_' + exchange
+
+    let checkTradesArr = []
+    let digieDuplicateTradeIdsArr = []
+    let digieDoubtTradeIdsArr = []
+    let userDoubtTradeIdsArr = []
+
+    let coins = []
+    let where = {
+        'user_id': user_id,
+        // 'trades.value.pair': 'EOSUSDT', 
+    }
+
+    let pipeline = [
+        {
+            '$match': where
+        },
+        {
+            '$addFields': {
+                'trades.value.vol': {
+                    '$toDouble': '$trades.value.vol'
+                }
+            },
+        },
+        {
+            '$group': {
+                '_id': '$trades.value.ordertxid', 'parent': {
+                    '$first': '$$ROOT'
+                }, 'fractions': {
+                    '$push': '$$ROOT'
+                }
+            }
+        },
+        {
+            '$addFields': {
+                'parent.trades.value.fractionQtySum': {
+                    '$sum': '$fractions.trades.value.vol'
+                },
+            }
+        },
+        {
+            '$lookup': {
+                'from': buy_collection,
+                'let': { 'binance_id': '$_id', },
+                'pipeline': [
+                    {
+                        '$match': {
+                            'application_mode': 'live',
+                            // 'symbol': 'EOSUSDT',
+                            'admin_id': '5eb5a5a628914a45246bacc6',
+                            'status': { '$ne': 'canceled' },
+                            '$expr': {
+                                '$or': [
+                                    {
+                                        '$eq': ['$binance_order_id', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$binance_order_id_sell', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$tradeId', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$tradeId_sell', '$$binance_id'],
+                                    },
+                                ]
+                            },
+                        }
+                    },
+                ],
+                'as': "digie_buy_order"
+            }
+        },
+        {
+            '$lookup': {
+                'from': sold_collection,
+                'let': { 'binance_id': '$_id', },
+                'pipeline': [
+                    {
+                        '$match': {
+                            'application_mode': 'live',
+                            // 'symbol': 'EOSUSDT',
+                            'admin_id': '5eb5a5a628914a45246bacc6',
+                            'status': { '$ne': 'canceled' },
+                            '$expr': {
+                                '$or': [
+                                    {
+                                        '$eq': ['$binance_order_id', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$binance_order_id_sell', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$tradeId', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$tradeId_sell', '$$binance_id'],
+                                    },
+                                ]
+                            },
+                        }
+                    },
+                ],
+                'as': "digie_sold_order"
+            }
+        },
+        {
+            '$addFields': {
+                'is_mapped_trade': {
+                    '$cond': [
+                        {
+                            '$and': [
+                                {
+                                    '$eq': [{ '$size': '$digie_buy_order' }, 0]
+                                },
+                                {
+                                    '$eq': [{ '$size': '$digie_sold_order' }, 0]
+                                }
+                            ]
+                        },
+                        'no',
+                        'yes'
+                    ]
+                },
+            }
+        },
+        {
+            '$group': {
+                '_id': '$is_mapped_trade',
+                'data': { '$push': '$$ROOT' },
+                'total': { '$sum': 1 }
+            }
+        },
+        {
+            '$unwind':'$data'
+        },
+        { 
+            '$addFields':{
+                'is_mapped':'$_id'
+            }
+        }, 
+        { 
+            '$project':{
+                '_id':0, 
+                'total':0
+            }
+        },
+        {
+            '$out': temp_trade_history_duplicate_filter_col
+        }
+    ]
+    
+    await db.collection(trade_history_collection).aggregate(pipeline, { 'allowDiskUse': true }).toArray()
+
+    console.log('user_id :::: ', user_id, '  ----> initial filtration done')
+    console.log('  ----> ->>>>>>>>>>>>>>>>>  mapped filtration start')
+    
+    //set status as mapped on all mapped orders and insert into filtered trade history new col "filtered_trade_history"
+    let whereMapped = {
+        'is_mapped': 'yes',
+        // 'data.parent.trades.value.pair': 'EOSUSDT',
+        'data.parent.user_id': user_id
+    }
+
+    //pagination code for script
+    var total_count = await await db.collection(temp_trade_history_duplicate_filter_col).countDocuments(whereMapped)
+
+    console.log('total records', total_count)
+    
+    var per_page = 50;
+    var num_pages = Math.ceil(total_count / per_page);
+
+    console.log('total count ',total_count ,'  -----  total pages', num_pages)
+    
+    for (let i = 1; i <= num_pages; i++) {
+        
+        let page = i
+        let skip = (page - 1) * per_page
+        let limit = per_page
+
+        console.log('page: ', page, skip)
+        
+        let mappedTrades = await db.collection(temp_trade_history_duplicate_filter_col).find(whereMapped).skip(skip).limit(limit).toArray()
+    
+        if(mappedTrades.length > 0){
+    
+            for (let i = 0; i < mappedTrades.length; i++){
+                
+                let insDataArr = mappedTrades[i]['data']
+                let currTrade = insDataArr
+                
+                delete currTrade['_id']
+                currTrade['tradeMappType'] = 'mapped'
+                
+                let mappedTradeArr = []
+    
+                for (let j = 0; j < currTrade.fractions.length; j++) {
+    
+                    let obj = Object.assign({}, currTrade.fractions[j])
+                    delete obj['_id']
+    
+                    obj.trades.value.tradeMappType = 'mapped'
+                    obj.trades.value.is_mapped_trade = 'yes'
+    
+                    if (currTrade.digie_buy_order.length > 0) {
+                        obj.trades.value.digie_order_id = currTrade.digie_buy_order[0]['_id']
+                    } else if (currTrade.digie_sold_order.length > 0) {
+                        obj.trades.value.digie_order_id = currTrade.digie_sold_order[0]['_id']
+                    }
+    
+                    obj.trades.value.isParent = j == 0 ? 'yes' : 'no'
+    
+                    mappedTradeArr.push(obj)
+    
+                }
+                
+                //insert in filtred trade history collection
+                await db.collection(filtered_trade_history).insertMany(mappedTradeArr)
+    
+                let tradeIds = currTrade.fractions.map(item => item.trades.value.ordertxid)
+                
+                console.log(mappedTradeArr[0]['trades']['value'])
+                console.log(tradeIds)
+    
+                //update in trade history collection
+                await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
+    
+            }
+        }
+    }
+
+
+    console.log('  ----> mapped filtration done')
+    console.log('  ----> ->>>>>>>>>>>>>>>>>  Unmapped filtration start')
+
+    let whereUnmapped = {
+        'is_mapped': 'no',
+        // 'data.parent.trades.value.pair': 'EOSUSDT',
+        'data.parent.user_id': user_id
+    }
+
+    //pagination code for script
+    var total_count = await await db.collection(temp_trade_history_duplicate_filter_col).countDocuments(whereUnmapped)
+
+    console.log('total records', total_count)
+    
+    var per_page = 50;
+    var num_pages = Math.ceil(total_count / per_page);
+    
+    console.log('total count ',total_count ,'  -----  total pages', num_pages)
+    
+    for (let i = 1; i <= num_pages; i++) {
+        
+        let page = i
+        let skip = (page - 1) * per_page
+        let limit = per_page
+
+        console.log('page: ', page, skip)
+        
+        checkTradesArr = await db.collection(temp_trade_history_duplicate_filter_col).find(whereUnmapped).skip(skip).limit(limit).toArray()
+    
+        if (checkTradesArr.length > 0) {
+            
+            for (let i = 0; i < checkTradesArr.length; i++) {
+                
+                checkTradesArr = checkTradesArr[i]['data']
+
+                let currTrade = checkTradesArr[i]['parent']['trades']['value']
+                
+                console.log(currTrade)
+                // continue
+    
+                // let currTrade = checkTradesArr[i]['trades']['value']
+                let quantity = parseFloat(currTrade['fractionQtySum'])
+                let pair = currTrade['pair']
+                let _3percentQuantityAbove = quantity + (quantity * 3) / 100
+                let _3percentQuantityBelow = quantity - (quantity * 3) / 100
+    
+                // console.log(quantity, _3percentQuantityAbove)
+    
+                // let tradeTime = new Date(currTrade.time * timeMultiplyer);
+                let tradeTime = parseFloat(currTrade.time);
+    
+                let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
+                _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 2); // timestamp
+                _1minuteAbove = new Date(_1minuteAbove); // Date object
+                // console.log(_1minuteAbove);
+    
+                let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
+                _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 2); // timestamp
+                _1minuteBelow = new Date(_1minuteBelow); // Date object
+                // console.log(_1minuteBelow);
+    
+                //digie duplicate
+                var whereDigie1 = [
+                    {
+                        '$match': {
+                            'admin_id': user_id,
+                            'application_mode': 'live',
+                            'quantity': quantity,
+                            'symbol': pair,
+                            '$or': [
+                                {
+                                    'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                },
+                                {
+                                    'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                }
+                            ]
+                        }
+                    }
+                ]
+    
+                var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+                var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+                var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+    
+                if (digieTrades1.length > 0) {
+                    //confirmed duplicate
+                    digieDuplicateTradeIdsArr.push(currTrade.ordertxid)
+
+
+                    let currTrade_temp = checkTradesArr[i]
+
+                    delete currTrade_temp['_id']
+                    currTrade_temp['tradeMappType'] = 'Digie duplicate'
+
+                    let duplicateTradeArr = []
+
+                    for (let j = 0; j < currTrade_temp.fractions.length; j++) {
+
+                        let obj = Object.assign({}, currTrade_temp.fractions[j])
+                        delete obj['_id']
+
+                        obj.trades.value.tradeMappType = 'Digie duplicate'
+                        obj.trades.value.is_mapped_trade = 'no'
+
+                        if (currTrade_temp.digie_buy_order.length > 0) {
+                            obj.trades.value.digie_order_id = currTrade_temp.digie_buy_order[0]['_id']
+                        } else if (currTrade_temp.digie_sold_order.length > 0) {
+                            obj.trades.value.digie_order_id = currTrade_temp.digie_sold_order[0]['_id']
+                        }
+
+                        if (j == 0) {
+                            obj.trades.value.isParent = 'yes'
+                            obj.trades.value.fractionQtySum = quantity
+                        } else {
+                            obj.trades.value.isParent = 'no'
+                        }
+
+                        duplicateTradeArr.push(obj)
+                    }
+
+                    //insert in filtred trade history collection
+                    await db.collection(filtered_trade_history).insertMany(duplicateTradeArr)
+
+                    let tradeIds = currTrade_temp.fractions.map(item => item.trades.value.ordertxid)
+
+                    console.log('************************************************** Digie duplicate')
+                    console.log(duplicateTradeArr[0]['trades']['value'])
+                    console.log(tradeIds)
+
+                //update in trade history collection
+                await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
+    
+                } else {
+                    //digie doubt
+                    var whereDigie1 = [
+                        {
+                            '$match': {
+                                'admin_id': user_id,
+                                'application_mode': 'live',
+                                'quantity': { '$gte': _3percentQuantityBelow, '$lte': _3percentQuantityAbove },
+                                'symbol': pair,
+                                '$or': [
+                                    {
+                                        'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                    },
+                                    {
+                                        'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+    
+                    var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+                    var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+                    var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+    
+                    if (digieTrades1.length > 0) {
+                        //digie doubt
+                        digieDoubtTradeIdsArr.push(currTrade.ordertxid)
+
+
+                        let currTrade_temp = checkTradesArr[i]
+
+                        delete currTrade_temp['_id']
+                        currTrade_temp['tradeMappType'] = 'Digie Doubtful'
+
+                        let duplicateTradeArr = []
+
+                        for (let j = 0; j < currTrade_temp.fractions.length; j++) {
+
+                            let obj = Object.assign({}, currTrade_temp.fractions[j])
+                            delete obj['_id']
+
+                            obj.trades.value.tradeMappType = 'Digie Doubtful'
+                            obj.trades.value.is_mapped_trade = 'no'
+
+                            if (currTrade_temp.digie_buy_order.length > 0) {
+                                obj.trades.value.digie_order_id = currTrade_temp.digie_buy_order[0]['_id']
+                            } else if (currTrade_temp.digie_sold_order.length > 0) {
+                                obj.trades.value.digie_order_id = currTrade_temp.digie_sold_order[0]['_id']
+                            }
+
+                            if (j == 0) {
+                                obj.trades.value.isParent = 'yes'
+                                obj.trades.value.fractionQtySum = quantity
+                            } else {
+                                obj.trades.value.isParent = 'no'
+                            }
+
+                            duplicateTradeArr.push(obj)
+                        }
+
+                        //insert in filtred trade history collection
+                        await db.collection(filtered_trade_history).insertMany(duplicateTradeArr)
+
+                        let tradeIds = currTrade_temp.fractions.map(item => item.trades.value.ordertxid)
+
+                        console.log('************************************************** Digie Doubt')
+                        console.log(duplicateTradeArr[0]['trades']['value'])
+                        console.log(tradeIds)
+
+                        //update in trade history collection
+                        await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
+
+                    } else {
+                        userDoubtTradeIdsArr.push(currTrade.ordertxid)
+
+
+                        let currTrade_temp = checkTradesArr[i]
+
+                        delete currTrade_temp['_id']
+                        currTrade_temp['tradeMappType'] = 'User Doubtful'
+
+                        let duplicateTradeArr = []
+
+                        for (let j = 0; j < currTrade_temp.fractions.length; j++) {
+
+                            let obj = Object.assign({}, currTrade_temp.fractions[j])
+                            delete obj['_id']
+
+                            obj.trades.value.tradeMappType = 'User Doubtful'
+                            obj.trades.value.is_mapped_trade = 'no'
+
+                            if (currTrade_temp.digie_buy_order.length > 0) {
+                                obj.trades.value.digie_order_id = currTrade_temp.digie_buy_order[0]['_id']
+                            } else if (currTrade_temp.digie_sold_order.length > 0) {
+                                obj.trades.value.digie_order_id = currTrade_temp.digie_sold_order[0]['_id']
+                            }
+
+                            if (j == 0){
+                                obj.trades.value.isParent = 'yes'
+                                obj.trades.value.fractionQtySum = quantity
+                            }else{
+                                obj.trades.value.isParent = 'no'
+                            }
+
+                            duplicateTradeArr.push(obj)
+                        }
+
+                        //insert in filtred trade history collection
+                        await db.collection(filtered_trade_history).insertMany(duplicateTradeArr)
+
+                        let tradeIds = currTrade_temp.fractions.map(item => item.trades.value.ordertxid)
+
+                        
+                        console.log('************************************************** User Doubt')
+                        console.log(duplicateTradeArr[0]['trades']['value'])
+                        console.log(tradeIds)
+
+                        //update in trade history collection
+                        // await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
+
+                    }
+                }
+    
+            }
+    
+        }
+
+    }
+
+    console.log('  ----> Unmapped filtration done')
+
+    let resultObj = {
+        'digieDuplicateTradeIdsArr': digieDuplicateTradeIdsArr,
+        'digieDoubtTradeIdsArr': digieDoubtTradeIdsArr,
+        'userDoubtTradeIdsArr': userDoubtTradeIdsArr,
+    }
+
+    console.log(resultObj)
+
 }
 
 async function getUserTimezone(user_id){
