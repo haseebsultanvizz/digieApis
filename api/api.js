@@ -14410,6 +14410,8 @@ async function update_user_balance(user_id) {
     }
     let url = 'http://' + ip + port + '/updateUserBalance'
 
+    // console.log(url)
+
     //Update Kraken Balance
     var options = {
         method: 'POST',
@@ -14428,7 +14430,13 @@ async function update_user_balance(user_id) {
             'user_id': user_id
         }
     };
-    request(options, function (error, response, body) { });
+    request(options, function (error, response, body) {
+        // if(error){
+        //     // console.log(error)
+        // }else{
+        //     // console.log(body)
+        // }
+     });
 
 
 
@@ -24835,6 +24843,2070 @@ async function countTradeHistory(pipeline, collectionName) {
     soldCountRes = soldCountRes.length > 0 ? soldCountRes[0].totalItems : 0
 
     return { 'buyCount': buyCountRes, 'soldCount': soldCountRes }
+}
+
+router.post('/checkBinanceDuplicatesForTradeHistory', async (req, res)=>{
+
+    console.log(req.body)
+
+    let user_id = req.body.user_id
+    let exchange = req.body.exchange
+    
+    if(typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != ''){
+        // let exchange = 'binance'
+        // let user_id = '5eb5a5a628914a45246bacc6' // james parker
+        
+        // let exchange = 'kraken'
+        // let user_id = '5c0913e2fc9aadaac61dd0dc' // Gary gordon
+    
+        //check if user already in progress
+        let progressCollectionName = exchange == 'binance' ? 'duplicate_trade_history_script_in_progress' : exchange +'_duplicate_trade_history_script_in_progress'
+    
+        const db = await conn
+        let run_script = false 
+        let user = await db.collection(progressCollectionName).find({}).toArray()
+        if (user.length > 0){
+    
+            let dt1 = new Date()
+            let dt2 = user[0]['start_date'];
+    
+            let diff = (dt2.getTime() - dt1.getTime()) / 1000;
+            diff /= 60;
+            diff = Math.abs(Math.round(diff));
+    
+            if(diff > 60){
+                //remove old entry and start the cron
+                await db.collection(progressCollectionName).deleteMany({})
+                run_script = true
+            }
+        }else{
+            run_script = true
+        }
+        
+        if (run_script){
+    
+            //save cron in progress
+            await db.collection(progressCollectionName).insertOne({ 'user_id': user_id, 'exchange': exchange, 'start_date': new Date()})
+    
+            let data = await checkBinanceDuplicatesForTradeHistory(user_id, exchange)
+        }
+    }else{
+        console.log('user_id, exchange required')
+    }
+    
+    res.send({})
+    
+})
+
+async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
+    
+    // let exchange = 'binance'
+    
+    const db = await conn
+
+    let timezone = await getUserTimezone(user_id)
+    
+    let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
+
+    let where = {}
+    let application_mode = 'live'
+    let coins = ['EOSUSDT']
+    let order_level = ''
+    let order_type = ''
+    let trigger_type = ''
+    let status = ''
+    let limit = 50
+    let skip = 0
+    let start_date = ''
+    let end_date = ''
+
+    let pipeline = [
+        {
+            '$match': {
+                'user_id': user_id,
+                'tradesChecked': {'$ne': 'yes'}
+            }
+        },
+        {
+            '$sort': {
+                'trades.value.time': -1,
+            }
+        }
+    ]
+
+    if (coins.length > 0) {
+        pipeline[0]['$match']['trades.value.pair'] = { '$in': coins }
+    }
+
+    if (order_type != '') {
+        pipeline[0]['$match']['trades.value.ordertype'] = order_type
+    }
+
+    if (status == 'buy') {
+        pipeline[0]['$match']['trades.value.type'] = 'buy'
+    } else if (status == 'sold') {
+        pipeline[0]['$match']['trades.value.type'] = 'sell'
+    }
+
+    if (start_date != '' || end_date != '') {
+
+        // var unixTimestamp = Math.floor(new Date("2017-09-15 00:00:00.000").getTime() / 1000);
+        let condObj = {}
+
+        if (start_date != '') {
+            start_date += ' 00:00:00.000'
+            condObj['$gte'] = Math.floor(new Date(start_date).getTime() / 1000)
+        }
+        if (end_date != '') {
+            end_date += ' 23:59:59.000'
+            condObj['$lte'] = Math.floor(new Date(end_date).getTime() / 1000)
+        }
+
+        if (condObj && Object.keys(condObj).length === 0 && condObj.constructor === Object) {
+            //do nothing
+        } else {
+            pipeline[0]['$match']['trades.value.time'] = condObj
+        }
+    }
+
+    let countArr = await countTradeHistory(pipeline, collectionName)
+
+    let total_count = countArr.buyCount + countArr.soldCount
+
+    console.log('total records', total_count)
+    
+    let per_page = 50;
+    let num_pages = Math.ceil(total_count / per_page);
+    
+    console.log('total pages', num_pages)
+    
+    for (let i = 1; i <= num_pages; i++) {
+        
+        let page = i
+        skip = (page - 1) * per_page
+        limit = per_page
+
+        console.log('page: ', page, skip)
+        
+        let ifSkipExists = pipeline.findIndex(item => item['$skip'] == (page - 2) * per_page)
+        let ifLimitExists = pipeline.findIndex(item => item['$limit'] == 50)
+        
+        if (ifLimitExists > -1 && ifSkipExists > -1){
+            pipeline[ifLimitExists]['$limit'] = limit
+            pipeline[ifSkipExists]['$skip'] = skip
+        }else{
+            pipeline.push({ '$skip': skip })
+            pipeline.push({ '$limit': limit })
+        }
+    
+        let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
+    
+        let tradeIds = trades.map(item => item.trades.value.ordertxid)
+    
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+
+        let whereDigie = [
+            {
+                '$match': {
+                    'admin_id': user_id,
+                    'application_mode': 'live',
+                }
+            }
+        ]
+
+        if (exchange == 'binance') {
+
+            whereDigie[0]['$match']['$or'] = [
+                {
+                    'binance_order_id': { '$in': tradeIds },
+                },
+                {
+                    'binance_order_id_sell': { '$in': tradeIds },
+                },
+                {
+                    'tradeId': { '$in': tradeIds },
+                },
+                {
+                    'tradeId_sell': { '$in': tradeIds },
+                },
+            ]
+        }else if(exchange == 'kraken'){
+
+            whereDigie[0]['$match']['$or'] = [
+                {
+                    'tradeId': { '$in': tradeIds },
+                },
+                {
+                    'kraken_order_id': { '$in': tradeIds },
+                },
+                {
+                    'sell_kraken_order_id': { '$in': tradeIds },
+                }
+            ]
+        }else{
+            whereDigie[0]['$match']['do_not_pick'] = true
+        }
+        
+        // console.log(JSON.stringify(whereDigie))
+    
+        let digieBuyTrades = await db.collection(buy_collection).aggregate(whereDigie).toArray()
+        let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
+        let digieTrades = digieBuyTrades.concat(digieSoldTrades)
+    
+        let timeMultiplyer = 1;
+        if (exchange == 'binance') {
+            timeMultiplyer = 1;
+        } else if (exchange == 'kraken'){
+            timeMultiplyer = 1000
+        }
+    
+        trades = trades.map(item => {
+    
+            let timeZoneTime = item.trades.value.time * timeMultiplyer;
+            try {
+                timeZoneTime = new Date(timeZoneTime).toLocaleString("en-US", {
+                    timeZone: timezone
+                });
+                timeZoneTime = new Date(timeZoneTime);
+            } catch (e) {
+                console.log(e);
+            }
+            let date = timeZoneTime.toLocaleString() + ' ' + timezone;
+    
+            item['trades']['value']['formattedDate'] = date
+            return item
+        })
+    
+        //categorise trades that not exist
+        let checkTradesArr = []
+        let digieDuplicateTradeIdsArr = []
+        let digieDoubtTradeIdsArr = []
+        let userDoubtTradeIdsArr = []
+
+        if (exchange == 'binance') {
+            trades.forEach(item => {
+
+                let krakenObj = Object.assign(item)
+                krakenObj = krakenObj.trades.value
+                let tradeId = krakenObj.ordertxid
+
+                let digieEntry = digieTrades.find(item => item.binance_order_id == tradeId || item.binance_order_id_sell == tradeId || item.tradeId == tradeId || item.tradeId_sell == tradeId ? true : false)
+
+                if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
+
+                    if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
+                        // krakenObj['tradeMappType'] = 'User duplicate'
+                    } else {
+                        checkTradesArr.push(item)
+                    }
+                }
+            })
+        }else if (exchange == 'kraken') {
+            trades.forEach(item => {
+
+                let krakenObj = Object.assign(item)
+                krakenObj = krakenObj.trades.value
+                let tradeId = krakenObj.ordertxid
+
+                let digieEntry = digieTrades.find(item => item.tradeId == tradeId || item.kraken_order_id == tradeId || item.sell_kraken_order_id == tradeId ? true : false)
+
+                if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
+
+                    if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
+                        // krakenObj['tradeMappType'] = 'User duplicate'
+                    } else {
+                        checkTradesArr.push(item)
+                    }
+                }
+            })
+        }
+    
+        if (checkTradesArr.length > 0) {
+            for (let i = 0; i < checkTradesArr.length; i++) {
+    
+                let currTrade = checkTradesArr[i]['trades']['value']
+                let quantity = parseFloat(currTrade['vol'])
+                let pair = currTrade['pair']
+                let _3percentQuantityAbove = quantity + (quantity * 3) / 100
+                let _3percentQuantityBelow = quantity - (quantity * 3) / 100
+    
+                // console.log(quantity, _3percentQuantityAbove)
+    
+                // let tradeTime = new Date(currTrade.time * timeMultiplyer);
+                let tradeTime = parseFloat(currTrade.time);
+    
+                let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
+                _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 2); // timestamp
+                _1minuteAbove = new Date(_1minuteAbove); // Date object
+                // console.log(_1minuteAbove);
+    
+                let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
+                _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 2); // timestamp
+                _1minuteBelow = new Date(_1minuteBelow); // Date object
+                // console.log(_1minuteBelow);
+    
+                //digie duplicate
+                var whereDigie1 = [
+                    {
+                        '$match': {
+                            'admin_id': user_id,
+                            'application_mode': 'live',
+                            'quantity': quantity,
+                            'symbol': pair,
+                            '$or': [
+                                {
+                                    'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                },
+                                {
+                                    'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                }
+                            ]
+                        }
+                    }
+                ]
+    
+                var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+                var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+                var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+    
+                if (digieTrades1.length > 0) {
+                    //confirmed duplicate
+                    digieDuplicateTradeIdsArr.push(currTrade.ordertxid)
+    
+                } else {
+                    //digie doubt
+                    var whereDigie1 = [
+                        {
+                            '$match': {
+                                'admin_id': user_id,
+                                'application_mode': 'live',
+                                'quantity': { '$gte': _3percentQuantityBelow, '$lte': _3percentQuantityAbove },
+                                'symbol': pair,
+                                '$or': [
+                                    {
+                                        'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove},
+                                    },
+                                    {
+                                        'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove},
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+    
+                    var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+                    var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+                    var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+    
+                    if (digieTrades1.length > 0) {
+                        //digie doubt
+                        digieDoubtTradeIdsArr.push(currTrade.ordertxid)
+                    } else {
+                        userDoubtTradeIdsArr.push(currTrade.ordertxid)
+                    }
+                }
+    
+            }
+        }
+        // console.log(checkTradesArr.length)
+    
+        let resultObj = {
+            'countArr': countArr,
+            'kraken_trades': trades,
+            'digie_trades': digieTrades,
+            'digieDuplicateTradeIdsArr': digieDuplicateTradeIdsArr,
+            'digieDoubtTradeIdsArr': digieDoubtTradeIdsArr,
+            'userDoubtTradeIdsArr': userDoubtTradeIdsArr,
+        }
+
+        let filteredTrades = await filterMappedAndDuplicateTrades(resultObj, exchange)
+        
+        // console.log(filteredTrades.length)
+    
+        //save in the trade_history_view collection
+        // console.log(JSON.stringify(filteredTrades))
+        
+        if (filteredTrades.length > 0){
+            let trade_history_filtered_collection_name = exchange == 'binance' ? 'trade_history_filtered' : 'trade_history_filtered_'+exchange
+            //DB Save Call
+            console.log('save call ' + page)
+            await db.collection(trade_history_filtered_collection_name).insertMany(filteredTrades)
+        }
+        
+        //Update checked trades 
+        await db.collection(collectionName).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds}}, {'$set':{ 'tradesChecked': 'yes' }})
+        
+    }//pagination loop end
+
+    await checkFractionDuplicateTrades(user_id, exchange)
+    
+    //remove progress entry
+    let progressCollectionName = exchange == 'binance' ? 'duplicate_trade_history_script_in_progress' : exchange + '_duplicate_trade_history_script_in_progress'
+    await db.collection(progressCollectionName).deleteMany({})
+
+    //update user duplicate trade script run date
+    let userField = exchange == 'binance' ? 'duplicate_trade_history_script_date' : exchange +'_duplicate_trade_history_script_date'
+    let set = {}
+    set['$set'] = {}
+    set['$set'][userField] = new Date()
+    await db.collection('users').updateOne({ '_id': new ObjectID(String(user_id)) }, set)
+
+    console.log(' completed ')
+
+    return true;
+}
+
+async function checkFractionDuplicateTrades(user_id, exchange){
+    return new Promise(async (resolve)=>{
+
+        if(exchange == 'binance'){
+            console.log('fraction duplocate code running')
+    
+            const db = await conn
+    
+            //check fraction duplicate trades script
+            let mappedCollection = exchange == 'binance' ? 'trade_history_filtered' : 'trade_history_filtered_' + exchange
+    
+            let fractionPipeline = [
+                {
+                    '$match': {
+                        'user_id': user_id,
+                        'tradeMappType': { '$in': ['User Doubtful'] },
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': '$ordertxid',
+                        'orders': { '$push': '$ordertxid' },
+                    }
+                },
+                {
+                    '$match': {
+                        '$expr': { '$gte': [{ '$size': '$orders' }, 2] }
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': null,
+                        'orderIds': { '$push': '$_id' },
+                    }
+                },
+                {
+                    '$project': {
+                        '_id': 0,
+                        'orderIds': 1,
+                    }
+                },
+            ]
+
+            console.log(JSON.stringify(fractionPipeline))
+
+            let fraction_duplicate_trades = await db.collection(mappedCollection).aggregate(fractionPipeline).toArray()
+
+            var tradeIds = []
+
+            console.log('total Ids ', fraction_duplicate_trades.length)
+            
+            if (fraction_duplicate_trades.length > 0) {
+                
+                tradeIds = typeof fraction_duplicate_trades[0]['orderIds'] != 'undefined' && fraction_duplicate_trades[0]['orderIds'].length > 0 ? fraction_duplicate_trades[0]['orderIds'] : [];
+                
+                console.log('tradeIds ', tradeIds)
+                
+                if (tradeIds.length > 0){
+                    //re run trades with quantities added
+                    await checkExchangeTrades(user_id, exchange, tradeIds)
+                }
+            }
+        }
+
+        resolve(true)
+    })
+} 
+
+async function checkExchangeTrades(user_id, exchange, tradeIds_){
+
+    return new Promise(async (resolve)=>{
+        const db = await conn
+
+        let timezone = await getUserTimezone(user_id)
+
+        let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
+
+        //check fraction duplicate trades script
+        let mappedCollection = exchange == 'binance' ? 'trade_history_filtered' : 'trade_history_filtered_' + exchange
+
+        let pipeline = [
+            {
+                '$match': {
+                    'user_id': user_id,
+                    'trades.value.ordertxid': { '$in': tradeIds_ },
+                },
+            },
+            { 
+                '$group': { 
+                    '_id': '$trades.value.ordertxid',
+                    'orders': { '$push': '$$ROOT.trades.value.vol' },
+                    'order': { '$first': '$$ROOT' }, 
+                    'tradeIds': { '$first': '$$ROOT.trades.value.ordertxid' },
+                    'qtySum': { '$sum': { '$toDouble': "$trades.value.vol" } }
+                } 
+            }, 
+            { 
+                '$match': { 
+                    '$expr': { '$gte': [{ '$size': '$orders' }, 2] } 
+                } 
+            }, 
+            { 
+                '$addFields': { 'order.vol': '$qtySum' } 
+            }, 
+            { 
+                '$project': { 
+                    'order': 1 
+                } 
+            },
+            {
+                '$replaceRoot': { newRoot: '$order' } 
+            },
+        ]
+
+        let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
+
+        console.log('fraction trades count', trades.length)
+        console.log(trades)
+
+        let tradeIds = trades.map(item => item.trades.value.ordertxid)
+
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+
+        let whereDigie = [
+            {
+                '$match': {
+                    'admin_id': user_id,
+                    'application_mode': 'live',
+                }
+            }
+        ]
+
+        if (exchange == 'binance') {
+
+            whereDigie[0]['$match']['$or'] = [
+                {
+                    'binance_order_id': { '$in': tradeIds },
+                },
+                {
+                    'binance_order_id_sell': { '$in': tradeIds },
+                },
+                {
+                    'tradeId': { '$in': tradeIds },
+                },
+                {
+                    'tradeId_sell': { '$in': tradeIds },
+                },
+            ]
+        } else if (exchange == 'kraken') {
+
+            whereDigie[0]['$match']['$or'] = [
+                {
+                    'tradeId': { '$in': tradeIds },
+                },
+                {
+                    'kraken_order_id': { '$in': tradeIds },
+                },
+                {
+                    'sell_kraken_order_id': { '$in': tradeIds },
+                }
+            ]
+        } else {
+            whereDigie[0]['$match']['do_not_pick'] = true
+        }
+
+        // console.log(JSON.stringify(whereDigie))
+
+        let digieBuyTrades = await db.collection(buy_collection).aggregate(whereDigie).toArray()
+        let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
+        let digieTrades = digieBuyTrades.concat(digieSoldTrades)
+
+        let timeMultiplyer = 1;
+        if (exchange == 'binance') {
+            timeMultiplyer = 1;
+        } else if (exchange == 'kraken') {
+            timeMultiplyer = 1000
+        }
+
+        trades = trades.map(item => {
+
+            let timeZoneTime = item.trades.value.time * timeMultiplyer;
+            try {
+                timeZoneTime = new Date(timeZoneTime).toLocaleString("en-US", {
+                    timeZone: timezone
+                });
+                timeZoneTime = new Date(timeZoneTime);
+            } catch (e) {
+                console.log(e);
+            }
+            let date = timeZoneTime.toLocaleString() + ' ' + timezone;
+
+            item['trades']['value']['formattedDate'] = date
+            return item
+        })
+
+        //categorise trades that not exist
+        let checkTradesArr = []
+        let digieDuplicateTradeIdsArr = []
+        let digieDoubtTradeIdsArr = []
+        let userDoubtTradeIdsArr = []
+
+        if (exchange == 'binance') {
+            trades.forEach(item => {
+
+                let krakenObj = Object.assign(item)
+                krakenObj = krakenObj.trades.value
+                let tradeId = krakenObj.ordertxid
+
+                let digieEntry = digieTrades.find(item => item.binance_order_id == tradeId || item.binance_order_id_sell == tradeId || item.tradeId == tradeId || item.tradeId_sell == tradeId ? true : false)
+
+                if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
+
+                    if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
+                        // krakenObj['tradeMappType'] = 'User duplicate'
+                    } else {
+                        checkTradesArr.push(item)
+                    }
+                }
+            })
+        } else if (exchange == 'kraken') {
+            trades.forEach(item => {
+
+                let krakenObj = Object.assign(item)
+                krakenObj = krakenObj.trades.value
+                let tradeId = krakenObj.ordertxid
+
+                let digieEntry = digieTrades.find(item => item.tradeId == tradeId || item.kraken_order_id == tradeId || item.sell_kraken_order_id == tradeId ? true : false)
+
+                if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
+
+                    if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
+                        // krakenObj['tradeMappType'] = 'User duplicate'
+                    } else {
+                        checkTradesArr.push(item)
+                    }
+                }
+            })
+        }
+
+        if (checkTradesArr.length > 0) {
+            for (let i = 0; i < checkTradesArr.length; i++) {
+
+                let currTrade = checkTradesArr[i]['trades']['value']
+                let quantity = parseFloat(currTrade['vol'])
+                let pair = currTrade['pair']
+                let _3percentQuantityAbove = quantity + (quantity * 3) / 100
+                let _3percentQuantityBelow = quantity - (quantity * 3) / 100
+
+                // console.log(quantity, _3percentQuantityAbove)
+
+                // let tradeTime = new Date(currTrade.time * timeMultiplyer);
+                let tradeTime = parseFloat(currTrade.time);
+
+                let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
+                _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 1); // timestamp
+                _1minuteAbove = new Date(_1minuteAbove); // Date object
+                // console.log(_1minuteAbove);
+
+                let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
+                _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 1); // timestamp
+                _1minuteBelow = new Date(_1minuteBelow); // Date object
+                // console.log(_1minuteBelow);
+
+                //digie duplicate
+                var whereDigie1 = [
+                    {
+                        '$match': {
+                            'admin_id': user_id,
+                            'application_mode': 'live',
+                            'quantity': quantity,
+                            'symbol': pair,
+                            '$or': [
+                                {
+                                    'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                },
+                                {
+                                    'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                }
+                            ]
+                        }
+                    }
+                ]
+
+                var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+                var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+                var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+
+                if (digieTrades1.length > 0) {
+                    //confirmed duplicate
+                    digieDuplicateTradeIdsArr.push(currTrade.ordertxid)
+
+                } else {
+                    //digie doubt
+                    var whereDigie1 = [
+                        {
+                            '$match': {
+                                'admin_id': user_id,
+                                'application_mode': 'live',
+                                'quantity': { '$gte': _3percentQuantityBelow, '$lte': _3percentQuantityAbove },
+                                'symbol': pair,
+                                '$or': [
+                                    {
+                                        'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                    },
+                                    {
+                                        'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+
+                    var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+                    var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+                    var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+
+                    if (digieTrades1.length > 0) {
+                        //digie doubt
+                        digieDoubtTradeIdsArr.push(currTrade.ordertxid)
+                    } else {
+                        userDoubtTradeIdsArr.push(currTrade.ordertxid)
+                    }
+                }
+
+            }
+        }
+        // console.log(checkTradesArr.length)
+
+        let resultObj = {
+            'countArr': {},
+            'kraken_trades': trades,
+            'digie_trades': digieTrades,
+            'digieDuplicateTradeIdsArr': digieDuplicateTradeIdsArr,
+            'digieDoubtTradeIdsArr': digieDoubtTradeIdsArr,
+            'userDoubtTradeIdsArr': userDoubtTradeIdsArr,
+        }
+
+        let trade_history_filtered_collection_name = exchange == 'binance' ? 'trade_history_filtered' : 'trade_history_filtered_' + exchange
+
+        //remove from filtered from previous cycle
+        await db.collection(trade_history_filtered_collection_name).deleteMany({ 'user_id': user_id, 'ordertxid': { '$in': tradeIds }})
+
+        let filteredTrades = await filterMappedAndDuplicateTrades(resultObj, exchange)
+
+        console.log(filteredTrades.length)
+
+        //save in the trade_history_view collection
+        // console.log(JSON.stringify(filteredTrades))
+
+        if (filteredTrades.length > 0) {
+            //DB Save Call
+            // console.log('save call ' + page)
+            await db.collection(trade_history_filtered_collection_name).insertMany(filteredTrades)
+        }
+
+        //Update checked trades 
+        await db.collection(collectionName).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
+
+        resolve(true)
+    })
+} 
+
+async function filterMappedAndDuplicateTrades(trades, exchange){
+
+    return new Promise(async (resolve)=>{
+        let krakenTrades = trades.kraken_trades
+    
+        let digieTrades = trades.digie_trades
+        let totalItems = trades.totalItems
+        let countArr = trades.countArr
+        let digieDuplicateTradeIdsArr = trades.digieDuplicateTradeIdsArr
+        let digieDoubtTradeIdsArr = trades.digieDoubtTradeIdsArr
+        let userDoubtTradeIdsArr = trades.userDoubtTradeIdsArr
+
+        let timeMultiplyer = 1;
+        if (exchange == 'binance') {
+            timeMultiplyer = 1;
+        } else if (exchange == 'kraken') {
+            timeMultiplyer = 1000
+        }
+    
+        let ordersList = []
+        let tempOrderList = []
+    
+        for (let i = 0; i < krakenTrades.length; i++) {
+
+            let krakenObj = Object.assign(krakenTrades[i])
+            let user_ID = krakenObj.user_id;
+            let ID = krakenObj._id;
+            krakenObj = krakenObj.trades.value
+            let tradeId = krakenObj.ordertxid
+    
+            krakenObj['symbol'] = typeof krakenObj['symbol'] != 'undefined' && krakenObj['symbol'] != '' ? krakenObj.symbol : krakenObj.pair
+
+            let digieEntry
+    
+            if (exchange == 'binance') {
+            
+                digieEntry = digieEntry = digieTrades.find(item => item.binance_order_id == tradeId || item.binance_order_id_sell == tradeId || item.tradeId == tradeId || item.tradeId_sell == tradeId ? true : false)
+            
+            }else   if (exchange == 'kraken') {
+            
+                digieEntry = digieTrades.find(item => item.tradeId == tradeId || item.kraken_order_id == tradeId || item.sell_kraken_order_id == tradeId ? true : false)
+
+            }
+    
+            if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
+
+                // console.log(krakenTrades[i])
+
+                // krakenObj['_id'] = (new Date).toString() + Math.random() + Math.random() + 'fewrt45wet'
+                krakenObj['order_id'] = ID
+                krakenObj['_id'] = ID
+                krakenObj['symbol'] = krakenObj.symbol
+                krakenObj['quantity'] = krakenObj.vol
+                krakenObj['trigger_type'] = ''
+                krakenObj['tradeMappType'] = 'Digie duplicate'
+                krakenObj['admin_id'] = user_ID
+    
+                if (typeof krakenObj.duplicate_mapped != 'undefined' && krakenObj.duplicate_mapped == 'yes') {
+                    krakenObj['tradeMappType'] = 'Duplicate mapped'
+                }
+                if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
+                    krakenObj['tradeMappType'] = 'User duplicate'
+                }
+                if (digieDuplicateTradeIdsArr.includes(krakenObj.ordertxid)) {
+                    krakenObj['tradeMappType'] = 'Digie duplicate'
+                }
+                if (digieDoubtTradeIdsArr.includes(krakenObj.ordertxid)) {
+                    krakenObj['tradeMappType'] = 'Digie Doubtful'
+                }
+                if (userDoubtTradeIdsArr.includes(krakenObj.ordertxid)) {
+                    krakenObj['tradeMappType'] = 'User Doubtful'
+                }
+    
+            } else {
+
+                digieEntry['tradeMappType'] = 'mapped'
+    
+            }
+            krakenObj = Object.assign({}, krakenObj, typeof digieEntry == 'undefined' ? {} : digieEntry)
+    
+            let timeString = new Date(krakenObj.time * timeMultiplyer);
+            krakenObj['timeString'] = timeString
+            
+            // let modifiedDate = Number(new Date(krakenObj.time * timeMultiplyer));
+            // let currentDate = Number(new Date());
+            // let diff = currentDate - modifiedDate;
+            // let timeElapsString = timeAgo.format(Date.now() - diff);
+            // krakenObj['timeElapsString'] = timeElapsString
+
+            // console.log(krakenObj)
+
+            /* ******************* keep these fields only *************************** */
+            let tempInsObj = {
+                'user_id': krakenObj['admin_id'],
+                'digie_order_id': krakenObj['_id'],
+                'symbol': krakenObj['symbol'],
+                'tradeMappType': krakenObj['tradeMappType'],
+                'ordertxid': krakenObj['ordertxid'],
+                'formattedDate': krakenObj['formattedDate'],
+                'quantity': krakenObj['quantity'],
+                'price': krakenObj['price'],
+                'timeString': krakenObj['timeString'],
+                'buy_parent_id': krakenObj['buy_parent_id'],
+                'type': krakenObj['type'],
+                'trigger_type': krakenObj['trigger_type'],
+                // 'timeElapsString': krakenObj['timeElapsString'],
+            }
+
+            tempOrderList.push(tempInsObj)
+        }
+    
+        ordersList = tempOrderList
+        
+        resolve(ordersList)
+
+    })
+}
+
+router.get('/checkDuplicateTrades', async (req, res)=>{
+    
+    checkDuplicateTrades()
+
+    res.send({})
+})
+
+async function checkDuplicateTrades(){
+
+    const db = await conn
+    
+    let user_id = '5eb5a5a628914a45246bacc6'
+    let exchange = 'binance'
+
+    let timeMultiplyer = 1;
+    if (exchange == 'kraken') {
+        timeMultiplyer = 1000
+    }
+
+    let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+    let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+    let trade_history_collection = exchange == 'binance' ? 'user_trade_history' : 'user_trade_history_' + exchange
+    let temp_trade_history_duplicate_filter_col = exchange == 'binance' ? 'trade_history_duplicate_filter_col' : 'trade_history_duplicate_filter_col_' + exchange
+    let filtered_trade_history = exchange == 'binance' ? 'filtered_trade_history' : 'filtered_trade_history_' + exchange
+
+    let checkTradesArr = []
+    let digieDuplicateTradeIdsArr = []
+    let digieDoubtTradeIdsArr = []
+    let userDoubtTradeIdsArr = []
+
+    let coins = []
+    let where = {
+        'user_id': user_id,
+        // 'trades.value.pair': 'EOSUSDT', 
+    }
+
+    let pipeline = [
+        {
+            '$match': where
+        },
+        {
+            '$addFields': {
+                'trades.value.vol': {
+                    '$toDouble': '$trades.value.vol'
+                }
+            },
+        },
+        {
+            '$group': {
+                '_id': '$trades.value.ordertxid', 'parent': {
+                    '$first': '$$ROOT'
+                }, 'fractions': {
+                    '$push': '$$ROOT'
+                }
+            }
+        },
+        {
+            '$addFields': {
+                'parent.trades.value.fractionQtySum': {
+                    '$sum': '$fractions.trades.value.vol'
+                },
+            }
+        },
+        {
+            '$lookup': {
+                'from': buy_collection,
+                'let': { 'binance_id': '$_id', },
+                'pipeline': [
+                    {
+                        '$match': {
+                            'application_mode': 'live',
+                            // 'symbol': 'EOSUSDT',
+                            'admin_id': '5eb5a5a628914a45246bacc6',
+                            'status': { '$ne': 'canceled' },
+                            '$expr': {
+                                '$or': [
+                                    {
+                                        '$eq': ['$binance_order_id', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$binance_order_id_sell', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$tradeId', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$tradeId_sell', '$$binance_id'],
+                                    },
+                                ]
+                            },
+                        }
+                    },
+                ],
+                'as': "digie_buy_order"
+            }
+        },
+        {
+            '$lookup': {
+                'from': sold_collection,
+                'let': { 'binance_id': '$_id', },
+                'pipeline': [
+                    {
+                        '$match': {
+                            'application_mode': 'live',
+                            // 'symbol': 'EOSUSDT',
+                            'admin_id': '5eb5a5a628914a45246bacc6',
+                            'status': { '$ne': 'canceled' },
+                            '$expr': {
+                                '$or': [
+                                    {
+                                        '$eq': ['$binance_order_id', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$binance_order_id_sell', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$tradeId', '$$binance_id'],
+                                    },
+                                    {
+                                        '$eq': ['$tradeId_sell', '$$binance_id'],
+                                    },
+                                ]
+                            },
+                        }
+                    },
+                ],
+                'as': "digie_sold_order"
+            }
+        },
+        {
+            '$addFields': {
+                'is_mapped_trade': {
+                    '$cond': [
+                        {
+                            '$and': [
+                                {
+                                    '$eq': [{ '$size': '$digie_buy_order' }, 0]
+                                },
+                                {
+                                    '$eq': [{ '$size': '$digie_sold_order' }, 0]
+                                }
+                            ]
+                        },
+                        'no',
+                        'yes'
+                    ]
+                },
+            }
+        },
+        {
+            '$group': {
+                '_id': '$is_mapped_trade',
+                'data': { '$push': '$$ROOT' },
+                'total': { '$sum': 1 }
+            }
+        },
+        {
+            '$unwind':'$data'
+        },
+        { 
+            '$addFields':{
+                'is_mapped':'$_id'
+            }
+        }, 
+        { 
+            '$project':{
+                '_id':0, 
+                'total':0
+            }
+        },
+        {
+            '$out': temp_trade_history_duplicate_filter_col
+        }
+    ]
+    
+    await db.collection(trade_history_collection).aggregate(pipeline, { 'allowDiskUse': true }).toArray()
+
+    console.log('user_id :::: ', user_id, '  ----> initial filtration done')
+    console.log('  ----> ->>>>>>>>>>>>>>>>>  mapped filtration start')
+    
+    //set status as mapped on all mapped orders and insert into filtered trade history new col "filtered_trade_history"
+    let whereMapped = {
+        'is_mapped': 'yes',
+        // 'data.parent.trades.value.pair': 'EOSUSDT',
+        'data.parent.user_id': user_id
+    }
+
+    //pagination code for script
+    var total_count = await await db.collection(temp_trade_history_duplicate_filter_col).countDocuments(whereMapped)
+
+    console.log('total records', total_count)
+    
+    var per_page = 50;
+    var num_pages = Math.ceil(total_count / per_page);
+
+    console.log('total count ',total_count ,'  -----  total pages', num_pages)
+    
+    for (let i = 1; i <= num_pages; i++) {
+        
+        let page = i
+        let skip = (page - 1) * per_page
+        let limit = per_page
+
+        console.log('page: ', page, skip)
+        
+        let mappedTrades = await db.collection(temp_trade_history_duplicate_filter_col).find(whereMapped).skip(skip).limit(limit).toArray()
+    
+        if(mappedTrades.length > 0){
+    
+            for (let i = 0; i < mappedTrades.length; i++){
+                
+                let insDataArr = mappedTrades[i]['data']
+                let currTrade = insDataArr
+                
+                delete currTrade['_id']
+                currTrade['tradeMappType'] = 'mapped'
+                
+                let mappedTradeArr = []
+    
+                for (let j = 0; j < currTrade.fractions.length; j++) {
+    
+                    let obj = Object.assign({}, currTrade.fractions[j])
+                    delete obj['_id']
+    
+                    obj.trades.value.tradeMappType = 'mapped'
+                    obj.trades.value.is_mapped_trade = 'yes'
+    
+                    if (currTrade.digie_buy_order.length > 0) {
+                        obj.trades.value.digie_order_id = currTrade.digie_buy_order[0]['_id']
+                    } else if (currTrade.digie_sold_order.length > 0) {
+                        obj.trades.value.digie_order_id = currTrade.digie_sold_order[0]['_id']
+                    }
+    
+                    obj.trades.value.isParent = j == 0 ? 'yes' : 'no'
+    
+                    mappedTradeArr.push(obj)
+    
+                }
+                
+                //insert in filtred trade history collection
+                await db.collection(filtered_trade_history).insertMany(mappedTradeArr)
+    
+                let tradeIds = currTrade.fractions.map(item => item.trades.value.ordertxid)
+                
+                console.log(mappedTradeArr[0]['trades']['value'])
+                console.log(tradeIds)
+    
+                //update in trade history collection
+                await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
+    
+            }
+        }
+    }
+
+
+    console.log('  ----> mapped filtration done')
+    console.log('  ----> ->>>>>>>>>>>>>>>>>  Unmapped filtration start')
+
+    let whereUnmapped = {
+        'is_mapped': 'no',
+        // 'data.parent.trades.value.pair': 'EOSUSDT',
+        'data.parent.user_id': user_id
+    }
+
+    //pagination code for script
+    var total_count = await await db.collection(temp_trade_history_duplicate_filter_col).countDocuments(whereUnmapped)
+
+    console.log('total records', total_count)
+    
+    var per_page = 50;
+    var num_pages = Math.ceil(total_count / per_page);
+    
+    console.log('total count ',total_count ,'  -----  total pages', num_pages)
+    
+    for (let i = 1; i <= num_pages; i++) {
+        
+        let page = i
+        let skip = (page - 1) * per_page
+        let limit = per_page
+
+        console.log('page: ', page, skip)
+        
+        checkTradesArr = await db.collection(temp_trade_history_duplicate_filter_col).find(whereUnmapped).skip(skip).limit(limit).toArray()
+    
+        if (checkTradesArr.length > 0) {
+            
+            for (let i = 0; i < checkTradesArr.length; i++) {
+                
+                checkTradesArr = checkTradesArr[i]['data']
+
+                let currTrade = checkTradesArr[i]['parent']['trades']['value']
+                
+                console.log(currTrade)
+                // continue
+    
+                // let currTrade = checkTradesArr[i]['trades']['value']
+                let quantity = parseFloat(currTrade['fractionQtySum'])
+                let pair = currTrade['pair']
+                let _3percentQuantityAbove = quantity + (quantity * 3) / 100
+                let _3percentQuantityBelow = quantity - (quantity * 3) / 100
+    
+                // console.log(quantity, _3percentQuantityAbove)
+    
+                // let tradeTime = new Date(currTrade.time * timeMultiplyer);
+                let tradeTime = parseFloat(currTrade.time);
+    
+                let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
+                _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 2); // timestamp
+                _1minuteAbove = new Date(_1minuteAbove); // Date object
+                // console.log(_1minuteAbove);
+    
+                let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
+                _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 2); // timestamp
+                _1minuteBelow = new Date(_1minuteBelow); // Date object
+                // console.log(_1minuteBelow);
+    
+                //digie duplicate
+                var whereDigie1 = [
+                    {
+                        '$match': {
+                            'admin_id': user_id,
+                            'application_mode': 'live',
+                            'quantity': quantity,
+                            'symbol': pair,
+                            '$or': [
+                                {
+                                    'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                },
+                                {
+                                    'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                }
+                            ]
+                        }
+                    }
+                ]
+    
+                var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+                var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+                var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+    
+                if (digieTrades1.length > 0) {
+                    //confirmed duplicate
+                    digieDuplicateTradeIdsArr.push(currTrade.ordertxid)
+
+
+                    let currTrade_temp = checkTradesArr[i]
+
+                    delete currTrade_temp['_id']
+                    currTrade_temp['tradeMappType'] = 'Digie duplicate'
+
+                    let duplicateTradeArr = []
+
+                    for (let j = 0; j < currTrade_temp.fractions.length; j++) {
+
+                        let obj = Object.assign({}, currTrade_temp.fractions[j])
+                        delete obj['_id']
+
+                        obj.trades.value.tradeMappType = 'Digie duplicate'
+                        obj.trades.value.is_mapped_trade = 'no'
+
+                        if (currTrade_temp.digie_buy_order.length > 0) {
+                            obj.trades.value.digie_order_id = currTrade_temp.digie_buy_order[0]['_id']
+                        } else if (currTrade_temp.digie_sold_order.length > 0) {
+                            obj.trades.value.digie_order_id = currTrade_temp.digie_sold_order[0]['_id']
+                        }
+
+                        if (j == 0) {
+                            obj.trades.value.isParent = 'yes'
+                            obj.trades.value.fractionQtySum = quantity
+                        } else {
+                            obj.trades.value.isParent = 'no'
+                        }
+
+                        duplicateTradeArr.push(obj)
+                    }
+
+                    //insert in filtred trade history collection
+                    await db.collection(filtered_trade_history).insertMany(duplicateTradeArr)
+
+                    let tradeIds = currTrade_temp.fractions.map(item => item.trades.value.ordertxid)
+
+                    console.log('************************************************** Digie duplicate')
+                    console.log(duplicateTradeArr[0]['trades']['value'])
+                    console.log(tradeIds)
+
+                //update in trade history collection
+                await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
+    
+                } else {
+                    //digie doubt
+                    var whereDigie1 = [
+                        {
+                            '$match': {
+                                'admin_id': user_id,
+                                'application_mode': 'live',
+                                'quantity': { '$gte': _3percentQuantityBelow, '$lte': _3percentQuantityAbove },
+                                'symbol': pair,
+                                '$or': [
+                                    {
+                                        'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                    },
+                                    {
+                                        'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+    
+                    var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
+                    var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
+                    var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
+    
+                    if (digieTrades1.length > 0) {
+                        //digie doubt
+                        digieDoubtTradeIdsArr.push(currTrade.ordertxid)
+
+
+                        let currTrade_temp = checkTradesArr[i]
+
+                        delete currTrade_temp['_id']
+                        currTrade_temp['tradeMappType'] = 'Digie Doubtful'
+
+                        let duplicateTradeArr = []
+
+                        for (let j = 0; j < currTrade_temp.fractions.length; j++) {
+
+                            let obj = Object.assign({}, currTrade_temp.fractions[j])
+                            delete obj['_id']
+
+                            obj.trades.value.tradeMappType = 'Digie Doubtful'
+                            obj.trades.value.is_mapped_trade = 'no'
+
+                            if (currTrade_temp.digie_buy_order.length > 0) {
+                                obj.trades.value.digie_order_id = currTrade_temp.digie_buy_order[0]['_id']
+                            } else if (currTrade_temp.digie_sold_order.length > 0) {
+                                obj.trades.value.digie_order_id = currTrade_temp.digie_sold_order[0]['_id']
+                            }
+
+                            if (j == 0) {
+                                obj.trades.value.isParent = 'yes'
+                                obj.trades.value.fractionQtySum = quantity
+                            } else {
+                                obj.trades.value.isParent = 'no'
+                            }
+
+                            duplicateTradeArr.push(obj)
+                        }
+
+                        //insert in filtred trade history collection
+                        await db.collection(filtered_trade_history).insertMany(duplicateTradeArr)
+
+                        let tradeIds = currTrade_temp.fractions.map(item => item.trades.value.ordertxid)
+
+                        console.log('************************************************** Digie Doubt')
+                        console.log(duplicateTradeArr[0]['trades']['value'])
+                        console.log(tradeIds)
+
+                        //update in trade history collection
+                        await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
+
+                    } else {
+                        userDoubtTradeIdsArr.push(currTrade.ordertxid)
+
+
+                        let currTrade_temp = checkTradesArr[i]
+
+                        delete currTrade_temp['_id']
+                        currTrade_temp['tradeMappType'] = 'User Doubtful'
+
+                        let duplicateTradeArr = []
+
+                        for (let j = 0; j < currTrade_temp.fractions.length; j++) {
+
+                            let obj = Object.assign({}, currTrade_temp.fractions[j])
+                            delete obj['_id']
+
+                            obj.trades.value.tradeMappType = 'User Doubtful'
+                            obj.trades.value.is_mapped_trade = 'no'
+
+                            if (currTrade_temp.digie_buy_order.length > 0) {
+                                obj.trades.value.digie_order_id = currTrade_temp.digie_buy_order[0]['_id']
+                            } else if (currTrade_temp.digie_sold_order.length > 0) {
+                                obj.trades.value.digie_order_id = currTrade_temp.digie_sold_order[0]['_id']
+                            }
+
+                            if (j == 0){
+                                obj.trades.value.isParent = 'yes'
+                                obj.trades.value.fractionQtySum = quantity
+                            }else{
+                                obj.trades.value.isParent = 'no'
+                            }
+
+                            duplicateTradeArr.push(obj)
+                        }
+
+                        //insert in filtred trade history collection
+                        await db.collection(filtered_trade_history).insertMany(duplicateTradeArr)
+
+                        let tradeIds = currTrade_temp.fractions.map(item => item.trades.value.ordertxid)
+
+                        
+                        console.log('************************************************** User Doubt')
+                        console.log(duplicateTradeArr[0]['trades']['value'])
+                        console.log(tradeIds)
+
+                        //update in trade history collection
+                        // await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
+
+                    }
+                }
+    
+            }
+    
+        }
+
+    }
+
+    console.log('  ----> Unmapped filtration done')
+
+    let resultObj = {
+        'digieDuplicateTradeIdsArr': digieDuplicateTradeIdsArr,
+        'digieDoubtTradeIdsArr': digieDoubtTradeIdsArr,
+        'userDoubtTradeIdsArr': userDoubtTradeIdsArr,
+    }
+
+    console.log(resultObj)
+
+}
+
+async function getUserTimezone(user_id){
+
+    return new Promise(async (resolve)=>{
+
+        const db = await conn
+
+        let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(user_id)) }, {_id:0, timezone:1})
+
+        if (userObj) {
+            // console.log('if ran', userObj)
+            
+            var timezone = userObj['timezone'];
+    
+            let latestTimeZones = [
+                "Africa/Abidjan",
+                "Africa/Accra",
+                "Africa/Addis_Ababa",
+                "Africa/Algiers",
+                "Africa/Asmara",
+                "Africa/Asmera",
+                "Africa/Bamako",
+                "Africa/Bangui",
+                "Africa/Banjul",
+                "Africa/Blantyre",
+                "Africa/Brazzaville",
+                "Africa/Bujumbura",
+                "Africa/Cairo",
+                "Africa/Casablanca",
+                "Africa/Ceuta",
+                "Africa/Conakry",
+                "Africa/Dakar",
+                "Africa/Dar_es_Salaam",
+                "Africa/Djibouti",
+                "Africa/Douala",
+                "Africa/El_Aaiun",
+                "Africa/Freetown",
+                "Africa/Gaborone",
+                "Africa/Harare",
+                "Africa/Johannesburg",
+                "Africa/Juba",
+                "Africa/Kampala",
+                "Africa/Khartoum",
+                "Africa/Kigali",
+                "Africa/Kinshasa",
+                "Africa/Lagos",
+                "Africa/Libreville",
+                "Africa/Lome",
+                "Africa/Luanda",
+                "Africa/Lubumbashi",
+                "Africa/Lusaka",
+                "Africa/Malabo",
+                "Africa/Maputo",
+                "Africa/Maseru",
+                "Africa/Mbabane",
+                "Africa/Mogadishu",
+                "Africa/Monrovia",
+                "Africa/Nairobi",
+                "Africa/Ndjamena",
+                "Africa/Niamey",
+                "Africa/Nouakchott",
+                "Africa/Ouagadougou",
+                "Africa/Porto-Novo",
+                "Africa/Sao_Tome",
+                "Africa/Timbuktu",
+                "Africa/Tripoli",
+                "Africa/Tunis",
+                "Africa/Windhoek",
+                "America/Adak",
+                "America/Anchorage",
+                "America/Anguilla",
+                "America/Antigua",
+                "America/Araguaina",
+                "America/Argentina/Buenos_Aires",
+                "America/Argentina/Catamarca",
+                "America/Argentina/Cordoba",
+                "America/Argentina/Jujuy",
+                "America/Argentina/La_Rioja",
+                "America/Argentina/Mendoza",
+                "America/Argentina/Rio_Gallegos",
+                "America/Argentina/Salta",
+                "America/Argentina/San_Juan",
+                "America/Argentina/San_Luis",
+                "America/Argentina/Tucuman",
+                "America/Argentina/Ushuaia",
+                "America/Aruba",
+                "America/Asuncion",
+                "America/Atikokan",
+                "America/Atka",
+                "America/Bahia",
+                "America/Bahia_Banderas",
+                "America/Barbados",
+                "America/Belem",
+                "America/Belize",
+                "America/Blanc-Sablon",
+                "America/Boa_Vista",
+                "America/Bogota",
+                "America/Boise",
+                "America/Buenos_Aires",
+                "America/Cambridge_Bay",
+                "America/Campo_Grande",
+                "America/Cancun",
+                "America/Caracas",
+                "America/Catamarca",
+                "America/Cayenne",
+                "America/Cayman",
+                "America/Chicago",
+                "America/Chihuahua",
+                "America/Coral_Harbour",
+                "America/Cordoba",
+                "America/Costa_Rica",
+                "America/Creston",
+                "America/Cuiaba",
+                "America/Curacao",
+                "America/Danmarkshavn",
+                "America/Dawson",
+                "America/Dawson_Creek",
+                "America/Denver",
+                "America/Detroit",
+                "America/Dominica",
+                "America/Edmonton",
+                "America/Eirunepe",
+                "America/El_Salvador",
+                "America/Ensenada",
+                "America/Fort_Wayne",
+                "America/Fortaleza",
+                "America/Glace_Bay",
+                "America/Godthab",
+                "America/Goose_Bay",
+                "America/Grand_Turk",
+                "America/Grenada",
+                "America/Guadeloupe",
+                "America/Guatemala",
+                "America/Guayaquil",
+                "America/Guyana",
+                "America/Halifax",
+                "America/Havana",
+                "America/Hermosillo",
+                "America/Indiana/Indianapolis",
+                "America/Indiana/Knox",
+                "America/Indiana/Marengo",
+                "America/Indiana/Petersburg",
+                "America/Indiana/Tell_City",
+                "America/Indiana/Vevay",
+                "America/Indiana/Vincennes",
+                "America/Indiana/Winamac",
+                "America/Indianapolis",
+                "America/Inuvik",
+                "America/Iqaluit",
+                "America/Jamaica",
+                "America/Jujuy",
+                "America/Juneau",
+                "America/Kentucky/Louisville",
+                "America/Kentucky/Monticello",
+                "America/Kralendijk",
+                "America/La_Paz",
+                "America/Lima",
+                "America/Los_Angeles",
+                "America/Louisville",
+                "America/Lower_Princes",
+                "America/Maceio",
+                "America/Managua",
+                "America/Manaus",
+                "America/Marigot",
+                "America/Martinique",
+                "America/Matamoros",
+                "America/Mazatlan",
+                "America/Mendoza",
+                "America/Menominee",
+                "America/Merida",
+                "America/Metlakatla",
+                "America/Mexico_City",
+                "America/Miquelon",
+                "America/Moncton",
+                "America/Monterrey",
+                "America/Montevideo",
+                "America/Montreal",
+                "America/Montserrat",
+                "America/Nassau",
+                "America/New_York",
+                "America/Nipigon",
+                "America/Nome",
+                "America/Noronha",
+                "America/North_Dakota/Beulah",
+                "America/North_Dakota/Center",
+                "America/North_Dakota/New_Salem",
+                "America/Ojinaga",
+                "America/Panama",
+                "America/Pangnirtung",
+                "America/Paramaribo",
+                "America/Phoenix",
+                "America/Port_of_Spain",
+                "America/Port-au-Prince",
+                "America/Porto_Acre",
+                "America/Porto_Velho",
+                "America/Puerto_Rico",
+                "America/Rainy_River",
+                "America/Rankin_Inlet",
+                "America/Recife",
+                "America/Regina",
+                "America/Resolute",
+                "America/Rio_Branco",
+                "America/Rosario",
+                "America/Santa_Isabel",
+                "America/Santarem",
+                "America/Santiago",
+                "America/Santo_Domingo",
+                "America/Sao_Paulo",
+                "America/Scoresbysund",
+                "America/Shiprock",
+                "America/Sitka",
+                "America/St_Barthelemy",
+                "America/St_Johns",
+                "America/St_Kitts",
+                "America/St_Lucia",
+                "America/St_Thomas",
+                "America/St_Vincent",
+                "America/Swift_Current",
+                "America/Tegucigalpa",
+                "America/Thule",
+                "America/Thunder_Bay",
+                "America/Tijuana",
+                "America/Toronto",
+                "America/Tortola",
+                "America/Vancouver",
+                "America/Virgin",
+                "America/Whitehorse",
+                "America/Winnipeg",
+                "America/Yakutat",
+                "America/Yellowknife",
+                "Antarctica/Casey",
+                "Antarctica/Davis",
+                "Antarctica/Macquarie",
+                "Antarctica/Mawson",
+                "Antarctica/Palmer",
+                "Antarctica/Rothera",
+                "Antarctica/South_Pole",
+                "Antarctica/Syowa",
+                "Antarctica/Troll",
+                "Antarctica/Vostok",
+                "Arctic/Longyearbyen",
+                "Asia/Aden",
+                "Asia/Almaty",
+                "Asia/Amman",
+                "Asia/Anadyr",
+                "Asia/Aqtau",
+                "Asia/Aqtobe",
+                "Asia/Ashgabat",
+                "Asia/Ashkhabad",
+                "Asia/Baghdad",
+                "Asia/Bahrain",
+                "Asia/Baku",
+                "Asia/Bangkok",
+                "Asia/Beirut",
+                "Asia/Bishkek",
+                "Asia/Brunei",
+                "Asia/Calcutta",
+                "Asia/Choibalsan",
+                "Asia/Chongqing",
+                "Asia/Chungking",
+                "Asia/Colombo",
+                "Asia/Dacca",
+                "Asia/Damascus",
+                "Asia/Dhaka",
+                "Asia/Dili",
+                "Asia/Dubai",
+                "Asia/Dushanbe",
+                "Asia/Gaza",
+                "Asia/Harbin",
+                "Asia/Hebron",
+                "Asia/Ho_Chi_Minh",
+                "Asia/Hong_Kong",
+                "Asia/Hovd",
+                "Asia/Irkutsk",
+                "Asia/Istanbul",
+                "Asia/Jakarta",
+                "Asia/Jayapura",
+                "Asia/Jerusalem",
+                "Asia/Kabul",
+                "Asia/Kamchatka",
+                "Asia/Karachi",
+                "Asia/Kashgar",
+                "Asia/Kathmandu",
+                "Asia/Katmandu",
+                "Asia/Khandyga",
+                "Asia/Kolkata",
+                "Asia/Krasnoyarsk",
+                "Asia/Kuala_Lumpur",
+                "Asia/Kuching",
+                "Asia/Kuwait",
+                "Asia/Macao",
+                "Asia/Macau",
+                "Asia/Magadan",
+                "Asia/Makassar",
+                "Asia/Manila",
+                "Asia/Muscat",
+                "Asia/Nicosia",
+                "Asia/Novokuznetsk",
+                "Asia/Novosibirsk",
+                "Asia/Omsk",
+                "Asia/Oral",
+                "Asia/Phnom_Penh",
+                "Asia/Pontianak",
+                "Asia/Pyongyang",
+                "Asia/Qatar",
+                "Asia/Qyzylorda",
+                "Asia/Rangoon",
+                "Asia/Riyadh",
+                "Asia/Saigon",
+                "Asia/Sakhalin",
+                "Asia/Samarkand",
+                "Asia/Seoul",
+                "Asia/Shanghai",
+                "Asia/Singapore",
+                "Asia/Taipei",
+                "Asia/Tashkent",
+                "Asia/Tbilisi",
+                "Asia/Tehran",
+                "Asia/Tel_Aviv",
+                "Asia/Thimbu",
+                "Asia/Thimphu",
+                "Asia/Tokyo",
+                "Asia/Ujung_Pandang",
+                "Asia/Ulaanbaatar",
+                "Asia/Ulan_Bator",
+                "Asia/Urumqi",
+                "Asia/Ust-Nera",
+                "Asia/Vientiane",
+                "Asia/Vladivostok",
+                "Asia/Yangon",
+                "Asia/Yakutsk",
+                "Asia/Yekaterinburg",
+                "Asia/Yerevan",
+                "Atlantic/Azores",
+                "Atlantic/Bermuda",
+                "Atlantic/Canary",
+                "Atlantic/Cape_Verde",
+                "Atlantic/Faeroe",
+                "Atlantic/Faroe",
+                "Atlantic/Jan_Mayen",
+                "Atlantic/Madeira",
+                "Atlantic/Reykjavik",
+                "Atlantic/South_Georgia",
+                "Atlantic/St_Helena",
+                "Atlantic/Stanley",
+                "Australia/Adelaide",
+                "Australia/Brisbane",
+                "Australia/Broken_Hill",
+                "Australia/Canberra",
+                "Australia/Currie",
+                "Australia/Darwin",
+                "Australia/Eucla",
+                "Australia/Hobart",
+                "Australia/Lindeman",
+                "Australia/Lord_Howe",
+                "Australia/Melbourne",
+                "Australia/North",
+                "Australia/Perth",
+                "Australia/Queensland",
+                "Australia/South",
+                "Australia/Sydney",
+                "Australia/Tasmania",
+                "Australia/Victoria",
+                "Australia/West",
+                "Australia/Yancowinna",
+                "Brazil/Acre",
+                "Brazil/East",
+                "Brazil/West",
+                "Canada/Atlantic",
+                "Canada/Central",
+                "Canada/Eastern",
+                "Canada/East-Saskatchewan",
+                "Canada/Mountain",
+                "Canada/Newfoundland",
+                "Canada/Pacific",
+                "Canada/Saskatchewan",
+                "Canada/Yukon",
+                "Chile/Continental",
+                "Etc/Universal",
+                "Etc/UTC",
+                "Etc/Zulu",
+                "Europe/Amsterdam",
+                "Europe/Andorra",
+                "Europe/Athens",
+                "Europe/Belfast",
+                "Europe/Belgrade",
+                "Europe/Berlin",
+                "Europe/Bratislava",
+                "Europe/Brussels",
+                "Europe/Bucharest",
+                "Europe/Budapest",
+                "Europe/Busingen",
+                "Europe/Chisinau",
+                "Europe/Copenhagen",
+                "Europe/Dublin",
+                "Europe/Gibraltar",
+                "Europe/Guernsey",
+                "Europe/Helsinki",
+                "Europe/Isle_of_Man",
+                "Europe/Istanbul",
+                "Europe/Jersey",
+                "Europe/Kaliningrad",
+                "Europe/Kiev",
+                "Europe/Lisbon",
+                "Europe/Ljubljana",
+                "Europe/London",
+                "Europe/Luxembourg",
+                "Europe/Madrid",
+                "Europe/Malta",
+                "Europe/Mariehamn",
+                "Europe/Minsk",
+                "Europe/Monaco",
+                "Europe/Moscow",
+                "Europe/Nicosia",
+                "Europe/Oslo",
+                "Europe/Paris",
+                "Europe/Podgorica",
+                "Europe/Prague",
+                "Europe/Riga",
+                "Europe/Rome",
+                "Europe/Samara",
+                "Europe/San_Marino",
+                "Europe/Sarajevo",
+                "Europe/Simferopol",
+                "Europe/Skopje",
+                "Europe/Sofia",
+                "Europe/Stockholm",
+                "Europe/Tallinn",
+                "Europe/Tirane",
+                "Europe/Tiraspol",
+                "Europe/Uzhgorod",
+                "Europe/Vaduz",
+                "Europe/Vatican",
+                "Europe/Vienna",
+                "Europe/Vilnius",
+                "Europe/Volgograd",
+                "Europe/Warsaw",
+                "Europe/Zagreb",
+                "Europe/Zaporozhye",
+                "Europe/Zurich",
+                "GMT",
+                "Indian/Antananarivo",
+                "Indian/Chagos",
+                "Indian/Christmas",
+                "Indian/Cocos",
+                "Indian/Comoro",
+                "Indian/Kerguelen",
+                "Indian/Mahe",
+                "Indian/Maldives",
+                "Indian/Mauritius",
+                "Indian/Mayotte",
+                "Indian/Reunion",
+                "Mexico/General",
+                "Pacific/Apia",
+                "Pacific/Auckland",
+                "Pacific/Chatham",
+                "Pacific/Chuuk",
+                "Pacific/Easter",
+                "Pacific/Efate",
+                "Pacific/Enderbury",
+                "Pacific/Fakaofo",
+                "Pacific/Fiji",
+                "Pacific/Funafuti",
+                "Pacific/Galapagos",
+                "Pacific/Gambier",
+                "Pacific/Guadalcanal",
+                "Pacific/Guam",
+                "Pacific/Honolulu",
+                "Pacific/Johnston",
+                "Pacific/Kiritimati",
+                "Pacific/Kosrae",
+                "Pacific/Kwajalein",
+                "Pacific/Majuro",
+                "Pacific/Marquesas",
+                "Pacific/Midway",
+                "Pacific/Nauru",
+                "Pacific/Niue",
+                "Pacific/Norfolk",
+                "Pacific/Noumea",
+                "Pacific/Pago_Pago",
+                "Pacific/Palau",
+                "Pacific/Pitcairn",
+                "Pacific/Pohnpei",
+                "Pacific/Ponape",
+                "Pacific/Port_Moresby",
+                "Pacific/Rarotonga",
+                "Pacific/Saipan",
+                "Pacific/Samoa",
+                "Pacific/Tahiti",
+                "Pacific/Tarawa",
+                "Pacific/Tongatapu",
+                "Pacific/Truk",
+                "Pacific/Wake",
+                "Pacific/Wallis",
+                "Pacific/Yap",
+                "UTC",
+            ];
+            let timezones = {
+                "Africa/Asmera": "Africa/Nairobi",
+                "Africa/Timbuktu": "Africa/Abidjan",
+                "America/Argentina/ComodRivadavia": "America/Argentina/Catamarca",
+                "America/Atka": "America/Adak",
+                "America/Buenos_Aires": "America/Argentina/Buenos_Aires",
+                "America/Catamarca": "America/Argentina/Catamarca",
+                "America/Coral_Harbour": "America/Atikokan",
+                "America/Cordoba": "America/Argentina/Cordoba",
+                "America/Ensenada": "America/Tijuana",
+                "America/Fort_Wayne": "America/Indiana/Indianapolis",
+                "America/Indianapolis": "America/Indiana/Indianapolis",
+                "America/Jujuy": "America/Argentina/Jujuy",
+                "America/Knox_IN": "America/Indiana/Knox",
+                "America/Louisville": "America/Kentucky/Louisville",
+                "America/Mendoza": "America/Argentina/Mendoza",
+                "America/Montreal": "America/Toronto",
+                "America/Porto_Acre": "America/Rio_Branco",
+                "America/Rosario": "America/Argentina/Cordoba",
+                "America/Santa_Isabel": "America/Tijuana",
+                "America/Shiprock": "America/Denver",
+                "America/Virgin": "America/Port_of_Spain",
+                "Antarctica/South_Pole": "Pacific/Auckland",
+                "Asia/Ashkhabad": "Asia/Ashgabat",
+                "Asia/Calcutta": "Asia/Kolkata",
+                "Asia/Chongqing": "Asia/Shanghai",
+                "Asia/Chungking": "Asia/Shanghai",
+                "Asia/Dacca": "Asia/Dhaka",
+                "Asia/Harbin": "Asia/Shanghai",
+                "Asia/Kashgar": "Asia/Urumqi",
+                "Asia/Katmandu": "Asia/Kathmandu",
+                "Asia/Macao": "Asia/Macau",
+                "Asia/Rangoon": "Asia/Yangon",
+                "Asia/Saigon": "Asia/Ho_Chi_Minh",
+                "Asia/Tel_Aviv": "Asia/Jerusalem",
+                "Asia/Thimbu": "Asia/Thimphu",
+                "Asia/Ujung_Pandang": "Asia/Makassar",
+                "Asia/Ulan_Bator": "Asia/Ulaanbaatar",
+                "Atlantic/Faeroe": "Atlantic/Faroe",
+                "Atlantic/Jan_Mayen": "Europe/Oslo",
+                "Australia/ACT": "Australia/Sydney",
+                "Australia/Canberra": "Australia/Sydney",
+                "Australia/LHI": "Australia/Lord_Howe",
+                "Australia/NSW": "Australia/Sydney",
+                "Australia/North": "Australia/Darwin",
+                "Australia/Queensland": "Australia/Brisbane",
+                "Australia/South": "Australia/Adelaide",
+                "Australia/Tasmania": "Australia/Hobart",
+                "Australia/Victoria": "Australia/Melbourne",
+                "Australia/West": "Australia/Perth",
+                "Australia/Yancowinna": "Australia/Broken_Hill",
+                "Brazil/Acre": "America/Rio_Branco",
+                "Brazil/DeNoronha": "America/Noronha",
+                "Brazil/East": "America/Sao_Paulo",
+                "Brazil/West": "America/Manaus",
+                "Canada/Atlantic": "America/Halifax",
+                "Canada/Central": "America/Winnipeg",
+                "Canada/East-Saskatchewan": "America/Regina",
+                "Canada/Eastern": "America/Toronto",
+                "Canada/Mountain": "America/Edmonton",
+                "Canada/Newfoundland": "America/St_Johns",
+                "Canada/Pacific": "America/Vancouver",
+                "Canada/Saskatchewan": "America/Regina",
+                "Canada/Yukon": "America/Whitehorse",
+                "Chile/Continental": "America/Santiago",
+                "Chile/EasterIsland": "Pacific/Easter",
+                "Cuba": "America/Havana",
+                "Egypt": "Africa/Cairo",
+                "Eire": "Europe/Dublin",
+                "Europe/Belfast": "Europe/London",
+                "Europe/Tiraspol": "Europe/Chisinau",
+                "GB": "Europe/London",
+                "GB-Eire": "Europe/London",
+                "GMT+0": "Etc/GMT",
+                "GMT-0": "Etc/GMT",
+                "GMT0": "Etc/GMT",
+                "Greenwich": "Etc/GMT",
+                "Hongkong": "Asia/Hong_Kong",
+                "Iceland": "Atlantic/Reykjavik",
+                "Iran": "Asia/Tehran",
+                "Israel": "Asia/Jerusalem",
+                "Jamaica": "America/Jamaica",
+                "Japan": "Asia/Tokyo",
+                "Kwajalein": "Pacific/Kwajalein",
+                "Libya": "Africa/Tripoli",
+                "Mexico/BajaNorte": "America/Tijuana",
+                "Mexico/BajaSur": "America/Mazatlan",
+                "Mexico/General": "America/Mexico_City",
+                "NZ": "Pacific/Auckland",
+                "NZ-CHAT": "Pacific/Chatham",
+                "Navajo": "America/Denver",
+                "PRC": "Asia/Shanghai",
+                "Pacific/Ponape": "Pacific/Pohnpei",
+                "Pacific/Samoa": "Pacific/Pago_Pago",
+                "Pacific/Truk": "Pacific/Chuuk",
+                "Pacific/Yap": "Pacific/Chuuk",
+                "Poland": "Europe/Warsaw",
+                "Portugal": "Europe/Lisbon",
+                "ROC": "Asia/Taipei",
+                "ROK": "Asia/Seoul",
+                "Singapore": "Asia/Singapore",
+                "Turkey": "Europe/Istanbul",
+                "UCT": "Etc/UCT",
+                "US/Alaska": "America/Anchorage",
+                "US/Aleutian": "America/Adak",
+                "US/Arizona": "America/Phoenix",
+                "US/Central": "America/Chicago",
+                "US/East-Indiana": "America/Indiana/Indianapolis",
+                "US/Eastern": "America/New_York",
+                "US/Hawaii": "Pacific/Honolulu",
+                "US/Indiana-Starke": "America/Indiana/Knox",
+                "US/Michigan": "America/Detroit",
+                "US/Mountain": "America/Denver",
+                "US/Pacific": "America/Los_Angeles",
+                "US/Samoa": "Pacific/Pago_Pago",
+                "UTC": "Etc/UTC",
+                "Universal": "Etc/UTC",
+                "W-SU": "Europe/Moscow",
+                "Zulu": "Etc/UTC"
+            };
+        
+            let userTimezone = timezone;
+        
+            let tempTimezone = timezone;
+        
+            if (latestTimeZones.includes(userTimezone)) {
+                tempTimezone = userTimezone;
+            } else {
+                if (typeof timezones[userTimezone] != 'undefined') {
+                    tempTimezone = timezones[userTimezone];
+                } else {
+                    tempTimezone = 'America/New_York';
+                }
+            }
+        
+            resolve(tempTimezone)
+        }else{
+            // console.log('else ran', userObj)
+            resolve('America/New_York')
+        }
+
+    })
+
 }
 
 router.post('/getTradeHistory', async (req, res)=>{
