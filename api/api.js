@@ -4153,7 +4153,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         filter['$or'] = [
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -4163,7 +4163,7 @@ async function listOrderListing(postDAta3, dbConnection) {
             },
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
             },
@@ -4181,7 +4181,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         filter['$or'] = [
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -4191,7 +4191,7 @@ async function listOrderListing(postDAta3, dbConnection) {
             },
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
             },
@@ -4359,7 +4359,7 @@ async function listOrderListing(postDAta3, dbConnection) {
 
 
 
-        // console.log(filter_all_2, pagination, limit, skip, '=================')
+        console.log(filter_all_2, pagination, limit, skip, '=================')
 
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter_all_2, pagination, limit, skip);
         var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter_all_2, pagination, limit, skip);
@@ -4381,7 +4381,7 @@ async function listOrderListing(postDAta3, dbConnection) {
     } else {
         var orderArr = await list_orders_by_filter(collectionName, filter, pagination, limit, skip);
     }
-    // console.log(orderArr.length)
+    console.log(orderArr.length)
     return orderArr;
 } //End of listOrderListing
 
@@ -9269,6 +9269,22 @@ router.post('/lisEditManualOrderById', async (req, resp) => {
 
 
 
+
+
+
+    // check Added By Huzaifa to Convert Value Into Float
+    buyOrderArr['buy_trail_interval'] =(typeof buyOrderArr['buy_trail_interval'] != 'undefined' && buyOrderArr['buy_trail_interval'] != '') ? parseFloat(buyOrderArr['buy_trail_interval']) : ''
+    buyOrderArr['sell_trail_interval'] = (typeof buyOrderArr['sell_trail_interval'] != 'undefined' && buyOrderArr['sell_trail_interval'] != '') ? parseFloat(buyOrderArr['sell_trail_interval']) : ''
+    buyOrderArr['sell_trail_price'] = (typeof buyOrderArr['sell_trail_price'] != 'undefined' && buyOrderArr['sell_trail_price'] != '') ? parseFloat(buyOrderArr['sell_trail_price']) : ''
+    buyOrderArr['buy_trail_price'] = (typeof buyOrderArr['buy_trail_price'] != 'undefined' && buyOrderArr['buy_trail_price'] != '') ? parseFloat(buyOrderArr['buy_trail_price']) : ''
+    buyOrderArr['sell_price'] = (typeof buyOrderArr['sell_price'] != 'undefined' && buyOrderArr['sell_price'] != '') ? parseFloat(buyOrderArr['sell_price']) : ''
+    buyOrderArr['iniatial_trail_stop'] = (typeof buyOrderArr['iniatial_trail_stop'] != 'undefined' && buyOrderArr['iniatial_trail_stop'] != '') ? parseFloat(buyOrderArr['iniatial_trail_stop']) : ''
+    buyOrderArr['lth_profit'] = (typeof buyOrderArr['lth_profit'] != 'undefined' && buyOrderArr['lth_profit'] != '') ? parseFloat(buyOrderArr['lth_profit']) : ''
+    buyOrderArr['expecteddeepPrice'] = (typeof buyOrderArr['expecteddeepPrice'] != 'undefined' && buyOrderArr['expecteddeepPrice'] != '') ? parseFloat(buyOrderArr['expecteddeepPrice']) : ''
+
+
+
+
     //Get order log against order
     var ordrLogPromise = await listOrderLog(orderId, exchange, order_mode, order_created_date);
 
@@ -9414,6 +9430,24 @@ router.post('/updateManualOrder', async (req, resp) => {
             buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
         }
 
+
+
+        // check Added By Huzaifa to Convert Value Into Float
+        console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=IF=-=-=-=-=')
+        buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
+        buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
+        buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
+        buyorderArr['buy_trail_price'] = (typeof buyorderArr['buy_trail_price'] != 'undefined' && buyorderArr['buy_trail_price'] != '') ? parseFloat(buyorderArr['buy_trail_price']) : ''
+        buyorderArr['sell_price'] = (typeof buyorderArr['sell_price'] != 'undefined' && buyorderArr['sell_price'] != '') ? parseFloat(buyorderArr['sell_price']) : ''
+        buyorderArr['iniatial_trail_stop'] = (typeof buyorderArr['iniatial_trail_stop'] != 'undefined' && buyorderArr['iniatial_trail_stop'] != '') ? parseFloat(buyorderArr['iniatial_trail_stop']) : ''
+        buyorderArr['lth_profit'] = (typeof buyorderArr['lth_profit'] != 'undefined' && buyorderArr['lth_profit'] != '') ? parseFloat(buyorderArr['lth_profit']) : ''
+        buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
+
+
+
+        console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=After IF=-=-=-=-=')
+
+
     } else {
         //set profit percentage if sell price is fixed
         if (buyorderArr['profit_type'] == 'fixed_price') {
@@ -9465,6 +9499,18 @@ router.post('/updateManualOrder', async (req, resp) => {
             buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
         }
 
+
+
+        // check Added By Huzaifa to Convert Value Into Float
+        console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'])
+        buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
+        buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
+        buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
+        buyorderArr['buy_trail_price'] = (typeof buyorderArr['buy_trail_price'] != 'undefined' && buyorderArr['buy_trail_price'] != '') ? parseFloat(buyorderArr['buy_trail_price']) : ''
+        buyorderArr['sell_price'] = (typeof buyorderArr['sell_price'] != 'undefined' && buyorderArr['sell_price'] != '') ? parseFloat(buyorderArr['sell_price']) : ''
+        buyorderArr['iniatial_trail_stop'] = (typeof buyorderArr['iniatial_trail_stop'] != 'undefined' && buyorderArr['iniatial_trail_stop'] != '') ? parseFloat(buyorderArr['iniatial_trail_stop']) : ''
+        buyorderArr['lth_profit'] = (typeof buyorderArr['lth_profit'] != 'undefined' && buyorderArr['lth_profit'] != '') ? parseFloat(buyorderArr['lth_profit']) : ''
+        buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
     }
 
     buyorderArr['modified_date'] = new Date();
@@ -9756,16 +9802,16 @@ router.post('/updateManualOrder', async (req, resp) => {
         }
 
 
-        if(upArr){
-          upArr['buy_trail_interval'] =(typeof upArr['buy_trail_interval'] != 'undefined' && upArr['buy_trail_interval'] != '') ? parseFloat(upArr['buy_trail_interval']) : ''
-          upArr['sell_trail_interval'] = (typeof upArr['sell_trail_interval'] != 'undefined' && upArr['sell_trail_interval'] != '') ? parseFloat(upArr['sell_trail_interval']) : ''
-          upArr['sell_trail_price'] = (typeof upArr['sell_trail_price'] != 'undefined' && upArr['sell_trail_price'] != '') ? parseFloat(upArr['sell_trail_price']) : ''
-          upArr['buy_trail_price'] = (typeof upArr['buy_trail_price'] != 'undefined' && upArr['buy_trail_price'] != '') ? parseFloat(upArr['buy_trail_price']) : ''
-          upArr['sell_price'] = (typeof upArr['sell_price'] != 'undefined' && upArr['sell_price'] != '') ? parseFloat(upArr['sell_price']) : ''
-          upArr['iniatial_trail_stop'] = (typeof upArr['iniatial_trail_stop'] != 'undefined' && upArr['iniatial_trail_stop'] != '') ? parseFloat(upArr['iniatial_trail_stop']) : ''
-          upArr['lth_profit'] = (typeof upArr['lth_profit'] != 'undefined' && upArr['lth_profit'] != '') ? parseFloat(upArr['lth_profit']) : ''
-          upArr['expecteddeepPrice'] = (typeof upArr['expecteddeepPrice'] != 'undefined' && upArr['expecteddeepPrice'] != '') ? parseFloat(upArr['expecteddeepPrice']) : ''
-        }
+        // if(updArr){
+        //   updArr['buy_trail_interval'] =(typeof updArr['buy_trail_interval'] != 'undefined' && updArr['buy_trail_interval'] != '') ? parseFloat(updArr['buy_trail_interval']) : ''
+        //   updArr['sell_trail_interval'] = (typeof updArr['sell_trail_interval'] != 'undefined' && updArr['sell_trail_interval'] != '') ? parseFloat(updArr['sell_trail_interval']) : ''
+        //   updArr['sell_trail_price'] = (typeof updArr['sell_trail_price'] != 'undefined' && updArr['sell_trail_price'] != '') ? parseFloat(updArr['sell_trail_price']) : ''
+        //   updArr['buy_trail_price'] = (typeof updArr['buy_trail_price'] != 'undefined' && updArr['buy_trail_price'] != '') ? parseFloat(updArr['buy_trail_price']) : ''
+        //   updArr['sell_price'] = (typeof updArr['sell_price'] != 'undefined' && updArr['sell_price'] != '') ? parseFloat(updArr['sell_price']) : ''
+        //   updArr['iniatial_trail_stop'] = (typeof updArr['iniatial_trail_stop'] != 'undefined' && updArr['iniatial_trail_stop'] != '') ? parseFloat(updArr['iniatial_trail_stop']) : ''
+        //   updArr['lth_profit'] = (typeof updArr['lth_profit'] != 'undefined' && updArr['lth_profit'] != '') ? parseFloat(updArr['lth_profit']) : ''
+        //   updArr['expecteddeepPrice'] = (typeof updArr['expecteddeepPrice'] != 'undefined' && updArr['expecteddeepPrice'] != '') ? parseFloat(updArr['expecteddeepPrice']) : ''
+        // }
 
         var updPrmise = updateOne(where, updArr, collection);
         updPrmise.then((callback) => { })
@@ -22179,7 +22225,7 @@ async function getOrderStats(postData2){
         filter_3['$or'] = [
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -22189,7 +22235,7 @@ async function getOrderStats(postData2){
             },
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': {'$nin': ['yes', 'taking_child', 'completed']}
             },
@@ -22246,7 +22292,7 @@ async function getOrderStats(postData2){
         filter_33['$or'] = [
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -22256,7 +22302,7 @@ async function getOrderStats(postData2){
             },
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
             },
@@ -24682,14 +24728,7 @@ async function getTradeHistory(filter, exchange, timezone) {
                         'application_mode': 'live',
                         'quantity': quantity,
                         'symbol': pair,
-                        '$or': [
-                            {
-                                'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove},
-                            },
-                            {
-                                'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove},
-                            }
-                        ]
+                        'created_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove},
                     }
                 }
             ]
@@ -24711,14 +24750,7 @@ async function getTradeHistory(filter, exchange, timezone) {
                             'application_mode': 'live',
                             'quantity': { '$gte': _3percentQuantityBelow, '$lte': _3percentQuantityAbove },
                             'symbol': pair,
-                            '$or': [
-                                {
-                                    'buy_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
-                                },
-                                {
-                                    'sell_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove },
-                                }
-                            ]
+                            'created_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove},
                         }
                     }
                 ]
@@ -26862,158 +26894,6 @@ router.post('/getTradeHistory', async (req, res)=>{
     res.send(trades)
 
 })
-
-router.post('/getTradeHistoryTest', async (req, res) => {
-
-    let where = req.body.postData
-    let timezone = req.body.timezone;
-    let exchange = req.body.postData.exchange;
-
-    let trades = await getTradeHistoryTest(where, exchange, timezone)
-
-    res.send(trades)
-
-})
-
-async function getTradeHistoryTest(filter, exchange, timezone) {
-
-    // console.log(new Date())
-    const db = await conn
-    // exchange = 'kraken'
-    let collectionName = exchange == 'binance' ? 'trade_history_filtered' : 'trade_history_filtered_' + exchange
-
-    let where = {}
-
-    let user_id = filter.admin_id
-    let application_mode = filter.application_mode
-    let coins = filter.coins
-    let end_date = filter.end_date
-    let limit = filter.limit
-    // let limit = 1
-    let order_level = filter.order_level
-    let order_type = filter.order_type
-    let skip = filter.skip
-    let start_date = filter.start_date
-    let status = filter.status
-    let trigger_type = filter.trigger_type
-
-    let mapped_type = ''
-
-    if (typeof filter.mapped_type != 'undefined' && filter.mapped_type != '') {
-        mapped_type = filter.mapped_type
-    }
-
-
-    // order_type = order_type == 'all' ? '' : order_type
-
-    if (typeof filter.searchUsername != 'undefined' && filter.searchUsername != '') {
-
-        let tempWhere = {}
-        tempWhere['$or'] = [{
-            username_lowercase: filter.searchUsername.toLowerCase()
-        }, {
-            email_address: filter.searchUsername
-        }]
-        let user = await db.collection('users').find(tempWhere).project({ '_id': 1 }).toArray();
-        user_id = user.length > 0 ? String(user[0]['_id']) : user_id
-
-    }
-    
-    let pipeline = [
-        {
-            '$match': {
-                'user_id': user_id,
-                // 'tradesChecked': 'yes'
-            }
-        },
-        {
-            '$sort': {
-                'timeString': -1,
-            }
-        }
-    ]
-
-    if (coins.length > 0) {
-        pipeline[0]['$match']['symbol'] = { '$in': coins }
-    }
-    
-    if (mapped_type != '') {
-        pipeline[0]['$match']['tradeMappType'] = mapped_type
-    }
-
-    // if (order_type != '') {
-    //     pipeline[0]['$match']['ordertype'] = order_type
-    // }
-
-    if (status == 'buy') {
-        pipeline[0]['$match']['type'] = 'buy'
-    } else if (status == 'sold') {
-        pipeline[0]['$match']['type'] = 'sell'
-    }
-
-    if (start_date != '' || end_date != '') {
-
-        // var unixTimestamp = Math.floor(new Date("2017-09-15 00:00:00.000").getTime() / 1000);
-        let condObj = {}
-
-        if (start_date != '') {
-            start_date += ' 00:00:00.000'
-            condObj['$gte'] = Math.floor(new Date(start_date).getTime() / 1000)
-        }
-        if (end_date != '') {
-            end_date += ' 23:59:59.000'
-            condObj['$lte'] = Math.floor(new Date(end_date).getTime() / 1000)
-        }
-
-        if (condObj && Object.keys(condObj).length === 0 && condObj.constructor === Object) {
-            //do nothing
-        } else {
-            pipeline[0]['$match']['timeString'] = condObj
-        }
-    }
-
-    let countArr = await countTradeHistoryTest(pipeline, collectionName)
-
-    pipeline.push({ '$skip': skip })
-    pipeline.push({ '$limit': limit })
-
-    // console.log(JSON.stringify(pipeline))
-
-    let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
-
-    trades = trades.sort(function (x, y) {
-        return new Date(y.timeString) - new Date(x.timeString);
-    });
-
-    let resultObj = {
-        'countArr': countArr,
-        'kraken_trades': trades,
-    }
-
-    return resultObj
-}
-
-async function countTradeHistoryTest(pipeline, collectionName) {
-
-    const db = await conn
-    let countPipeline = JSON.parse(JSON.stringify(pipeline))
-
-    //buy count
-    let buyCountPipeLine = Object.assign([], countPipeline)
-    buyCountPipeLine.push({ '$count': 'totalItems' })
-    buyCountPipeLine[0]['$match']['type'] = 'buy'
-    let buyCountRes = await db.collection(collectionName).aggregate(buyCountPipeLine).toArray()
-    buyCountRes = buyCountRes.length > 0 ? buyCountRes[0].totalItems : 0
-
-    //sold count
-    let soldCountPipeLine = Object.assign([], countPipeline)
-    soldCountPipeLine.push({ '$count': 'totalItems' })
-    soldCountPipeLine[0]['$match']['type'] = 'sell'
-    let soldCountRes = await db.collection(collectionName).aggregate(soldCountPipeLine).toArray()
-    soldCountRes = soldCountRes.length > 0 ? soldCountRes[0].totalItems : 0
-
-    return { 'buyCount': buyCountRes, 'soldCount': soldCountRes }
-}
 
 router.post('/mapTrade', async (req, res) => {
 
