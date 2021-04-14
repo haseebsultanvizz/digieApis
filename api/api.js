@@ -4153,7 +4153,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         filter['$or'] = [
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -4163,7 +4163,7 @@ async function listOrderListing(postDAta3, dbConnection) {
             },
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
             },
@@ -4181,7 +4181,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         filter['$or'] = [
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -4191,7 +4191,7 @@ async function listOrderListing(postDAta3, dbConnection) {
             },
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
             },
@@ -22217,7 +22217,7 @@ async function getOrderStats(postData2){
         filter_3['$or'] = [
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -22227,7 +22227,7 @@ async function getOrderStats(postData2){
             },
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': {'$nin': ['yes', 'taking_child', 'completed']}
             },
@@ -22284,7 +22284,7 @@ async function getOrderStats(postData2){
         filter_33['$or'] = [
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -22294,7 +22294,7 @@ async function getOrderStats(postData2){
             },
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
-                'is_sell_order': 'yes',
+                // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
             },
