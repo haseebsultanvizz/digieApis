@@ -9426,6 +9426,11 @@ router.post('/updateManualOrder', async (req, resp) => {
 
         }
 
+
+
+
+
+
         if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
             buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
         }
@@ -9444,6 +9449,16 @@ router.post('/updateManualOrder', async (req, resp) => {
         buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
 
 
+
+
+        if (getBuyOrder[0]['sell_profit_percent'] !== buyorderArr['sell_profit_percent'] && getBuyOrder[0]['status'] == 'FILLED'){
+            sell_price = getBuyOrder[0]['purchased_price']+(getBuyOrder[0]['purchased_price']*buyorderArr['sell_profit_percent'])/100
+		    buyorderArr['sell_price'] = parseFloat(sell_price)
+        }
+        if (getBuyOrder[0]['lth_profit'] !== buyorderArr['lth_profit'] && getBuyOrder[0]['status'] == 'LTH'){
+            sell_price = getBuyOrder[0]['purchased_price']+(getBuyOrder[0]['purchased_price']*buyorderArr['lth_profit'])/100
+		    buyorderArr['sell_price'] = parseFloat(sell_price)
+        }
 
         console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=After IF=-=-=-=-=')
 
@@ -9511,6 +9526,17 @@ router.post('/updateManualOrder', async (req, resp) => {
         buyorderArr['iniatial_trail_stop'] = (typeof buyorderArr['iniatial_trail_stop'] != 'undefined' && buyorderArr['iniatial_trail_stop'] != '') ? parseFloat(buyorderArr['iniatial_trail_stop']) : ''
         buyorderArr['lth_profit'] = (typeof buyorderArr['lth_profit'] != 'undefined' && buyorderArr['lth_profit'] != '') ? parseFloat(buyorderArr['lth_profit']) : ''
         buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
+
+
+
+        if (getBuyOrder[0]['sell_profit_percent'] !== buyorderArr['sell_profit_percent'] && getBuyOrder[0]['status'] == 'FILLED'){
+            sell_price = getBuyOrder[0]['purchased_price']+(getBuyOrder[0]['purchased_price']*buyorderArr['sell_profit_percent'])/100
+		    buyorderArr['sell_price'] = parseFloat(sell_price)
+        }
+        if (getBuyOrder[0]['lth_profit'] !== buyorderArr['lth_profit'] && getBuyOrder[0]['status'] == 'LTH'){
+            sell_price = getBuyOrder[0]['purchased_price']+(getBuyOrder[0]['purchased_price']*buyorderArr['lth_profit'])/100
+		    buyorderArr['sell_price'] = parseFloat(sell_price)
+        }
     }
 
     buyorderArr['modified_date'] = new Date();
