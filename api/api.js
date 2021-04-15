@@ -1662,6 +1662,24 @@ router.post('/createManualOrder', (req, resp) => {
                 if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
                     log_msg += ' with auto sell ' + profit_percent + '%';
                 }
+                if (req.body.orderArr.buy_on_buy_hit == 'yes' && req.body.orderArr.buy_on_buy_hit != '' && typeof req.body.orderArr.buy_on_buy_hit != 'undefined') {
+                  log_msg += ', Buy on Digie Signal was "Enabled" ';
+                }
+                if (req.body.orderArr.sell_on_sell_hit == 'yes' && req.body.orderArr.sell_on_sell_hit != '' && typeof req.body.orderArr.sell_on_sell_hit != 'undefined') {
+                  log_msg += ', Sell on Digie Signal was "Enabled" ';
+                }
+                if (req.body.orderArr.buy_trail_check == 'yes' && req.body.orderArr.buy_trail_check != '' && typeof req.body.orderArr.buy_trail_check != 'undefined') {
+                  log_msg += ', Trail Buy was Enabled and Buy Trail Perc was : '+ req.body.orderArr.buy_trail_interval;
+                }
+                if (req.body.orderArr.sell_trail_check == 'yes' && req.body.orderArr.sell_trail_check != '' && typeof req.body.orderArr.sell_trail_check != 'undefined') {
+                  log_msg += ', Trail Sell was Enabled and Sell Trail Perc was : '+ req.body.orderArr.sell_trail_interval;
+                }
+                if (req.body.orderArr.stop_loss == 'yes' && req.body.orderArr.stop_loss != '' && typeof req.body.orderArr.stop_loss != 'undefined') {
+                  log_msg += ', Stop Loss was Enabled and Stop Loss Perc was : '+ req.body.orderArr.loss_percentage;
+                }
+                if (req.body.orderArr.lth_functionality == 'yes' && req.body.orderArr.lth_functionality != '' && typeof req.body.orderArr.lth_functionality != 'undefined') {
+                  log_msg += ', LTH was Enabled and LTH Perc was : '+ req.body.orderArr.lth_profit;
+                }
                 let show_hide_log = 'yes';
                 let type = 'Order_created';
                 // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
@@ -9872,10 +9890,10 @@ router.post('/setForSell', async (req, resp) => {
         let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
         sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
         sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
-        
+
         // sellOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * sellOrderArr['sell_profit_percent']) + parseFloat(purchased_price);
     }
-    
+
     //set sell profit percentage
     if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
         let purchased_price = !isNaN(parseFloat(sellOrderArr['purchased_price'])) ? parseFloat(sellOrderArr['purchased_price']) : ''
@@ -9932,14 +9950,14 @@ router.post('/setForSell', async (req, resp) => {
         let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
         updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
         updArr['profit_percent'] = updArr['sell_profit_percent']
-        
+
         updArr['sell_price'] = sellOrderArr['sell_price']
     }
-    
+
     //set sell profit percentage
     if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
         let purchased_price = !isNaN(parseFloat(sellOrderArr['purchased_price'])) ? parseFloat(sellOrderArr['purchased_price']) : ''
-        
+
         let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
         updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
 
@@ -15695,7 +15713,7 @@ async function listmarketPriceMinNotationCoinArr(coin, exchange) {
                 coinObjArr[item.coin] = {}
                 coinObjArr[item.coin]['currentmarketPrice'] = item.price
                 let notationObj =  promisesResult[0].find(item2=>{return item2.symbol == item.coin ? true : false })
-                
+
                 // console.log(item.coin, item.price, notationObj)
 
                 coinObjArr[item.coin]['marketMinNotation'] = notationObj.min_notation
