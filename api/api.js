@@ -25925,23 +25925,10 @@ async function checkDuplicateTrades(){
         }
     ]
 
-<<<<<<< HEAD
-    // console.log(JSON.stringify(pipeline))
-    // process.exit(0)
-    // return
-    
-=======
->>>>>>> c21b52dd33d3d9cff3133bf5bd1af1c2974937a1
     await db.collection(trade_history_collection).aggregate(pipeline, { 'allowDiskUse': true }).toArray()
 
     console.log('user_id :::: ', user_id, '  ----> initial filtration done')
     console.log('  ----> ->>>>>>>>>>>>>>>>>  mapped filtration start')
-<<<<<<< HEAD
-    
-    /*
-=======
-
->>>>>>> c21b52dd33d3d9cff3133bf5bd1af1c2974937a1
     //set status as mapped on all mapped orders and insert into filtered trade history new col "filtered_trade_history"
     let whereMapped = {
         'is_mapped': 'yes',
@@ -26018,8 +26005,6 @@ async function checkDuplicateTrades(){
         db = await conn
     }
 
-    */
-
     console.log('  ----> mapped filtration done')
     console.log('  ----> ->>>>>>>>>>>>>>>>>  Unmapped filtration start')
 
@@ -26052,19 +26037,11 @@ async function checkDuplicateTrades(){
         if (checkTradesArr.length > 0) {
 
             for (let i = 0; i < checkTradesArr.length; i++) {
-<<<<<<< HEAD
-                
-                let checkTradesArr1 = checkTradesArr[i]['data']
-
-                let currTrade = checkTradesArr1['parent']['trades']['value']
-                
-=======
 
                 checkTradesArr = checkTradesArr[i]['data']
 
                 let currTrade = checkTradesArr[i]['parent']['trades']['value']
 
->>>>>>> c21b52dd33d3d9cff3133bf5bd1af1c2974937a1
                 console.log(currTrade)
                 // continue
 
