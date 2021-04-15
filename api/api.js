@@ -24482,31 +24482,6 @@ async function getTradeHistory(filter, exchange, timezone) {
     // exchange = 'kraken'
     let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
 
-    // let coinPairsObj = {
-    //     'BTCUSDT': 'XBTUSDT',
-    //     'XRPBTC': 'XRPXBT',
-    //     'LINKBTC': 'LINKXBT',
-    //     'XLMBTC': 'XLMXBT',
-    //     'ETHBTC': 'ETHXBT',
-    //     'XMRBTC': 'XMRXBT',
-    //     'ADABTC': 'ADAXBT',
-    //     'QTUMBTC': 'QTUMXBT',
-    //     'TRXBTC': 'TRXXBT',
-    //     'XRPUSDT': 'XRPUSDT',
-    //     'LTCUSDT': 'LTCUSDT',
-    //     'EOSBTC': 'EOSXBT',
-    //     'ETCBTC': 'ETCXBT',
-    //     'DASHBTC': 'DASHXBT',
-    // }
-
-    // if (filter.coins.length > 0){
-    //     filter.coins = filter.coins.map(str => coinPairsObj[str])
-    // }else{
-    //     for (const [key, value] of Object.entries(coinPairsObj)) {
-    //         filter.coins.push(value)
-    //     }
-    // }
-
     let where = {}
 
     let user_id = filter.admin_id
@@ -24521,6 +24496,7 @@ async function getTradeHistory(filter, exchange, timezone) {
     let start_date = filter.start_date
     let status = filter.status
     let trigger_type = filter.trigger_type
+    let mapped_status = filter.mapped_status
 
     order_type = order_type == 'all' ? '' : order_type
 
@@ -24549,6 +24525,10 @@ async function getTradeHistory(filter, exchange, timezone) {
             }
         }
     ]
+
+    if (typeof mapped_status != 'undefined' && mapped_status != ''){
+        pipeline[0]['$match']['status'] = mapped_status
+    }
 
     if (coins.length > 0) {
         pipeline[0]['$match']['trades.value.pair'] = { '$in': coins }
@@ -26928,11 +26908,171 @@ router.post('/getTradeHistory', async (req, res)=>{
     let timezone = req.body.timezone;
     let exchange = req.body.postData.exchange;
 
-    let trades = await getTradeHistory(where, exchange, timezone)
+    // let trades = await getTradeHistory(where, exchange, timezone)
+    
+    let trades = await getTradeHistoryAsim(where, exchange, timezone)
+
+    // console.log(trades)
 
     res.send(trades)
 
 })
+
+async function getTradeHistoryAsim(filter, exchange, timezone) {
+
+    // console.log(new Date())
+    const db = await conn
+    // exchange = 'kraken'
+    let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
+
+    let where = {}
+
+    let user_id = filter.admin_id
+    let application_mode = filter.application_mode
+    let coins = filter.coins
+    let end_date = filter.end_date
+    let limit = filter.limit
+    // let limit = 1
+    let order_level = filter.order_level
+    let order_type = filter.order_type
+    let skip = filter.skip
+    let start_date = filter.start_date
+    let status = filter.status
+    let trigger_type = filter.trigger_type
+    let mapped_status = filter.mapped_status
+    let get_all_users = filter.get_all_users
+
+    order_type = order_type == 'all' ? '' : order_type
+
+    if (typeof filter.searchUsername != 'undefined' && filter.searchUsername != '') {
+
+        let tempWhere = {}
+        tempWhere['$or'] = [{
+            username_lowercase: filter.searchUsername.toLowerCase()
+        }, {
+            email_address: filter.searchUsername
+        }]
+        let user = await db.collection('users').find(tempWhere).project({ '_id': 1 }).toArray();
+        user_id = user.length > 0 ? String(user[0]['_id']) : user_id
+
+    }
+
+    let pipeline = [
+        {
+            '$match': {
+                'user_id': user_id,
+            }
+        },
+        {
+            '$sort': {
+                'trades.value.time': -1,
+            }
+        }
+    ]
+
+    if (typeof mapped_status != 'undefined' && mapped_status != '') {
+        pipeline[0]['$match']['status'] = mapped_status
+    }
+
+    if (typeof get_all_users != 'undefined' && get_all_users == 'yes') {
+        delete pipeline[0]['$match']['user_id']
+    }
+
+    if (coins.length > 0) {
+        pipeline[0]['$match']['trades.value.pair'] = { '$in': coins }
+    }
+
+    if (order_type != '') {
+        pipeline[0]['$match']['trades.value.ordertype'] = order_type
+    }
+
+    if (status == 'buy') {
+        pipeline[0]['$match']['trades.value.type'] = 'buy'
+    } else if (status == 'sold') {
+        pipeline[0]['$match']['trades.value.type'] = 'sell'
+    }
+
+    if (start_date != '' || end_date != '') {
+
+        // var unixTimestamp = Math.floor(new Date("2017-09-15 00:00:00.000").getTime() / 1000);
+        let condObj = {}
+
+        if (start_date != '') {
+            start_date += ' 00:00:00.000'
+            condObj['$gte'] = Math.floor(new Date(start_date).getTime() / 1000)
+        }
+        if (end_date != '') {
+            end_date += ' 23:59:59.000'
+            condObj['$lte'] = Math.floor(new Date(end_date).getTime() / 1000)
+        }
+
+        if (condObj && Object.keys(condObj).length === 0 && condObj.constructor === Object) {
+            //do nothing
+        } else {
+            pipeline[0]['$match']['trades.value.time'] = condObj
+        }
+    }
+
+    let countArr = await countTradeHistory(pipeline, collectionName)
+
+    pipeline.push({ '$skip': skip })
+    pipeline.push({ '$limit': limit })
+
+    // console.log(JSON.stringify(pipeline))
+    // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
+
+    let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
+
+    // console.log(trades)
+    // console.log(trades[0]['trades']['value'])
+
+    let timeMultiplyer = 1;
+    if (exchange == 'kraken') {
+        timeMultiplyer = 1000
+    }
+
+    trades = trades.map(item => {
+
+        let timeZoneTime = item.trades.value.time * timeMultiplyer;
+        try {
+            timeZoneTime = new Date(timeZoneTime).toLocaleString("en-US", {
+                timeZone: timezone
+            });
+            timeZoneTime = new Date(timeZoneTime);
+        } catch (e) {
+            console.log(e);
+        }
+        let date = timeZoneTime.toLocaleString() + ' ' + timezone;
+
+        item['trades']['value']['formattedDate'] = date
+        return item
+    })
+
+    // console.log(new Date())
+
+    trades.forEach(item => {
+        return item.strUnixTime = (item.trades.value.time).toString()
+    })
+
+    // console.log(trades)
+
+    trades = trades.sort(function (x, y) {
+        return y.strUnixTime - x.strUnixTime;
+    });
+
+    let resultObj = {
+        'countArr': countArr,
+        'kraken_trades': trades,
+        'digie_trades': [],
+        'digieDuplicateTradeIdsArr': [],
+        'digieDoubtTradeIdsArr': [],
+        'userDoubtTradeIdsArr': [],
+    }
+
+    // console.log('kraken_trades', trades.length, ' digieTrades ', digieTrades.length, ' digieDuplicateTradeIdsArr ', digieDuplicateTradeIdsArr.length, ' digieDoubtTradeIdsArr ', digieDoubtTradeIdsArr.length, ' userDoubtTradeIdsArr ', userDoubtTradeIdsArr.length)
+
+    return resultObj
+}
 
 router.post('/mapTrade', async (req, res) => {
 
