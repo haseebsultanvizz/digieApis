@@ -4381,7 +4381,6 @@ async function listOrderListing(postDAta3, dbConnection) {
     } else {
         var orderArr = await list_orders_by_filter(collectionName, filter, pagination, limit, skip);
     }
-    // console.log(orderArr.length)
     return orderArr;
 } //End of listOrderListing
 
@@ -9426,6 +9425,11 @@ router.post('/updateManualOrder', async (req, resp) => {
 
         }
 
+
+
+
+
+
         if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
             buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
         }
@@ -9444,6 +9448,16 @@ router.post('/updateManualOrder', async (req, resp) => {
         buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
 
 
+
+
+        if (getBuyOrder[0]['sell_profit_percent'] !== buyorderArr['sell_profit_percent'] && getBuyOrder[0]['status'] == 'FILLED'){
+            sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['sell_profit_percent']))/100
+		    buyorderArr['sell_price'] = parseFloat(sell_price)
+        }
+        if (getBuyOrder[0]['lth_profit'] !== buyorderArr['lth_profit'] && getBuyOrder[0]['status'] == 'LTH'){
+            sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['lth_profit']))/100
+		    buyorderArr['sell_price'] = parseFloat(sell_price)
+        }
 
         console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=After IF=-=-=-=-=')
 
@@ -9511,6 +9525,17 @@ router.post('/updateManualOrder', async (req, resp) => {
         buyorderArr['iniatial_trail_stop'] = (typeof buyorderArr['iniatial_trail_stop'] != 'undefined' && buyorderArr['iniatial_trail_stop'] != '') ? parseFloat(buyorderArr['iniatial_trail_stop']) : ''
         buyorderArr['lth_profit'] = (typeof buyorderArr['lth_profit'] != 'undefined' && buyorderArr['lth_profit'] != '') ? parseFloat(buyorderArr['lth_profit']) : ''
         buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
+
+
+
+        if (getBuyOrder[0]['sell_profit_percent'] !== buyorderArr['sell_profit_percent'] && getBuyOrder[0]['status'] == 'FILLED'){
+            sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['sell_profit_percent']))/100
+		    buyorderArr['sell_price'] = parseFloat(sell_price)
+        }
+        if (getBuyOrder[0]['lth_profit'] !== buyorderArr['lth_profit'] && getBuyOrder[0]['status'] == 'LTH'){
+            sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['lth_profit']))/100
+		    buyorderArr['sell_price'] = parseFloat(sell_price)
+        }
     }
 
     buyorderArr['modified_date'] = new Date();
@@ -24838,29 +24863,29 @@ router.post('/checkBinanceDuplicatesForTradeHistory', async (req, res)=>{
 
     let user_id = req.body.user_id
     let exchange = req.body.exchange
-    
+
     if(typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != ''){
         // let exchange = 'binance'
         // let user_id = '5eb5a5a628914a45246bacc6' // james parker
-        
+
         // let exchange = 'kraken'
         // let user_id = '5c0913e2fc9aadaac61dd0dc' // Gary gordon
-    
+
         //check if user already in progress
         let progressCollectionName = exchange == 'binance' ? 'duplicate_trade_history_script_in_progress' : exchange +'_duplicate_trade_history_script_in_progress'
-    
+
         const db = await conn
-        let run_script = false 
+        let run_script = false
         let user = await db.collection(progressCollectionName).find({}).toArray()
         if (user.length > 0){
-    
+
             let dt1 = new Date()
             let dt2 = user[0]['start_date'];
-    
+
             let diff = (dt2.getTime() - dt1.getTime()) / 1000;
             diff /= 60;
             diff = Math.abs(Math.round(diff));
-    
+
             if(diff > 60){
                 //remove old entry and start the cron
                 await db.collection(progressCollectionName).deleteMany({})
@@ -24869,30 +24894,30 @@ router.post('/checkBinanceDuplicatesForTradeHistory', async (req, res)=>{
         }else{
             run_script = true
         }
-        
+
         if (run_script){
-    
+
             //save cron in progress
             await db.collection(progressCollectionName).insertOne({ 'user_id': user_id, 'exchange': exchange, 'start_date': new Date()})
-    
+
             let data = await checkBinanceDuplicatesForTradeHistory(user_id, exchange)
         }
     }else{
         console.log('user_id, exchange required')
     }
-    
+
     res.send({})
-    
+
 })
 
 async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
-    
+
     // let exchange = 'binance'
-    
+
     const db = await conn
 
     let timezone = await getUserTimezone(user_id)
-    
+
     let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
 
     let where = {}
@@ -24961,23 +24986,23 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
     let total_count = countArr.buyCount + countArr.soldCount
 
     console.log('total records', total_count)
-    
+
     let per_page = 50;
     let num_pages = Math.ceil(total_count / per_page);
-    
+
     console.log('total pages', num_pages)
-    
+
     for (let i = 1; i <= num_pages; i++) {
-        
+
         let page = i
         skip = (page - 1) * per_page
         limit = per_page
 
         console.log('page: ', page, skip)
-        
+
         let ifSkipExists = pipeline.findIndex(item => item['$skip'] == (page - 2) * per_page)
         let ifLimitExists = pipeline.findIndex(item => item['$limit'] == 50)
-        
+
         if (ifLimitExists > -1 && ifSkipExists > -1){
             pipeline[ifLimitExists]['$limit'] = limit
             pipeline[ifSkipExists]['$skip'] = skip
@@ -24985,11 +25010,11 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
             pipeline.push({ '$skip': skip })
             pipeline.push({ '$limit': limit })
         }
-    
+
         let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
-    
+
         let tradeIds = trades.map(item => item.trades.value.ordertxid)
-    
+
         let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
 
@@ -25034,22 +25059,22 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
         }else{
             whereDigie[0]['$match']['do_not_pick'] = true
         }
-        
+
         // console.log(JSON.stringify(whereDigie))
-    
+
         let digieBuyTrades = await db.collection(buy_collection).aggregate(whereDigie).toArray()
         let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
         let digieTrades = digieBuyTrades.concat(digieSoldTrades)
-    
+
         let timeMultiplyer = 1;
         if (exchange == 'binance') {
             timeMultiplyer = 1;
         } else if (exchange == 'kraken'){
             timeMultiplyer = 1000
         }
-    
+
         trades = trades.map(item => {
-    
+
             let timeZoneTime = item.trades.value.time * timeMultiplyer;
             try {
                 timeZoneTime = new Date(timeZoneTime).toLocaleString("en-US", {
@@ -25060,11 +25085,11 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
                 console.log(e);
             }
             let date = timeZoneTime.toLocaleString() + ' ' + timezone;
-    
+
             item['trades']['value']['formattedDate'] = date
             return item
         })
-    
+
         //categorise trades that not exist
         let checkTradesArr = []
         let digieDuplicateTradeIdsArr = []
@@ -25108,31 +25133,31 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
                 }
             })
         }
-    
+
         if (checkTradesArr.length > 0) {
             for (let i = 0; i < checkTradesArr.length; i++) {
-    
+
                 let currTrade = checkTradesArr[i]['trades']['value']
                 let quantity = parseFloat(currTrade['vol'])
                 let pair = currTrade['pair']
                 let _3percentQuantityAbove = quantity + (quantity * 3) / 100
                 let _3percentQuantityBelow = quantity - (quantity * 3) / 100
-    
+
                 // console.log(quantity, _3percentQuantityAbove)
-    
+
                 // let tradeTime = new Date(currTrade.time * timeMultiplyer);
                 let tradeTime = parseFloat(currTrade.time);
-    
+
                 let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
                 _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 2); // timestamp
                 _1minuteAbove = new Date(_1minuteAbove); // Date object
                 // console.log(_1minuteAbove);
-    
+
                 let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
                 _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 2); // timestamp
                 _1minuteBelow = new Date(_1minuteBelow); // Date object
                 // console.log(_1minuteBelow);
-    
+
                 //digie duplicate
                 var whereDigie1 = [
                     {
@@ -25152,15 +25177,15 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
                         }
                     }
                 ]
-    
+
                 var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
                 var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
                 var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
-    
+
                 if (digieTrades1.length > 0) {
                     //confirmed duplicate
                     digieDuplicateTradeIdsArr.push(currTrade.ordertxid)
-    
+
                 } else {
                     //digie doubt
                     var whereDigie1 = [
@@ -25181,11 +25206,11 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
                             }
                         }
                     ]
-    
+
                     var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
                     var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
                     var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
-    
+
                     if (digieTrades1.length > 0) {
                         //digie doubt
                         digieDoubtTradeIdsArr.push(currTrade.ordertxid)
@@ -25193,11 +25218,11 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
                         userDoubtTradeIdsArr.push(currTrade.ordertxid)
                     }
                 }
-    
+
             }
         }
         // console.log(checkTradesArr.length)
-    
+
         let resultObj = {
             'countArr': countArr,
             'kraken_trades': trades,
@@ -25208,26 +25233,26 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
         }
 
         let filteredTrades = await filterMappedAndDuplicateTrades(resultObj, exchange)
-        
+
         // console.log(filteredTrades.length)
-    
+
         //save in the trade_history_view collection
         // console.log(JSON.stringify(filteredTrades))
-        
+
         if (filteredTrades.length > 0){
             let trade_history_filtered_collection_name = exchange == 'binance' ? 'trade_history_filtered' : 'trade_history_filtered_'+exchange
             //DB Save Call
             console.log('save call ' + page)
             await db.collection(trade_history_filtered_collection_name).insertMany(filteredTrades)
         }
-        
-        //Update checked trades 
+
+        //Update checked trades
         await db.collection(collectionName).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds}}, {'$set':{ 'tradesChecked': 'yes' }})
-        
+
     }//pagination loop end
 
     await checkFractionDuplicateTrades(user_id, exchange)
-    
+
     //remove progress entry
     let progressCollectionName = exchange == 'binance' ? 'duplicate_trade_history_script_in_progress' : exchange + '_duplicate_trade_history_script_in_progress'
     await db.collection(progressCollectionName).deleteMany({})
@@ -25249,12 +25274,12 @@ async function checkFractionDuplicateTrades(user_id, exchange){
 
         if(exchange == 'binance'){
             console.log('fraction duplocate code running')
-    
+
             const db = await conn
-    
+
             //check fraction duplicate trades script
             let mappedCollection = exchange == 'binance' ? 'trade_history_filtered' : 'trade_history_filtered_' + exchange
-    
+
             let fractionPipeline = [
                 {
                     '$match': {
@@ -25294,13 +25319,13 @@ async function checkFractionDuplicateTrades(user_id, exchange){
             var tradeIds = []
 
             console.log('total Ids ', fraction_duplicate_trades.length)
-            
+
             if (fraction_duplicate_trades.length > 0) {
-                
+
                 tradeIds = typeof fraction_duplicate_trades[0]['orderIds'] != 'undefined' && fraction_duplicate_trades[0]['orderIds'].length > 0 ? fraction_duplicate_trades[0]['orderIds'] : [];
-                
+
                 console.log('tradeIds ', tradeIds)
-                
+
                 if (tradeIds.length > 0){
                     //re run trades with quantities added
                     await checkExchangeTrades(user_id, exchange, tradeIds)
@@ -25310,7 +25335,7 @@ async function checkFractionDuplicateTrades(user_id, exchange){
 
         resolve(true)
     })
-} 
+}
 
 async function checkExchangeTrades(user_id, exchange, tradeIds_){
 
@@ -25331,30 +25356,30 @@ async function checkExchangeTrades(user_id, exchange, tradeIds_){
                     'trades.value.ordertxid': { '$in': tradeIds_ },
                 },
             },
-            { 
-                '$group': { 
+            {
+                '$group': {
                     '_id': '$trades.value.ordertxid',
                     'orders': { '$push': '$$ROOT.trades.value.vol' },
-                    'order': { '$first': '$$ROOT' }, 
+                    'order': { '$first': '$$ROOT' },
                     'tradeIds': { '$first': '$$ROOT.trades.value.ordertxid' },
                     'qtySum': { '$sum': { '$toDouble': "$trades.value.vol" } }
-                } 
-            }, 
-            { 
-                '$match': { 
-                    '$expr': { '$gte': [{ '$size': '$orders' }, 2] } 
-                } 
-            }, 
-            { 
-                '$addFields': { 'order.vol': '$qtySum' } 
-            }, 
-            { 
-                '$project': { 
-                    'order': 1 
-                } 
+                }
             },
             {
-                '$replaceRoot': { newRoot: '$order' } 
+                '$match': {
+                    '$expr': { '$gte': [{ '$size': '$orders' }, 2] }
+                }
+            },
+            {
+                '$addFields': { 'order.vol': '$qtySum' }
+            },
+            {
+                '$project': {
+                    'order': 1
+                }
+            },
+            {
+                '$replaceRoot': { newRoot: '$order' }
             },
         ]
 
@@ -25600,18 +25625,18 @@ async function checkExchangeTrades(user_id, exchange, tradeIds_){
             await db.collection(trade_history_filtered_collection_name).insertMany(filteredTrades)
         }
 
-        //Update checked trades 
+        //Update checked trades
         await db.collection(collectionName).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
 
         resolve(true)
     })
-} 
+}
 
 async function filterMappedAndDuplicateTrades(trades, exchange){
 
     return new Promise(async (resolve)=>{
         let krakenTrades = trades.kraken_trades
-    
+
         let digieTrades = trades.digie_trades
         let totalItems = trades.totalItems
         let countArr = trades.countArr
@@ -25625,10 +25650,10 @@ async function filterMappedAndDuplicateTrades(trades, exchange){
         } else if (exchange == 'kraken') {
             timeMultiplyer = 1000
         }
-    
+
         let ordersList = []
         let tempOrderList = []
-    
+
         for (let i = 0; i < krakenTrades.length; i++) {
 
             let krakenObj = Object.assign(krakenTrades[i])
@@ -25636,21 +25661,21 @@ async function filterMappedAndDuplicateTrades(trades, exchange){
             let ID = krakenObj._id;
             krakenObj = krakenObj.trades.value
             let tradeId = krakenObj.ordertxid
-    
+
             krakenObj['symbol'] = typeof krakenObj['symbol'] != 'undefined' && krakenObj['symbol'] != '' ? krakenObj.symbol : krakenObj.pair
 
             let digieEntry
-    
+
             if (exchange == 'binance') {
-            
+
                 digieEntry = digieEntry = digieTrades.find(item => item.binance_order_id == tradeId || item.binance_order_id_sell == tradeId || item.tradeId == tradeId || item.tradeId_sell == tradeId ? true : false)
-            
+
             }else   if (exchange == 'kraken') {
-            
+
                 digieEntry = digieTrades.find(item => item.tradeId == tradeId || item.kraken_order_id == tradeId || item.sell_kraken_order_id == tradeId ? true : false)
 
             }
-    
+
             if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
 
                 // console.log(krakenTrades[i])
@@ -25663,7 +25688,7 @@ async function filterMappedAndDuplicateTrades(trades, exchange){
                 krakenObj['trigger_type'] = ''
                 krakenObj['tradeMappType'] = 'Digie duplicate'
                 krakenObj['admin_id'] = user_ID
-    
+
                 if (typeof krakenObj.duplicate_mapped != 'undefined' && krakenObj.duplicate_mapped == 'yes') {
                     krakenObj['tradeMappType'] = 'Duplicate mapped'
                 }
@@ -25679,17 +25704,17 @@ async function filterMappedAndDuplicateTrades(trades, exchange){
                 if (userDoubtTradeIdsArr.includes(krakenObj.ordertxid)) {
                     krakenObj['tradeMappType'] = 'User Doubtful'
                 }
-    
+
             } else {
 
                 digieEntry['tradeMappType'] = 'mapped'
-    
+
             }
             krakenObj = Object.assign({}, krakenObj, typeof digieEntry == 'undefined' ? {} : digieEntry)
-    
+
             let timeString = new Date(krakenObj.time * timeMultiplyer);
             krakenObj['timeString'] = timeString
-            
+
             // let modifiedDate = Number(new Date(krakenObj.time * timeMultiplyer));
             // let currentDate = Number(new Date());
             // let diff = currentDate - modifiedDate;
@@ -25717,16 +25742,16 @@ async function filterMappedAndDuplicateTrades(trades, exchange){
 
             tempOrderList.push(tempInsObj)
         }
-    
+
         ordersList = tempOrderList
-        
+
         resolve(ordersList)
 
     })
 }
 
 router.get('/checkDuplicateTrades', async (req, res)=>{
-    
+
     checkDuplicateTrades()
 
     res.send({})
@@ -25734,8 +25759,8 @@ router.get('/checkDuplicateTrades', async (req, res)=>{
 
 async function checkDuplicateTrades(){
 
-    var db = await conn
-    
+    const db = await conn
+
     let user_id = '5eb5a5a628914a45246bacc6'
     let exchange = 'binance'
 
@@ -25758,7 +25783,7 @@ async function checkDuplicateTrades(){
     let coins = []
     let where = {
         'user_id': user_id,
-        // 'trades.value.pair': 'EOSUSDT', 
+        // 'trades.value.pair': 'EOSUSDT',
     }
 
     let pipeline = [
@@ -25884,14 +25909,14 @@ async function checkDuplicateTrades(){
         {
             '$unwind':'$data'
         },
-        { 
+        {
             '$addFields':{
                 'is_mapped':'$_id'
             }
-        }, 
-        { 
+        },
+        {
             '$project':{
-                '_id':0, 
+                '_id':0,
                 'total':0
             }
         },
@@ -25900,16 +25925,23 @@ async function checkDuplicateTrades(){
         }
     ]
 
+<<<<<<< HEAD
     // console.log(JSON.stringify(pipeline))
     // process.exit(0)
     // return
     
+=======
+>>>>>>> c21b52dd33d3d9cff3133bf5bd1af1c2974937a1
     await db.collection(trade_history_collection).aggregate(pipeline, { 'allowDiskUse': true }).toArray()
 
     console.log('user_id :::: ', user_id, '  ----> initial filtration done')
     console.log('  ----> ->>>>>>>>>>>>>>>>>  mapped filtration start')
+<<<<<<< HEAD
     
     /*
+=======
+
+>>>>>>> c21b52dd33d3d9cff3133bf5bd1af1c2974937a1
     //set status as mapped on all mapped orders and insert into filtered trade history new col "filtered_trade_history"
     let whereMapped = {
         'is_mapped': 'yes',
@@ -25921,65 +25953,65 @@ async function checkDuplicateTrades(){
     var total_count = await await db.collection(temp_trade_history_duplicate_filter_col).countDocuments(whereMapped)
 
     console.log('total records', total_count)
-    
+
     var per_page = 50;
     var num_pages = Math.ceil(total_count / per_page);
 
     console.log('total count ',total_count ,'  -----  total pages', num_pages)
-    
+
     for (let i = 1; i <= num_pages; i++) {
-        
+
         let page = i
         let skip = (page - 1) * per_page
         let limit = per_page
 
         console.log('page: ', page, skip)
-        
+
         let mappedTrades = await db.collection(temp_trade_history_duplicate_filter_col).find(whereMapped).skip(skip).limit(limit).toArray()
-    
+
         if(mappedTrades.length > 0){
-    
+
             for (let i = 0; i < mappedTrades.length; i++){
-                
+
                 let insDataArr = mappedTrades[i]['data']
                 let currTrade = insDataArr
-                
+
                 delete currTrade['_id']
                 currTrade['tradeMappType'] = 'mapped'
-                
+
                 let mappedTradeArr = []
-    
+
                 for (let j = 0; j < currTrade.fractions.length; j++) {
-    
+
                     let obj = Object.assign({}, currTrade.fractions[j])
                     delete obj['_id']
-    
+
                     obj.trades.value.tradeMappType = 'mapped'
                     obj.trades.value.is_mapped_trade = 'yes'
-    
+
                     if (currTrade.digie_buy_order.length > 0) {
                         obj.trades.value.digie_order_id = currTrade.digie_buy_order[0]['_id']
                     } else if (currTrade.digie_sold_order.length > 0) {
                         obj.trades.value.digie_order_id = currTrade.digie_sold_order[0]['_id']
                     }
-    
+
                     obj.trades.value.isParent = j == 0 ? 'yes' : 'no'
-    
+
                     mappedTradeArr.push(obj)
-    
+
                 }
-                
+
                 //insert in filtred trade history collection
                 await db.collection(filtered_trade_history).insertMany(mappedTradeArr)
-    
+
                 let tradeIds = currTrade.fractions.map(item => item.trades.value.ordertxid)
-                
+
                 console.log(mappedTradeArr[0]['trades']['value'])
                 console.log(tradeIds)
-    
+
                 //update in trade history collection
                 await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
-    
+
             }
         }
 
@@ -26001,54 +26033,62 @@ async function checkDuplicateTrades(){
     var total_count = await await db.collection(temp_trade_history_duplicate_filter_col).countDocuments(whereUnmapped)
 
     console.log('total records', total_count)
-    
+
     var per_page = 50;
     var num_pages = Math.ceil(total_count / per_page);
-    
+
     console.log('total count ',total_count ,'  -----  total pages', num_pages)
-    
+
     for (let i = 1; i <= num_pages; i++) {
-        
+
         let page = i
         let skip = (page - 1) * per_page
         let limit = per_page
 
         console.log('page: ', page, skip)
-        
+
         checkTradesArr = await db.collection(temp_trade_history_duplicate_filter_col).find(whereUnmapped).skip(skip).limit(limit).toArray()
-    
+
         if (checkTradesArr.length > 0) {
-            
+
             for (let i = 0; i < checkTradesArr.length; i++) {
+<<<<<<< HEAD
                 
                 let checkTradesArr1 = checkTradesArr[i]['data']
 
                 let currTrade = checkTradesArr1['parent']['trades']['value']
                 
+=======
+
+                checkTradesArr = checkTradesArr[i]['data']
+
+                let currTrade = checkTradesArr[i]['parent']['trades']['value']
+
+>>>>>>> c21b52dd33d3d9cff3133bf5bd1af1c2974937a1
                 console.log(currTrade)
                 // continue
-    
+
                 // let currTrade = checkTradesArr[i]['trades']['value']
                 let quantity = parseFloat(currTrade['fractionQtySum'])
                 let pair = currTrade['pair']
                 let _3percentQuantityAbove = quantity + (quantity * 3) / 100
                 let _3percentQuantityBelow = quantity - (quantity * 3) / 100
-    
+
                 // console.log(quantity, _3percentQuantityAbove)
-    
+
                 // let tradeTime = new Date(currTrade.time * timeMultiplyer);
                 let tradeTime = parseFloat(currTrade.time);
-    
+
                 let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
                 _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 2); // timestamp
                 _1minuteAbove = new Date(_1minuteAbove); // Date object
                 // console.log(_1minuteAbove);
-    
+
                 let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
                 _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 2); // timestamp
                 _1minuteBelow = new Date(_1minuteBelow); // Date object
                 // console.log(_1minuteBelow);
-    
+
                 //digie duplicate
                 var whereDigie1 = [
                     {
@@ -26068,11 +26108,11 @@ async function checkDuplicateTrades(){
                         }
                     }
                 ]
-    
+
                 var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
                 var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
                 var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
-    
+
                 if (digieTrades1.length > 0) {
                     //confirmed duplicate
                     digieDuplicateTradeIdsArr.push(currTrade.ordertxid)
@@ -26120,7 +26160,7 @@ async function checkDuplicateTrades(){
 
                 //update in trade history collection
                 await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
-    
+
                 } else {
                     //digie doubt
                     var whereDigie1 = [
@@ -26141,11 +26181,11 @@ async function checkDuplicateTrades(){
                             }
                         }
                     ]
-    
+
                     var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
                     var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
                     var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
-    
+
                     if (digieTrades1.length > 0) {
                         //digie doubt
                         digieDoubtTradeIdsArr.push(currTrade.ordertxid)
@@ -26234,7 +26274,7 @@ async function checkDuplicateTrades(){
 
                         let tradeIds = currTrade_temp.fractions.map(item => item.trades.value.ordertxid)
 
-                        
+
                         console.log('************************************************** User Doubt')
                         console.log(duplicateTradeArr[0]['trades']['value'])
                         console.log(tradeIds)
@@ -26244,9 +26284,9 @@ async function checkDuplicateTrades(){
 
                     }
                 }
-    
+
             }
-    
+
         }
 
         db = await conn
@@ -26274,9 +26314,9 @@ async function getUserTimezone(user_id){
 
         if (userObj) {
             // console.log('if ran', userObj)
-            
+
             var timezone = userObj['timezone'];
-    
+
             let latestTimeZones = [
                 "Africa/Abidjan",
                 "Africa/Accra",
@@ -26880,11 +26920,11 @@ async function getUserTimezone(user_id){
                 "W-SU": "Europe/Moscow",
                 "Zulu": "Etc/UTC"
             };
-        
+
             let userTimezone = timezone;
-        
+
             let tempTimezone = timezone;
-        
+
             if (latestTimeZones.includes(userTimezone)) {
                 tempTimezone = userTimezone;
             } else {
@@ -26894,7 +26934,7 @@ async function getUserTimezone(user_id){
                     tempTimezone = 'America/New_York';
                 }
             }
-        
+
             resolve(tempTimezone)
         }else{
             // console.log('else ran', userObj)
