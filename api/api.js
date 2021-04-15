@@ -1662,6 +1662,18 @@ router.post('/createManualOrder', (req, resp) => {
                 if (req.body.orderArr.auto_sell == 'yes' && profit_percent != '') {
                     log_msg += ' with auto sell ' + profit_percent + '%';
                 }
+                if (req.body.orderArr.buy_on_buy_hit == 'yes' && req.body.orderArr.buy_on_buy_hit != '' && typeof req.body.orderArr.buy_on_buy_hit != 'undefined') {
+                  log_msg += ', Buy on Digie Signal was "Enabled" ';
+                }
+                if (req.body.orderArr.sell_on_sell_hit == 'yes' && req.body.orderArr.sell_on_sell_hit != '' && typeof req.body.orderArr.sell_on_sell_hit != 'undefined') {
+                  log_msg += ', Sell on Digie Signal was "Enabled" ';
+                }
+                if (req.body.orderArr.buy_trail_check_temp == 'yes' && req.body.orderArr.buy_trail_check_temp != '' && typeof req.body.orderArr.buy_trail_check_temp != 'undefined') {
+                  log_msg += ', Trail Buy was Enabled and Buy Trail Perc was : '+ req.body.orderArr.buy_trail_interval_temp;
+                }
+                if (req.body.orderArr.sell_trail_check_temp == 'yes' && req.body.orderArr.sell_trail_check_temp != '' && typeof req.body.orderArr.sell_trail_check_temp != 'undefined') {
+                  log_msg += ', Trail Sell was Enabled and Sell Trail Perc was : '+ req.body.orderArr.sell_trail_interval_temp;
+                }
                 let show_hide_log = 'yes';
                 let type = 'Order_created';
                 // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
