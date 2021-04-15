@@ -1668,11 +1668,11 @@ router.post('/createManualOrder', (req, resp) => {
                 if (req.body.orderArr.sell_on_sell_hit == 'yes' && req.body.orderArr.sell_on_sell_hit != '' && typeof req.body.orderArr.sell_on_sell_hit != 'undefined') {
                   log_msg += ', Sell on Digie Signal was "Enabled" ';
                 }
-                if (req.body.orderArr.buy_trail_check_temp == 'yes' && req.body.orderArr.buy_trail_check_temp != '' && typeof req.body.orderArr.buy_trail_check_temp != 'undefined') {
-                  log_msg += ', Trail Buy was Enabled and Buy Trail Perc was : '+ req.body.orderArr.buy_trail_interval_temp;
+                if (req.body.orderArr.buy_trail_check == 'yes' && req.body.orderArr.buy_trail_check != '' && typeof req.body.orderArr.buy_trail_check != 'undefined') {
+                  log_msg += ', Trail Buy was Enabled and Buy Trail Perc was : '+ req.body.orderArr.buy_trail_interval;
                 }
-                if (req.body.orderArr.sell_trail_check_temp == 'yes' && req.body.orderArr.sell_trail_check_temp != '' && typeof req.body.orderArr.sell_trail_check_temp != 'undefined') {
-                  log_msg += ', Trail Sell was Enabled and Sell Trail Perc was : '+ req.body.orderArr.sell_trail_interval_temp;
+                if (req.body.orderArr.sell_trail_check == 'yes' && req.body.orderArr.sell_trail_check != '' && typeof req.body.orderArr.sell_trail_check != 'undefined') {
+                  log_msg += ', Trail Sell was Enabled and Sell Trail Perc was : '+ req.body.orderArr.sell_trail_interval;
                 }
                 let show_hide_log = 'yes';
                 let type = 'Order_created';
@@ -9884,10 +9884,10 @@ router.post('/setForSell', async (req, resp) => {
         let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
         sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
         sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
-        
+
         // sellOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * sellOrderArr['sell_profit_percent']) + parseFloat(purchased_price);
     }
-    
+
     //set sell profit percentage
     if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
         let purchased_price = !isNaN(parseFloat(sellOrderArr['purchased_price'])) ? parseFloat(sellOrderArr['purchased_price']) : ''
@@ -9944,14 +9944,14 @@ router.post('/setForSell', async (req, resp) => {
         let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
         updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
         updArr['profit_percent'] = updArr['sell_profit_percent']
-        
+
         updArr['sell_price'] = sellOrderArr['sell_price']
     }
-    
+
     //set sell profit percentage
     if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
         let purchased_price = !isNaN(parseFloat(sellOrderArr['purchased_price'])) ? parseFloat(sellOrderArr['purchased_price']) : ''
-        
+
         let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
         updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
 
@@ -15707,7 +15707,7 @@ async function listmarketPriceMinNotationCoinArr(coin, exchange) {
                 coinObjArr[item.coin] = {}
                 coinObjArr[item.coin]['currentmarketPrice'] = item.price
                 let notationObj =  promisesResult[0].find(item2=>{return item2.symbol == item.coin ? true : false })
-                
+
                 // console.log(item.coin, item.price, notationObj)
 
                 coinObjArr[item.coin]['marketMinNotation'] = notationObj.min_notation
