@@ -272,6 +272,16 @@ Content-Type: application/json
 }
 ###
 
+GET http://localhost:3010/apiEndPoint/checkDuplicateTrades
+# GET http://34.205.124.51:3010/apiEndPoint//checkDuplicateTrades
+Content-Type: application/json
+
+{
+    "user_id": "5eb5a5a628914a45246bacc6",
+    "exchange": "binance"
+}
+###
+
 POST http://localhost:3010/apiEndPoint/hit_auto_buy_cron
 # POST http://34.205.124.51:3010/apiEndPoint/hit_auto_buy_cron
 Content-Type: application/json
@@ -573,6 +583,15 @@ POST http://localhost:3010/apiEndPoint/getTradeHistory
 
 ###
 GET http://34.205.124.51:3010/apiEndPoint/getAllGlobalCoins
+Content-Type: application/json
+
+{ 
+    "candleCoins": "candleCoins"
+}
+
+###
+# GET http://34.205.124.51:3010/apiEndPoint/getAllGlobalCoins
+GET https://digiapis.digiebot.com/apiEndPoint/getAllGlobalCoins
 Content-Type: application/json
 
 { 

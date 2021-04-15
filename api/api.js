@@ -4359,7 +4359,7 @@ async function listOrderListing(postDAta3, dbConnection) {
 
 
 
-        console.log(filter_all_2, pagination, limit, skip, '=================')
+        // console.log(filter_all_2, pagination, limit, skip, '=================')
 
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter_all_2, pagination, limit, skip);
         var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter_all_2, pagination, limit, skip);
@@ -4381,7 +4381,7 @@ async function listOrderListing(postDAta3, dbConnection) {
     } else {
         var orderArr = await list_orders_by_filter(collectionName, filter, pagination, limit, skip);
     }
-    console.log(orderArr.length)
+    // console.log(orderArr.length)
     return orderArr;
 } //End of listOrderListing
 
@@ -9847,12 +9847,17 @@ router.post('/setForSell', async (req, resp) => {
         let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
         sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
         sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
+        
+        // sellOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * sellOrderArr['sell_profit_percent']) + parseFloat(purchased_price);
     }
-
+    
     //set sell profit percentage
     if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+        let purchased_price = !isNaN(parseFloat(sellOrderArr['purchased_price'])) ? parseFloat(sellOrderArr['purchased_price']) : ''
         let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
         sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+
+        sellOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * sellOrderArr['sell_profit_percent']) + parseFloat(purchased_price);
     }
 
     //set stop loss
@@ -9902,12 +9907,18 @@ router.post('/setForSell', async (req, resp) => {
         let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
         updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
         updArr['profit_percent'] = updArr['sell_profit_percent']
+        
+        updArr['sell_price'] = sellOrderArr['sell_price']
     }
-
+    
     //set sell profit percentage
     if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+        let purchased_price = !isNaN(parseFloat(sellOrderArr['purchased_price'])) ? parseFloat(sellOrderArr['purchased_price']) : ''
+        
         let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
         updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+
+        updArr['sell_price'] = ((parseFloat(purchased_price) / 100) * updArr['sell_profit_percent']) + parseFloat(purchased_price);
     }
 
     //set stop loss
@@ -15659,6 +15670,8 @@ async function listmarketPriceMinNotationCoinArr(coin, exchange) {
                 coinObjArr[item.coin] = {}
                 coinObjArr[item.coin]['currentmarketPrice'] = item.price
                 let notationObj =  promisesResult[0].find(item2=>{return item2.symbol == item.coin ? true : false })
+                
+                // console.log(item.coin, item.price, notationObj)
 
                 coinObjArr[item.coin]['marketMinNotation'] = notationObj.min_notation
                 coinObjArr[item.coin]['marketMinNotationStepSize'] = notationObj.step_size
@@ -25721,7 +25734,7 @@ router.get('/checkDuplicateTrades', async (req, res)=>{
 
 async function checkDuplicateTrades(){
 
-    const db = await conn
+    var db = await conn
     
     let user_id = '5eb5a5a628914a45246bacc6'
     let exchange = 'binance'
@@ -25886,12 +25899,17 @@ async function checkDuplicateTrades(){
             '$out': temp_trade_history_duplicate_filter_col
         }
     ]
+
+    // console.log(JSON.stringify(pipeline))
+    // process.exit(0)
+    // return
     
     await db.collection(trade_history_collection).aggregate(pipeline, { 'allowDiskUse': true }).toArray()
 
     console.log('user_id :::: ', user_id, '  ----> initial filtration done')
     console.log('  ----> ->>>>>>>>>>>>>>>>>  mapped filtration start')
     
+    /*
     //set status as mapped on all mapped orders and insert into filtered trade history new col "filtered_trade_history"
     let whereMapped = {
         'is_mapped': 'yes',
@@ -25964,8 +25982,11 @@ async function checkDuplicateTrades(){
     
             }
         }
+
+        db = await conn
     }
 
+    */
 
     console.log('  ----> mapped filtration done')
     console.log('  ----> ->>>>>>>>>>>>>>>>>  Unmapped filtration start')
@@ -26000,9 +26021,9 @@ async function checkDuplicateTrades(){
             
             for (let i = 0; i < checkTradesArr.length; i++) {
                 
-                checkTradesArr = checkTradesArr[i]['data']
+                let checkTradesArr1 = checkTradesArr[i]['data']
 
-                let currTrade = checkTradesArr[i]['parent']['trades']['value']
+                let currTrade = checkTradesArr1['parent']['trades']['value']
                 
                 console.log(currTrade)
                 // continue
@@ -26057,7 +26078,7 @@ async function checkDuplicateTrades(){
                     digieDuplicateTradeIdsArr.push(currTrade.ordertxid)
 
 
-                    let currTrade_temp = checkTradesArr[i]
+                    let currTrade_temp = checkTradesArr1
 
                     delete currTrade_temp['_id']
                     currTrade_temp['tradeMappType'] = 'Digie duplicate'
@@ -26130,7 +26151,7 @@ async function checkDuplicateTrades(){
                         digieDoubtTradeIdsArr.push(currTrade.ordertxid)
 
 
-                        let currTrade_temp = checkTradesArr[i]
+                        let currTrade_temp = checkTradesArr1
 
                         delete currTrade_temp['_id']
                         currTrade_temp['tradeMappType'] = 'Digie Doubtful'
@@ -26177,7 +26198,7 @@ async function checkDuplicateTrades(){
                         userDoubtTradeIdsArr.push(currTrade.ordertxid)
 
 
-                        let currTrade_temp = checkTradesArr[i]
+                        let currTrade_temp = checkTradesArr1
 
                         delete currTrade_temp['_id']
                         currTrade_temp['tradeMappType'] = 'User Doubtful'
@@ -26228,6 +26249,7 @@ async function checkDuplicateTrades(){
     
         }
 
+        db = await conn
     }
 
     console.log('  ----> Unmapped filtration done')
