@@ -4381,7 +4381,6 @@ async function listOrderListing(postDAta3, dbConnection) {
     } else {
         var orderArr = await list_orders_by_filter(collectionName, filter, pagination, limit, skip);
     }
-    console.log(orderArr.length)
     return orderArr;
 } //End of listOrderListing
 
