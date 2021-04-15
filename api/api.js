@@ -1674,6 +1674,12 @@ router.post('/createManualOrder', (req, resp) => {
                 if (req.body.orderArr.sell_trail_check == 'yes' && req.body.orderArr.sell_trail_check != '' && typeof req.body.orderArr.sell_trail_check != 'undefined') {
                   log_msg += ', Trail Sell was Enabled and Sell Trail Perc was : '+ req.body.orderArr.sell_trail_interval;
                 }
+                if (req.body.orderArr.stop_loss == 'yes' && req.body.orderArr.stop_loss != '' && typeof req.body.orderArr.stop_loss != 'undefined') {
+                  log_msg += ', Stop Loss was Enabled and Stop Loss Perc was : '+ req.body.orderArr.loss_percentage;
+                }
+                if (req.body.orderArr.lth_functionality == 'yes' && req.body.orderArr.lth_functionality != '' && typeof req.body.orderArr.lth_functionality != 'undefined') {
+                  log_msg += ', LTH was Enabled and LTH Perc was : '+ req.body.orderArr.lth_profit;
+                }
                 let show_hide_log = 'yes';
                 let type = 'Order_created';
                 // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
