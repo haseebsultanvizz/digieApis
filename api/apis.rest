@@ -605,3 +605,14 @@ Content-Type: application/json
 { 
     "candleCoins": "candleCoins"
 }
+
+###
+POST http://34.205.124.51:3010/apiEndPoint/getSubscription
+Content-Type: application/json
+
+{ 
+    "user_id": "5eb5a5a628914a45246bacc6"
+}
+
+###
+GET http://localhost:3010/apiEndPoint/resetATG_script
