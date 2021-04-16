@@ -1614,7 +1614,7 @@ router.post('/createManualOrder', (req, resp) => {
         if (typeof orders['buy_trail_check_temp'] != 'undefined' && orders['buy_trail_check_temp'] == 'yes') {
             orders['buy_trail_check'] = 'yes'
             orders['buy_trail_interval'] = parseFloat(orders['buy_trail_interval_temp'])
-            orders['buy_trail_price'] = 0
+            // orders['buy_trail_price'] = 0
         }else{
             orders['buy_trail_check'] = ''
             orders['buy_trail_interval'] = ''
@@ -1623,7 +1623,7 @@ router.post('/createManualOrder', (req, resp) => {
         if (typeof orders['sell_trail_check_temp'] != 'undefined' && orders['sell_trail_check_temp'] == 'yes') {
             orders['sell_trail_check'] = 'yes'
             orders['sell_trail_interval'] = parseFloat(orders['sell_trail_interval_temp'])
-            orders['sell_trail_price'] = 0
+            // orders['sell_trail_price'] = 0
         }else{
             orders['sell_trail_check'] = ''
             orders['sell_trail_interval'] = ''
@@ -9468,11 +9468,11 @@ router.post('/updateManualOrder', async (req, resp) => {
 
 
 
-        if (getBuyOrder[0]['sell_profit_percent'] !== buyorderArr['sell_profit_percent'] && getBuyOrder[0]['status'] == 'FILLED'){
+        if (parseFloat(getBuyOrder[0]['sell_profit_percent']) !== parseFloat(buyorderArr['sell_profit_percent']) && getBuyOrder[0]['status'] == 'FILLED'){
             sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['sell_profit_percent']))/100
 		    buyorderArr['sell_price'] = parseFloat(sell_price)
         }
-        if (getBuyOrder[0]['lth_profit'] !== buyorderArr['lth_profit'] && getBuyOrder[0]['status'] == 'LTH'){
+        if (parseFloat(getBuyOrder[0]['lth_profit']) !== parseFloat(buyorderArr['lth_profit']) && getBuyOrder[0]['status'] == 'LTH'){
             sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['lth_profit']))/100
 		    buyorderArr['sell_price'] = parseFloat(sell_price)
         }
@@ -26927,7 +26927,7 @@ router.post('/getTradeHistory', async (req, res)=>{
     let exchange = req.body.postData.exchange;
 
     // let trades = await getTradeHistory(where, exchange, timezone)
-    
+
     let trades = await getTradeHistoryAsim(where, exchange, timezone)
 
     // console.log(trades)
