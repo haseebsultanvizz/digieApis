@@ -9405,6 +9405,18 @@ router.post('/updateManualOrder', async (req, resp) => {
       buyorderArr['buy_trail_interval'] = ''
       buyorderArr['buy_trail_price'] = 0
   }
+
+
+  if (typeof req.body.buyorderArr['sell_trail_check_temp'] != 'undefined' && req.body.buyorderArr['sell_trail_check_temp'] == 'yes') {
+    buyorderArr['sell_trail_check'] = 'yes'
+    buyorderArr['sell_trail_interval'] = parseFloat(req.body.buyorderArr['sell_trail_interval_temp'])
+    // sellOrderArr['sell_trail_price'] = 0
+  }else{
+    buyorderArr['sell_trail_check'] = ''
+    buyorderArr['sell_trail_interval'] = ''
+    buyorderArr['sell_trail_price'] = 0
+  }
+
   if (typeof req.body.buyorderArr['sell_trail_check_temp'] != 'undefined' && req.body.buyorderArr['sell_trail_check_temp'] == 'yes') {
       sellOrderArr['sell_trail_check'] = 'yes'
       sellOrderArr['sell_trail_interval'] = parseFloat(req.body.buyorderArr['sell_trail_interval_temp'])
