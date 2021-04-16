@@ -22996,6 +22996,8 @@ async function customApiRequest(reqObj){
         };
         request(options, function (error, response, body) {
             if (error) {
+
+                // console.log(error)
                 resolve({
                     'status': false,
                     'message': 'Something went wrong.'
@@ -26959,6 +26961,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     let trigger_type = filter.trigger_type
     let mapped_status = filter.mapped_status
     let get_all_users = filter.get_all_users
+    let search_order_id = filter.search_order_id
 
     order_type = order_type == 'all' ? '' : order_type
 
@@ -26979,6 +26982,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         {
             '$match': {
                 'user_id': user_id,
+                '$and': [{ 'status': { '$ne':'fractionChild'}}]
             }
         },
         {
@@ -27008,6 +27012,11 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         pipeline[0]['$match']['trades.value.type'] = 'buy'
     } else if (status == 'sold') {
         pipeline[0]['$match']['trades.value.type'] = 'sell'
+    }
+
+    if (search_order_id != '') {
+        let order_ids = !isNaN(parseFloat(search_order_id)) ? [parseFloat(search_order_id), String(search_order_id)] : [search_order_id]
+        pipeline[0]['$match']['trades.value.ordertxid'] = { '$in': order_ids}
     }
 
     if (start_date != '' || end_date != '') {
