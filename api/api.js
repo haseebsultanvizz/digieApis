@@ -9364,514 +9364,678 @@ router.post('/lisEditManualOrderById', async (req, resp) => {
 //post call for updating manual orders
 router.post('/updateManualOrder', async (req, resp) => {
 
-    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+  let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+
+  let buyOrderId = req.body.buyOrderId;
+  let exchange = req.body.exchange;
+  var sellOrderId = req.body.sellOrderId;
+  let tempSellOrderId = req.body.tempSellOrderId;
+
+
+  let buyorderArr = req.body.buyorderArr;
+  let sellOrderArr = req.body.sellOrderArr;
+  let tempOrderArr = req.body.tempOrderArr;
+
+  let show_hide_log = 'yes';
+  let type = 'order_update';
+  let log_msg = "Order has been updated " + interfaceType;
+  // var logPromise = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange);
+  getBuyOrder = await listOrderById(buyOrderId, exchange);
+  order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+  order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+  var logPromise = create_orders_history_log(buyOrderId, log_msg, 'order_update', 'yes', exchange, order_mode, order_created_date)
+  logPromise.then((resolve) => {})
 
-    let buyOrderId = req.body.buyOrderId;
-    let exchange = req.body.exchange;
-    var sellOrderId = req.body.sellOrderId;
-    let tempSellOrderId = req.body.tempSellOrderId;
+  //Send Notification
+  send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', log_msg, buyOrderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
+  var orders_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+  var buy_order_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+  var temp_sell_order_collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
 
-    let buyorderArr = req.body.buyorderArr;
-    let sellOrderArr = req.body.sellOrderArr;
-    let tempOrderArr = req.body.tempOrderArr;
 
-    let show_hide_log = 'yes';
-    let type = 'order_update';
-    let log_msg = "Order has been updated " + interfaceType;
-    // var logPromise = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange);
-    getBuyOrder = await listOrderById(buyOrderId, exchange);
-    order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-    order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-    var logPromise = create_orders_history_log(buyOrderId, log_msg, 'order_update', 'yes', exchange, order_mode, order_created_date)
-    logPromise.then((resolve) => {})
 
-    //Send Notification
-    send_notification(getBuyOrder[0]['admin_id'], 'news_alerts', 'medium', log_msg, buyOrderId, exchange, getBuyOrder[0]['symbol'], order_mode, '')
 
-    var orders_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-    var buy_order_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-    var temp_sell_order_collection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
+  if (typeof req.body.buyorderArr['buy_trail_check_temp'] != 'undefined' && req.body.buyorderArr['buy_trail_check_temp'] == 'yes') {
+      buyorderArr['buy_trail_check'] = 'yes'
+      buyorderArr['buy_trail_interval'] = parseFloat(req.body.buyorderArr['buy_trail_interval_temp'])
+      // buyorderArr['buy_trail_price'] = 0
+  }else{
+      buyorderArr['buy_trail_check'] = ''
+      buyorderArr['buy_trail_interval'] = ''
+      buyorderArr['buy_trail_price'] = 0
+  }
+  if (typeof req.body.buyorderArr['sell_trail_check_temp'] != 'undefined' && req.body.buyorderArr['sell_trail_check_temp'] == 'yes') {
+      sellOrderArr['sell_trail_check'] = 'yes'
+      sellOrderArr['sell_trail_interval'] = parseFloat(req.body.buyorderArr['sell_trail_interval_temp'])
+      // sellOrderArr['sell_trail_price'] = 0
+  }else{
+      sellOrderArr['sell_trail_check'] = ''
+      sellOrderArr['sell_trail_interval'] = ''
+      sellOrderArr['sell_trail_price'] = 0
+  }
 
+  //remove temp keys
+  delete req.body.buyorderArr['buy_trail_check_temp']
+  delete req.body.buyorderArr['buy_trail_interval_temp']
+  delete req.body.buyorderArr['buy_trail_price_temp']
+  delete req.body.buyorderArr['sell_trail_check_temp']
+  delete req.body.buyorderArr['sell_trail_interval_temp']
+  delete req.body.buyorderArr['sell_trail_price_temp']
 
-    var where = {};
-    where['_id'] = new ObjectID(buyOrderId)
 
-    if (sellOrderId != '') {
-        //set profit percentage if sell price is fixed
-        if (buyorderArr['profit_type'] == 'fixed_price') {
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-            let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
-            buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-            buyorderArr['profit_percent'] = buyorderArr['sell_profit_percent']
-        }
-
-        //set sell profit percentage
-        if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
-            let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
-            buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-        }
 
-        //set stop loss
-        if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
-            buyorderArr['stop_loss'] = 'yes'
-            buyorderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
-
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-            let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
-            buyorderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
-
-        } else {
-            buyorderArr['stop_loss'] = 'no'
-            buyorderArr['loss_percentage'] = ''
-        }
-
-        //set lth profit
-        if (typeof buyorderArr['lth_functionality'] != 'undefined' && buyorderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(buyorderArr['lth_profit']))) {
-            buyorderArr['lth_functionality'] = 'yes'
-            buyorderArr['lth_profit'] = parseFloat(parseFloat(buyorderArr['lth_profit']).toFixed(1))
-        } else {
-            buyorderArr['lth_functionality'] = 'no'
-            buyorderArr['lth_profit'] = ''
-
-            if (getBuyOrder[0]['status'] == 'LTH'){
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                buyorderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
-                buyorderArr['is_lth_order'] = 'no'
-                buyorderArr['status'] = 'FILLED'
-            }
-
-        }
-
-
-
-
-
-
-        if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
-            buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
-        }
-
-
-
-        // check Added By Huzaifa to Convert Value Into Float
-        console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=IF=-=-=-=-=')
-        buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
-        buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
-        buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
-        buyorderArr['buy_trail_price'] = (typeof buyorderArr['buy_trail_price'] != 'undefined' && buyorderArr['buy_trail_price'] != '') ? parseFloat(buyorderArr['buy_trail_price']) : ''
-        buyorderArr['sell_price'] = (typeof buyorderArr['sell_price'] != 'undefined' && buyorderArr['sell_price'] != '') ? parseFloat(buyorderArr['sell_price']) : ''
-        buyorderArr['iniatial_trail_stop'] = (typeof buyorderArr['iniatial_trail_stop'] != 'undefined' && buyorderArr['iniatial_trail_stop'] != '') ? parseFloat(buyorderArr['iniatial_trail_stop']) : ''
-        buyorderArr['lth_profit'] = (typeof buyorderArr['lth_profit'] != 'undefined' && buyorderArr['lth_profit'] != '') ? parseFloat(buyorderArr['lth_profit']) : ''
-        buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
-
 
 
+  var where = {};
+  where['_id'] = new ObjectID(buyOrderId)
+
+  if (sellOrderId != '') {
+      //set profit percentage if sell price is fixed
+      if (buyorderArr['profit_type'] == 'fixed_price') {
+          let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+          let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+          buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+          buyorderArr['profit_percent'] = buyorderArr['sell_profit_percent']
+      }
+
+      //set sell profit percentage
+      if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+          let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
+          buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+      }
 
-        if (parseFloat(getBuyOrder[0]['sell_profit_percent']) !== parseFloat(buyorderArr['sell_profit_percent']) && getBuyOrder[0]['status'] == 'FILLED'){
-            sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['sell_profit_percent']))/100
-		    buyorderArr['sell_price'] = parseFloat(sell_price)
-        }
-        if (parseFloat(getBuyOrder[0]['lth_profit']) !== parseFloat(buyorderArr['lth_profit']) && getBuyOrder[0]['status'] == 'LTH'){
-            sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['lth_profit']))/100
-		    buyorderArr['sell_price'] = parseFloat(sell_price)
-        }
-
-        console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=After IF=-=-=-=-=')
-
-
-    } else {
-        //set profit percentage if sell price is fixed
-        if (buyorderArr['profit_type'] == 'fixed_price') {
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-            let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
-            buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-            buyorderArr['profit_percent'] = tempOrderArr['sell_profit_percent']
-            buyorderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
-            buyorderArr['profit_price'] = buyorderArr['sell_price']
-        }
-
-        //set sell profit percentage
-        if (buyorderArr['profit_type'] == 'percentage' && typeof tempOrderArr['sell_profit_percent'] != 'undefined') {
-            let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['sell_profit_percent']).toFixed(1))
-            buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-        }
-
-        //set stop loss
-        if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
-            buyorderArr['stop_loss'] = 'yes'
-            buyorderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
-
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-            let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
-            buyorderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
-
-        } else {
-            buyorderArr['stop_loss'] = 'no'
-            buyorderArr['loss_percentage'] = ''
-        }
-
-        //set lth profit
-        if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
-            buyorderArr['lth_functionality'] = 'yes'
-            buyorderArr['lth_profit'] = parseFloat(parseFloat(tempOrderArr['lth_profit']).toFixed(1))
-        } else {
-            buyorderArr['lth_functionality'] = 'no'
-            buyorderArr['lth_profit'] = ''
-
-            if (getBuyOrder[0]['status'] == 'LTH') {
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                buyorderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
-                buyorderArr['is_lth_order'] = 'no'
-                buyorderArr['status'] = 'FILLED'
-            }
-        }
-
-        if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
-            buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
-        }
-
-
-
-        // check Added By Huzaifa to Convert Value Into Float
-        console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'])
-        buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
-        buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
-        buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
-        buyorderArr['buy_trail_price'] = (typeof buyorderArr['buy_trail_price'] != 'undefined' && buyorderArr['buy_trail_price'] != '') ? parseFloat(buyorderArr['buy_trail_price']) : ''
-        buyorderArr['sell_price'] = (typeof buyorderArr['sell_price'] != 'undefined' && buyorderArr['sell_price'] != '') ? parseFloat(buyorderArr['sell_price']) : ''
-        buyorderArr['iniatial_trail_stop'] = (typeof buyorderArr['iniatial_trail_stop'] != 'undefined' && buyorderArr['iniatial_trail_stop'] != '') ? parseFloat(buyorderArr['iniatial_trail_stop']) : ''
-        buyorderArr['lth_profit'] = (typeof buyorderArr['lth_profit'] != 'undefined' && buyorderArr['lth_profit'] != '') ? parseFloat(buyorderArr['lth_profit']) : ''
-        buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
-
-
-
-        if (getBuyOrder[0]['sell_profit_percent'] !== buyorderArr['sell_profit_percent'] && getBuyOrder[0]['status'] == 'FILLED'){
-            sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['sell_profit_percent']))/100
-		    buyorderArr['sell_price'] = parseFloat(sell_price)
-        }
-        if (getBuyOrder[0]['lth_profit'] !== buyorderArr['lth_profit'] && getBuyOrder[0]['status'] == 'LTH'){
-            sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['lth_profit']))/100
-		    buyorderArr['sell_price'] = parseFloat(sell_price)
-        }
-    }
-
-    buyorderArr['modified_date'] = new Date();
-    var upsert = {
-        'upsert': true
-    };
-
-
-    //cancel_hour
-    if (typeof buyorderArr['update_cancel_hour'] != 'undefined' && buyorderArr['update_cancel_hour'] == 'yes' && typeof buyorderArr['cancel_hour'] != 'undefined' && buyorderArr['cancel_hour'] != '' && buyorderArr['cancel_hour'] > 0) {
-        let currTime = new Date()
-        buyorderArr['cancel_hour_time'] = new Date(currTime.setTime(currTime.getTime() + (buyorderArr['cancel_hour'] * 60 * 60 * 1000)))
-    } else {
-        delete buyorderArr['update_cancel_hour']
-        delete buyorderArr['cancel_hour_time']
-        delete buyorderArr['cancel_hour']
-    }
-
-    //add these fields in kraken order array
-    if (exchange == 'kraken') {
-        buyorderArr['defined_sell_percentage'] = typeof buyorderArr['sell_profit_percent'] != 'undefined' ? buyorderArr['sell_profit_percent'] : ''
-        buyorderArr['custom_stop_loss_percentage'] = typeof buyorderArr['loss_percentage'] != 'undefined' ? buyorderArr['loss_percentage'] : ''
-    }
-
-    var updPromise = updateSingle(buy_order_collection, where, buyorderArr, upsert);
-    updPromise.then((callback) => {});
-
-
-    if (sellOrderId != '') {
-        var where_1 = {};
-        where_1['_id'] = new ObjectID(sellOrderId)
-
-        //set profit percentage if sell price is fixed
-        if (buyorderArr['profit_type'] == 'fixed_price') {
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-            let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
-            sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-            sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
-            sellOrderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
-        }
-
-        //set sell profit percentage
-        if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
-            let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
-            sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-        }
-
-        //set stop loss
-        if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
-            sellOrderArr['stop_loss'] = 'yes'
-            sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
-
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-            let loss_price = (parseFloat(purchased_price) * parseFloat(sellOrderArr['loss_percentage'])) / 100;
-            sellOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
-
-        } else {
-            sellOrderArr['stop_loss'] = 'no'
-            sellOrderArr['loss_percentage'] = ''
-        }
-
-        //set lth profit
-        if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
-            sellOrderArr['lth_functionality'] = 'yes'
-            sellOrderArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
-        } else {
-            sellOrderArr['lth_functionality'] = 'no'
-            sellOrderArr['lth_profit'] = ''
-
-            if (getBuyOrder[0]['status'] == 'LTH') {
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                sellOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
-            }
-        }
-
-        if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
-            sellOrderArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
-        }
-
-        sellOrderArr['modified_date'] = new Date();
-        var upsert = {
-            'upsert': true
-        };
-
-
-        //add these fields in kraken order array
-        if (exchange == 'kraken') {
-            sellOrderArr['defined_sell_percentage'] = typeof sellOrderArr['sell_profit_percent'] != 'undefined' ? sellOrderArr['sell_profit_percent'] : ''
-            sellOrderArr['custom_stop_loss_percentage'] = typeof sellOrderArr['loss_percentage'] != 'undefined' ? sellOrderArr['loss_percentage'] : ''
-        }
-
-        var updPromise_1 = updateSingle(orders_collection, where_1, sellOrderArr, upsert);
-        updPromise_1.then((callback) => {});
-    }
-
-
-    if (tempSellOrderId != '') {
-        var where_2 = {};
-        where_2['_id'] = new ObjectID(tempSellOrderId)
-
-        //set profit percentage if sell price is fixed
-        if (buyorderArr['profit_type'] == 'fixed_price') {
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-            let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
-            tempOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-            tempOrderArr['profit_percent'] = tempOrderArr['sell_profit_percent']
-            tempOrderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
-            tempOrderArr['profit_price'] = tempOrderArr['sell_price']
-        }
-
-        //set sell profit percentage
-        if (buyorderArr['profit_type'] == 'percentage' && typeof tempOrderArr['sell_profit_percent'] != 'undefined') {
-            let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['sell_profit_percent']).toFixed(1))
-            tempOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-        }
-
-        //set stop loss
-        if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
-            tempOrderArr['stop_loss'] = 'yes'
-            tempOrderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
-
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-            let loss_price = (parseFloat(purchased_price) * parseFloat(tempOrderArr['loss_percentage'])) / 100;
-            tempOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
-
-        } else {
-            tempOrderArr['stop_loss'] = 'no'
-            tempOrderArr['loss_percentage'] = ''
-        }
-
-        //set lth profit
-        if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
-            tempOrderArr['lth_functionality'] = 'yes'
-            tempOrderArr['lth_profit'] = parseFloat(parseFloat(tempOrderArr['lth_profit']).toFixed(1))
-        } else {
-            tempOrderArr['lth_functionality'] = 'no'
-            tempOrderArr['lth_profit'] = ''
-
-            if (getBuyOrder[0]['status'] == 'LTH') {
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                tempOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
-            }
-
-        }
-
-        if (typeof tempOrderArr['trail_interval'] != 'undefined' && tempOrderArr['trail_interval'] != '') {
-            tempOrderArr['trail_interval'] = parseFloat(tempOrderArr['trail_interval'])
-        }
-
-        tempOrderArr['modified_date'] = new Date();
-        var upsert = {
-            'upsert': true
-        };
-
-
-        //add these fields in kraken order array
-        if (exchange == 'kraken') {
-            tempOrderArr['defined_sell_percentage'] = typeof tempOrderArr['sell_profit_percent'] != 'undefined' ? tempOrderArr['sell_profit_percent'] : ''
-            tempOrderArr['custom_stop_loss_percentage'] = typeof tempOrderArr['loss_percentage'] != 'undefined' ? tempOrderArr['loss_percentage'] : ''
-        }
-
-        var updPromise_2 = updateSingle(temp_sell_order_collection, where_2, tempOrderArr, upsert);
-        updPromise_2.then((callback) => {})
-    }else{
-
-        //when order was created with out auto sell and after buy it does not create sell array from edit page so set it from here
-        let sellOrderArr = tempOrderArr;
-        var buy_order_id = buyOrderId;
-
-        if (buy_order_id != '') {
-            sellOrderArr['buy_order_id'] = new ObjectID(buy_order_id);
-        }
-
-        //set profit percentage if sell price is fixed
-        if (sellOrderArr['profit_type'] == 'fixed_price') {
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-            let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
-            sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-            sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
-            sellOrderArr['sell_price'] = !isNaN(parseFloat(sellOrderArr['sell_price'])) ? parseFloat(sellOrderArr['sell_price']) : ''
-        }
-
-        //set sell profit percentage
-        if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
-            let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
-            sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-        }
-
-        //set stop loss
-        if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
-            sellOrderArr['stop_loss'] = 'yes'
-            sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
-
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-            let loss_price = (parseFloat(purchased_price) * parseFloat(sellOrderArr['loss_percentage'])) / 100;
-            sellOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
-
-        } else {
-            sellOrderArr['stop_loss'] = 'no'
-            sellOrderArr['loss_percentage'] = ''
-        }
-
-        //set lth profit
-        if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
-            sellOrderArr['lth_functionality'] = 'yes'
-            sellOrderArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
-        } else {
-            sellOrderArr['lth_functionality'] = 'no'
-            sellOrderArr['lth_profit'] = ''
-
-            if (getBuyOrder[0]['status'] == 'LTH') {
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                sellOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
-            }
-        }
-
-        if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
-            sellOrderArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
-        }
-
-        //add these fields in kraken order array
-        if (exchange == 'kraken') {
-            sellOrderArr['defined_sell_percentage'] = typeof sellOrderArr['sell_profit_percent'] != 'undefined' ? sellOrderArr['sell_profit_percent'] : ''
-            sellOrderArr['custom_stop_loss_percentage'] = typeof sellOrderArr['loss_percentage'] != 'undefined' ? sellOrderArr['loss_percentage'] : ''
-        }
-
-        //function to set manual order for sell
-        var sellOrderId = await setForSell(sellOrderArr, exchange, buy_order_id);
-
-        var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        var updArr = {};
-        updArr['is_sell_order'] = 'yes';
-        updArr['sell_order_id'] = sellOrderId;
-        updArr['auto_sell'] = 'yes';
-        // updArr['quantity'] = parseFloat(sellOrderArr['quantity']);
-
-        //set profit percentage if sell price is fixed
-        if (sellOrderArr['profit_type'] == 'fixed_price') {
-            let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : ''
-            let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
-            updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
-            updArr['profit_percent'] = updArr['sell_profit_percent']
-        }
-
-        //set sell profit percentage
-        if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
-            let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
-            updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
-        }
-
-        //set stop loss
-        if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
-            updArr['stop_loss'] = 'yes'
-            updArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
-        } else {
-            updArr['stop_loss'] = 'no'
-            updArr['loss_percentage'] = ''
-        }
-
-        //set lth profit
-        if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
-            updArr['lth_functionality'] = 'yes'
-            updArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
-        } else {
-            updArr['lth_functionality'] = 'no'
-            updArr['lth_profit'] = ''
-
-            if (getBuyOrder[0]['status'] == 'LTH') {
-                let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
-                updArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
-            }
-        }
-
-        if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
-            updArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
-        }
-
-        var where = {};
-        where['_id'] = {
-            '$in': [buyOrderId, new ObjectID(buyOrderId)]
-        }
-        updArr['modified_date'] = new Date();
-
-
-        //add these fields in kraken order array
-        if (exchange == 'kraken') {
-            updArr['defined_sell_percentage'] = typeof updArr['sell_profit_percent'] != 'undefined' ? updArr['sell_profit_percent'] : ''
-            updArr['custom_stop_loss_percentage'] = typeof updArr['loss_percentage'] != 'undefined' ? updArr['loss_percentage'] : ''
-        }
-
-
-        // if(updArr){
-        //   updArr['buy_trail_interval'] =(typeof updArr['buy_trail_interval'] != 'undefined' && updArr['buy_trail_interval'] != '') ? parseFloat(updArr['buy_trail_interval']) : ''
-        //   updArr['sell_trail_interval'] = (typeof updArr['sell_trail_interval'] != 'undefined' && updArr['sell_trail_interval'] != '') ? parseFloat(updArr['sell_trail_interval']) : ''
-        //   updArr['sell_trail_price'] = (typeof updArr['sell_trail_price'] != 'undefined' && updArr['sell_trail_price'] != '') ? parseFloat(updArr['sell_trail_price']) : ''
-        //   updArr['buy_trail_price'] = (typeof updArr['buy_trail_price'] != 'undefined' && updArr['buy_trail_price'] != '') ? parseFloat(updArr['buy_trail_price']) : ''
-        //   updArr['sell_price'] = (typeof updArr['sell_price'] != 'undefined' && updArr['sell_price'] != '') ? parseFloat(updArr['sell_price']) : ''
-        //   updArr['iniatial_trail_stop'] = (typeof updArr['iniatial_trail_stop'] != 'undefined' && updArr['iniatial_trail_stop'] != '') ? parseFloat(updArr['iniatial_trail_stop']) : ''
-        //   updArr['lth_profit'] = (typeof updArr['lth_profit'] != 'undefined' && updArr['lth_profit'] != '') ? parseFloat(updArr['lth_profit']) : ''
-        //   updArr['expecteddeepPrice'] = (typeof updArr['expecteddeepPrice'] != 'undefined' && updArr['expecteddeepPrice'] != '') ? parseFloat(updArr['expecteddeepPrice']) : ''
-        // }
-
-        var updPrmise = updateOne(where, updArr, collection);
-        updPrmise.then((callback) => { })
-
-        let log_msg = "Sell Order was Created " + interfaceType;
-        // var logPromise1 = recordOrderLog(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange);
-        var getBuyOrder = await listOrderById(buyOrderId, exchange);
-        var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
-        var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
-        var logPromise1 = create_orders_history_log(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange, order_mode, order_created_date)
-
-        logPromise1.then((resolve) => { })
-    }
-
-    resp.status(200).send({
-        message: 'order updated'
-    });
+      //set stop loss
+      if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
+          buyorderArr['stop_loss'] = 'yes'
+          buyorderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+
+          let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+          let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
+          buyorderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
+      } else {
+          buyorderArr['stop_loss'] = 'no'
+          buyorderArr['loss_percentage'] = ''
+      }
+
+      //set lth profit
+      if (typeof buyorderArr['lth_functionality'] != 'undefined' && buyorderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(buyorderArr['lth_profit']))) {
+          buyorderArr['lth_functionality'] = 'yes'
+          buyorderArr['lth_profit'] = parseFloat(parseFloat(buyorderArr['lth_profit']).toFixed(1))
+      } else {
+          buyorderArr['lth_functionality'] = 'no'
+          buyorderArr['lth_profit'] = ''
+
+          if (getBuyOrder[0]['status'] == 'LTH'){
+              let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+              buyorderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+              buyorderArr['is_lth_order'] = 'no'
+              buyorderArr['status'] = 'FILLED'
+          }
+
+      }
+
+
+
+
+
+
+      if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
+          buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
+      }
+
+
+
+      // check Added By Huzaifa to Convert Value Into Float
+      console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=IF=-=-=-=-=')
+      buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
+      buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
+      buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
+      buyorderArr['buy_trail_price'] = (typeof buyorderArr['buy_trail_price'] != 'undefined' && buyorderArr['buy_trail_price'] != '') ? parseFloat(buyorderArr['buy_trail_price']) : ''
+      buyorderArr['sell_price'] = (typeof buyorderArr['sell_price'] != 'undefined' && buyorderArr['sell_price'] != '') ? parseFloat(buyorderArr['sell_price']) : ''
+      buyorderArr['iniatial_trail_stop'] = (typeof buyorderArr['iniatial_trail_stop'] != 'undefined' && buyorderArr['iniatial_trail_stop'] != '') ? parseFloat(buyorderArr['iniatial_trail_stop']) : ''
+      buyorderArr['lth_profit'] = (typeof buyorderArr['lth_profit'] != 'undefined' && buyorderArr['lth_profit'] != '') ? parseFloat(buyorderArr['lth_profit']) : ''
+      buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
+
+
+
+
+      if (parseFloat(getBuyOrder[0]['sell_profit_percent']) !== parseFloat(buyorderArr['sell_profit_percent']) && getBuyOrder[0]['status'] == 'FILLED'){
+          sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['sell_profit_percent']))/100
+      buyorderArr['sell_price'] = parseFloat(sell_price)
+      }
+      if (parseFloat(getBuyOrder[0]['lth_profit']) !== parseFloat(buyorderArr['lth_profit']) && getBuyOrder[0]['status'] == 'LTH'){
+          sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['lth_profit']))/100
+      buyorderArr['sell_price'] = parseFloat(sell_price)
+      }
+
+      console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=After IF=-=-=-=-=')
+
+
+  } else {
+      //set profit percentage if sell price is fixed
+      if (buyorderArr['profit_type'] == 'fixed_price') {
+          let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+          let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+          buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+          buyorderArr['profit_percent'] = tempOrderArr['sell_profit_percent']
+          buyorderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
+          buyorderArr['profit_price'] = buyorderArr['sell_price']
+      }
+
+      //set sell profit percentage
+      if (buyorderArr['profit_type'] == 'percentage' && typeof tempOrderArr['sell_profit_percent'] != 'undefined') {
+          let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['sell_profit_percent']).toFixed(1))
+          buyorderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+      }
+
+      //set stop loss
+      if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
+          buyorderArr['stop_loss'] = 'yes'
+          buyorderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
+
+          let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+          let loss_price = (parseFloat(purchased_price) * parseFloat(buyorderArr['loss_percentage'])) / 100;
+          buyorderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
+      } else {
+          buyorderArr['stop_loss'] = 'no'
+          buyorderArr['loss_percentage'] = ''
+      }
+
+      //set lth profit
+      if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
+          buyorderArr['lth_functionality'] = 'yes'
+          buyorderArr['lth_profit'] = parseFloat(parseFloat(tempOrderArr['lth_profit']).toFixed(1))
+      } else {
+          buyorderArr['lth_functionality'] = 'no'
+          buyorderArr['lth_profit'] = ''
+
+          if (getBuyOrder[0]['status'] == 'LTH') {
+              let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+              buyorderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+              buyorderArr['is_lth_order'] = 'no'
+              buyorderArr['status'] = 'FILLED'
+          }
+      }
+
+      if (typeof buyorderArr['trail_interval'] != 'undefined' && buyorderArr['trail_interval'] != '') {
+          buyorderArr['trail_interval'] = parseFloat(buyorderArr['trail_interval'])
+      }
+
+
+
+      // check Added By Huzaifa to Convert Value Into Float
+      console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'])
+      buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
+      buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
+      buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
+      buyorderArr['buy_trail_price'] = (typeof buyorderArr['buy_trail_price'] != 'undefined' && buyorderArr['buy_trail_price'] != '') ? parseFloat(buyorderArr['buy_trail_price']) : ''
+      buyorderArr['sell_price'] = (typeof buyorderArr['sell_price'] != 'undefined' && buyorderArr['sell_price'] != '') ? parseFloat(buyorderArr['sell_price']) : ''
+      buyorderArr['iniatial_trail_stop'] = (typeof buyorderArr['iniatial_trail_stop'] != 'undefined' && buyorderArr['iniatial_trail_stop'] != '') ? parseFloat(buyorderArr['iniatial_trail_stop']) : ''
+      buyorderArr['lth_profit'] = (typeof buyorderArr['lth_profit'] != 'undefined' && buyorderArr['lth_profit'] != '') ? parseFloat(buyorderArr['lth_profit']) : ''
+      buyorderArr['expecteddeepPrice'] = (typeof buyorderArr['expecteddeepPrice'] != 'undefined' && buyorderArr['expecteddeepPrice'] != '') ? parseFloat(buyorderArr['expecteddeepPrice']) : ''
+
+
+
+      if (getBuyOrder[0]['sell_profit_percent'] !== buyorderArr['sell_profit_percent'] && getBuyOrder[0]['status'] == 'FILLED'){
+          sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['sell_profit_percent']))/100
+      buyorderArr['sell_price'] = parseFloat(sell_price)
+      }
+      if (getBuyOrder[0]['lth_profit'] !== buyorderArr['lth_profit'] && getBuyOrder[0]['status'] == 'LTH'){
+          sell_price = parseFloat(getBuyOrder[0]['purchased_price'])+(parseFloat(getBuyOrder[0]['purchased_price'])*parseFloat(buyorderArr['lth_profit']))/100
+      buyorderArr['sell_price'] = parseFloat(sell_price)
+      }
+  }
+
+  buyorderArr['modified_date'] = new Date();
+  var upsert = {
+      'upsert': true
+  };
+
+
+  //cancel_hour
+  if (typeof buyorderArr['update_cancel_hour'] != 'undefined' && buyorderArr['update_cancel_hour'] == 'yes' && typeof buyorderArr['cancel_hour'] != 'undefined' && buyorderArr['cancel_hour'] != '' && buyorderArr['cancel_hour'] > 0) {
+      let currTime = new Date()
+      buyorderArr['cancel_hour_time'] = new Date(currTime.setTime(currTime.getTime() + (buyorderArr['cancel_hour'] * 60 * 60 * 1000)))
+  } else {
+      delete buyorderArr['update_cancel_hour']
+      delete buyorderArr['cancel_hour_time']
+      delete buyorderArr['cancel_hour']
+  }
+
+  //add these fields in kraken order array
+  if (exchange == 'kraken') {
+      buyorderArr['defined_sell_percentage'] = typeof buyorderArr['sell_profit_percent'] != 'undefined' ? buyorderArr['sell_profit_percent'] : ''
+      buyorderArr['custom_stop_loss_percentage'] = typeof buyorderArr['loss_percentage'] != 'undefined' ? buyorderArr['loss_percentage'] : ''
+  }
+
+  var updPromise = updateSingle(buy_order_collection, where, buyorderArr, upsert);
+  updPromise.then((callback) => {});
+
+
+  if (sellOrderId != '') {
+      var where_1 = {};
+      where_1['_id'] = new ObjectID(sellOrderId)
+
+      //set profit percentage if sell price is fixed
+      if (buyorderArr['profit_type'] == 'fixed_price') {
+          let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+          let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+          sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+          sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
+          sellOrderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
+      }
+
+      //set sell profit percentage
+      if (buyorderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+          let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
+          sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+      }
+
+      //set stop loss
+      if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
+          sellOrderArr['stop_loss'] = 'yes'
+          sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+
+          let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+          let loss_price = (parseFloat(purchased_price) * parseFloat(sellOrderArr['loss_percentage'])) / 100;
+          sellOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
+      } else {
+          sellOrderArr['stop_loss'] = 'no'
+          sellOrderArr['loss_percentage'] = ''
+      }
+
+      //set lth profit
+      if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
+          sellOrderArr['lth_functionality'] = 'yes'
+          sellOrderArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
+      } else {
+          sellOrderArr['lth_functionality'] = 'no'
+          sellOrderArr['lth_profit'] = ''
+
+          if (getBuyOrder[0]['status'] == 'LTH') {
+              let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+              sellOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+          }
+      }
+
+      if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
+          sellOrderArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
+      }
+
+      sellOrderArr['modified_date'] = new Date();
+      var upsert = {
+          'upsert': true
+      };
+
+
+      //add these fields in kraken order array
+      if (exchange == 'kraken') {
+          sellOrderArr['defined_sell_percentage'] = typeof sellOrderArr['sell_profit_percent'] != 'undefined' ? sellOrderArr['sell_profit_percent'] : ''
+          sellOrderArr['custom_stop_loss_percentage'] = typeof sellOrderArr['loss_percentage'] != 'undefined' ? sellOrderArr['loss_percentage'] : ''
+      }
+
+      var updPromise_1 = updateSingle(orders_collection, where_1, sellOrderArr, upsert);
+      updPromise_1.then((callback) => {});
+  }else{
+
+      if(typeof buyorderArr['auto_sell'] != 'undefined' && buyorderArr['auto_sell'] == 'yes'){
+
+          //when order was created with out auto sell and after buy it does not create sell array from edit page so set it from here
+          let sellOrderArr = tempOrderArr;
+          var buy_order_id = buyOrderId;
+
+          if (buy_order_id != '') {
+              sellOrderArr['buy_order_id'] = new ObjectID(buy_order_id);
+          }
+
+          //set profit percentage if sell price is fixed
+          if (sellOrderArr['profit_type'] == 'fixed_price') {
+              let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+              let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
+              sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+              sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
+              sellOrderArr['sell_price'] = !isNaN(parseFloat(sellOrderArr['sell_price'])) ? parseFloat(sellOrderArr['sell_price']) : ''
+          }
+
+          //set sell profit percentage
+          if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+              let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
+              sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+          }
+
+          //set stop loss
+          if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
+              sellOrderArr['stop_loss'] = 'yes'
+              sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+
+              let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+              let loss_price = (parseFloat(purchased_price) * parseFloat(sellOrderArr['loss_percentage'])) / 100;
+              sellOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
+          } else {
+              sellOrderArr['stop_loss'] = 'no'
+              sellOrderArr['loss_percentage'] = ''
+          }
+
+          //set lth profit
+          if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
+              sellOrderArr['lth_functionality'] = 'yes'
+              sellOrderArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
+          } else {
+              sellOrderArr['lth_functionality'] = 'no'
+              sellOrderArr['lth_profit'] = ''
+
+              if (getBuyOrder[0]['status'] == 'LTH') {
+                  let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                  sellOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+              }
+          }
+
+          if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
+              sellOrderArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
+          }
+
+          //add these fields in kraken order array
+          if (exchange == 'kraken') {
+              sellOrderArr['defined_sell_percentage'] = typeof sellOrderArr['sell_profit_percent'] != 'undefined' ? sellOrderArr['sell_profit_percent'] : ''
+              sellOrderArr['custom_stop_loss_percentage'] = typeof sellOrderArr['loss_percentage'] != 'undefined' ? sellOrderArr['loss_percentage'] : ''
+          }
+
+          //function to set manual order for sell
+          var sellOrderId = await setForSell(sellOrderArr, exchange, buy_order_id);
+
+          var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+          var updArr = {};
+          updArr['is_sell_order'] = 'yes';
+          updArr['sell_order_id'] = sellOrderId;
+          updArr['auto_sell'] = 'yes';
+          // updArr['quantity'] = parseFloat(sellOrderArr['quantity']);
+
+          //set profit percentage if sell price is fixed
+          if (sellOrderArr['profit_type'] == 'fixed_price') {
+              let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : ''
+              let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
+              updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+              updArr['profit_percent'] = updArr['sell_profit_percent']
+          }
+
+          //set sell profit percentage
+          if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+              let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
+              updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+          }
+
+          //set stop loss
+          if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
+              updArr['stop_loss'] = 'yes'
+              updArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+          } else {
+              updArr['stop_loss'] = 'no'
+              updArr['loss_percentage'] = ''
+          }
+
+          //set lth profit
+          if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
+              updArr['lth_functionality'] = 'yes'
+              updArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
+          } else {
+              updArr['lth_functionality'] = 'no'
+              updArr['lth_profit'] = ''
+
+              if (getBuyOrder[0]['status'] == 'LTH') {
+                  let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+                  updArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+              }
+          }
+
+          if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
+              updArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
+          }
+
+          var where = {};
+          where['_id'] = {
+              '$in': [buyOrderId, new ObjectID(buyOrderId)]
+          }
+          updArr['modified_date'] = new Date();
+
+
+          //add these fields in kraken order array
+          if (exchange == 'kraken') {
+              updArr['defined_sell_percentage'] = typeof updArr['sell_profit_percent'] != 'undefined' ? updArr['sell_profit_percent'] : ''
+              updArr['custom_stop_loss_percentage'] = typeof updArr['loss_percentage'] != 'undefined' ? updArr['loss_percentage'] : ''
+          }
+
+          var updPrmise = updateOne(where, updArr, collection);
+          updPrmise.then((callback) => { })
+
+          let log_msg = "Sell Order was Created " + interfaceType;
+          // var logPromise1 = recordOrderLog(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange);
+          var getBuyOrder = await listOrderById(buyOrderId, exchange);
+          var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+          var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+          var logPromise1 = create_orders_history_log(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange, order_mode, order_created_date)
+
+          logPromise1.then((resolve) => { })
+      }
+
+  }
+
+  /*
+  if (tempSellOrderId != '') {
+      var where_2 = {};
+      where_2['_id'] = new ObjectID(tempSellOrderId)
+
+      //set profit percentage if sell price is fixed
+      if (buyorderArr['profit_type'] == 'fixed_price') {
+          let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+          let sell_profit_percent = ((parseFloat(buyorderArr['sell_price']) - purchased_price) / purchased_price) * 100
+          tempOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+          tempOrderArr['profit_percent'] = tempOrderArr['sell_profit_percent']
+          tempOrderArr['sell_price'] = !isNaN(parseFloat(buyorderArr['sell_price'])) ? parseFloat(buyorderArr['sell_price']) : ''
+          tempOrderArr['profit_price'] = tempOrderArr['sell_price']
+      }
+
+      //set sell profit percentage
+      if (buyorderArr['profit_type'] == 'percentage' && typeof tempOrderArr['sell_profit_percent'] != 'undefined') {
+          let sell_profit_percent = parseFloat(parseFloat(tempOrderArr['sell_profit_percent']).toFixed(1))
+          tempOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+      }
+
+      //set stop loss
+      if (typeof tempOrderArr['stop_loss'] != 'undefined' && tempOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(tempOrderArr['loss_percentage']))) {
+          tempOrderArr['stop_loss'] = 'yes'
+          tempOrderArr['loss_percentage'] = parseFloat(parseFloat(tempOrderArr['loss_percentage']).toFixed(1))
+
+          let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+          let loss_price = (parseFloat(purchased_price) * parseFloat(tempOrderArr['loss_percentage'])) / 100;
+          tempOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
+      } else {
+          tempOrderArr['stop_loss'] = 'no'
+          tempOrderArr['loss_percentage'] = ''
+      }
+
+      //set lth profit
+      if (typeof tempOrderArr['lth_functionality'] != 'undefined' && tempOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(tempOrderArr['lth_profit']))) {
+          tempOrderArr['lth_functionality'] = 'yes'
+          tempOrderArr['lth_profit'] = parseFloat(parseFloat(tempOrderArr['lth_profit']).toFixed(1))
+      } else {
+          tempOrderArr['lth_functionality'] = 'no'
+          tempOrderArr['lth_profit'] = ''
+
+          if (getBuyOrder[0]['status'] == 'LTH') {
+              let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+              tempOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+          }
+
+      }
+
+      if (typeof tempOrderArr['trail_interval'] != 'undefined' && tempOrderArr['trail_interval'] != '') {
+          tempOrderArr['trail_interval'] = parseFloat(tempOrderArr['trail_interval'])
+      }
+
+      tempOrderArr['modified_date'] = new Date();
+      var upsert = {
+          'upsert': true
+      };
+
+
+      //add these fields in kraken order array
+      if (exchange == 'kraken') {
+          tempOrderArr['defined_sell_percentage'] = typeof tempOrderArr['sell_profit_percent'] != 'undefined' ? tempOrderArr['sell_profit_percent'] : ''
+          tempOrderArr['custom_stop_loss_percentage'] = typeof tempOrderArr['loss_percentage'] != 'undefined' ? tempOrderArr['loss_percentage'] : ''
+      }
+
+      var updPromise_2 = updateSingle(temp_sell_order_collection, where_2, tempOrderArr, upsert);
+      updPromise_2.then((callback) => {})
+  }else{
+
+      //when order was created with out auto sell and after buy it does not create sell array from edit page so set it from here
+      let sellOrderArr = tempOrderArr;
+      var buy_order_id = buyOrderId;
+
+      if (buy_order_id != '') {
+          sellOrderArr['buy_order_id'] = new ObjectID(buy_order_id);
+      }
+
+      //set profit percentage if sell price is fixed
+      if (sellOrderArr['profit_type'] == 'fixed_price') {
+          let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+          let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
+          sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+          sellOrderArr['profit_percent'] = sellOrderArr['sell_profit_percent']
+          sellOrderArr['sell_price'] = !isNaN(parseFloat(sellOrderArr['sell_price'])) ? parseFloat(sellOrderArr['sell_price']) : ''
+      }
+
+      //set sell profit percentage
+      if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+          let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
+          sellOrderArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+      }
+
+      //set stop loss
+      if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
+          sellOrderArr['stop_loss'] = 'yes'
+          sellOrderArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+
+          let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+          let loss_price = (parseFloat(purchased_price) * parseFloat(sellOrderArr['loss_percentage'])) / 100;
+          sellOrderArr['iniatial_trail_stop'] = parseFloat(purchased_price) - parseFloat(loss_price);
+
+      } else {
+          sellOrderArr['stop_loss'] = 'no'
+          sellOrderArr['loss_percentage'] = ''
+      }
+
+      //set lth profit
+      if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
+          sellOrderArr['lth_functionality'] = 'yes'
+          sellOrderArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
+      } else {
+          sellOrderArr['lth_functionality'] = 'no'
+          sellOrderArr['lth_profit'] = ''
+
+          if (getBuyOrder[0]['status'] == 'LTH') {
+              let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+              sellOrderArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+          }
+      }
+
+      if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
+          sellOrderArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
+      }
+
+      //add these fields in kraken order array
+      if (exchange == 'kraken') {
+          sellOrderArr['defined_sell_percentage'] = typeof sellOrderArr['sell_profit_percent'] != 'undefined' ? sellOrderArr['sell_profit_percent'] : ''
+          sellOrderArr['custom_stop_loss_percentage'] = typeof sellOrderArr['loss_percentage'] != 'undefined' ? sellOrderArr['loss_percentage'] : ''
+      }
+
+      //function to set manual order for sell
+      var sellOrderId = await setForSell(sellOrderArr, exchange, buy_order_id);
+
+      var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+      var updArr = {};
+      updArr['is_sell_order'] = 'yes';
+      updArr['sell_order_id'] = sellOrderId;
+      updArr['auto_sell'] = 'yes';
+      // updArr['quantity'] = parseFloat(sellOrderArr['quantity']);
+
+      //set profit percentage if sell price is fixed
+      if (sellOrderArr['profit_type'] == 'fixed_price') {
+          let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : ''
+          let sell_profit_percent = ((parseFloat(sellOrderArr['sell_price']) - purchased_price) / purchased_price) * 100
+          updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? parseFloat(Math.abs(sell_profit_percent).toFixed(1)) : ''
+          updArr['profit_percent'] = updArr['sell_profit_percent']
+      }
+
+      //set sell profit percentage
+      if (sellOrderArr['profit_type'] == 'percentage' && typeof sellOrderArr['sell_profit_percent'] != 'undefined') {
+          let sell_profit_percent = parseFloat(parseFloat(sellOrderArr['sell_profit_percent']).toFixed(1))
+          updArr['sell_profit_percent'] = !isNaN(sell_profit_percent) ? Math.abs(sell_profit_percent) : ''
+      }
+
+      //set stop loss
+      if (typeof sellOrderArr['stop_loss'] != 'undefined' && sellOrderArr['stop_loss'] == 'yes' && !isNaN(parseFloat(sellOrderArr['loss_percentage']))) {
+          updArr['stop_loss'] = 'yes'
+          updArr['loss_percentage'] = parseFloat(parseFloat(sellOrderArr['loss_percentage']).toFixed(1))
+      } else {
+          updArr['stop_loss'] = 'no'
+          updArr['loss_percentage'] = ''
+      }
+
+      //set lth profit
+      if (typeof sellOrderArr['lth_functionality'] != 'undefined' && sellOrderArr['lth_functionality'] == 'yes' && !isNaN(parseFloat(sellOrderArr['lth_profit']))) {
+          updArr['lth_functionality'] = 'yes'
+          updArr['lth_profit'] = parseFloat(parseFloat(sellOrderArr['lth_profit']).toFixed(1))
+      } else {
+          updArr['lth_functionality'] = 'no'
+          updArr['lth_profit'] = ''
+
+          if (getBuyOrder[0]['status'] == 'LTH') {
+              let purchased_price = !isNaN(parseFloat(getBuyOrder[0]['purchased_price'])) ? parseFloat(getBuyOrder[0]['purchased_price']) : parseFloat(getBuyOrder[0]['price'])
+              updArr['sell_price'] = ((parseFloat(purchased_price) / 100) * buyorderArr['sell_profit_percent']) + parseFloat(purchased_price);
+          }
+      }
+
+      if (typeof sellOrderArr['trail_interval'] != 'undefined' && sellOrderArr['trail_interval'] != '') {
+          updArr['trail_interval'] = parseFloat(sellOrderArr['trail_interval'])
+      }
+
+      var where = {};
+      where['_id'] = {
+          '$in': [buyOrderId, new ObjectID(buyOrderId)]
+      }
+      updArr['modified_date'] = new Date();
+
+
+      //add these fields in kraken order array
+      if (exchange == 'kraken') {
+          updArr['defined_sell_percentage'] = typeof updArr['sell_profit_percent'] != 'undefined' ? updArr['sell_profit_percent'] : ''
+          updArr['custom_stop_loss_percentage'] = typeof updArr['loss_percentage'] != 'undefined' ? updArr['loss_percentage'] : ''
+      }
+
+      var updPrmise = updateOne(where, updArr, collection);
+      updPrmise.then((callback) => { })
+
+      let log_msg = "Sell Order was Created " + interfaceType;
+      // var logPromise1 = recordOrderLog(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange);
+      var getBuyOrder = await listOrderById(buyOrderId, exchange);
+      var order_created_date = ((getBuyOrder.length > 0) ? getBuyOrder[0]['created_date'] : new Date())
+      var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
+      var logPromise1 = create_orders_history_log(buyOrderId, log_msg, 'set_for_sell', 'yes', exchange, order_mode, order_created_date)
+
+      logPromise1.then((resolve) => { })
+  }
+  */
+
+  resp.status(200).send({
+      message: 'order updated'
+  });
 
 }) //End of updateManualOrder
 
