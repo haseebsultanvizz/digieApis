@@ -4157,6 +4157,19 @@ async function listOrderListing(postDAta3, dbConnection) {
         filter['created_date'] = obj;
     }
 
+
+    if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
+        }
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
+        }
+        filter['modified_date'] = obj;
+    }
+
+
     if (postDAta.status == 'open') {
         // filter['status'] = {
         //     '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
