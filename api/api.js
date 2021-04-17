@@ -4184,7 +4184,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         filter['$or'] = [
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                // 'is_sell_order': 'yes',
+                'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -4194,7 +4194,7 @@ async function listOrderListing(postDAta3, dbConnection) {
             },
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                // 'is_sell_order': 'yes',
+                'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
             },
@@ -22411,6 +22411,17 @@ async function getOrderStats(postData2){
             filter_1['created_date'] = obj;
         }
 
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_1['modified_date'] = obj;
+        }
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_1[key] = value;
@@ -22443,6 +22454,16 @@ async function getOrderStats(postData2){
             }
             filter_2['created_date'] = obj;
         }
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_2['modified_date'] = obj;
+        }
 
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
@@ -22470,7 +22491,7 @@ async function getOrderStats(postData2){
         filter_3['$or'] = [
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                // 'is_sell_order': 'yes',
+                'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -22480,7 +22501,7 @@ async function getOrderStats(postData2){
             },
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                // 'is_sell_order': 'yes',
+                'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': {'$nin': ['yes', 'taking_child', 'completed']}
             },
@@ -22515,6 +22536,18 @@ async function getOrderStats(postData2){
             }
             filter_3['created_date'] = obj;
         }
+
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_3['modified_date'] = obj;
+        }
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_3[key] = value;
@@ -22565,6 +22598,18 @@ async function getOrderStats(postData2){
             }
             filter_33['created_date'] = obj;
         }
+
+
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_33['modified_date'] = obj;
+        }
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_33[key] = value;
@@ -22594,6 +22639,17 @@ async function getOrderStats(postData2){
             }
             filter_4['created_date'] = obj;
         }
+
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_4['modified_date'] = obj;
+        }
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_4[key] = value;
@@ -22621,6 +22677,18 @@ async function getOrderStats(postData2){
             }
             filter_errors['created_date'] = obj;
         }
+
+
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_errors['modified_date'] = obj;
+        }
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_errors[key] = value;
@@ -22646,6 +22714,17 @@ async function getOrderStats(postData2){
                 obj['$lte'] = new Date(postDAta.end_date);
             }
             filter_5['created_date'] = obj;
+        }
+
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_5['modified_date'] = obj;
         }
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
@@ -22679,6 +22758,17 @@ async function getOrderStats(postData2){
             }
             filter_6['created_date'] = obj;
         }
+
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_6['modified_date'] = obj;
+        }
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_6[key] = value;
@@ -22708,6 +22798,16 @@ async function getOrderStats(postData2){
                 obj['$lte'] = new Date(postDAta.end_date);
             }
             filter_7['created_date'] = obj;
+        }
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_7['modified_date'] = obj;
         }
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
@@ -22751,6 +22851,16 @@ async function getOrderStats(postData2){
                 obj['$lte'] = new Date(postDAta.end_date);
             }
             filter_8['created_date'] = obj;
+        }
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_8['modified_date'] = obj;
         }
 
         if (count > 0) {
@@ -22820,6 +22930,17 @@ async function getOrderStats(postData2){
             filter_12['created_date'] = obj;
         }
 
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_12['modified_date'] = obj;
+        }
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_12[key] = value;
@@ -22858,6 +22979,18 @@ async function getOrderStats(postData2){
             filter_9['created_date'] = obj;
         }
 
+
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_9['modified_date'] = obj;
+        }
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_9[key] = value;
@@ -22883,6 +23016,17 @@ async function getOrderStats(postData2){
                 obj['$lte'] = new Date(postDAta.end_date);
             }
             filter_all['created_date'] = obj
+        }
+
+        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_all['modified_date'] = obj;
         }
 
         let tempAllFilter = await getAllTabFilter()
