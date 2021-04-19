@@ -4158,7 +4158,7 @@ async function listOrderListing(postDAta3, dbConnection) {
     }
 
 
-    if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
         let obj = {}
         if (postDAta.modified_start_date != '') {
             obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -18650,11 +18650,11 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
             request(options, function (error, response, body) {
                 if (error) {
                     //Do nothing
-                    // console.log(error)
+                    console.log(error)
                 } else {
                     if (body.success == 'true') {
 
-                        // console.log(body)
+                        console.log(body)
 
                         //Save Buy History
                         // saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
@@ -18675,7 +18675,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
                         update_user_balance(buyArr.user_id)
 
                     }else{
-                        // console.log(buyArr.user_id, '  -----------  ' ,body)
+                        console.log(buyArr.user_id, '  -----------  ' ,body)
                     }
                 }
             })
@@ -18850,7 +18850,7 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                 usdWorthQty = parseFloat(auto_buy_usdt_worth) * oneUsdWorthQty
                 quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
 
-                // console.log(avaialableUsdWorth, ' < ', parseFloat(trigger_buy_usdt_worth))
+                console.log(avaialableUsdWorth, ' < ', parseFloat(trigger_buy_usdt_worth))
                 if (avaialableUsdWorth < parseFloat(trigger_buy_usdt_worth)){
                     //TODO: check if balance available to buy more
                     //Add 10% extr over current quantity trying to purchase
@@ -18859,8 +18859,8 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                     let currentQty = ((10 * (currentMarketPrice * quantity)) / 100);
                     let balance = (buy_currency == 'USDT' ? parseFloat(balanceObj['USDT']) : parseFloat(balanceObj['BTC']))
 
-                    // console.log(balance, ' > ', currentQty)
-                    // console.log('minReqQty ', minReqQty, 'quantity ', quantity)
+                    console.log(balance, ' > ', currentQty)
+                    console.log('minReqQty ', minReqQty, 'quantity ', quantity)
 
                     if (balance > currentQty) {
                         //TODO: send for buy
@@ -22512,7 +22512,7 @@ async function getOrderStats(postData2){
             filter_1['created_date'] = obj;
         }
 
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -22555,7 +22555,7 @@ async function getOrderStats(postData2){
             }
             filter_2['created_date'] = obj;
         }
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -22638,7 +22638,7 @@ async function getOrderStats(postData2){
             filter_3['created_date'] = obj;
         }
 
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -22703,7 +22703,7 @@ async function getOrderStats(postData2){
         }
 
 
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -22743,7 +22743,7 @@ async function getOrderStats(postData2){
             filter_4['created_date'] = obj;
         }
 
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -22782,7 +22782,7 @@ async function getOrderStats(postData2){
         }
 
 
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -22819,7 +22819,7 @@ async function getOrderStats(postData2){
             filter_5['created_date'] = obj;
         }
 
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -22862,7 +22862,7 @@ async function getOrderStats(postData2){
             filter_6['created_date'] = obj;
         }
 
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -22902,7 +22902,7 @@ async function getOrderStats(postData2){
             }
             filter_7['created_date'] = obj;
         }
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -22955,7 +22955,7 @@ async function getOrderStats(postData2){
             }
             filter_8['created_date'] = obj;
         }
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -23033,7 +23033,7 @@ async function getOrderStats(postData2){
             filter_12['created_date'] = obj;
         }
 
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -23083,7 +23083,7 @@ async function getOrderStats(postData2){
         }
 
 
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -23121,7 +23121,7 @@ async function getOrderStats(postData2){
             filter_all['created_date'] = obj
         }
 
-        if (postDAta.modified_start_date != '' || postDAta.modified_end_date != '') {
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
             let obj = {}
             if (postDAta.modified_start_date != '') {
                 obj['$gte'] = new Date(postDAta.modified_start_date);
@@ -27850,5 +27850,81 @@ router.all('/getAllGlobalCoins', async (req, res) => {
     }
 
 })
+
+
+router.get('/createATGFromScriptForUser', async (req, res)=>{
+
+    createATGFromScriptForUser()
+
+    res.send({})
+})
+
+async function createATGFromScriptForUser(){
+
+    const db = await conn
+
+    let user_ids = [
+    ]
+
+    if (user_ids.length > 0) {
+
+        let total_user_ids = user_ids.length 
+        for (let i = 0; i < total_user_ids; i++){
+
+            let user_id = user_ids[i]
+            let exchange = 'kraken'
+            let application_mode = 'live'
+            let user_atg_settings = await db.collection('auto_trade_settings_kraken').find({'user_id': user_id, 'application_mode': 'live' }).toArray()
+
+            if (user_atg_settings.length >0){
+
+                console.log('current user in progress  :::  user_id  :::  ', user_id)
+                
+                //reset ATG call
+                var reqObj = {
+                    'type': 'POST',
+                    'url': 'https://digiapis.digiebot.com/apiEndPoint/resetAutoTradeGenerator',
+                    'payload': {
+                        'user_id': String(user_id),
+                        'exchange': exchange,
+                        'application_mode': application_mode,
+                    },
+                }
+                var apiResult = await customApiRequest(reqObj)
+                console.log(' XXXXXXXX reset call done')
+                
+                user_atg_settings = user_atg_settings[0]
+                
+                
+                console.log(' >>>>>>>>>> ATG create call done')
+                
+                //Create ATG call
+                var reqObj = {
+                    'type': 'POST',
+                    'url': 'https://digiapis.digiebot.com/apiEndPoint/saveAutoTradeSettings',
+                    'payload': {
+                        'user_id': String(user_id),
+                        'exchange': exchange,
+                        'data': user_atg_settings,
+                        'application_mode': application_mode,
+                    },
+                }
+                var apiResult = await customApiRequest(reqObj)
+                
+                console.log(' __________________ ATG done ')
+
+
+            }
+
+            // break;
+        }
+
+        console.log('************ Script Completed ************')
+    }
+
+    return true
+}
+
+
 
 module.exports = router;
