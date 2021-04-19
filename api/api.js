@@ -4213,6 +4213,7 @@ async function listOrderListing(postDAta3, dbConnection) {
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
                 // 'is_sell_order': 'yes',
+                'is_sell_order': {'$ne' : 'sold'},
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -4222,6 +4223,7 @@ async function listOrderListing(postDAta3, dbConnection) {
             },
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
+                'is_sell_order': {'$ne' : 'sold'},
                 // 'is_sell_order': 'yes',
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
@@ -22571,6 +22573,7 @@ async function getOrderStats(postData2){
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
                 // 'is_sell_order': 'yes',
+                'is_sell_order': {'$ne' : 'sold'},
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': 'yes',
                 'cavg_parent': 'yes',
@@ -22581,6 +22584,7 @@ async function getOrderStats(postData2){
             {
                 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
                 // 'is_sell_order': 'yes',
+                'is_sell_order': {'$ne' : 'sold'},
                 'is_lth_order': { '$ne': 'yes' },
                 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
             },
