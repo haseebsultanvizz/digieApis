@@ -16128,6 +16128,7 @@ async function createAutoTradeParents(settings){
                     }
                     let set1 = {
                         '$set': {
+                            'auto_trade_generator': 'yes',
                             'market_value': '',
                             'price': '',
                             'quantity': minReqQty,
@@ -16237,6 +16238,7 @@ async function createAutoTradeParents(settings){
                     }
                     let set1 = {
                         '$set': {
+                            'auto_trade_generator': 'yes',
                             'market_value': '',
                             'price': '',
                             'quantity': quantity,
