@@ -15280,6 +15280,13 @@ router.post('/get_user_exchanges', async (req,res) => {
     }
 })
 
+
+
+
+
+
+
+
 //getAutoTradeSettings
 router.post('/getAutoTradeSettings', async (req, res) => {
 
@@ -15444,6 +15451,31 @@ router.post('/getAutoTradeParents', async (req, res) => {
         });
     }
 })//end getAutoTradeSettings
+
+// get User Manual Triggers
+router.post('/get_user_manual_triggers', async (req,res) => {
+    let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''
+    let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : ''
+    let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
+
+
+
+    let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange
+
+
+    let where = {
+        'admin_id': user_id,
+        'application_mode': application_mode,
+        'parent_status': 'parent',
+        'status': { '$ne': 'canceled' },
+        'auto_trade_generator': { '$ne': 'yes' }
+    }
+
+    conn.then(async (db) => {
+        var Total_count = await db.collection(collectionName).find(where).count();
+        res.send({status: true, count: Total_count, message: 'Count for Manaully Created Triggers.'});
+    });
+});
 
 //saveAutoTradeSettings
 router.post('/saveAutoTradeSettings', async (req, res) => {
@@ -15965,6 +15997,52 @@ async function createAutoTradeParents(settings){
 
         // console.log('user_remaining_usd_limit ', user_remaining_usd_limit)
 
+
+
+        //TODO: manual_parents_arrr :: get array of all manual parents grouped by order_level and coins
+        let replace_manual_parent = step4.replace_manual_parent
+
+
+        if(replace_manual_parent == 'yes'){
+            var manual_parents_arrr = []
+        } else {
+           var manual_parents_pipeline = [
+                {
+                    '$match': {
+                        'admin_id': '5eb5a5a628914a45246bacc6',
+                        'application_mode': 'live',
+                        'parent_status': 'parent',
+                        'status': { '$ne': 'canceled' },
+                        'auto_trade_generator': { '$ne': 'yes' }
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': { 'symbol': '$symbol', 'order_level': '$order_level' },
+                        // 'order': { '$push': '$$ROOT' },
+                        'total': { '$sum': 1 }
+                    }
+                },
+                {
+                    '$project': {
+                        '_id': 1,
+                        'total': 1
+                    }
+                },
+                {
+                    '$sort': {
+                        '_id.symbol': 1
+                    }
+                }
+            ]
+            var manual_parents_arrr = await db.collection(collectionName).aggregate(manual_parents_pipeline).toArray()
+        }
+
+
+
+
+
+
         for(let i=0; i<coninsCount; i++){
 
             let coin = coins[i]
@@ -16024,8 +16102,19 @@ async function createAutoTradeParents(settings){
 
                     level = bots[index]
 
+                    // IF Replace Manual Order is NO
+                    if(replace_manual_parent == 'no'){
+                        if(manual_parents_arrr.length > 0){
+                            let if_manual_parent_exists = manual_parents_arrr.filter(item => { return item._id.symbol == coin && item._id.order_level == bots[index] }).length > 0 ? true : false
+                            if (if_manual_parent_exists){
+                                continue;
+                            }
+                        }
+                    }
+
+
                     let where1 = {
-                        'auto_trade_generator': 'yes',
+                        // 'auto_trade_generator': 'yes',
                         'admin_id': user_id,
                         'order_mode': application_mode,
                         'application_mode': application_mode,
@@ -16123,8 +16212,18 @@ async function createAutoTradeParents(settings){
 
                     level = bots[index]
 
+                    // IF Replace Manual Order is NO
+                    if(replace_manual_parent == 'no'){
+                        if(manual_parents_arrr.length > 0){
+                            let if_manual_parent_exists = manual_parents_arrr.filter(item => { return item._id.symbol == coin && item._id.order_level == bots[index] }).length > 0 ? true : false
+                            if (if_manual_parent_exists){
+                                continue;
+                            }
+                        }
+                    }
+
                     let where1 = {
-                        'auto_trade_generator': 'yes',
+                        // 'auto_trade_generator': 'yes',
                         'admin_id': user_id,
                         'order_mode': application_mode,
                         'application_mode': application_mode,
