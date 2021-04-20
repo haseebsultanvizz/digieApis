@@ -18923,6 +18923,8 @@ router.post('/buySellCoinBalance', (req, res) => {
             }
 
             let result = await buySellCoinBalanceNow(dataArr, exchange)
+            // console.log('hit came')
+
             res.send(result);
         }
     })
@@ -19034,6 +19036,8 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                 // })
             } else if (exchange == 'kraken'){
 
+                // console.log(' Hit came, kraken ')
+
                 var options = {
                     method: 'POST',
                     url: 'http://34.199.235.34:3200/buySellPost',
@@ -19053,6 +19057,8 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                         })
                     } else {
                         if (body.success == 'true') {
+
+                            // console.log(body)
 
                             body.reqData = reqData
                             //Save History
@@ -27301,6 +27307,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     let search_order_id = filter.search_order_id
 
     order_type = order_type == 'all' ? '' : order_type
+    mapped_status = mapped_status == 'all' ? '' : mapped_status
 
     if (typeof filter.searchUsername != 'undefined' && filter.searchUsername != '') {
 
