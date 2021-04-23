@@ -11632,243 +11632,245 @@ router.post('/get_error_in_sell', async (req, resp) => {
 //remove error from orders
 router.post('/remove_error', async (req, resp) => {
 
-    let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
-    let order_id = req.body.order_id;
-    let exchange = req.body.exchange;
-    conn.then(async (db) => {
+  let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+  let order_id = req.body.order_id;
+  let exchange = req.body.exchange;
+  conn.then(async (db) => {
 
-        //delete sell order from ready_orders_for_sell_ip_based
-        let ready_for_sell_collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange
-        await db.collection(ready_for_sell_collection).deleteOne({ 'buy_order_id': { '$in': [order_id, new ObjectID(order_id)]}});
+      //delete sell order from ready_orders_for_sell_ip_based
+      let ready_for_sell_collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange
+      await db.collection(ready_for_sell_collection).deleteOne({ 'buy_order_id': { '$in': [order_id, new ObjectID(order_id)]}});
 
-        //get buy order
-        let buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        let sell_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+      //get buy order
+      let buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+      let sell_collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
 
-        let where = {
-            '_id': {
-                $in: [order_id, new ObjectID(order_id)]
-            }
-        }
-        let buy_order = await db.collection(buy_collection).find(where).limit(1).toArray();
-        if (buy_order.length > 0) {
-            buy_order = buy_order[0]
+      let where = {
+          '_id': {
+              $in: [order_id, new ObjectID(order_id)]
+          }
+      }
+      let buy_order = await db.collection(buy_collection).find(where).limit(1).toArray();
+      if (buy_order.length > 0) {
+          buy_order = buy_order[0]
 
-            //find error in buy_order
-            let buy_status = buy_order['status']
-            let temp_buy_status_arr = buy_status.split('_')
-            var error_type = '';
+          //find error in buy_order
+          let buy_status = buy_order['status']
+          let temp_buy_status_arr = buy_status.split('_')
+          var error_type = '';
 
-            var custom_unset = 0
+          var custom_unset = 0
 
-            var update_buy_status = '';
-            var buy_status_update = false
+          var update_buy_status = '';
+          var buy_status_update = false
 
-            if (buy_status == 'error') {
+          if (buy_status == 'error') {
 
-                custom_unset = 1
-                update_buy_status = 'new'
-                error_type = buy_status
-            } else if (temp_buy_status_arr[0] == 'new') {
+              custom_unset = 1
+              update_buy_status = 'new'
+              error_type = buy_status
+          } else if (temp_buy_status_arr[0] == 'new') {
 
-                //remove new error
-                update_buy_status = 'canceled'
-                error_type = temp_buy_status_arr.join(' ')
+              //remove new error
+              update_buy_status = 'canceled'
+              error_type = temp_buy_status_arr.join(' ')
 
-            } else if (temp_buy_status_arr[0] == 'buy' || temp_buy_status_arr[0] == 'BUY') {
+          } else if (temp_buy_status_arr[0] == 'buy' || temp_buy_status_arr[0] == 'BUY') {
 
-                //remove buy error
-                update_buy_status = 'canceled'
-                error_type = temp_buy_status_arr.join(' ')
+              //remove buy error
+              update_buy_status = 'canceled'
+              error_type = temp_buy_status_arr.join(' ')
 
-            } else if (temp_buy_status_arr[0] == 'FILLED' || temp_buy_status_arr[0] == 'LTH') {
+          } else if (temp_buy_status_arr[0] == 'FILLED' || temp_buy_status_arr[0] == 'LTH') {
 
-                //remove FILLED or LTH error
-                update_buy_status = 'FILLED'
-                error_type = temp_buy_status_arr.join(' ')
+              //remove FILLED or LTH error
+              update_buy_status = 'FILLED'
+              error_type = temp_buy_status_arr.join(' ')
 
-            } else if (buy_status == 'FILLED_ERROR' || buy_status == 'submitted_ERROR' || buy_status == 'LTH_ERROR' || buy_status == 'new_ERROR') {
-                let statusArr = buy_status.split('_');
-                update_buy_status = statusArr[0];
-                error_type = statusArr.join(' ');
+          } else if (buy_status == 'FILLED_ERROR' || buy_status == 'submitted_ERROR' || buy_status == 'LTH_ERROR' || buy_status == 'new_ERROR') {
+              let statusArr = buy_status.split('_');
+              update_buy_status = statusArr[0];
+              error_type = statusArr.join(' ');
 
-                if(update_buy_status == 'new'){
-                    custom_unset = 1
-                }
+              if(update_buy_status == 'new'){
+                  custom_unset = 1
+              }
 
-            }else{
-                update_buy_status = 'skip'
-                //check if error exist in sell order status
-            }
+          }else{
+              update_buy_status = 'skip'
+              //check if error exist in sell order status
+          }
 
-            if (update_buy_status != '') {
+          if (update_buy_status != '') {
 
-                //skip buy status update if error only exist in sell order
-                if (update_buy_status != 'skip'){
-
-
-                    let update = {}
-                    let set1 = {}
-
-                    //Calculate initial trail price
-                    if (typeof buy_order['purchased_price'] != 'undefined' && buy_order['purchased_price'] != '' && typeof buy_order['custom_stop_loss_percentage'] != 'undefined' && buy_order['custom_stop_loss_percentage'] != ''){
-                        var tt_purchased_price = parseFloat(buy_order['purchased_price'])
-                        if (!isNaN(tt_purchased_price)) {
-                            var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
-                            if (!isNaN(tt_CSLP)) {
-                                var loss_price = (tt_purchased_price * tt_CSLP) / 100;
-                                set1['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
-                                set1['custom_stop_loss_percentage'] = tt_CSLP;
-                                set1['loss_percentage'] = tt_CSLP;
-                                set1['custom_stop_loss_step'] = 0;
-                            }
-                        }
-                    }
-
-                    //remove error from buy_order
-                    let where = {
-                        '_id': new ObjectID(order_id)
-                    }
-                    set1['status'] = update_buy_status
-                    set1['modified_date'] = new Date()
-
-                    update['$set'] = set1
-                    update['$unset'] = {
-                        'is_lth_order':'',
-                        'order_sell_process': ''
-                    }
-
-                    if (custom_unset === 1){
-                        update['$unset']['sent_for_buy'] = ''
-                    }
-
-                    let updated = await db.collection(buy_collection).updateOne(where, update)
-
-                    if (update_buy_status == 'canceled'){
-                        //Delete sell order
-                        if (typeof buy_order['sell_order_id'] != 'undefined' && buy_order['sell_order_id'] != '') {
-                            let where2 = {
-                                '_id': new ObjectID(String(buy_order['sell_order_id']))
-                            }
-                            await db.collection(sell_collection).deleteOne(where2)
-                        }
-
-                        //set parent if exists
-                        if (typeof buy_order['buy_parent_id'] != 'undefined' && buy_order['buy_parent_id'] != '') {
-                            let where3 = {
-                                '_id': new ObjectID(String(buy_order['buy_parent_id'])),
-                                'pause_manually': { '$ne': 'yes' },
-                                'status': { '$ne': 'canceled' },
-                            }
-                            let updObj3 = {};
-                            updObj3['$set'] = {};
-                            updObj3['$set']['status'] = 'new';
-                            updObj3['$set']['pause_status'] = 'play';
-                            updObj3['$set']['modified_date'] = new Date()
-                            await db.collection(buy_collection).updateOne(where3, updObj3)
-                        }
-                    }
-
-                }
-
-                //remove error from sell_order
-                if (typeof buy_order['sell_order_id'] != 'undefined') {
-
-                    let update2 = {}
-                    let set2 = {}
-
-                    //Calculate initial trail price
-                    if (typeof buy_order['purchased_price'] != 'undefined' && buy_order['purchased_price'] != '' && typeof buy_order['custom_stop_loss_percentage'] != 'undefined' && buy_order['custom_stop_loss_percentage'] != '') {
-                        var tt_purchased_price = parseFloat(buy_order['purchased_price'])
-                        if (!isNaN(tt_purchased_price)) {
-                            var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
-                            if (!isNaN(tt_CSLP)) {
-                                var loss_price = (tt_purchased_price * tt_CSLP) / 100;
-                                set2['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
-                                set2['custom_stop_loss_percentage'] = tt_CSLP;
-                                set2['loss_percentage'] = tt_CSLP;
-                                set2['custom_stop_loss_step'] = 0;
-                            }
-                        }
-                    }
-
-                    let where2 = {
-                        '_id': new ObjectID(String(buy_order['sell_order_id']))
-                    }
-                    set2['status'] = 'new'
-                    set2['modified_date'] = new Date()
-                    update2['$set'] = set2
-                    let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
-
-                    await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$unset': { 'sent_for_sell': '' } })
-                    
-                }
-
-                //create remove error log
-                var log_msg = 'Order was updated And Removed ' + error_type + ' ' + interfaceType + ' ***';
-                var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, buy_order['application_mode'], buy_order['created_date'])
-                promiseLog.then((callback) => {});
-
-                //Send Notification
-                send_notification(buy_order['admin_id'], 'news_alerts', 'medium', log_msg, order_id, exchange, buy_order['symbol'], buy_order['application_mode'], '')
-
-                resp.status(200).send({
-                    status: true,
-                    message: 'Error removed successfully',
-                });
-            } else {
-                resp.status(200).send({
-                    status: false,
-                    message: 'Something went wrong'
-                });
-            }
-        } else {
-            resp.status(200).send({
-                status: false,
-                message: 'Something went wrong'
-            });
-        }
-
-        // let where = {};
-        // where['buy_order_id'] = { $in: [order_id, new ObjectID(order_id)] }
-        // where['status'] = { $in: ['error', 'LTH_ERROR', 'FILLED_ERROR', 'submitted_ERROR'] }
-        // let update = {};
-        // update['status'] = 'new'
-
-        // let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
-        // let set = {};
-        // set['$set'] = update;
-        // db.collection(collection).updateOne(where, set, async (err, result) => {
-        //     if (err) {
-        //         console.log(err)
-        //         resp.status(200).send({
-        //             status: false,
-        //             message: 'Something went wrong'
-        //         });
-        //     } else {
-
-        //         if (result['nModified'] > 0) {
-
-        //             resp.status(200).send({
-        //                 status: true,
-        //                 message: 'Error removed successfully',
-        //                 result
-        //             });
-
-        //         } else {
-        //             resp.status(200).send({
-        //                 status: false,
-        //                 message: 'Something went wrong'
-        //             });
-        //         }
-
-        //     }
-        // })
+              //skip buy status update if error only exist in sell order
+              if (update_buy_status != 'skip'){
 
 
-    })
+                  let update = {}
+                  let set1 = {}
+
+                  //Calculate initial trail price
+                  if (typeof buy_order['purchased_price'] != 'undefined' && buy_order['purchased_price'] != '' && typeof buy_order['custom_stop_loss_percentage'] != 'undefined' && buy_order['custom_stop_loss_percentage'] != ''){
+                      var tt_purchased_price = parseFloat(buy_order['purchased_price'])
+                      if (!isNaN(tt_purchased_price)) {
+                          var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
+                          if (!isNaN(tt_CSLP)) {
+                              var loss_price = (tt_purchased_price * tt_CSLP) / 100;
+                              set1['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
+                              set1['custom_stop_loss_percentage'] = tt_CSLP;
+                              set1['loss_percentage'] = tt_CSLP;
+                              set1['custom_stop_loss_step'] = 0;
+                          }
+                      }
+                  }
+
+                  //remove error from buy_order
+                  let where = {
+                      '_id': new ObjectID(order_id)
+                  }
+                  set1['status'] = update_buy_status
+                  set1['modified_date'] = new Date()
+
+                  update['$set'] = set1
+                  update['$unset'] = {
+                      'is_lth_order':'',
+                      'order_sell_process': ''
+                  }
+
+                  if (custom_unset === 1){
+                      update['$unset']['sent_for_buy'] = ''
+                  }
+
+                  let updated = await db.collection(buy_collection).updateOne(where, update)
+
+                  if (update_buy_status == 'canceled'){
+                      //Delete sell order
+                      if (typeof buy_order['sell_order_id'] != 'undefined' && buy_order['sell_order_id'] != '') {
+                          let where2 = {
+                              '_id': new ObjectID(String(buy_order['sell_order_id']))
+                          }
+                          await db.collection(sell_collection).deleteOne(where2)
+                      }
+
+                      //set parent if exists
+                      if (typeof buy_order['buy_parent_id'] != 'undefined' && buy_order['buy_parent_id'] != '') {
+                          let where3 = {
+                              '_id': new ObjectID(String(buy_order['buy_parent_id'])),
+                              'pause_manually': { '$ne': 'yes' },
+                              'status': { '$ne': 'canceled' },
+                          }
+                          let updObj3 = {};
+                          updObj3['$set'] = {};
+                          updObj3['$set']['status'] = 'new';
+                          updObj3['$set']['pause_status'] = 'play';
+                          updObj3['$set']['modified_date'] = new Date()
+                          await db.collection(buy_collection).updateOne(where3, updObj3)
+                      }
+                  }
+
+              }
+
+              //remove error from sell_order
+              if (typeof buy_order['sell_order_id'] != 'undefined') {
+
+                  let update2 = {}
+                  let set2 = {}
+
+                  //Calculate initial trail price
+                  if (typeof buy_order['purchased_price'] != 'undefined' && buy_order['purchased_price'] != '' && typeof buy_order['custom_stop_loss_percentage'] != 'undefined' && buy_order['custom_stop_loss_percentage'] != '') {
+                      var tt_purchased_price = parseFloat(buy_order['purchased_price'])
+                      if (!isNaN(tt_purchased_price)) {
+                          var tt_CSLP = parseFloat(parseFloat(buy_order['custom_stop_loss_percentage']).toFixed(1))
+                          if (!isNaN(tt_CSLP)) {
+                              var loss_price = (tt_purchased_price * tt_CSLP) / 100;
+                              set2['iniatial_trail_stop'] = parseFloat(tt_purchased_price) - parseFloat(loss_price);
+                              set2['custom_stop_loss_percentage'] = tt_CSLP;
+                              set2['loss_percentage'] = tt_CSLP;
+                              set2['custom_stop_loss_step'] = 0;
+                          }
+                      }
+                  }
+
+                  let where2 = {
+                      '_id': new ObjectID(String(buy_order['sell_order_id']))
+                  }
+                  set2['status'] = 'new'
+                  set2['modified_date'] = new Date()
+                  update2['$set'] = set2
+                  let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
+
+                  await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$unset': { 'sent_for_sell': '' } })
+
+              }
+
+              //create remove error log
+              var log_msg = 'Order was updated And Removed ' + error_type + ' ' + interfaceType + ' ***';
+              var promiseLog = create_orders_history_log(order_id, log_msg, 'remove_error', 'yes', exchange, buy_order['application_mode'], buy_order['created_date'])
+              promiseLog.then((callback) => {});
+
+              //Send Notification
+              send_notification(buy_order['admin_id'], 'news_alerts', 'medium', log_msg, order_id, exchange, buy_order['symbol'], buy_order['application_mode'], '')
+
+              resp.status(200).send({
+                  status: true,
+                  message: 'Error removed successfully',
+              });
+          } else {
+              resp.status(200).send({
+                  status: false,
+                  message: 'Something went wrong'
+              });
+          }
+      } else {
+          resp.status(200).send({
+              status: false,
+              message: 'Something went wrong'
+          });
+      }
+
+      // let where = {};
+      // where['buy_order_id'] = { $in: [order_id, new ObjectID(order_id)] }
+      // where['status'] = { $in: ['error', 'LTH_ERROR', 'FILLED_ERROR', 'submitted_ERROR'] }
+      // let update = {};
+      // update['status'] = 'new'
+
+      // let collection = (exchange == 'binance') ? 'orders' : 'orders_' + exchange;
+      // let set = {};
+      // set['$set'] = update;
+      // db.collection(collection).updateOne(where, set, async (err, result) => {
+      //     if (err) {
+      //         console.log(err)
+      //         resp.status(200).send({
+      //             status: false,
+      //             message: 'Something went wrong'
+      //         });
+      //     } else {
+
+      //         if (result['nModified'] > 0) {
+
+      //             resp.status(200).send({
+      //                 status: true,
+      //                 message: 'Error removed successfully',
+      //                 result
+      //             });
+
+      //         } else {
+      //             resp.status(200).send({
+      //                 status: false,
+      //                 message: 'Something went wrong'
+      //             });
+      //         }
+
+      //     }
+      // })
+
+
+  })
 
 }) //End of remove_error
+
+
 
 //chekc of order is in sell
 function get_error_in_sell(order_id, exchange) {
@@ -19034,13 +19036,17 @@ router.post('/buySellCoinBalance', (req, res) => {
                 'message': 'Request successful.'
             });
         } else {
+
+
+        var extra_quantity = await findQtyFromUsdWorth(symbol, 1, exchange)
+
             let dataArr = {
                 'user_id': user_id,
                 // 'application_mode': application_mode,
                 'exchange': exchange,
                 'action': action,
                 'symbol': symbol,
-                'quantity': quantity,
+                'quantity': (parseFloat(quantity) + parseFloat(extra_quantity)),
             }
 
             let result = await buySellCoinBalanceNow(dataArr, exchange)
@@ -19215,61 +19221,6 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
         }
     })
 }//End buySellCoinBalanceNow
-
-
-router.post('/findQtyFromUsdWorth', async (req, res)=>{
-    let symbol = req.body.symbol
-    let exchange = req.body.exchange
-    let usdAmount = req.body.usdAmount
-
-    if (typeof symbol != 'undefined' && symbol != '' && typeof exchange != 'undefined' && exchange != '' && typeof usdAmount != 'undefined' && usdAmount != '' && !isNaN(parseFloat(usdAmount))){
-        usdAmount = parseFloat(usdAmount)
-
-        let qty = await findQtyFromUsdWorth(symbol, usdAmount, exchange)
-        res.send({ symbol, usdAmount, qty, exchange})
-    }else{
-        res.send({ 'error': 'symbol, usdAmount and exchange are required' })
-    }
-
-})
-
-async function findQtyFromUsdWorth(coin, usd, exchange){
-
-    return new Promise(async resolve=>{
-
-        let marketPricesArr = await getPricesArr(exchange, ['BTCUSDT', coin])
-
-        let BTCUSDTPRICE = marketPricesArr['BTCUSDT']['currentmarketPrice']
-        let currentMarketPrice = marketPricesArr[coin]['currentmarketPrice']
-        let marketMinNotationStepSize = marketPricesArr[coin]['marketMinNotationStepSize']
-
-        let qty = 0
-
-        let selectedCoin = coin;
-        let splitArr = selectedCoin.split('USDT');
-        var usdWorthQty = 0
-        var oneUsdWorthQty = 0;
-    
-        if (splitArr[1] == '') {
-            oneUsdWorthQty = 1 / currentMarketPrice
-            usdWorthQty = usd * oneUsdWorthQty
-            // console.log('USD COIN', oneUsdWorthQty);
-        } else {
-            oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
-            usdWorthQty = usd * oneUsdWorthQty
-            // console.log('BTC COIN', oneUsdWorthQty);
-        }
-    
-        var toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
-        if (exchange == 'kraken') {
-            toFixedNum = 6
-        }
-
-        qty = !isNaN(parseFloat(usdWorthQty.toFixed(toFixedNum))) ? parseFloat(usdWorthQty.toFixed(toFixedNum)) : 0
-
-        resolve(qty)
-    })
-}//End findQtyFromUsdWorth
 
 //saveBuySellCoinBalanceHistory
 async function saveBuySellCoinBalanceHistory(user_id, exchange, response, action) {
@@ -27882,6 +27833,73 @@ async function candleCoins() {
 
     })
 }
+
+
+
+router.post('/findQtyFromUsdWorth', async (req, res)=>{
+  let symbol = req.body.symbol
+  let exchange = req.body.exchange
+  let usdAmount = req.body.usdAmount
+
+  if (typeof symbol != 'undefined' && symbol != '' && typeof exchange != 'undefined' && exchange != '' && typeof usdAmount != 'undefined' && usdAmount != '' && !isNaN(parseFloat(usdAmount))){
+      usdAmount = parseFloat(usdAmount)
+
+      let qty = await findQtyFromUsdWorth(symbol, usdAmount, exchange)
+      res.send({ symbol, usdAmount, qty, exchange})
+  }else{
+      res.send({ 'error': 'symbol, usdAmount and exchange are required' })
+  }
+
+})
+
+async function findQtyFromUsdWorth(coin, usd, exchange){
+
+  return new Promise(async resolve=>{
+
+      let marketPricesArr = await getPricesArr(exchange, ['BTCUSDT', coin])
+
+      let BTCUSDTPRICE = marketPricesArr['BTCUSDT']['currentmarketPrice']
+      let currentMarketPrice = marketPricesArr[coin]['currentmarketPrice']
+      let marketMinNotationStepSize = marketPricesArr[coin]['marketMinNotationStepSize']
+
+      let qty = 0
+
+      let selectedCoin = coin;
+      let splitArr = selectedCoin.split('USDT');
+      var usdWorthQty = 0
+      var oneUsdWorthQty = 0;
+
+      if (splitArr[1] == '') {
+          oneUsdWorthQty = 1 / currentMarketPrice
+          usdWorthQty = usd * oneUsdWorthQty
+          // console.log('USD COIN', oneUsdWorthQty);
+      } else {
+          oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
+          usdWorthQty = usd * oneUsdWorthQty
+          // console.log('BTC COIN', oneUsdWorthQty);
+      }
+
+      var toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+      if (exchange == 'kraken') {
+          toFixedNum = 6
+      }
+
+      qty = !isNaN(parseFloat(usdWorthQty.toFixed(toFixedNum))) ? parseFloat(usdWorthQty.toFixed(toFixedNum)) : 0
+
+      resolve(qty)
+  })
+}//End findQtyFromUsdWorth
+
+
+
+
+
+
+
+
+
+
+
 
 router.all('/getAllGlobalCoins', async (req, res) => {
 
