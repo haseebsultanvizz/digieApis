@@ -11659,10 +11659,14 @@ router.post('/remove_error', async (req, resp) => {
             let temp_buy_status_arr = buy_status.split('_')
             var error_type = '';
 
+            var custom_unset = 0
+
             var update_buy_status = '';
             var buy_status_update = false
 
             if (buy_status == 'error') {
+
+                custom_unset = 1
                 update_buy_status = 'new'
                 error_type = buy_status
             } else if (temp_buy_status_arr[0] == 'new') {
@@ -11687,6 +11691,11 @@ router.post('/remove_error', async (req, resp) => {
                 let statusArr = buy_status.split('_');
                 update_buy_status = statusArr[0];
                 error_type = statusArr.join(' ');
+
+                if(update_buy_status == 'new'){
+                    custom_unset = 1
+                }
+
             }else{
                 update_buy_status = 'skip'
                 //check if error exist in sell order status
@@ -11727,6 +11736,10 @@ router.post('/remove_error', async (req, resp) => {
                     update['$unset'] = {
                         'is_lth_order':'',
                         'order_sell_process': ''
+                    }
+
+                    if (custom_unset === 1){
+                        update['$unset']['sent_for_buy'] = ''
                     }
 
                     let updated = await db.collection(buy_collection).updateOne(where, update)
@@ -11786,6 +11799,9 @@ router.post('/remove_error', async (req, resp) => {
                     set2['modified_date'] = new Date()
                     update2['$set'] = set2
                     let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
+
+                    await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$unset': { 'sent_for_sell': '' } })
+                    
                 }
 
                 //create remove error log
@@ -19195,6 +19211,61 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
         }
     })
 }//End buySellCoinBalanceNow
+
+
+router.post('/findQtyFromUsdWorth', async (req, res)=>{
+    let symbol = req.body.symbol
+    let exchange = req.body.exchange
+    let usdAmount = req.body.usdAmount
+
+    if (typeof symbol != 'undefined' && symbol != '' && typeof exchange != 'undefined' && exchange != '' && typeof usdAmount != 'undefined' && usdAmount != '' && !isNaN(parseFloat(usdAmount))){
+        usdAmount = parseFloat(usdAmount)
+
+        let qty = await findQtyFromUsdWorth(symbol, usdAmount, exchange)
+        res.send({ symbol, usdAmount, qty, exchange})
+    }else{
+        res.send({ 'error': 'symbol, usdAmount and exchange are required' })
+    }
+
+})
+
+async function findQtyFromUsdWorth(coin, usd, exchange){
+
+    return new Promise(async resolve=>{
+
+        let marketPricesArr = await getPricesArr(exchange, ['BTCUSDT', coin])
+
+        let BTCUSDTPRICE = marketPricesArr['BTCUSDT']['currentmarketPrice']
+        let currentMarketPrice = marketPricesArr[coin]['currentmarketPrice']
+        let marketMinNotationStepSize = marketPricesArr[coin]['marketMinNotationStepSize']
+
+        let qty = 0
+
+        let selectedCoin = coin;
+        let splitArr = selectedCoin.split('USDT');
+        var usdWorthQty = 0
+        var oneUsdWorthQty = 0;
+    
+        if (splitArr[1] == '') {
+            oneUsdWorthQty = 1 / currentMarketPrice
+            usdWorthQty = usd * oneUsdWorthQty
+            // console.log('USD COIN', oneUsdWorthQty);
+        } else {
+            oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
+            usdWorthQty = usd * oneUsdWorthQty
+            // console.log('BTC COIN', oneUsdWorthQty);
+        }
+    
+        var toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
+        if (exchange == 'kraken') {
+            toFixedNum = 6
+        }
+
+        qty = !isNaN(parseFloat(usdWorthQty.toFixed(toFixedNum))) ? parseFloat(usdWorthQty.toFixed(toFixedNum)) : 0
+
+        resolve(qty)
+    })
+}//End findQtyFromUsdWorth
 
 //saveBuySellCoinBalanceHistory
 async function saveBuySellCoinBalanceHistory(user_id, exchange, response, action) {

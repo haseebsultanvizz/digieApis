@@ -340,7 +340,16 @@ GET http://localhost:3010/apiEndPoint/deleteLogsTest
 GET http://localhost:3010/apiEndPoint/test_internal_function
 # GET http://34.205.124.51:3010/apiEndPoint/test_internal_function
 
+###
 
+POST http://localhost:3010/apiEndPoint/findQtyFromUsdWorth
+Content-Type: application/json
+
+{ 
+    "symbol": "BTCUSDT",
+    "usdAmount": "100",
+    "exchange": "binance"
+}
 
 ###
 
