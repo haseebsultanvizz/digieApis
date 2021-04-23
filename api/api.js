@@ -15473,7 +15473,7 @@ router.post('/get_user_manual_triggers', async (req,res) => {
     let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : ''
     let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
-
+    let coins = req.body.coins
 
 
     let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange
@@ -15484,8 +15484,11 @@ router.post('/get_user_manual_triggers', async (req,res) => {
         'application_mode': application_mode,
         'parent_status': 'parent',
         'status': { '$ne': 'canceled' },
-        'auto_trade_generator': { '$ne': 'yes' }
+        'auto_trade_generator': { '$ne': 'yes' },
+        'symbol': { '$in': coins}
     }
+
+    console.log(where, "===> where")
 
     conn.then(async (db) => {
         var Total_count = await db.collection(collectionName).find(where).count();
@@ -16025,7 +16028,8 @@ async function createAutoTradeParents(settings){
            var manual_parents_pipeline = [
                 {
                     '$match': {
-                        'admin_id': '5eb5a5a628914a45246bacc6',
+                        // 'admin_id': '5eb5a5a628914a45246bacc6',
+                        'admin_id' : user_id,
                         'application_mode': 'live',
                         'parent_status': 'parent',
                         'status': { '$ne': 'canceled' },
@@ -27948,7 +27952,7 @@ async function createATGFromScriptForUser(){
 
     if (user_ids.length > 0) {
 
-        let total_user_ids = user_ids.length 
+        let total_user_ids = user_ids.length
         for (let i = 0; i < total_user_ids; i++){
 
             let user_id = user_ids[i]
@@ -27959,7 +27963,7 @@ async function createATGFromScriptForUser(){
             if (user_atg_settings.length >0){
 
                 console.log('current user in progress  :::  user_id  :::  ', user_id)
-                
+
                 //reset ATG call
                 var reqObj = {
                     'type': 'POST',
@@ -27972,12 +27976,12 @@ async function createATGFromScriptForUser(){
                 }
                 var apiResult = await customApiRequest(reqObj)
                 console.log(' XXXXXXXX reset call done')
-                
+
                 user_atg_settings = user_atg_settings[0]
-                
-                
+
+
                 console.log(' >>>>>>>>>> ATG create call done')
-                
+
                 //Create ATG call
                 var reqObj = {
                     'type': 'POST',
@@ -27990,7 +27994,7 @@ async function createATGFromScriptForUser(){
                     },
                 }
                 var apiResult = await customApiRequest(reqObj)
-                
+
                 console.log(' __________________ ATG done ')
 
 
