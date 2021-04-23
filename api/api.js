@@ -19038,7 +19038,12 @@ router.post('/buySellCoinBalance', (req, res) => {
         } else {
 
 
-        var extra_quantity = await findQtyFromUsdWorth(symbol, 1, exchange)
+        var extra_quantity = 0;
+        if(action == 'buy'){
+          extra_quantity = await findQtyFromUsdWorth(symbol, 1, exchange);
+        } else {
+          extra_quantity = 0;
+        }
 
             let dataArr = {
                 'user_id': user_id,
