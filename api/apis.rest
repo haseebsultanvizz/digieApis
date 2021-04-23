@@ -9,19 +9,19 @@ Content-Type: application/json
         "admin_id": "5c0912bffc9aadaac61dd074",
         "application_mode": "test",
         "auto_sell": "yes",
-        "buy_trail_percentage": 0.1, 
-        "buy_trail_price": "0.00000013", 
+        "buy_trail_percentage": 0.1,
+        "buy_trail_price": "0.00000013",
         "exchange": "binance",
-        "lth_functionality": "yes", 
-        "lth_profit": 15.3, 
+        "lth_functionality": "yes",
+        "lth_profit": 15.3,
         "order_type": "market_order",
         "price":1.3e-7,
         "quantity": 2222,
         "sell_price":1.43e-7,  - conditional
         "status": "new",
         "symbol": "NCASHBTC",
-        "trail_check": "yes", 
-        "trail_interval": "0.00000000", 
+        "trail_check": "yes",
+        "trail_interval": "0.00000000",
         "trigger_type": "no"
     },
     "tempOrderArr": {
@@ -138,7 +138,7 @@ Content-Type: application/json
 POST http://34.205.124.51:3010/apiEndPoint/buyOrderManually
 Content-Type: application/json
 
-{ 
+{
     "coin": "NEOBTC",
     "exchange": "binance",
     "orderId": "5df334958cff810019b21908"
@@ -149,7 +149,7 @@ Content-Type: application/json
 POST http://34.205.124.51:3010/apiEndPoint/sellOrderManually
 Content-Type: application/json
 
-{ 
+{
     "currentMarketPriceByCoin": "0.00053440",
     "definedSellPrice": 0.0005355,
     "exchange": "binance",
@@ -161,7 +161,7 @@ Content-Type: application/json
 POST http://34.205.124.51:3010/apiEndPoint/orderMoveToLth
 Content-Type: application/json
 
-{ 
+{
     "exchange": "binance",
     "lth_profit": 56,
     "orderId": "5df7a4cd28981a0019c6e843"
@@ -223,7 +223,7 @@ Content-Type: application/json
 POST http://34.205.124.51:3010/apiEndPoint/getTradeBuyLimitCheck
 Content-Type: application/json
 
-{ 
+{
     "exchange": "binance",
     "user_id": "5c0912b7fc9aadaac61dd072",
     "usd_worth": 50
@@ -235,7 +235,7 @@ POST http://localhost:3010/apiEndPoint/get_user_id
 # POST http://34.205.124.51:3010/apiEndPoint/get_user_id
 Content-Type: application/json
 
-{ 
+{
     "username": "admin"
 }
 
@@ -286,7 +286,7 @@ POST http://localhost:3010/apiEndPoint/hit_auto_buy_cron
 # POST http://34.205.124.51:3010/apiEndPoint/hit_auto_buy_cron
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5eb5a5a628914a45246bacc6",
     "exchange": "binance"
 }
@@ -297,7 +297,7 @@ Content-Type: application/json
 POST http://52.7.57.119:3600/buyBNBPost
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c0912b7fc9aadaac61dd072",
     "coin": "BNB",
     "quantity": 0.01,
@@ -309,7 +309,7 @@ Content-Type: application/json
 POST http://52.7.57.119:3600/buySellPost
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c09156cfc9aadaac61dd192",
     "symbol": "LTCUSDT",
     "quantity": 0.140043,
@@ -345,9 +345,9 @@ GET http://localhost:3010/apiEndPoint/test_internal_function
 POST http://localhost:3010/apiEndPoint/findQtyFromUsdWorth
 Content-Type: application/json
 
-{ 
-    "symbol": "BTCUSDT",
-    "usdAmount": "100",
+{
+    "symbol": "ETHBTC",
+    "usdAmount": "1",
     "exchange": "binance"
 }
 
@@ -357,7 +357,7 @@ POST http://localhost:3010/apiEndPoint/updateDailyActualTradeAbleAutoTradeGen
 # POST http://34.205.124.51:3010/apiEndPoint/updateDailyActualTradeAbleAutoTradeGen
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c0912b7fc9aadaac61dd072",
     "exchange": "binance"
 }
@@ -379,7 +379,7 @@ POST http://localhost:3010/apiEndPoint/updateDailyTradeSettings_digie
 # POST http://34.205.124.51:3010/apiEndPoint/updateDailyTradeSettings_digie
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c0913a0fc9aadaac61dd0be",
     "exchange": "binance",
     "application_mode": "live"
@@ -391,7 +391,7 @@ POST http://localhost:3010/apiEndPoint/is_trading_points_exceeded
 # POST http://34.205.124.51:3010/apiEndPoint/is_trading_points_exceeded
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5eb5a5a628914a45246bacc6"
 }
 
@@ -403,7 +403,7 @@ POST http://localhost:3010/apiEndPoint/test_user_api_key
 # POST http://34.205.124.51:3010/apiEndPoint/test_user_api_key
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c09134cfc9aadaac61dd09c"
 }
 
@@ -413,7 +413,7 @@ Content-Type: application/json
 POST http://35.153.9.225:3006/updateUserBalance
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c0912e6fc9aadaac61dd085"
 }
 
@@ -422,7 +422,7 @@ Content-Type: application/json
 POST http://35.153.9.225:3006/updateUserBalance
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c09156cfc9aadaac61dd192",
     "validating": false
 }
@@ -433,7 +433,7 @@ POST https://users.digiebot.com/cronjob/GetUserTotalPoints
 Content-Type: application/json
 Authorization: Basic cG9pbnRTdXBwbHk6NGU0NmQ5OWFjMjJhNGIwYWJlNTc2OGE3OGVlODdiOGM=
 
-{ 
+{
     "user_id": "5eb5a5a628914a45246bacc6"
 }
 
@@ -443,7 +443,7 @@ Authorization: Basic cG9pbnRTdXBwbHk6NGU0NmQ5OWFjMjJhNGIwYWJlNTc2OGE3OGVlODdiOGM
 POST http://52.22.53.12:3600/buySellPostBAM
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c0912b7fc9aadaac61dd072",
     "symbol": "BTCUSDT",
     "quantity": 0.000522,
@@ -456,7 +456,7 @@ Content-Type: application/json
 POST http://52.22.53.12:3600/buySellPostBAM
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c0912b7fc9aadaac61dd072",
     "symbol": "LTCUSDT",
     "quantity": 0.14221,
@@ -469,7 +469,7 @@ Content-Type: application/json
 POST http://localhost:3010/apiEndPoint/get_dashboard_wallet
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5f69f307aaa0ae5497059482",
     "exchange": "binance"
 }
@@ -478,7 +478,7 @@ Content-Type: application/json
 POST app.digiebot.com/admin/trading_reports/Atg/find_available_btc_usdt_test
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5f69f307aaa0ae5497059482",
     "exchange": "binance",
     "baseCurrencyArr": ["BTC", "USDT"],
@@ -498,7 +498,7 @@ POST http://localhost:3010/apiEndPoint/isKeyUpdated
 # POST http://34.205.124.51:3010/apiEndPoint/isKeyUpdated
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c0912b7fc9aadaac61dd072",
     "exchange": "kraken"
 }
@@ -523,9 +523,9 @@ POST http://localhost:3010/apiEndPoint/hit_auto_buy_cron
 # POST http://34.205.124.51:3010/apiEndPoint/hit_auto_buy_cron
 Content-Type: application/json
 
-{ 
+{
     "user_id": "603879831cf9cf055f4d7af7",
-    "exchange": "binance"   
+    "exchange": "binance"
 }
 
 ###
@@ -534,7 +534,7 @@ POST http://localhost:3010/apiEndPoint/getUserPackage
 # POST http://34.205.124.51:3010/apiEndPoint/getUserPackage
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c0912b7fc9aadaac61dd072"
 }
 
@@ -544,7 +544,7 @@ POST http://localhost:3010/apiEndPoint/updateUserPackage
 # POST http://34.205.124.51:3010/apiEndPoint/updateUserPackage
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5c0912b7fc9aadaac61dd072",
     "userPackage":[]
 }
@@ -554,7 +554,7 @@ Content-Type: application/json
 POST http://localhost:3010/apiEndPoint/get_user_wallet
 Content-Type: application/json
 
-{ 
+{
     "admin_id": "5c0912b7fc9aadaac61dd072",
     "exchange": "kraken"
 }
@@ -564,7 +564,7 @@ Content-Type: application/json
 GET http://localhost:3010/apiEndPoint/get_CA_shift_user_ids
 
 
-### 
+###
 GET http://localhost:3010/apiEndPoint/test_move_logs_function
 
 ###
@@ -582,7 +582,7 @@ GET http://localhost:3010/apiEndPoint/get_current_market_prices
 #POST https://digiapis.digiebot.com/apiEndPoint/checkBinanceApiSecret
 Content-Type: application/json
 
-{ 
+{
     "api_key": "z1in8ZGQwYLReFiPdsDoMtfBWhQeOOWG7VRnTMu3zVD1AV8cbsEb5FLOhRoxk79H",
     "api_secret": "GwSqxV2qpyZw4Dm0aLSWVMjq6EKRuMQM92GbUtvIKLD7cTm9KrxHAiugqFuIqzns"
 }
@@ -594,7 +594,7 @@ POST http://localhost:3010/apiEndPoint/getTradeHistory
 GET http://34.205.124.51:3010/apiEndPoint/getAllGlobalCoins
 Content-Type: application/json
 
-{ 
+{
     "candleCoins": "candleCoins"
 }
 
@@ -603,7 +603,7 @@ Content-Type: application/json
 GET https://digiapis.digiebot.com/apiEndPoint/getAllGlobalCoins
 Content-Type: application/json
 
-{ 
+{
     "candleCoins": "candleCoins"
 }
 
@@ -611,7 +611,7 @@ Content-Type: application/json
 POST http://34.205.124.51:3010/apiEndPoint/listUserCoinsApi
 Content-Type: application/json
 
-{ 
+{
     "candleCoins": "candleCoins"
 }
 
@@ -619,7 +619,7 @@ Content-Type: application/json
 POST http://34.205.124.51:3010/apiEndPoint/getSubscription
 Content-Type: application/json
 
-{ 
+{
     "user_id": "5eb5a5a628914a45246bacc6"
 }
 

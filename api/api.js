@@ -19040,7 +19040,8 @@ router.post('/buySellCoinBalance', (req, res) => {
 
         var extra_quantity = 0;
         if(action == 'buy'){
-          extra_quantity = await findQtyFromUsdWorth(symbol, 1, exchange);
+          extra_quantity = await findQtyFromUsdWorth(symbol, 5, exchange,);
+          // console.log(extra_quantity,'Quantity');
         } else {
           extra_quantity = 0;
         }
@@ -19053,6 +19054,10 @@ router.post('/buySellCoinBalance', (req, res) => {
                 'symbol': symbol,
                 'quantity': (parseFloat(quantity) + parseFloat(extra_quantity)),
             }
+
+
+
+            // console.log(dataArr)
 
             let result = await buySellCoinBalanceNow(dataArr, exchange)
             // console.log('hit came')
@@ -19097,7 +19102,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                         })
                     } else {
                         if (body.success == 'true') {
-
+                          // console.log('BODY Running')
                             body.reqData = reqData
                             //Save History
                             saveBuySellCoinBalanceHistory(dataArr.user_id, exchange, body, dataArr.action)
@@ -19109,7 +19114,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                                 'message': dataArr.action == 'buy' ? 'Balance buy successfull' : 'Balance sell successfull'
                             })
                         } else {
-                            // console.log(body)
+                            // console.log(body, 'else')
                             resolve({
                                 'status': false,
                                 'response': body,
@@ -27883,13 +27888,19 @@ async function findQtyFromUsdWorth(coin, usd, exchange){
           usdWorthQty = usd * oneUsdWorthQty
           // console.log('BTC COIN', oneUsdWorthQty);
       }
-
+      // var toFixedNum = 6
       var toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
       if (exchange == 'kraken') {
           toFixedNum = 6
       }
 
+      // console.log(usdWorthQty, 'usdWorthQty', toFixedNum)
+
+
       qty = !isNaN(parseFloat(usdWorthQty.toFixed(toFixedNum))) ? parseFloat(usdWorthQty.toFixed(toFixedNum)) : 0
+
+
+
 
       resolve(qty)
   })
