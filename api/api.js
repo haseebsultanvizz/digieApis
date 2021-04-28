@@ -27507,11 +27507,14 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
 
         if (start_date != '') {
             start_date += ' 00:00:00.000'
-            condObj['$gte'] = Math.floor(new Date(start_date).getTime() / 1000)
+            condObj['$gte'] = Math.floor(new Date(start_date).getTime())
+            // condObj['$gte'] = Math.floor(new Date(start_date).getTime() / 1000)
         }
         if (end_date != '') {
             end_date += ' 23:59:59.000'
-            condObj['$lte'] = Math.floor(new Date(end_date).getTime() / 1000)
+            condObj['$lte'] = Math.floor(new Date(end_date).getTime())
+            // condObj['$lte'] = Math.floor(new Date(end_date).getTime() / 1000)
+            // condObj['$lte'] = new Date(end_date)
         }
 
         if (condObj && Object.keys(condObj).length === 0 && condObj.constructor === Object) {
@@ -27521,6 +27524,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         }
     }
 
+
     let countArr = await countTradeHistory(pipeline, collectionName)
 
     pipeline.push({ '$skip': skip })
@@ -27528,7 +27532,6 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
 
     // console.log(JSON.stringify(pipeline))
     // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
-
     let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
 
     // console.log(trades)
