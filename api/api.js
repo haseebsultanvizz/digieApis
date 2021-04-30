@@ -27685,6 +27685,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     let user_id = filter.admin_id
     let application_mode = filter.application_mode
     let coins = filter.coins
+    let multi_status = filter.multi_status
     let end_date = filter.end_date
     let limit = filter.limit
     // let limit = 1
@@ -27728,8 +27729,10 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         }
     ]
 
-    if (typeof mapped_status != 'undefined' && mapped_status != '') {
-        pipeline[0]['$match']['status'] = mapped_status
+    if (typeof mapped_status != 'undefined' && mapped_status != '' || multi_status.length > 0) {
+        // pipeline[0]['$match']['status'] = mapped_status
+
+        pipeline[0]['$match']['status'] = { '$in': multi_status}
     }
 
     if (typeof get_all_users != 'undefined' && get_all_users == 'yes') {
@@ -27787,6 +27790,8 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
 
     // console.log(JSON.stringify(pipeline))
     // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
+
+    console.log(pipeline)
     let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
 
     // console.log(trades)
