@@ -22005,6 +22005,254 @@ router.post('/get_latest_buy_sell_details', async (req, res) => {
     }
 })//end get_latest_buy_sell_details
 
+
+
+router.post('/get_btcusdt_coin_quantity', async (req, res) => {
+  let exchange = req.body.exchange
+  let admin_id = req.body.user_id
+  if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
+
+      let result = await get_btcusdt_quantity(admin_id, exchange)
+
+      res.send(result)
+
+  } else {
+      res.send({
+          status: false,
+          message: 'exchange and user_id are required',
+      })
+  }
+})//end get_btcusdt_coin_quantity
+async function get_btcusdt_quantity(admin_id, exchange){
+  return new Promise(async resolve =>{
+
+
+
+      let lthBalance_quantity = get_lthBalance_quantity(admin_id, exchange)
+      let openBalance_quantity = get_openBalance_quantity(admin_id, exchange)
+      let costAvgBalance_quantity = get_costAvgBalance_quantity(admin_id, exchange)
+      let avaiableBalance = getBtcUsdtBalance(admin_id, exchange)
+
+
+
+      let myPromises11 = await Promise.all([lthBalance_quantity, openBalance_quantity, costAvgBalance_quantity, avaiableBalance])
+
+      resolve({
+          status: true,
+          data: {
+              'lthBalance_quantity': myPromises11[0],
+              'openBalance_quantity': myPromises11[1],
+              'costAvgBalance_quantity': myPromises11[2],
+              'avaiableBalance': myPromises11[3],
+          },
+          message: 'Data found successfully',
+      })
+
+  })
+}
+
+async function get_lthBalance_quantity(user_id, exchange){
+  return new Promise(async (resolve) => {
+    conn.then(async (db) => {
+        let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        var where = {
+            'admin_id': user_id,
+            'symbol':'BTCUSDT',
+            'application_mode': 'live',
+            'status': { '$in': ['LTH', 'LTH_ERROR'] },
+            'is_sell_order': 'yes',
+            'cost_avg': { '$nin': ['taking_child', 'yes', 'completed'] }
+        }
+        let lthOrders = await db.collection(collectionName).find(where).project( {quantity: 1, symbol: 1}).toArray();
+        // console.log(lthOrders, 'lthOrders')
+        let LthBtcusdt = 0;
+        if (lthOrders.length > 0) {
+
+            let totalLth = lthOrders.length
+
+
+
+
+
+            for (let i = 0; i < totalLth; i++) {
+
+                let order = lthOrders[i]
+
+                let selectedCoin = order['symbol'];
+                let quantity = order['quantity'];
+
+
+                LthBtcusdt += parseFloat(quantity)
+
+            }
+
+            LthBtcusdt = LthBtcusdt
+            let resObj = {
+                'LthBtcusdt': !isNaN(LthBtcusdt) ? LthBtcusdt : 0,
+            }
+
+            // console.log('LTH balance',LthBtcusdt)
+            // console.log(resObj)
+            resolve(resObj)
+        } else {
+            resolve({})
+        }
+    })
+})
+}
+async function get_openBalance_quantity(user_id, exchange){
+  return new Promise(async (resolve) => {
+    conn.then(async (db) => {
+        let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+            var where = {
+                'admin_id': user_id,
+                'application_mode': 'live',
+                'symbol':'BTCUSDT'
+                // 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
+                // 'is_sell_order': 'yes',
+                // 'is_lth_order': {
+                //     $ne: 'yes'
+                // }
+            }
+
+            where['$or'] = [{
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': 'yes',
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': false },
+                'move_to_cost_avg': { '$ne': 'yes' },
+            },
+            {
+                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                'is_sell_order': 'yes',
+                'is_lth_order': { '$ne': 'yes' },
+                'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
+            }]
+        let openOrders = await db.collection(collectionName).find(where).project( {quantity: 1, symbol: 1}).toArray();
+        let OpenBtcusdt = 0;
+        // console.log(openOrders, 'openOrders')
+        if (openOrders.length > 0) {
+
+            let totalOpen = openOrders.length
+
+
+
+
+
+            for (let i = 0; i < totalOpen; i++) {
+
+                let order = openOrders[i]
+
+                let selectedCoin = order['symbol'];
+                let quantity = order['quantity'];
+
+
+
+
+                OpenBtcusdt += parseFloat(quantity)
+
+            }
+            OpenBtcusdt = OpenBtcusdt
+            let resObj = {
+                'OpenBtcusdt': !isNaN(OpenBtcusdt) ? OpenBtcusdt : 0,
+            }
+
+            // console.log('Open balance')
+            // console.log(resObj)
+            resolve(resObj)
+        } else {
+            resolve({})
+        }
+    })
+})
+}
+async function get_costAvgBalance_quantity(user_id, exchange){
+  return new Promise(async (resolve) => {
+
+    const db = await conn
+
+    let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+    let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+
+    var where = {
+        'admin_id': user_id,
+        'application_mode': 'live',
+        'status': { '$ne': 'canceled' },
+        'symbol':'BTCUSDT'
+    }
+
+    where['$or'] = [
+        {
+            'cost_avg': { '$in': ['taking_child', 'yes'] },
+            'cavg_parent': 'yes',
+            'show_order': 'yes',
+            'avg_orders_ids.0': { '$exists': false },
+            'move_to_cost_avg': 'yes',
+        },
+        {
+            'cost_avg': { '$in': ['taking_child', 'yes'] },
+            'cavg_parent': 'yes',
+            'show_order': 'yes',
+            'avg_orders_ids.0': { '$exists': true }
+        },
+    ]
+
+    let p1 = db.collection(buy_collection).find(where).toArray();
+    let p2 = db.collection(sold_collection).find(where).toArray();
+
+    let myPromises = await Promise.all([p1, p2])
+
+    let trades = myPromises[0].concat(myPromises[1])
+    let costAvgIds = trades.map(item=>item._id);
+    let avg_orders_ids = trades.map(item => item.avg_orders_ids);
+    avg_orders_ids = avg_orders_ids.filter(item => typeof item != 'undefined')
+    avg_orders_ids.forEach(item=>{costAvgIds = costAvgIds.concat(item)})
+
+    where = {'_id': {'$in': costAvgIds}, 'status':{'$ne':'canceled'}}
+
+    let lthOrders = await db.collection(buy_collection).find(where).project( {quantity: 1, symbol: 1}).toArray();
+    // console.log(lthOrders, 'costAvgOrders')
+    let LthBtc = 0;
+
+
+    if (lthOrders.length > 0) {
+
+        let totalLth = lthOrders.length
+
+
+
+
+
+
+
+        for (let i = 0; i < totalLth; i++) {
+
+            let order = lthOrders[i]
+
+            let selectedCoin = order['symbol'];
+            let quantity = order['quantity'];
+
+
+            LthBtc += parseFloat(quantity)
+
+        }
+
+        let resObj = {
+            'costAvgBtcusdt': !isNaN(LthBtc) ? LthBtc : 0,
+        }
+
+        // console.log('CostAvg Balance')
+        // console.log(resObj)
+        resolve(resObj)
+    } else {
+        resolve({})
+    }
+  })
+}
+
 //get_dashboard_wallet
 router.post('/get_dashboard_wallet', async (req, res) => {
     let exchange = req.body.exchange
