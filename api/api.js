@@ -1496,6 +1496,9 @@ async function getPricesArr(exchange, coinArr=[]){
             coinArr.push('BTCUSDT')
         }
 
+
+        console.log('coinArr', coinArr)
+
         let result = await listmarketPriceMinNotationCoinArr({ '$in': coinArr }, exchange)
 
         if (result){
@@ -15959,9 +15962,13 @@ async function listmarketPriceMinNotationCoinArr(coin, exchange) {
                 let notationObj =  promisesResult[0].find(item2=>{return item2.symbol == item.coin ? true : false })
 
                 // console.log(item.coin, item.price, notationObj)
-
-                coinObjArr[item.coin]['marketMinNotation'] = notationObj.min_notation
-                coinObjArr[item.coin]['marketMinNotationStepSize'] = notationObj.step_size
+                if(typeof notationObj !== 'undefined'){
+                  coinObjArr[item.coin]['marketMinNotation'] = typeof (notationObj.min_notation) !== 'undefined' ? notationObj.min_notation : 0;
+                  coinObjArr[item.coin]['marketMinNotationStepSize'] = typeof (notationObj.step_size) !== 'undefined' ? notationObj.step_size : 0;
+                } else {
+                  coinObjArr[item.coin]['marketMinNotation'] = 0
+                  coinObjArr[item.coin]['marketMinNotationStepSize'] = 0
+                }
             })
             resolve(coinObjArr)
         }else{
