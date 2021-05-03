@@ -4131,6 +4131,25 @@ async function listOrderListing(postDAta3, dbConnection) {
     filter['application_mode'] = postDAta.application_mode
     filter['admin_id'] = postDAta.admin_id
     var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+
+
+    // On Top Because of admin_id
+    if (typeof postDAta.user_name != 'undefined' && postDAta.user_name != '') {
+        let tempWhere = {}
+        tempWhere['$or'] = [
+            {
+                username_lowercase: postDAta.user_name.toLowerCase()
+            }, {
+                email_address: postDAta.user_name
+            }
+        ]
+
+
+        let user = await get_user_id_using_user_name('users', tempWhere)
+        var user_id = user.length > 0 ? String(user[0]['_id']) : user_id
+        filter['admin_id'] = user_id;
+    }
+
     if (postDAta.coins != '') {
         filter['symbol'] = {
             '$in': postDAta.coins
@@ -4171,7 +4190,6 @@ async function listOrderListing(postDAta3, dbConnection) {
         }
         filter['modified_date'] = obj;
     }
-
 
     if (postDAta.status == 'open') {
         // filter['status'] = {
@@ -4250,8 +4268,11 @@ async function listOrderListing(postDAta3, dbConnection) {
         ];
         filter['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
 
-        if (!digie_admin_ids.includes(postDAta.admin_id)){
-            filter['$or'][0]['show_order'] = 'yes'
+        // if (!digie_admin_ids.includes(postDAta.admin_id)){
+        //     filter['$or'][0]['show_order'] = 'yes'
+        // }
+        if (!digie_admin_ids.includes(filter['admin_id'])){
+          filter['$or'][0]['show_order'] = 'yes'
         }
 
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
@@ -4291,7 +4312,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         ]
         filter['status'] = { '$ne': 'canceled' }
 
-        if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
+        if (filter['admin_id'] == '5c0912b7fc9aadaac61dd072') {
             filter['$or'][1] = {
                 'cost_avg': { '$exists': true },
                 'show_order': 'yes'
@@ -4356,6 +4377,9 @@ async function listOrderListing(postDAta3, dbConnection) {
     }
 
     //if status is all the get from both buy_orders and sold_buy_orders
+
+
+    console.log(filter, 'filter')
     if (postDAta.status == 'all') {
 
 
@@ -4363,20 +4387,47 @@ async function listOrderListing(postDAta3, dbConnection) {
         let filter_all_2 = Object.assign(tempAllFilter, filter)
         delete filter_all_2['cost_avg']
 
+
+
+        // Comment By Huzaifa
+
+        // //Sold tab extra dynamic check
+        // if (!digie_admin_ids.includes(postDAta.admin_id)) {
+        //     filter_all_2['$or'][4]['show_order'] = 'yes'
+        // }
+
+        // //CostAvg tab extra dynamic check
+        // if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
+        //     filter_all_2['$or'][8]['show_order'] = {
+        //         'cost_avg': { '$exists': true },
+        //         'show_order': 'yes'
+        //     }
+        // }
+
+        // if (!digie_admin_ids.includes(postDAta.admin_id)) {
+        //     filter['is_sell_order'] = {
+        //         '$nin': ['pause', 'resume_pause']
+        //         // '$in': ['pause', 'resume_pause', 'resume_complete']
+        //     };
+        //     filter['resume_status'] = { '$ne': 'complete' }
+        //     filter['resume_order_id'] = { '$exists': false };
+        //     filter['resumed_parent_buy_order_id'] = { '$exists': false }
+        // }
+
         //Sold tab extra dynamic check
-        if (!digie_admin_ids.includes(postDAta.admin_id)) {
-            filter_all_2['$or'][4]['show_order'] = 'yes'
+        if (!digie_admin_ids.includes(filter['admin_id'])) {
+          filter_all_2['$or'][4]['show_order'] = 'yes'
         }
 
         //CostAvg tab extra dynamic check
-        if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
+        if (filter['admin_id'] == '5c0912b7fc9aadaac61dd072') {
             filter_all_2['$or'][8]['show_order'] = {
                 'cost_avg': { '$exists': true },
                 'show_order': 'yes'
             }
         }
 
-        if (!digie_admin_ids.includes(postDAta.admin_id)) {
+        if (!digie_admin_ids.includes(filter['admin_id'])) {
             filter['is_sell_order'] = {
                 '$nin': ['pause', 'resume_pause']
                 // '$in': ['pause', 'resume_pause', 'resume_complete']
@@ -4419,6 +4470,22 @@ async function listOrderListing(postDAta3, dbConnection) {
     }
     return orderArr;
 } //End of listOrderListing
+
+
+//get User id using username
+function get_user_id_using_user_name(collectionName, filter) {
+  return new Promise((resolve) => {
+      conn.then((db) => {
+          db.collection(collectionName).find(filter).project({ '_id': 1 }).toArray((err, result) => {
+              if (err) {
+                  console.log(err)
+              } else {
+                  resolve(result)
+              }
+          })
+      })
+  })
+} //End of list_orders
 
 //function for merging both buy_orders and sold_buy_orders
 function mergeOrdersArrays(SoldOrderArr, buyOrderArr) {
@@ -22780,6 +22847,25 @@ async function getOrderStats(postData2){
         }
 
 
+        if (typeof postDAta.user_name != 'undefined' && postDAta.user_name != '') {
+
+          let tempWhere = {}
+          tempWhere['$or'] = [
+              {
+                  username_lowercase: postDAta.user_name.toLowerCase()
+              }, {
+                  email_address: postDAta.user_name
+              }
+          ]
+
+          let user = await get_user_id_using_user_name('users', tempWhere)
+          var user_id = user.length > 0 ? String(user[0]['_id']) : user_id
+          search['admin_id'] = user_id;
+          admin_id = user_id;
+
+        }
+
+
         var count = 0;
         var i;
         for (i in search) {
@@ -22865,6 +22951,7 @@ async function getOrderStats(postData2){
             filter_2['modified_date'] = obj;
         }
 
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_2[key] = value;
@@ -22948,6 +23035,7 @@ async function getOrderStats(postData2){
             filter_3['modified_date'] = obj;
         }
 
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_3[key] = value;
@@ -23012,6 +23100,8 @@ async function getOrderStats(postData2){
             }
             filter_33['modified_date'] = obj;
         }
+
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_33[key] = value;
@@ -23052,6 +23142,7 @@ async function getOrderStats(postData2){
             }
             filter_4['modified_date'] = obj;
         }
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_4[key] = value;
@@ -23091,6 +23182,7 @@ async function getOrderStats(postData2){
             }
             filter_errors['modified_date'] = obj;
         }
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_errors[key] = value;
@@ -23128,6 +23220,7 @@ async function getOrderStats(postData2){
             }
             filter_5['modified_date'] = obj;
         }
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_5[key] = value;
@@ -23171,6 +23264,7 @@ async function getOrderStats(postData2){
             }
             filter_6['modified_date'] = obj;
         }
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_6[key] = value;
@@ -23211,6 +23305,7 @@ async function getOrderStats(postData2){
             }
             filter_7['modified_date'] = obj;
         }
+
         if (count > 0) {
             for (let [key, value] of Object.entries(search)) {
                 filter_7[key] = value;
@@ -23312,7 +23407,7 @@ async function getOrderStats(postData2){
         ]
         filter_12['status'] = {'$ne': 'canceled'}
 
-        if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
+        if (admin_id == '5c0912b7fc9aadaac61dd072') {
             filter_12['$or'][1] = {
                 'cost_avg': { '$exists': true },
                 'show_order': 'yes'
@@ -23406,7 +23501,7 @@ async function getOrderStats(postData2){
         //Count all tab
         let filter_all = {};
         filter_all['application_mode'] = postDAta.application_mode
-        filter_all['admin_id'] = postDAta.admin_id
+        filter_all['admin_id'] = admin_id
         filter_all['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
         if (postDAta.start_date != '' || postDAta.end_date != '') {
@@ -23436,12 +23531,12 @@ async function getOrderStats(postData2){
         delete filter_all_2['cost_avg']
 
         //Sold tab extra dynamic check
-        if (!digie_admin_ids.includes(postDAta.admin_id)) {
+        if (!digie_admin_ids.includes(admin_id)) {
             filter_all_2['$or'][4]['show_order'] = 'yes'
         }
 
         //CostAvg tab extra dynamic check
-        if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
+        if (admin_id == '5c0912b7fc9aadaac61dd072') {
             filter_all_2['$or'][8]['show_order'] = {
                 'cost_avg': { '$exists': true },
                 'show_order': 'yes'
@@ -23449,7 +23544,7 @@ async function getOrderStats(postData2){
         }
 
 
-        if (!digie_admin_ids.includes(postDAta.admin_id)) {
+        if (!digie_admin_ids.includes(admin_id)) {
             filter_all['is_sell_order'] = {
                 '$nin': ['pause', 'resume_pause']
                 // '$in': ['pause', 'resume_pause', 'resume_complete']
