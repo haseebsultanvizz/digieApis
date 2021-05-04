@@ -9387,6 +9387,14 @@ router.post('/lisEditManualOrderById', async (req, resp) => {
 
 
 
+
+    // Hassan Check Added here For Mobile developers
+    buyOrderArr['buy_on_buy_hit'] = (typeof buyOrderArr['buy_on_buy_hit'] != 'undefined' && buyOrderArr['buy_on_buy_hit'] != '') ? parseFloat(buyOrderArr['buy_on_buy_hit']) : 'no'
+    buyOrderArr['sell_on_sell_hit'] = (typeof buyOrderArr['sell_on_sell_hit'] != 'undefined' && buyOrderArr['sell_on_sell_hit'] != '') ? parseFloat(buyOrderArr['sell_on_sell_hit']) : 'no'
+    buyOrderArr['deep_price_processed'] = (typeof buyOrderArr['deep_price_processed'] != 'undefined' && buyOrderArr['deep_price_processed'] != '') ? parseFloat(buyOrderArr['deep_price_processed']) : 'no'
+    buyOrderArr['sell_trailing_starts'] = (typeof buyOrderArr['sell_trailing_starts'] != 'undefined' && buyOrderArr['sell_trailing_starts'] != '') ? parseFloat(buyOrderArr['sell_trailing_starts']) : 'no'
+    buyOrderArr['sell_trailing_starts'] = (typeof buyOrderArr['sell_trailing_starts'] != 'undefined' && buyOrderArr['sell_trailing_starts'] != '') ? parseFloat(buyOrderArr['sell_trailing_starts']) : 'no'
+
     //Get order log against order
     var ordrLogPromise = await listOrderLog(orderId, exchange, order_mode, order_created_date);
 
