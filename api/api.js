@@ -8805,6 +8805,102 @@ router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
 
 }) //End of updateBuyPriceFromDraggingChart
 
+
+
+
+//post call for updating digieSignal from chart
+router.post('/updateDigieSignalChart', async (req, resp) => {
+    var exchange = req.body.exchange;
+    var orderId = req.body.orderId;
+    var buy_signal = req.body.buy_signal;
+    var sell_signal = req.body.sell_signal;
+
+
+    console.log(buy_signal, sell_signal, orderId, exchange)
+
+    if(buy_signal){
+        console.log('buy_signal')
+    }
+    if(sell_signal){
+        console.log('sell_signal')
+    }
+    //get buy order detail on the base of order id
+    var orderArr = await listOrderById(orderId, exchange);
+
+    if (orderArr.length > 0) {
+        for (let index in orderArr) {
+
+            var order = orderArr[index]
+
+
+            //Check if Sell order exists then use it's values on priority
+            var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+
+
+
+            var application_mode = (typeof order['application_mode'] == 'undefined') ? 0 : order['application_mode'];
+            var order_mode = application_mode
+            var order_created_date = order['created_date'];
+
+
+
+            var filter = {};
+            filter['_id'] = new ObjectID(orderId);
+            var update = {};
+            if(buy_signal && buy_signal != ''){
+                update['buy_on_buy_hit'] = buy_signal == 'yes' ? 'yes' : ''
+            }
+            if(sell_signal && sell_signal != ''){
+                update['sell_on_sell_hit'] = sell_signal == 'yes' ? 'yes' : ''
+            }
+
+
+            update['modified_date'] = new Date();
+
+            var updatePromise = updateOne(filter, update, buy_collection);
+            updatePromise.then((resolve) => {});
+
+            //SAVE_LOG:
+
+
+            if(buy_signal && buy_signal != ''){
+                var log_msg = "Buy on Digie signal Updated to " + buy_signal;
+                var order_created_date = order['created_date']
+                var order_mode = order['application_mode']
+                var logPromise = create_orders_history_log(orderId, log_msg, 'Buy on Digie Signal ', 'yes', exchange, order_mode, order_created_date)
+                logPromise.then((callback) => {});
+            }
+
+            if(sell_signal && sell_signal != ''){
+                var log_msg = "Sell on Digie signal Updated to " + sell_signal;
+                var order_created_date = order['created_date']
+                var order_mode = order['application_mode']
+                var logPromise = create_orders_history_log(orderId, log_msg, 'Sell on Digie Signal', 'yes', exchange, order_mode, order_created_date)
+                logPromise.then((callback) => {});
+            }
+
+
+        } //End of foreach
+        if(buy_signal && buy_signal != ''){
+            resp.status(200).send({
+                message: 'Order Buy on  Digie Signal Updated Successfully'
+            })
+        }
+        if(sell_signal && sell_signal != ''){
+            resp.status(200).send({
+                message: 'Order Sell on Digie Signal Updated Successfully'
+            })
+        }
+
+    } else { //End of order array is not empty
+
+        resp.status(200).send({
+            message: 'An error occured'
+        })
+    }
+
+}) //End of DigieSignal
+
 //post call for updating lth profit from chart
 router.post('/updateLthProfitChart', async (req, resp) => {
     var exchange = req.body.exchange;
