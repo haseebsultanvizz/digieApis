@@ -1969,7 +1969,18 @@ router.post('/createAutoOrder', async (req, resp) => {
         }
         order['pick_parent'] = (user_remaining_limit > 0 ? 'yes' : 'no')
     }
-
+    let  getUsersHighLowRangevalues = await getUsersHighLowRangevaluesMethod(order['admin_id'],order['symbol'],order['exchange'])
+    // console.log(getUsersHighLowRangevalues)
+    if(getUsersHighLowRangevalues.length > 0)
+    {
+        // console.log('first Check Works')
+        if(typeof getUsersHighLowRangevalues[0]['highPrice_range']!="undefined" && typeof getUsersHighLowRangevalues[0]['lowPrice_range']!="undefined")
+        {
+            // console.log('Working, weell',getUsersHighLowRangevalues[0]['highPrice_range'])
+            order['highPrice_range'] = getUsersHighLowRangevalues[0]['highPrice_range']
+            order['lowPrice_range'] = getUsersHighLowRangevalues[0]['lowPrice_range']
+        }
+    }
     let orderResp = await createAutoOrder(order);
     resp.status(200).send({
         message: orderResp
@@ -8983,6 +8994,112 @@ router.post('/updateBuyTrailChart', async (req, resp) => {
     }
 
 }) //End of updateBuyTrailChart
+
+
+
+//post call for updating Sell Trail from chart
+router.post('/updateSellTrailChart', async (req, resp) => {
+    var exchange = req.body.exchange;
+    var orderId = req.body.orderId;
+    var lth_functionality = req.body.sell_trail_info;
+
+    //get buy order detail on the base of order id
+    var orderArr = await listOrderById(orderId, exchange);
+
+    if (orderArr.length > 0) {
+        for (let index in orderArr) {
+
+            var order = orderArr[index]
+
+            //Check if Sell order exists then use it's values on priority
+            var buy_collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            var sell_collection = buy_collection;
+            var sellOrderExist = false;
+
+            //try to find sell order for this buy order
+            var sellArr = await get_sell_order(orderId, exchange);
+
+            if (sellArr.length > 0) {
+
+                sellArr = sellArr[0];
+                sell_collection = sellArr['collection'];
+                sellArr = sellArr['sellArr'];
+                sellOrderExist = true;
+
+            }
+
+            var application_mode = (typeof order['application_mode'] == 'undefined') ? 0 : order['application_mode'];
+            var order_mode = application_mode
+            var order_created_date = order['created_date'];
+
+            if (sellOrderExist) {
+
+                var filter = {};
+                filter['_id'] = sellArr['_id'];
+                var update = {};
+
+                if (typeof req.body.sell_trail_info['sell_trail_check_temp'] != 'undefined' && req.body.sell_trail_info['sell_trail_check_temp'] == 'yes') {
+                    update['sell_trail_check'] = 'yes'
+                    update['sell_trail_interval'] = parseFloat(req.body.sell_trail_info['sell_trail_interval_temp'])
+                    // sellOrderArr['sell_trail_price'] = 0
+                }else{
+                    update['sell_trail_check'] = ''
+                    update['sell_trail_interval'] = ''
+                    update['sell_trail_price'] = 0
+                }
+
+                update['modified_date'] = new Date();
+
+                var updatePromise = updateOne(filter, update, sell_collection);
+                updatePromise.then((resolve) => {});
+            }
+
+            var filter = {};
+            filter['_id'] = new ObjectID(orderId);
+            var update = {};
+
+
+            if (typeof req.body.sell_trail_info['sell_trail_check_temp'] != 'undefined' && req.body.sell_trail_info['sell_trail_check_temp'] == 'yes') {
+                update['sell_trail_check'] = 'yes'
+                update['sell_trail_interval'] = parseFloat(req.body.sell_trail_info['sell_trail_interval_temp'])
+                // sellOrderArr['sell_trail_price'] = 0
+              }else{
+                update['sell_trail_check'] = ''
+                update['sell_trail_interval'] = ''
+                update['sell_trail_price'] = 0
+              }
+
+
+            update['modified_date'] = new Date();
+
+
+            console.log(update)
+
+            var updatePromise = updateOne(filter, update, buy_collection);
+            updatePromise.then((resolve) => {});
+
+            //SAVE_LOG:
+            var log_msg = "Order Buy Trail updated to From Chart";
+            var order_created_date = order['created_date']
+            var order_mode = order['application_mode']
+            var logPromise = create_orders_history_log(orderId, log_msg, 'Sell Trail Updated', 'yes', exchange, order_mode, order_created_date)
+            logPromise.then((callback) => {});
+
+
+        } //End of foreach
+
+        resp.status(200).send({
+            message: 'Order Sell Trail Updated Successfully'
+        })
+
+    } else { //End of order array is not empty
+
+        resp.status(200).send({
+            message: 'An error occured'
+        })
+    }
+
+}) //End of updateSellTrailChart
 
 //post call for updating lth profit from chart
 router.post('/updateLthProfitChart', async (req, resp) => {
@@ -16149,7 +16266,18 @@ async function runDailyLimitUpdateCron(user_id, exchange){
         resolve(true)
     })
 }
+async function getUsersHighLowRangevaluesMethod(admin_id,symbol,exchange){
+    return new Promise(async (resolve)=>{
+        let db = await conn
+        let collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange;
 
+        let result = await db.collection(collection).find({"admin_id":admin_id,"symbol":symbol}).sort({'_id':-1}).limit(1).toArray()
+
+
+        resolve(result)
+
+    })
+}
 async function getUserRemainingLimit(user_id, exchange){
     return new Promise(async (resolve)=>{
         let db = await conn
