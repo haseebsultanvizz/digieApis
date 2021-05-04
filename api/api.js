@@ -16271,7 +16271,7 @@ async function getUsersHighLowRangevaluesMethod(admin_id,symbol,exchange){
         let db = await conn
         let collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange;
 
-        let result = await db.collection(collection).find({"admin_id":admin_id,"symbol":symbol}).sort({'_id':-1}).limit(1).toArray()
+        let result = await db.collection(collection).find({"parent_status":"parent","pause_status":"play","trigger_type":"barrier_percentile_trigger","application_mode":"live","admin_id":admin_id,"symbol":symbol}).sort({'_id':-1}).limit(1).toArray()
 
 
         resolve(result)
