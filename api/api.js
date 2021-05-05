@@ -9053,10 +9053,6 @@ router.post('/updateSellTrailChart', async (req, resp) => {
                     update['sell_trail_percentage'] = ''
                 }
 
-                ins_temp_data['trail_check'] = (this.sell_trail_check) ? 'yes' : '';
-                ins_temp_data['trail_interval'] = trail_interval_sell;
-                ins_temp_data['sell_trail_percentage'] = this.sell_trail_interval_per;
-
                 update['modified_date'] = new Date();
 
                 var updatePromise = updateOne(filter, update, sell_collection);
