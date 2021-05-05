@@ -9705,7 +9705,7 @@ router.post('/lisEditManualOrderById', async (req, resp) => {
     buyOrderArr['deep_price_processed'] = (typeof buyOrderArr['deep_price_processed'] != 'undefined' && buyOrderArr['deep_price_processed'] != '') ? parseFloat(buyOrderArr['deep_price_processed']) : 'no'
     buyOrderArr['sell_trailing_starts'] = (typeof buyOrderArr['sell_trailing_starts'] != 'undefined' && buyOrderArr['sell_trailing_starts'] != '') ? parseFloat(buyOrderArr['sell_trailing_starts']) : 'no'
     buyOrderArr['sell_trailing_starts'] = (typeof buyOrderArr['sell_trailing_starts'] != 'undefined' && buyOrderArr['sell_trailing_starts'] != '') ? parseFloat(buyOrderArr['sell_trailing_starts']) : 'no'
-
+    buyOrderArr['sent_for_sell'] = (typeof buyOrderArr['sent_for_sell'] != 'undefined' && buyOrderArr['sent_for_sell'] != '') ?buyOrderArr['sent_for_sell'] : 'no'
     //Get order log against order
     var ordrLogPromise = await listOrderLog(orderId, exchange, order_mode, order_created_date);
 
