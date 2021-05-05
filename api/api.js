@@ -4388,9 +4388,6 @@ async function listOrderListing(postDAta3, dbConnection) {
     }
 
     //if status is all the get from both buy_orders and sold_buy_orders
-
-
-    console.log(filter, 'filter')
     if (postDAta.status == 'all') {
 
 
