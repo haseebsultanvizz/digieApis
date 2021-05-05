@@ -8952,16 +8952,20 @@ router.post('/updateBuyTrailChart', async (req, resp) => {
             if (typeof req.body.buy_trail_info['buy_trail_check_temp'] != 'undefined' && req.body.buy_trail_info['buy_trail_check_temp'] == 'yes') {
                 update['buy_trail_check'] = 'yes'
                 update['buy_trail_interval'] = parseFloat(req.body.buy_trail_info['buy_trail_interval_temp'])
+                update['trail_check'] = 'yes';
+                update['buy_trail_percentage'] = parseFloat(req.body.buy_trail_info['buy_trail_interval_temp'])
                 // update['buy_trail_price'] = 0
             }else{
                 update['buy_trail_check'] = ''
                 update['buy_trail_interval'] = ''
                 update['buy_trail_price'] = 0
+                update['trail_check'] = ''
+                update['buy_trail_percentage'] = ''
             }
 
 
 
-                console.log(update)
+            console.log(update)
 
 
 
