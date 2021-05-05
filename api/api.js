@@ -9041,12 +9041,21 @@ router.post('/updateSellTrailChart', async (req, resp) => {
                 if (typeof req.body.sell_trail_info['sell_trail_check_temp'] != 'undefined' && req.body.sell_trail_info['sell_trail_check_temp'] == 'yes') {
                     update['sell_trail_check'] = 'yes'
                     update['sell_trail_interval'] = parseFloat(req.body.sell_trail_info['sell_trail_interval_temp'])
+                    update['trail_check'] = 'yes';
+                    // ins_temp_data['trail_interval'] = trail_interval_sell;
+                    update['sell_trail_percentage'] = parseFloat(req.body.sell_trail_info['sell_trail_interval_temp'])
                     // sellOrderArr['sell_trail_price'] = 0
                 }else{
                     update['sell_trail_check'] = ''
                     update['sell_trail_interval'] = ''
                     update['sell_trail_price'] = 0
+                    update['trail_check'] = '';
+                    update['sell_trail_percentage'] = ''
                 }
+
+                ins_temp_data['trail_check'] = (this.sell_trail_check) ? 'yes' : '';
+                ins_temp_data['trail_interval'] = trail_interval_sell;
+                ins_temp_data['sell_trail_percentage'] = this.sell_trail_interval_per;
 
                 update['modified_date'] = new Date();
 
@@ -9062,11 +9071,16 @@ router.post('/updateSellTrailChart', async (req, resp) => {
             if (typeof req.body.sell_trail_info['sell_trail_check_temp'] != 'undefined' && req.body.sell_trail_info['sell_trail_check_temp'] == 'yes') {
                 update['sell_trail_check'] = 'yes'
                 update['sell_trail_interval'] = parseFloat(req.body.sell_trail_info['sell_trail_interval_temp'])
+                update['trail_check'] = 'yes';
+                // ins_temp_data['trail_interval'] = trail_interval_sell;
+                update['sell_trail_percentage'] = parseFloat(req.body.sell_trail_info['sell_trail_interval_temp'])
                 // sellOrderArr['sell_trail_price'] = 0
               }else{
                 update['sell_trail_check'] = ''
                 update['sell_trail_interval'] = ''
                 update['sell_trail_price'] = 0
+                update['trail_check'] = '';
+                update['sell_trail_percentage'] = ''
               }
 
 
