@@ -12206,7 +12206,7 @@ router.post('/remove_error', async (req, resp) => {
                   update2['$set'] = set2
                   let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
 
-                  await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$unset': { 'sent_for_sell': '','opportunity_id':'' } })
+                  await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$unset': { 'sent_for_sell': '','sell_opportunity_id': } })
 
               }
 
