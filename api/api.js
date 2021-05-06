@@ -9565,10 +9565,10 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             update['custom_stop_loss_percentage'] = new_percentage;
                             update['auto_sell'] = 'yes';
 
-                            if (typeof order['lth_proft'] == 'undefined' || order['lth_proft'] == '') {
-                                update['lth_functionality'] = 'yes'
-                                update['lth_profit'] = sell_profit_percent
-                            }
+                            // if (typeof order['lth_proft'] == 'undefined' || order['lth_proft'] == '') {
+                            //     update['lth_functionality'] = 'yes'
+                            //     update['lth_profit'] = sell_profit_percent
+                            // }
 
                             update['modified_date'] = new Date();
                             var updatePromise = updateOne(filter, update, sell_collection);
@@ -9585,10 +9585,10 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                         update['custom_stop_loss_percentage'] = new_percentage;
                         update['auto_sell'] = 'yes';
 
-                        if (typeof order['lth_proft'] == 'undefined' || order['lth_proft'] == '') {
-                            update['lth_functionality'] = 'yes'
-                            update['lth_profit'] = sell_profit_percent
-                        }
+                        // if (typeof order['lth_proft'] == 'undefined' || order['lth_proft'] == '') {
+                        //     update['lth_functionality'] = 'yes'
+                        //     update['lth_profit'] = sell_profit_percent
+                        // }
 
                         update['modified_date'] = new Date();
                         var updatePromise = updateOne(filter, update, buy_collection);
