@@ -8048,6 +8048,8 @@ router.post('/updateBuyPriceFromDragging', async (req, resp) => {
     if(getBuyOrder[0]['deep_price_on_off'] !== 'undefined' && getBuyOrder[0]['deep_price_on_off'] == 'yes' && getBuyOrder[0]['status'] == 'new'){
       console.log('Update Deep Price now')
       update['expecteddeepPrice'] = updated_buy_price;
+    } else {
+      console.log('Not Update Deep Price now')
     }
     update['modified_date'] = new Date();
     var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
