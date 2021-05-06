@@ -8045,6 +8045,8 @@ router.post('/updateBuyPriceFromDragging', async (req, resp) => {
     filter['_id'] = new ObjectID(orderId);
     var update = {};
     update['price'] = updated_buy_price;
+
+    console.log(getBuyOrder[0])
     if(getBuyOrder[0]['deep_price_on_off'] !== 'undefined' && getBuyOrder[0]['deep_price_on_off'] == 'yes' && getBuyOrder[0]['status'] == 'new'){
       console.log('Update Deep Price now')
       update['expecteddeepPrice'] = updated_buy_price;
