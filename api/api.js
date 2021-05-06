@@ -9460,10 +9460,10 @@ router.post('/updateOrderfromdragingChart', async (req, resp) => {
                             update['loss_percentage'] = new_percentage;
                             update['custom_stop_loss_percentage'] = new_percentage;
 
-                            if (typeof order['lth_proft'] == 'undefined' || order['lth_proft'] == '') {
-                                update['lth_functionality'] = 'yes'
-                                update['lth_profit'] = sell_profit_percent
-                            }
+                            // if (typeof order['lth_proft'] == 'undefined' || order['lth_proft'] == '') {
+                            //     update['lth_functionality'] = 'yes'
+                            //     update['lth_profit'] = sell_profit_percent
+                            // }
 
                             update['modified_date'] = new Date();
 
