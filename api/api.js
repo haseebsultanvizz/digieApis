@@ -8769,7 +8769,6 @@ router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
                     var update = {};
 
                     update['price'] = updated_buy_price;
-                    console.log(order)
                     if(order['deep_price_on_off'] !== 'undefined' && order['deep_price_on_off'] == 'yes' && order['status'] == 'new'){
                       console.log('Update Deep Price now')
                       update['expecteddeepPrice'] = updated_buy_price;
@@ -8793,6 +8792,12 @@ router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
                 var update = {};
 
                 update['price'] = updated_buy_price;
+                if(order['deep_price_on_off'] !== 'undefined' && order['deep_price_on_off'] == 'yes' && order['status'] == 'new'){
+                  console.log('Update Deep Price now')
+                  update['expecteddeepPrice'] = updated_buy_price;
+                } else {
+                  console.log('Not Update Deep Price now')
+                }
                 if (!isNaN(sell_price)) {
                     update['sell_price'] = sell_price;
                 }
