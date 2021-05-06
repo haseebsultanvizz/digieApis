@@ -8045,7 +8045,7 @@ router.post('/updateBuyPriceFromDragging', async (req, resp) => {
     filter['_id'] = new ObjectID(orderId);
     var update = {};
     update['price'] = updated_buy_price;
-    // update['purchased_price'] = updated_buy_price;
+    update['expecteddeepPrice'] = updated_buy_price;
     update['modified_date'] = new Date();
     var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
     var updatePromise = await updateOne(filter, update, collectionName);
