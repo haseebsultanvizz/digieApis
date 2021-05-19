@@ -16485,7 +16485,7 @@ async function createAutoTradeParents(settings){
 
 
 
-        console.log('Before Loop Start')
+        console.log('Before Loop Start==============================')
         for(let i=0; i<coninsCount; i++){
 
             let coin = coins[i]
@@ -16772,7 +16772,7 @@ async function createAutoTradeParents(settings){
 
         }
 
-        console.log('After Loop End')
+        console.log('=================================After Loop End')
 
         // { "_id" : ObjectId("5ef9cc0184c66a51207a3bb1"), "user_id" : "5c0912b7fc9aadaac61dd072", "daily_buy_usd_worth" : 0, "num_of_trades_buy_today" : 0, "daily_buy_usd_limit" : 41.412846272754, "created_date" : ISODate("2020-06-29T11:09:53Z"), "modified_date" : ISODate("2020-12-29T14:17:42.458Z"), "BTCTradesTodayCount" : 0, "USDTTradesTodayCount" : 0, "dailyTradeableBTC" : 0.27, "dailyTradeableBTC_usd_worth" : 20, "dailyTradeableUSDT" : 5000, "dailyTradeableUSDT_usd_worth" : 20, "daily_bought_btc_usd_worth" : 0, "daily_bought_usdt_usd_worth" : 0 }
 
@@ -16782,7 +16782,7 @@ async function createAutoTradeParents(settings){
         // console.log('after sleep parents processed: ', keepParentIdsArr.length)
 
 
-        console.log('After Wait for Seven Second')
+        console.log('================After Wait for Seven Second=============')
         //cancel previous parent orders
         var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         //TODO: if delete previous order selected then delete all previous parents
