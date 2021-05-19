@@ -17466,7 +17466,7 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
             let whereCoins = {'$in': coinsArr}
             // console.log('coins condition ', whereCoins)
             let coinData = await listmarketPriceMinNotationCoinArr(whereCoins, exchange)
-            // console.log('coinData ', coinData)
+            console.log('coinData ', coinData, coinsArr)
             let pricesArr = []
             if (coinsArr.length > 0){
                 await Promise.all(coinsArr.map(coin=>{
