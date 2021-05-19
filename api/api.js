@@ -12669,19 +12669,8 @@ router.post('/is_trading_points_exceeded', async (req, resp) => {
         });
 
     } else {
-
-        let reqObj = {
-            'type': 'POST',
-            'url': 'https://app.digiebot.com/admin/Api_calls/get_user_current_trading_points',
-            'payload': {
-                'user_id' : admin_id
-            },
-        }
-        let result = await customApiRequest(reqObj)
-        let tradingPoints = result.status && result.body['status'] ? result.body['current_trading_points'] : 0
         resp.send({
-            'status': false,
-            'tradingPoints': tradingPoints
+            'status': false
         });
     }
 })
