@@ -12669,8 +12669,19 @@ router.post('/is_trading_points_exceeded', async (req, resp) => {
         });
 
     } else {
+
+        let reqObj = {
+            'type': 'POST',
+            'url': 'https://app.digiebot.com/admin/Api_calls/get_user_current_trading_points',
+            'payload': {
+                'user_id' : admin_id
+            },
+        }
+        let result = await customApiRequest(reqObj)
+        let tradingPoints = result.status && result.body['status'] ? result.body['current_trading_points'] : 0
         resp.send({
-            'status': false
+            'status': false,
+            'tradingPoints': tradingPoints
         });
     }
 })
@@ -16437,7 +16448,7 @@ async function createAutoTradeParents(settings){
         let user_remaining_usd_limit = await getUserRemainingLimit(user_id, exchange)
         let user_remaining_limit = 0
 
-        // console.log('user_remaining_usd_limit ', user_remaining_usd_limit)
+        console.log('user_remaining_usd_limit ', user_remaining_usd_limit)
 
 
 
@@ -16537,7 +16548,15 @@ async function createAutoTradeParents(settings){
             usd_worth = parseFloat(usd_worth.toFixed(2))
             usdWorthQty = usd_worth * oneUsdWorthQty
             quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
-            // console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth, ' :::: ', oneUsdWorthQty, ' price ', currentMarketPrice, 'btcusdt_price', BTCUSDTPRICE)
+            // console.log('coin',coin,'quantity', quantity, ' < minReqQty', minReqQty, ' ------ usd_worth', usd_worth, ' :::: ','oneUsdWorthQty', oneUsdWorthQty, ' currentMarketPrice ', currentMarketPrice, 'BTCUSDTPRICE', BTCUSDTPRICE, 'user_remaining_limit', user_remaining_limit)
+            // console.log('digie_admin_ids', digie_admin_ids)
+            // console.log('user_id', user_id)
+            // if(user_remaining_limit > usd_worth){
+            //     console.log('yes')
+            // } else {
+            //     console.log('no')
+            // }
+            // return false
 
             if (quantity < minReqQty) {
                 //Create trades with minReqQty
