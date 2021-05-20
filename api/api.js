@@ -3410,7 +3410,7 @@ router.post('/listOrderListing', async (req, resp) => {
 
 
 
-    console.log(req.body.postData,'-=-=-=-=--=-=-=-=-=-=-=-=-=-=')
+    // console.log(req.body.postData,'-=-=-=-=--=-=-=-=-=-=-=-=-=-=')
     //function for listing orders
 
     let pricesObj = await get_current_market_prices(exchange, [])
