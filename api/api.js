@@ -4238,7 +4238,7 @@ async function listOrderListing(postDAta3, dbConnection) {
 
     }
 
-    if (postDAta.status == 'filled') {
+    if (postDAta.status == 'filled' || postDAta.status == 'FILLED') {
         // filter['status'] = {
         //     '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
         // }
