@@ -4029,6 +4029,20 @@ function countCollection(collectionName, filter) {
 } //End of countCollection
 
 
+function countATGExpectedOrders(collectionName, filter) {
+    return new Promise((resolve) => {
+        conn.then(async (db) => {
+
+            var data = await db.collection(collectionName).aggregate(filter).toArray();
+            console.log('Data', data[0]['total'])
+            if(data.length > 0){
+                resolve(data[0]['total']);
+            }
+        })
+    })
+} //End of countCollection
+
+
 
 //function for calculation average profit for a user of all his sold orders
 async function calculateAverageOrdersProfit(postDAta) {
@@ -23192,6 +23206,42 @@ async function getOrderStats(postData2){
         var application_mode = postData.application_mode;
         var postDAta = postData;
         var search = {};
+        var exchange = postDAta.exchange;
+
+        // Check Added to Count Total Trades Must be Made in ATG Starts here
+        var atg_collection = (exchange == 'binance') ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange;
+
+
+        var pipeline_atg = [
+            {
+              '$match': {
+                'user_id': {'$in':[admin_id, ObjectID(admin_id)]},
+                'application_mode': application_mode
+              }
+            },
+            {
+              '$project': {
+                '_id': 0,
+                'total': {
+                  '$multiply': [
+                    {
+                      '$size': '$step_2.coins'
+                    }, {
+                      '$size': '$step_3.bots'
+                    }
+                  ]
+                }
+              }
+            }
+        ];
+
+        console.log(atg_collection, pipeline_atg)
+        var atgCountPromise = await countATGExpectedOrders(atg_collection, pipeline_atg);
+
+
+        console.log(atgCountPromise,'Working')
+        // Check Added to Count Total Trades Must be Made in ATG End here
+
         //if filter values exist for order list create filter on the base of selected filters
         if (postDAta.coins != '') {
             //search on the bases of coins
@@ -23243,7 +23293,7 @@ async function getOrderStats(postData2){
             }
         }
 
-        var exchange = postDAta.exchange;
+
         var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
         //::::::::::::::::::::::::::::::::::::::::::::::::
         //Filter_1 part for count number of parent orders
@@ -23942,7 +23992,7 @@ async function getOrderStats(postData2){
 
 
         //Resolve promised for count order for all tabs
-        var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise, errorsCountPromise, costAvgTabCountPromise1, costAvgTabCountPromise2]);
+        var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise, errorsCountPromise, costAvgTabCountPromise1, costAvgTabCountPromise2, atgCountPromise]);
 
         var parentCount = PromiseResponse[0];
         var newCount = PromiseResponse[1];
@@ -23959,6 +24009,7 @@ async function getOrderStats(postData2){
         var errorsCount = PromiseResponse[12];
         var costAvgTabBuyCount = PromiseResponse[13];
         var costAvgTabSoldCount = PromiseResponse[14];
+        var atgCount = PromiseResponse[15];
 
         // var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
 
@@ -23984,6 +24035,7 @@ async function getOrderStats(postData2){
         countArr['costAvgTabBuyCount'] = costAvgTabBuyCount;
         countArr['costAvgTabSoldCount'] = costAvgTabSoldCount;
         countArr['costAvgTabCount'] = totalCostAvgCount;
+        countArr['atgCount'] = atgCount;
         //get user balance for listing on list-order page
         return countArr
 
