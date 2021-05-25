@@ -1106,8 +1106,11 @@ async function listUserCoins(userId) {
     return new Promise((resolve) => {
         let where = {};
         where.user_id = userId;
+        // where.symbol = {
+        //     '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC']
+        // };
         where.symbol = {
-            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC']
+            '$nin': ['', null, 'BTC', 'NCASHBTC', 'POEBTC']
         };
         conn.then(async (db) => {
             db.collection('coins').find(where).toArray(async (err, data) => {
