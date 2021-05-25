@@ -9726,7 +9726,7 @@ router.post('/lisEditManualOrderById', async (req, resp) => {
     buyOrderArr['deep_price_processed'] = (typeof buyOrderArr['deep_price_processed'] != 'undefined' && buyOrderArr['deep_price_processed'] != '') ? parseFloat(buyOrderArr['deep_price_processed']) : 'no'
     buyOrderArr['sell_trailing_starts'] = (typeof buyOrderArr['sell_trailing_starts'] != 'undefined' && buyOrderArr['sell_trailing_starts'] != '') ? parseFloat(buyOrderArr['sell_trailing_starts']) : 'no'
     buyOrderArr['sell_trailing_starts'] = (typeof buyOrderArr['sell_trailing_starts'] != 'undefined' && buyOrderArr['sell_trailing_starts'] != '') ? parseFloat(buyOrderArr['sell_trailing_starts']) : 'no'
-    buyOrderArr['sent_for_sell'] = (typeof buyOrderArr['sent_for_sell'] != 'undefined' && buyOrderArr['sent_for_sell'] != '') ?buyOrderArr['sent_for_sell'] : 'no'
+    buyOrderArr['sent_for_sell'] = (typeof buyOrderArr['sentforselltoDigieiptrading'] != 'undefined' && buyOrderArr['sentforselltoDigieiptrading'] != '') ?buyOrderArr['sentforselltoDigieiptrading'] : 'no'
     //Get order log against order
     var ordrLogPromise = await listOrderLog(orderId, exchange, order_mode, order_created_date);
 
@@ -12149,7 +12149,7 @@ router.post('/remove_error', async (req, resp) => {
                   }
 
                   if (custom_unset === 1){
-                      update['$unset']['sent_for_buy'] = ''
+                      update['$unset']['sentforbuytoDigieiptrading'] = ''
                   }
 
                   let updated = await db.collection(buy_collection).updateOne(where, update)
@@ -12210,7 +12210,7 @@ router.post('/remove_error', async (req, resp) => {
                   update2['$set'] = set2
                   let updated2 = await db.collection(sell_collection).updateOne(where2, update2)
 
-                  await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$unset': { 'sent_for_sell': '','sell_opportunity_id':''} })
+                  await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$unset': { 'sentforselltoDigieiptrading': '','sell_opportunity_id':''} })
 
               }
 
