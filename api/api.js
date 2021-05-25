@@ -1165,8 +1165,11 @@ async function getUserCoins(userId, exchange) {
     return new Promise((resolve) => {
         let where = {};
         where.user_id = userId;
+        // where.symbol = {
+        //     '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC']
+        // };
         where.symbol = {
-            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC']
+            '$nin': ['', null, 'BTC', 'NCASHBTC', 'POEBTC']
         };
         conn.then(async (db) => {
 
@@ -28509,8 +28512,11 @@ async function candleCoins() {
 
         const db = await conn
 
+        // let symbols = {
+        //     '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC']
+        // }
         let symbols = {
-            '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC']
+            '$nin': ['', null, 'BTC', 'NCASHBTC', 'POEBTC']
         }
 
         let where = {
