@@ -28654,7 +28654,8 @@ router.all('/getAllGlobalCoins', async (req, res) => {
 
         const db = await conn
 
-        let where_symbols = { '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC'] }
+        // let where_symbols = { '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC'] }
+        let where_symbols = { '$nin': ['', null, 'BTC', 'NCASHBTC', 'POEBTC'] }
 
         let binance = await db.collection('coins').find({ 'symbol': where_symbols, 'user_id': 'global', 'exchange_type': 'binance' }).toArray()
         let bam = await db.collection('coins_bam').find({ 'symbol': where_symbols, 'user_id': 'global' }).toArray()
