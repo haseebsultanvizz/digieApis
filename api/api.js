@@ -15000,21 +15000,24 @@ async function send_notification(admin_id, type, priority, message, order_id = '
     return true;
 }
 
-router.post('/update_user_balance', (req, res)=>{
+router.post('/update_user_balance', async (req, res)=>{
 
     let user_id = req.body.user_id
     if(typeof user_id != 'undefined' && user_id != ''){
-        let updateWallet = update_user_balance(user_id)
-    }
+        var updateWallet = await update_user_balance(user_id, res)
+      }
 
-    res.send({
-        'status': true,
-        'message': 'balance updated'
-    });
+
+      // Removed By huzaifa
+      // res.send({
+      //     'status': true,
+      //     'message': updateWallet
+      // });
+      // Removed By huzaifa
 
 })
 
-async function update_user_balance(user_id) {
+async function update_user_balance(user_id, res='') {
     //Update Binance Balance
     var options = {
         method: 'GET',
@@ -15083,9 +15086,10 @@ async function update_user_balance(user_id) {
     }
     let url = 'http://' + ip + port + '/updateUserBalance'
 
-    // console.log(url)
+    console.log(url)
 
     //Update Kraken Balance
+    var message = 0;
     var options = {
         method: 'POST',
         url: url,
@@ -15100,20 +15104,35 @@ async function update_user_balance(user_id) {
             'Content-Type'    : 'application/json'
         },
         json: {
-            'user_id': user_id
+            'user_id': user_id,
         }
     };
     request(options, function (error, response, body) {
-        // if(error){
-        //     // console.log(error)
-        // }else{
-        //     // console.log(body)
-        // }
+      // console.log(body)
+        if(error){
+            // console.log(error)
+        }else{
+            // console.log(body)
+
+
+            // Added by huzaifa
+            if(body['success']){
+              res.send({
+                'status': true,
+                'message': body['test']
+              });
+            } else {
+              res.send({
+                'status': false,
+                'message': 'not updates'
+              });
+            }
+            // Added by huzaifa
+        }
      });
 
 
-
-    return true
+     return true;
 }
 
 router.post('/getNotifications', (req, res) => {
