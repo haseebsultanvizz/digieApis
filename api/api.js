@@ -15004,8 +15004,20 @@ router.post('/update_user_balance', async (req, res)=>{
 
     let user_id = req.body.user_id
     if(typeof user_id != 'undefined' && user_id != ''){
-        var updateWallet = await update_user_balance(user_id, res)
-      }
+        var updateWallet = await update_user_balance(user_id, 'shahzad_check')
+        if(updateWallet){
+          console.log(updateWallet)
+          res.send({
+            'status': true,
+            'message': updateWallet
+          });
+        }
+    } else {
+      res.send({
+          'status': false,
+          'message': 'user id needed'
+      });
+    }
 
 
       // Removed By huzaifa
@@ -15018,6 +15030,14 @@ router.post('/update_user_balance', async (req, res)=>{
 })
 
 async function update_user_balance(user_id, res='') {
+
+
+  return new Promise(async resolve=>{
+
+
+
+
+
     //Update Binance Balance
     var options = {
         method: 'GET',
@@ -15087,6 +15107,8 @@ async function update_user_balance(user_id, res='') {
     let url = 'http://' + ip + port + '/updateUserBalance'
 
     console.log(url)
+    var message = 0
+    var result
 
     //Update Kraken Balance
     var options = {
@@ -15111,27 +15133,17 @@ async function update_user_balance(user_id, res='') {
         if(error){
             // console.log(error)
         }else{
-            console.log(body)
-
-
-            // Added by huzaifa
-            if(body['success']){
-              res.send({
-                'status': true,
-                'message': body['test']
-              });
-            } else {
-              res.send({
-                'status': false,
-                'message': 'not updates'
-              });
-            }
-            // Added by huzaifa
+          // console.log(body)
+          if(res == 'shahzad_check'){
+            console.log('if')
+            resolve(body)
+          } else {
+            console.log('else')
+            resolve(body['status'])
+          }
         }
      });
-
-
-     return true;
+  })
 }
 
 router.post('/getNotifications', (req, res) => {
