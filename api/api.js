@@ -15107,8 +15107,6 @@ async function update_user_balance(user_id, res='') {
     let url = 'http://' + ip + port + '/updateUserBalance'
 
     console.log(url)
-    var message = 0
-    var result
 
     //Update Kraken Balance
     var options = {
