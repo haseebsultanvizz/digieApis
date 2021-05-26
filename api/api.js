@@ -24063,7 +24063,7 @@ async function getOrderStats(postData2){
         var errorsCount = PromiseResponse[12];
         var costAvgTabBuyCount = PromiseResponse[13];
         var costAvgTabSoldCount = PromiseResponse[14];
-        var totalCount = PromiseResponse[15];
+        var totalatgCount = PromiseResponse[15];
         var atgCount = PromiseResponse[16];
 
         // var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
@@ -24091,7 +24091,7 @@ async function getOrderStats(postData2){
         countArr['costAvgTabSoldCount'] = costAvgTabSoldCount;
         countArr['costAvgTabCount'] = totalCostAvgCount;
         countArr['atgCount'] = atgCount;
-        countArr['totalCount'] = totalCount;
+        countArr['totalatgCount'] = totalatgCount;
         //get user balance for listing on list-order page
         return countArr
 
