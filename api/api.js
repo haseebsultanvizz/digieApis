@@ -15005,11 +15005,16 @@ router.post('/update_user_balance', async (req, res)=>{
     let user_id = req.body.user_id
     if(typeof user_id != 'undefined' && user_id != ''){
         var updateWallet = await update_user_balance(user_id, 'shahzad_check')
-        if(updateWallet){
+        if(updateWallet || updateWallet == true){
           console.log(updateWallet)
           res.send({
             'status': true,
             'message': updateWallet
+          });
+        } else {
+          res.send({
+            'status': false,
+            'message': 'Request Stuck somewhere'
           });
         }
     } else {
@@ -15130,6 +15135,13 @@ async function update_user_balance(user_id, res='') {
       console.log('working')
         if(error){
             // console.log(error)
+            if(res == 'shahzad_check'){
+              console.log('error_if', error)
+              resolve(false)
+            } else {
+              console.log('error_else', error)
+              resolve(false)
+            }
         }else{
           // console.log(body)
           if(res == 'shahzad_check'){
