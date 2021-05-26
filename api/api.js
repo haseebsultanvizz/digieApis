@@ -4034,9 +4034,11 @@ function countATGExpectedOrders(collectionName, filter) {
         conn.then(async (db) => {
 
             var data = await db.collection(collectionName).aggregate(filter).toArray();
-            console.log('Data', data[0]['total'])
+            console.log('Data', data)
             if(data.length > 0){
                 resolve(data[0]['total']);
+            } else {
+              resolve(0)
             }
         })
     })
@@ -28921,6 +28923,89 @@ async function createATGFromScriptForUser(){
 
     return true
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Huzaifa Starts Here
+router.post('/order_move_sold_to_buy', async (req, resp) => {
+
+  // let myIp = req.headers['x-forwarded-for']
+  // console.log('============================================================== Request Ip ::: ', myIp)
+
+  let exchange = req.body.exchange;
+  let order_id = req.body.order_id;
+  if(order_id != '' && typeof order_id != 'undefined'){
+    var order_detail = await order_move_sold_to_buy(exchange, order_id)
+    resp.status(200).send({
+      status: true,
+      message: order_detail
+    });
+  } else {
+    resp.status(200).send({
+      status: false,
+      message: 'Order Id Needed'
+  });
+  }
+
+}) //End of order_move_sold_to_buy
+
+function order_move_sold_to_buy(exchange, order_id) {
+  return new Promise((resolve) => {
+      let where = {};
+      where['_id'] = {'$in' :[order_id, ObjectID(order_id)]};
+      conn.then((db) => {
+          let collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+          db.collection(collectionName).find(where).toArray((err, result) => {
+              if (err) {
+                  resolve(err)
+              } else {
+                  // console.log(result, 'Order in Sold Collection')
+                  if(result.length > 0){
+                    let collection_name = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                    let data = {}
+                    data = result[0]
+                    data['previous_sold_order_id'] = result[0]['_id'];
+                    delete data['_id'];
+
+                    db.collection(collection_name).insertOne(data, (err, result) => {
+                      if (err) {
+                        resolve(err)
+                      } else {
+                        resolve('Inserted Successfully to Buy Collection')
+                      }
+                    })
+                  } else {
+                    resolve('Not Found')
+
+                  }
+              }
+          })
+      })
+  })
+} //End of order_move_sold_to_buy
+// Huzaifa Ends Here
 
 
 
