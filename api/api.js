@@ -23287,12 +23287,8 @@ async function getOrderStats(postData2){
               }
             }
         ];
+        var totalAtgCountPromise = await countATGExpectedOrders(atg_collection, pipeline_atg);
 
-        console.log(atg_collection, pipeline_atg)
-        var atgCountPromise = await countATGExpectedOrders(atg_collection, pipeline_atg);
-
-
-        console.log(atgCountPromise,'Working')
         // Check Added to Count Total Trades Must be Made in ATG End here
 
 
@@ -23346,6 +23342,53 @@ async function getOrderStats(postData2){
         //:::::::::::::::::::::: End of count parent ordes Filter ::::::::::::::
         //count parent orders Promise
         var parentCountPromise = countCollection(collectionName, filter_1);
+
+
+
+
+
+
+
+        //Filter_atg part for count number of atg orders
+        var filter_atg = {};
+        filter_atg['parent_status'] = 'parent';
+        filter_atg['auto_trade_generator'] = 'yes';
+        filter_atg['admin_id'] = admin_id;
+        filter_atg['application_mode'] = application_mode;
+        filter_atg['status'] = {
+            '$in': ['new', 'takingOrder']
+        }
+
+        if (postDAta.start_date != '' || postDAta.end_date != '') {
+            let obj = {}
+            if (postDAta.start_date != '') {
+                obj['$gte'] = new Date(postDAta.start_date);
+            }
+            if (postDAta.end_date != '') {
+                obj['$lte'] = new Date(postDAta.end_date);
+            }
+            filter_atg['created_date'] = obj;
+        }
+
+        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+            let obj = {}
+            if (postDAta.modified_start_date != '') {
+                obj['$gte'] = new Date(postDAta.modified_start_date);
+            }
+            if (postDAta.modified_end_date != '') {
+                obj['$lte'] = new Date(postDAta.modified_end_date);
+            }
+            filter_atg['modified_date'] = obj;
+        }
+
+        if (count > 0) {
+            for (let [key, value] of Object.entries(search)) {
+                filter_atg[key] = value;
+            }
+        }
+        //:::::::::::::::::::::: End of count atg ordes Filter ::::::::::::::
+        //count atg orders Promise
+        var atg_CountPromise = countCollection(collectionName, filter_atg);
 
 
 
@@ -24003,7 +24046,7 @@ async function getOrderStats(postData2){
 
 
         //Resolve promised for count order for all tabs
-        var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise, errorsCountPromise, costAvgTabCountPromise1, costAvgTabCountPromise2, atgCountPromise]);
+        var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise, errorsCountPromise, costAvgTabCountPromise1, costAvgTabCountPromise2, totalAtgCountPromise, atg_CountPromise]);
 
         var parentCount = PromiseResponse[0];
         var newCount = PromiseResponse[1];
@@ -24020,7 +24063,8 @@ async function getOrderStats(postData2){
         var errorsCount = PromiseResponse[12];
         var costAvgTabBuyCount = PromiseResponse[13];
         var costAvgTabSoldCount = PromiseResponse[14];
-        var atgCount = PromiseResponse[15];
+        var totalCount = PromiseResponse[15];
+        var atgCount = PromiseResponse[16];
 
         // var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
 
@@ -24047,6 +24091,7 @@ async function getOrderStats(postData2){
         countArr['costAvgTabSoldCount'] = costAvgTabSoldCount;
         countArr['costAvgTabCount'] = totalCostAvgCount;
         countArr['atgCount'] = atgCount;
+        countArr['totalCount'] = totalCount;
         //get user balance for listing on list-order page
         return countArr
 
