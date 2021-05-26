@@ -12117,10 +12117,12 @@ router.post('/remove_error', async (req, resp) => {
               update_buy_status = 'FILLED'
               error_type = temp_buy_status_arr.join(' ')
 
-          } else if (temp_buy_status_arr[0] == 'KEYFILLED_ERROR' || temp_buy_status_arr[0] == 'COIN_BAN_ERROR' || temp_buy_status_arr[0] ==  'TEMPAPILOCK_ERROR' || temp_buy_status_arr[0] == 'API_ERROR') {
+          } else if (buy_status == 'KEYFILLED_ERROR' || buy_status == 'COIN_BAN_ERROR' || buy_status ==  'TEMPAPILOCK_ERROR' || buy_status == 'API_ERROR') {
             //handle new types of error
             update_buy_status = 'FILLED'
             error_type = temp_buy_status_arr.join(' ')
+
+            // console.log('error_type', update_buy_status, error_type)
           }else if (buy_status == 'FILLED_ERROR' || buy_status == 'submitted_ERROR' || buy_status == 'LTH_ERROR' || buy_status == 'new_ERROR') {
               let statusArr = buy_status.split('_');
               update_buy_status = statusArr[0];
@@ -12140,7 +12142,7 @@ router.post('/remove_error', async (req, resp) => {
               //skip buy status update if error only exist in sell order
               if (update_buy_status != 'skip'){
 
-
+                // console.log('Working')
                   let update = {}
                   let set1 = {}
 
