@@ -28987,12 +28987,14 @@ function order_move_sold_to_buy(exchange, order_id) {
                     let data = {}
                     data = result[0]
                     data['previous_sold_order_id'] = result[0]['_id'];
+                    data['status'] = 'new';
                     delete data['_id'];
 
-                    db.collection(collection_name).insertOne(data, (err, result) => {
+                    db.collection(collection_name).insertOne(data, async (err, result) => {
                       if (err) {
                         resolve(err)
                       } else {
+                        var move_costAvg_completed = await db.collection(collectionName).updateOne(where, {$set: {move_costAvg: "completed"}})
                         resolve('Inserted Successfully to Buy Collection')
                       }
                     })
