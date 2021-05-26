@@ -12117,7 +12117,7 @@ router.post('/remove_error', async (req, resp) => {
               update_buy_status = 'FILLED'
               error_type = temp_buy_status_arr.join(' ')
 
-          } else if (buy_status == 'KEYFILLED_ERROR' || buy_status == 'COIN_BAN_ERROR' || buy_status ==  'TEMPAPILOCK_ERROR' || buy_status == 'API_ERROR') {
+          } else if (buy_status == 'KEYFILLED_ERROR' || buy_status == 'COIN_BAN_ERROR' || buy_status ==  'TEMPAPILOCK_ERROR' || buy_status == 'API_ERROR' || buy_status == 'APINONCE' || buy_status == 'API_NONCE') {
             //handle new types of error
             update_buy_status = 'FILLED'
             error_type = temp_buy_status_arr.join(' ')
