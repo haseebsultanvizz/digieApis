@@ -23214,39 +23214,7 @@ async function getOrderStats(postData2){
         var search = {};
         var exchange = postDAta.exchange;
 
-        // Check Added to Count Total Trades Must be Made in ATG Starts here
-        var atg_collection = (exchange == 'binance') ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange;
 
-
-        var pipeline_atg = [
-            {
-              '$match': {
-                'user_id': {'$in':[admin_id, ObjectID(admin_id)]},
-                'application_mode': application_mode
-              }
-            },
-            {
-              '$project': {
-                '_id': 0,
-                'total': {
-                  '$multiply': [
-                    {
-                      '$size': '$step_2.coins'
-                    }, {
-                      '$size': '$step_3.bots'
-                    }
-                  ]
-                }
-              }
-            }
-        ];
-
-        console.log(atg_collection, pipeline_atg)
-        var atgCountPromise = await countATGExpectedOrders(atg_collection, pipeline_atg);
-
-
-        console.log(atgCountPromise,'Working')
-        // Check Added to Count Total Trades Must be Made in ATG End here
 
         //if filter values exist for order list create filter on the base of selected filters
         if (postDAta.coins != '') {
@@ -23289,6 +23257,43 @@ async function getOrderStats(postData2){
           admin_id = user_id;
 
         }
+
+
+
+
+        // Check Added to Count Total Trades Must be Made in ATG Starts here
+        var atg_collection = (exchange == 'binance') ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange;
+
+
+        var pipeline_atg = [
+            {
+              '$match': {
+                'user_id': {'$in':[admin_id, ObjectID(admin_id)]},
+                'application_mode': application_mode
+              }
+            },
+            {
+              '$project': {
+                '_id': 0,
+                'total': {
+                  '$multiply': [
+                    {
+                      '$size': '$step_2.coins'
+                    }, {
+                      '$size': '$step_3.bots'
+                    }
+                  ]
+                }
+              }
+            }
+        ];
+
+        console.log(atg_collection, pipeline_atg)
+        var atgCountPromise = await countATGExpectedOrders(atg_collection, pipeline_atg);
+
+
+        console.log(atgCountPromise,'Working')
+        // Check Added to Count Total Trades Must be Made in ATG End here
 
 
         var count = 0;
