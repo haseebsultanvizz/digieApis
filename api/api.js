@@ -28985,7 +28985,7 @@ function order_move_sold_to_buy(exchange, order_id) {
                     let data = {}
                     data = result[0]
                     data['previous_sold_order_id'] = result[0]['_id'];
-                    data['status'] = 'new';
+                    data['status'] = 'CA_SOLD_MOVE';
                     data['cost_avg'] = 'yes'
                     data['show_order'] = 'yes'
                     data['cavg_parent'] = 'yes'
