@@ -16509,7 +16509,7 @@ async function createAutoTradeParents(settings){
         let user_remaining_usd_limit = await getUserRemainingLimit(user_id, exchange)
         let user_remaining_limit = 0
 
-        console.log('user_remaining_usd_limit ', user_remaining_usd_limit)
+        console.log('user_remaining_usd_limit ', user_remaining_usd_limit, 'test')
 
 
 
@@ -16557,7 +16557,8 @@ async function createAutoTradeParents(settings){
 
 
 
-        // console.log('Before Loop Start==============================')
+        console.log('Before Loop Start==============================')
+        console.log(coins)
         for(let i=0; i<coninsCount; i++){
 
             let coin = coins[i]
@@ -16622,7 +16623,7 @@ async function createAutoTradeParents(settings){
             if (quantity < minReqQty) {
                 //Create trades with minReqQty
                 for (let index in bots){
-
+                  console.log(i)
                     level = bots[index]
 
                     // IF Replace Manual Order is NO
@@ -16733,7 +16734,7 @@ async function createAutoTradeParents(settings){
             } else {
                 //Create trades with defined quantity
                 for (let index in bots) {
-
+                    console.log(i)
                     level = bots[index]
 
                     // IF Replace Manual Order is NO
@@ -16844,12 +16845,12 @@ async function createAutoTradeParents(settings){
 
         }
 
-        // console.log('=================================After Loop End')
+        console.log('=================================After Loop End')
 
         // { "_id" : ObjectId("5ef9cc0184c66a51207a3bb1"), "user_id" : "5c0912b7fc9aadaac61dd072", "daily_buy_usd_worth" : 0, "num_of_trades_buy_today" : 0, "daily_buy_usd_limit" : 41.412846272754, "created_date" : ISODate("2020-06-29T11:09:53Z"), "modified_date" : ISODate("2020-12-29T14:17:42.458Z"), "BTCTradesTodayCount" : 0, "USDTTradesTodayCount" : 0, "dailyTradeableBTC" : 0.27, "dailyTradeableBTC_usd_worth" : 20, "dailyTradeableUSDT" : 5000, "dailyTradeableUSDT_usd_worth" : 20, "daily_bought_btc_usd_worth" : 0, "daily_bought_usdt_usd_worth" : 0 }
 
 
-        //sleep 7 seconds before sending call next()
+        // sleep 7 seconds before sending call next()
         await new Promise(r => setTimeout(r, 7000));
         // console.log('after sleep parents processed: ', keepParentIdsArr.length)
 
@@ -28951,9 +28952,6 @@ async function createATGFromScriptForUser(){
 // Huzaifa Starts Here
 router.post('/order_move_sold_to_buy', async (req, resp) => {
 
-  // let myIp = req.headers['x-forwarded-for']
-  // console.log('============================================================== Request Ip ::: ', myIp)
-
   let exchange = req.body.exchange;
   let order_id = req.body.order_id;
   if(order_id != '' && typeof order_id != 'undefined'){
@@ -28988,8 +28986,80 @@ function order_move_sold_to_buy(exchange, order_id) {
                     data = result[0]
                     data['previous_sold_order_id'] = result[0]['_id'];
                     data['status'] = 'new';
-                    delete data['_id'];
+                    data['cost_avg'] = 'yes'
+                    data['show_order'] = 'yes'
+                    data['cavg_parent'] = 'yes'
+                    data['modified_date'] = new Date()
 
+
+                    // If Comming from Sold Tab
+                    data['cost_avg_buy'] = 'yes'
+                    data['move_to_cost_avg'] = 'yes'
+                    data['avg_price_three_upd'] = ''
+                    data['avg_sell_price_three'] = ''
+                    data['last_three_ids'] = ''
+                    data['quantity_three'] = ''
+                    data['avg_price_all_upd'] = ''
+                    data['all_buy_ids'] = ''
+                    data['quantity_all'] = ''
+
+
+                    // Suggestion Comming From Shahzad
+
+                    // let updBuyOrder   = {};
+                    // let updSellOrder  = {};
+                    // var percentComm = parseFloat(commission / qty);
+                    // var value_obj = {
+                    //    'filledQty'      : qty,
+                    //    'filledPrice'    : price,
+                    //    'buyOrderId'     : orderId,
+                    //    'orderFilledId'  : tradeId,
+                    //    'commission'     : commission,
+                    //    'commissionAsset': commissionAsset,
+                    //    'commissionPercentRatio': parseFloat(percentComm)
+                    // };
+                    // update_sub_document(buy_order_id, collection_name, value_obj, 'buy_fraction_filled_order_arr');
+
+                    // Suggestion Comming From Shahzad End Here
+
+
+
+                    data['cost_avg_array'] = {}
+                    // Buy Fraction Array
+                    if(typeof data['buy_fraction_filled_order_arr'] != 'undefined' && data['buy_fraction_filled_order_arr'].length > 0){
+                      data['cost_avg_array']['filledQtyBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['filledQty'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['filledQty'] != '' ? data['buy_fraction_filled_order_arr'][0]['filledQty'] : ''
+                      data['cost_avg_array']['filledPriceBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['filledPrice'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['filledPrice'] != '' ? data['buy_fraction_filled_order_arr'][0]['filledPrice'] : ''
+                      data['cost_avg_array']['buyOrderId'] = typeof data['buy_fraction_filled_order_arr'][0]['buyOrderId'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['buyOrderId'] != '' ? data['buy_fraction_filled_order_arr'][0]['buyOrderId'] : ''
+                      data['cost_avg_array']['orderFilledIdBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['orderFilledId'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['orderFilledId'] != '' ? data['buy_fraction_filled_order_arr'][0]['orderFilledId'] : ''
+                      data['cost_avg_array']['commissionBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['commission'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['commission'] != '' ? data['buy_fraction_filled_order_arr'][0]['commission'] : ''
+                    } else{
+                      data['cost_avg_array']['filledQtyBuy']= typeof data['quantity'] != 'undefined' && data['quantity'] != '' ? data['quantity'].toFixed(8) : ''
+                      data['cost_avg_array']['filledPriceBuy']= typeof data['purchased_price'] != 'undefined' && data['purchased_price'] != '' ? data['purchased_price'].toFixed(8) : ''
+                      data['cost_avg_array']['buyOrderId']= typeof data['binance_order_id'] != 'undefined' && data['binance_order_id'] != '' ? data['binance_order_id'] : ''
+                      data['cost_avg_array']['orderFilledIdBuy']= typeof data['tradeId'] != 'undefined' && data['tradeId'] != '' ? data['tradeId'] : ''
+                      data['cost_avg_array']['commissionBuy']= ''
+                    }
+
+                    // Sell Fraction Array
+                    if(typeof data['sell_fraction_filled_order_arr'] != 'undefined' && data['sell_fraction_filled_order_arr'].length > 0){
+                      data['cost_avg_array']['filledQtySell'] = typeof data['sell_fraction_filled_order_arr'][0]['filledQty'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['filledQty'] != '' ? data['sell_fraction_filled_order_arr'][0]['filledQty'] : ''
+                      data['cost_avg_array']['filledPriceSell'] = typeof data['sell_fraction_filled_order_arr'][0]['filledPrice'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['filledPrice'] != '' ? data['sell_fraction_filled_order_arr'][0]['filledPrice'] : ''
+                      data['cost_avg_array']['sellOrderId'] = typeof data['sell_fraction_filled_order_arr'][0]['sellOrderId'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['sellOrderId'] != '' ? data['sell_fraction_filled_order_arr'][0]['sellOrderId'] : ''
+                      data['cost_avg_array']['orderFilledIdSell'] = typeof data['sell_fraction_filled_order_arr'][0]['orderFilledId'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['orderFilledId'] != '' ? data['sell_fraction_filled_order_arr'][0]['orderFilledId'] : ''
+                      data['cost_avg_array']['commissionSell'] = typeof data['sell_fraction_filled_order_arr'][0]['commission'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['commission'] != '' ? data['sell_fraction_filled_order_arr'][0]['commission'] : ''
+                    } else {
+                      data['cost_avg_array']['filledQtySell']= typeof data['quantity'] != 'undefined' && data['quantity'] != '' ? data['quantity'].toFixed(8) : ''
+                      data['cost_avg_array']['filledPriceSell']= typeof data['market_sold_price'] != 'undefined' && data['market_sold_price'] != '' ? data['market_sold_price'].toFixed(8) : ''
+                      data['cost_avg_array']['sellOrderId']= typeof data['binance_order_id_sell'] != 'undefined' && data['binance_order_id_sell'] != '' ? data['binance_order_id_sell'] : ''
+                      data['cost_avg_array']['orderFilledIdSell']= typeof data['tradeId_sell'] != 'undefined' && data['tradeId_sell'] != '' ? data['tradeId_sell'] : ''
+                      data['cost_avg_array']['commissionSell']= ''
+                    }
+
+
+                    delete data['_id'];
+                    delete data['buy_fraction_filled_order_arr'];
+                    delete data['sell_fraction_filled_order_arr'];
+                    console.log('data', data)
                     db.collection(collection_name).insertOne(data, async (err, result) => {
                       if (err) {
                         resolve(err)
@@ -29007,6 +29077,55 @@ function order_move_sold_to_buy(exchange, order_id) {
       })
   })
 } //End of order_move_sold_to_buy
+
+
+
+
+
+function update_sub_document(id2, collection, value, field) {
+  return new Promise(resolve => {
+    conn.then(db => {
+      var where = {};
+      where["_id"] = new ObjectId(id2);
+      where[field+'.orderFilledId'] = value.orderFilledId;
+      //var oldData = db.collection(collection).findOne(where).toArray();
+
+      console.log("::::  where ::::", where)
+      console.log("::::  value.orderFilledId ::::", value.orderFilledId)
+      var oldData = db.collection(global.Orders).find(where).toArray((err, result) => {
+        //console.log("::::  where ::::", where)
+        console.log("::::  result ::::", result)
+        console.log("::::  result ::::", result._id)
+        console.log("::::  value ::::", value)
+        console.log("::::  field ::::", field)
+
+        if (typeof result._id == 'undefined' || result._id == 'undefined') {
+          console.log("::::  I am here  ::::")
+          var upd_arr = {};
+          let fieldObj = {};
+          fieldObj[field] = value;
+          upd_arr["$push"] = fieldObj;
+          var where1 = {};
+          where1["_id"] = new ObjectId(id2);
+
+          db.collection(collection).updateOne(where1, upd_arr, (err1, result1) => {
+            if (err1) {
+              //console.log("::::  err1 ::::", err1)
+              resolve(err1);
+            } else {
+              //console.log("::::  result1 ::::", result1)
+              resolve(result1);
+            }
+          });
+
+        } else {
+          resolve({'success':true});
+        }
+
+      });
+    });
+  });
+}
 // Huzaifa Ends Here
 
 
