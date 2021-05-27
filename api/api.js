@@ -29058,6 +29058,7 @@ function order_move_sold_to_buy(exchange, order_id) {
                     }
 
                     cost_avg_array_obj['order_sold'] = 'yes'
+                    cost_avg_array_obj['avg_purchase_price'] = data['avg_purchase_price'];
 
                     data['cost_avg_array'].push(cost_avg_array_obj)
 
@@ -29083,6 +29084,16 @@ function order_move_sold_to_buy(exchange, order_id) {
                       if (err) {
                         resolve(err)
                       } else {
+
+
+                        // console.log(result.insertedId, 'result');
+
+                        var doc_id = result.insertedId
+                        var updated_data_in_cost_avg_array = []
+                        data['cost_avg_array'][0]['buy_order_id'] = doc_id.toString()
+
+                        // console.log(doc_id, data['cost_avg_array'])
+                        var update_inserted_order = await db.collection(collection_name).updateOne({_id: ObjectID(doc_id)}, {$set: {cost_avg_array: data['cost_avg_array']}})
                         var move_costAvg_completed = await db.collection(collectionName).updateOne(where, {$set: {move_costAvg: "completed", status:'CA_SOLD_COMPLETE'}})
                         resolve('Inserted Successfully to Buy Collection')
                       }
