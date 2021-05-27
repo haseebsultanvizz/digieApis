@@ -28986,10 +28986,11 @@ function order_move_sold_to_buy(exchange, order_id) {
                     data = result[0]
                     data['previous_sold_order_id'] = result[0]['_id'];
                     data['status'] = 'CA_SOLD_MOVE';
-                    data['cost_avg'] = 'yes'
                     data['show_order'] = 'yes'
-                    data['cavg_parent'] = 'yes'
+                    delete data['modified_date']
                     data['modified_date'] = new Date()
+                    data['cost_avg'] = 'yes'
+                    data['cavg_parent'] = 'yes'
 
 
                     // If Comming from Sold Tab
@@ -29024,47 +29025,61 @@ function order_move_sold_to_buy(exchange, order_id) {
 
 
 
-                    data['cost_avg_array'] = {}
+                    data['cost_avg_array'] = []
+                    var cost_avg_array_obj ={}
                     // Buy Fraction Array
                     if(typeof data['buy_fraction_filled_order_arr'] != 'undefined' && data['buy_fraction_filled_order_arr'].length > 0){
-                      data['cost_avg_array']['filledQtyBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['filledQty'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['filledQty'] != '' ? data['buy_fraction_filled_order_arr'][0]['filledQty'] : ''
-                      data['cost_avg_array']['filledPriceBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['filledPrice'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['filledPrice'] != '' ? data['buy_fraction_filled_order_arr'][0]['filledPrice'] : ''
-                      data['cost_avg_array']['buyOrderId'] = typeof data['buy_fraction_filled_order_arr'][0]['buyOrderId'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['buyOrderId'] != '' ? data['buy_fraction_filled_order_arr'][0]['buyOrderId'] : ''
-                      data['cost_avg_array']['orderFilledIdBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['orderFilledId'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['orderFilledId'] != '' ? data['buy_fraction_filled_order_arr'][0]['orderFilledId'] : ''
-                      data['cost_avg_array']['commissionBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['commission'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['commission'] != '' ? data['buy_fraction_filled_order_arr'][0]['commission'] : ''
+                      cost_avg_array_obj['filledQtyBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['filledQty'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['filledQty'] != '' ? data['buy_fraction_filled_order_arr'][0]['filledQty'] : ''
+                      cost_avg_array_obj['filledPriceBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['filledPrice'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['filledPrice'] != '' ? data['buy_fraction_filled_order_arr'][0]['filledPrice'] : ''
+                      cost_avg_array_obj['buyOrderId'] = typeof data['buy_fraction_filled_order_arr'][0]['buyOrderId'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['buyOrderId'] != '' ? data['buy_fraction_filled_order_arr'][0]['buyOrderId'] : ''
+                      cost_avg_array_obj['orderFilledIdBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['orderFilledId'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['orderFilledId'] != '' ? data['buy_fraction_filled_order_arr'][0]['orderFilledId'] : ''
+                      cost_avg_array_obj['commissionBuy'] = typeof data['buy_fraction_filled_order_arr'][0]['commission'] != 'undefined' && data['buy_fraction_filled_order_arr'][0]['commission'] != '' ? data['buy_fraction_filled_order_arr'][0]['commission'] : ''
                     } else{
-                      data['cost_avg_array']['filledQtyBuy']= typeof data['quantity'] != 'undefined' && data['quantity'] != '' ? data['quantity'].toFixed(8) : ''
-                      data['cost_avg_array']['filledPriceBuy']= typeof data['purchased_price'] != 'undefined' && data['purchased_price'] != '' ? data['purchased_price'].toFixed(8) : ''
-                      data['cost_avg_array']['buyOrderId']= typeof data['binance_order_id'] != 'undefined' && data['binance_order_id'] != '' ? data['binance_order_id'] : ''
-                      data['cost_avg_array']['orderFilledIdBuy']= typeof data['tradeId'] != 'undefined' && data['tradeId'] != '' ? data['tradeId'] : ''
-                      data['cost_avg_array']['commissionBuy']= ''
+                      cost_avg_array_obj['filledQtyBuy']= typeof data['quantity'] != 'undefined' && data['quantity'] != '' ? data['quantity'].toFixed(8) : ''
+                      cost_avg_array_obj['filledPriceBuy']= typeof data['purchased_price'] != 'undefined' && data['purchased_price'] != '' ? data['purchased_price'].toFixed(8) : ''
+                      cost_avg_array_obj['buyOrderId']= typeof data['binance_order_id'] != 'undefined' && data['binance_order_id'] != '' ? data['binance_order_id'] : ''
+                      cost_avg_array_obj['orderFilledIdBuy']= typeof data['tradeId'] != 'undefined' && data['tradeId'] != '' ? data['tradeId'] : ''
+                      cost_avg_array_obj['commissionBuy']= ''
                     }
 
                     // Sell Fraction Array
                     if(typeof data['sell_fraction_filled_order_arr'] != 'undefined' && data['sell_fraction_filled_order_arr'].length > 0){
-                      data['cost_avg_array']['filledQtySell'] = typeof data['sell_fraction_filled_order_arr'][0]['filledQty'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['filledQty'] != '' ? data['sell_fraction_filled_order_arr'][0]['filledQty'] : ''
-                      data['cost_avg_array']['filledPriceSell'] = typeof data['sell_fraction_filled_order_arr'][0]['filledPrice'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['filledPrice'] != '' ? data['sell_fraction_filled_order_arr'][0]['filledPrice'] : ''
-                      data['cost_avg_array']['sellOrderId'] = typeof data['sell_fraction_filled_order_arr'][0]['sellOrderId'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['sellOrderId'] != '' ? data['sell_fraction_filled_order_arr'][0]['sellOrderId'] : ''
-                      data['cost_avg_array']['orderFilledIdSell'] = typeof data['sell_fraction_filled_order_arr'][0]['orderFilledId'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['orderFilledId'] != '' ? data['sell_fraction_filled_order_arr'][0]['orderFilledId'] : ''
-                      data['cost_avg_array']['commissionSell'] = typeof data['sell_fraction_filled_order_arr'][0]['commission'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['commission'] != '' ? data['sell_fraction_filled_order_arr'][0]['commission'] : ''
+                      cost_avg_array_obj['filledQtySell'] = typeof data['sell_fraction_filled_order_arr'][0]['filledQty'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['filledQty'] != '' ? data['sell_fraction_filled_order_arr'][0]['filledQty'] : ''
+                      cost_avg_array_obj['filledPriceSell'] = typeof data['sell_fraction_filled_order_arr'][0]['filledPrice'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['filledPrice'] != '' ? data['sell_fraction_filled_order_arr'][0]['filledPrice'] : ''
+                      cost_avg_array_obj['sellOrderId'] = typeof data['sell_fraction_filled_order_arr'][0]['sellOrderId'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['sellOrderId'] != '' ? data['sell_fraction_filled_order_arr'][0]['sellOrderId'] : ''
+                      cost_avg_array_obj['orderFilledIdSell'] = typeof data['sell_fraction_filled_order_arr'][0]['orderFilledId'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['orderFilledId'] != '' ? data['sell_fraction_filled_order_arr'][0]['orderFilledId'] : ''
+                      cost_avg_array_obj['commissionSell'] = typeof data['sell_fraction_filled_order_arr'][0]['commission'] != 'undefined' && data['sell_fraction_filled_order_arr'][0]['commission'] != '' ? data['sell_fraction_filled_order_arr'][0]['commission'] : ''
                     } else {
-                      data['cost_avg_array']['filledQtySell']= typeof data['quantity'] != 'undefined' && data['quantity'] != '' ? data['quantity'].toFixed(8) : ''
-                      data['cost_avg_array']['filledPriceSell']= typeof data['market_sold_price'] != 'undefined' && data['market_sold_price'] != '' ? data['market_sold_price'].toFixed(8) : ''
-                      data['cost_avg_array']['sellOrderId']= typeof data['binance_order_id_sell'] != 'undefined' && data['binance_order_id_sell'] != '' ? data['binance_order_id_sell'] : ''
-                      data['cost_avg_array']['orderFilledIdSell']= typeof data['tradeId_sell'] != 'undefined' && data['tradeId_sell'] != '' ? data['tradeId_sell'] : ''
-                      data['cost_avg_array']['commissionSell']= ''
+                      cost_avg_array_obj['filledQtySell']= typeof data['quantity'] != 'undefined' && data['quantity'] != '' ? data['quantity'].toFixed(8) : ''
+                      cost_avg_array_obj['filledPriceSell']= typeof data['market_sold_price'] != 'undefined' && data['market_sold_price'] != '' ? data['market_sold_price'].toFixed(8) : ''
+                      cost_avg_array_obj['sellOrderId']= typeof data['binance_order_id_sell'] != 'undefined' && data['binance_order_id_sell'] != '' ? data['binance_order_id_sell'] : ''
+                      cost_avg_array_obj['orderFilledIdSell']= typeof data['tradeId_sell'] != 'undefined' && data['tradeId_sell'] != '' ? data['tradeId_sell'] : ''
+                      cost_avg_array_obj['commissionSell']= ''
                     }
+
+                    cost_avg_array_obj['order_sold'] = 'yes'
+
+                    data['cost_avg_array'].push(cost_avg_array_obj)
+
 
 
                     delete data['_id'];
                     delete data['buy_fraction_filled_order_arr'];
                     delete data['sell_fraction_filled_order_arr'];
+                    delete data['activate_stop_loss_profit_percentage'];
+                    delete data['range_reset_executed'];
+                    delete data['avg_purchase_price'];
+                    delete data['buy_trail_price'];
+                    delete data['market_heighest_value'];
+                    delete data['market_lowest_value'];
+                    delete data['nextStopLossPrice'];
+
                     console.log('data', data)
                     db.collection(collection_name).insertOne(data, async (err, result) => {
                       if (err) {
                         resolve(err)
                       } else {
-                        var move_costAvg_completed = await db.collection(collectionName).updateOne(where, {$set: {move_costAvg: "completed"}})
+                        var move_costAvg_completed = await db.collection(collectionName).updateOne(where, {$set: {move_costAvg: "completed", status:'CA_SOLD_COMPLETE'}})
                         resolve('Inserted Successfully to Buy Collection')
                       }
                     })
