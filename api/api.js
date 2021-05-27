@@ -29074,7 +29074,11 @@ function order_move_sold_to_buy(exchange, order_id) {
                     delete data['market_lowest_value'];
                     delete data['nextStopLossPrice'];
 
-                    console.log('data', data)
+                    // console.log('data', data)
+
+
+
+
                     db.collection(collection_name).insertOne(data, async (err, result) => {
                       if (err) {
                         resolve(err)
