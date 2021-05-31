@@ -17558,6 +17558,7 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
 
                 let btcCoinsMinQty = []
                 let usdtCoinsMinQty = []
+                var required_usd_price = 15;
                 if (pricesArr.length > 0) {
                     await Promise.all(pricesArr.map(item => {
                         var extra_qty_percentage = 40;
@@ -17575,12 +17576,28 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
                         let splitArr = item.coin.split('USDT')
                         if (splitArr[1] == '') {
                             minUsdWorth = minReqQty * item['price']
+                            // Adjust Parent Quantity Atleast 15$ Function
+                            if(minUsdWorth >= required_usd_price){
+
+                            } else {
+                              minReqQty = required_usd_price / item['price']
+                              minUsdWorth = required_usd_price;
+                            }
                             usdtCoinsMinQty.push({
                                 'coin': item.coin,
                                 'usd_worth': parseFloat(minUsdWorth.toFixed(2)),
                             })
                         } else {
                             minUsdWorth = minReqQty * item['price'] * BTCUSDTPrice
+
+
+                            // Adjust Parent Quantity Atleast 15$ Function
+                            if(minUsdWorth >= required_usd_price){
+
+                            } else {
+                                minReqQty = required_usd_price / (item['price'] * BTCUSDTPrice)
+                                minUsdWorth = required_usd_price;
+                            }
                             btcCoinsMinQty.push({
                                 'coin': item.coin,
                                 'usd_worth': parseFloat(minUsdWorth.toFixed(2)),
