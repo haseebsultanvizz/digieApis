@@ -15113,49 +15113,77 @@ async function update_user_balance(user_id, res='') {
     }
     let url = 'http://' + ip + port + '/updateUserBalance'
 
-    console.log(url)
+
+    db.collection('kraken_user_balance_update').insertOne({ 'user_id': user_id, 'trading_ip' : ip, 'exchange' : 'kraken'}, async (err, result) => {
+      if (err) {
+          console.log(err)
+      } else {
+
+        if(res == 'shahzad_check'){
+          console.log('if')
+          resolve('Data inserted in Collection')
+        } else {
+          console.log('else')
+          resolve(body['status'])
+        }
+      }
+    });
+
+
+
+
+
+
+
+
+    // console.log(url)
 
     //Update Kraken Balance
-    var options = {
-        method: 'POST',
-        url: url,
-        headers: {
-            'cache-control'   : 'no-cache',
-            'Connection'      : 'keep-alive',
-            'Accept-Encoding' : 'gzip, deflate',
-            'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-            'Cache-Control'   : 'no-cache',
-            'Accept'          : '*/*',
-            'User-Agent'      : 'PostmanRuntime/7.20.1',
-            'Content-Type'    : 'application/json'
-        },
-        json: {
-            'user_id': user_id,
-        }
-    };
-    request(options, function (error, response, body) {
-      console.log('working')
-        if(error){
-            // console.log(error)
-            if(res == 'shahzad_check'){
-              console.log('error_if', error)
-              resolve(false)
-            } else {
-              console.log('error_else', error)
-              resolve(false)
-            }
-        }else{
-          // console.log(body)
-          if(res == 'shahzad_check'){
-            console.log('if')
-            resolve(body)
-          } else {
-            console.log('else')
-            resolve(body['status'])
-          }
-        }
-     });
+
+
+
+
+    // var options = {
+    //     method: 'POST',
+    //     url: url,
+    //     headers: {
+    //         'cache-control'   : 'no-cache',
+    //         'Connection'      : 'keep-alive',
+    //         'Accept-Encoding' : 'gzip, deflate',
+    //         'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+    //         'Cache-Control'   : 'no-cache',
+    //         'Accept'          : '*/*',
+    //         'User-Agent'      : 'PostmanRuntime/7.20.1',
+    //         'Content-Type'    : 'application/json'
+    //     },
+    //     json: {
+    //         'user_id': user_id,
+    //     }
+    // };
+    // request(options, function (error, response, body) {
+    //   if(error){
+
+    //       if(res == 'shahzad_check'){
+    //         console.log('error_if', error)
+    //         resolve(false)
+    //       } else {
+    //         console.log('error_else', error)
+    //         resolve(false)
+    //       }
+    //   }else{
+    //     if(res == 'shahzad_check'){
+    //       console.log('if')
+    //       resolve(body)
+    //     } else {
+    //       console.log('else')
+    //       resolve(body['status'])
+    //     }
+    //   }
+    // });
   })
+
+
+
 }
 
 router.post('/getNotifications', (req, res) => {
