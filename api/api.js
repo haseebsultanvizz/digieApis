@@ -4045,7 +4045,6 @@ function countATGExpectedOrders(collectionName, filter) {
 } //End of countCollection
 
 
-
 //function for calculation average profit for a user of all his sold orders
 async function calculateAverageOrdersProfit(postDAta) {
 
@@ -28995,6 +28994,9 @@ async function createATGFromScriptForUser(){
 
 
 // Huzaifa Starts Here
+
+
+// Cost Avg New Logic Things
 router.post('/order_move_sold_to_buy', async (req, resp) => {
 
   let exchange = req.body.exchange;
@@ -29013,7 +29015,6 @@ router.post('/order_move_sold_to_buy', async (req, resp) => {
   }
 
 }) //End of order_move_sold_to_buy
-
 function order_move_sold_to_buy(exchange, order_id) {
   return new Promise((resolve) => {
       let where = {};
@@ -29152,11 +29153,6 @@ function order_move_sold_to_buy(exchange, order_id) {
       })
   })
 } //End of order_move_sold_to_buy
-
-
-
-
-
 function update_sub_document(id2, collection, value, field) {
   return new Promise(resolve => {
     conn.then(db => {
@@ -29201,6 +29197,225 @@ function update_sub_document(id2, collection, value, field) {
     });
   });
 }
+
+// Cost Avg New logic Things End Here
+router.post('/get_atg_total_count_vs_atg_actual_count', async (req, resp) => {
+
+  let exchange = req.body.exchange;
+  let application_mode = req.body.application_mode;
+  var skip = req.body.skip;
+  var limit = req.body.limit;
+  if(application_mode != '' && typeof application_mode != 'undefined' && exchange != '' && typeof exchange != 'undefined'){
+    var order_detail = await get_atg_total_count_vs_atg_actual_count(exchange, application_mode, skip, limit)
+
+    if(order_detail == false){
+      resp.status(200).send({
+        status: false,
+        data: 'No Data Available'
+      });
+    } else {
+      resp.status(200).send({
+        status: true,
+        message: order_detail
+      });
+    }
+  } else {
+    resp.status(200).send({
+      status: false,
+      message: 'Application Mode & Exchange Required'
+  });
+  }
+
+}) //End of order_move_sold_to_buy
+
+
+function get_atg_total_count_vs_atg_actual_count(exchange, application_mode, skip, limit){
+  return new Promise((resolve) => {
+      conn.then(async (db) => {
+
+        var user_collection = 'users';
+        var orders_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
+        var atg_collection =  exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
+
+
+
+        var filter = [
+          {
+            '$match': {
+              'is_api_key_valid': 'yes',
+              'trading_status': 'on',
+              'default_exchange': exchange
+            }
+          }, {
+            '$project': {
+              'username': 1,
+              'first_name': 1,
+              'last_name': 1,
+              '_id': {
+                '$toString': '$_id'
+              }
+            }
+          }, {
+            '$lookup': {
+              'from': orders_collection,
+              'let': {
+                'admin_id': '$_id',
+                'status': [
+                  'new', 'takingOrder'
+                ]
+              },
+              'pipeline': [
+                {
+                  '$match': {
+                    '$expr': {
+                      '$and': [
+                        {
+                          '$eq': [
+                            '$auto_trade_generator', 'yes'
+                          ]
+                        }, {
+                          '$eq': [
+                            '$parent_status', 'parent'
+                          ]
+                        }, {
+                          '$eq': [
+                            '$application_mode', application_mode
+                          ]
+                        }, {
+                          '$in': [
+                            '$status', '$$status'
+                          ]
+                        }, {
+                          '$eq': [
+                            '$admin_id', '$$admin_id'
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }, {
+                  '$count': 'total'
+                }
+              ],
+              'as': 'orderdata'
+            }
+          }, {
+            '$lookup': {
+              'from': atg_collection,
+              'let': {
+                'admin_id': '$_id'
+              },
+              'pipeline': [
+                {
+                  '$match': {
+                    '$expr': {
+                      '$and': [
+                        {
+                          '$eq': [
+                            '$application_mode', application_mode
+                          ]
+                        }, {
+                          '$eq': [
+                            '$user_id', '$$admin_id'
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }, {
+                  '$project': {
+                    '_id': 0,
+                    'total': {
+                      '$multiply': [
+                        {
+                          '$size': '$step_2.coins'
+                        }, {
+                          '$size': '$step_3.bots'
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              'as': 'ATGTotalOrders'
+            }
+          }, {
+            '$project': {
+              'username': 1,
+              'first_name': 1,
+              'last_name': 1,
+              '_id': 1,
+              'buy_orders_count': {
+                '$arrayElemAt': [
+                  '$orderdata.total', 0
+                ]
+              },
+              'atg_count': {
+                '$arrayElemAt': [
+                  '$ATGTotalOrders.total', 0
+                ]
+              },
+              'difference': {
+                '$subtract': [
+                  {
+                    '$arrayElemAt': [
+                      '$ATGTotalOrders.total', 0
+                    ]
+                  }, {
+                    '$arrayElemAt': [
+                      '$orderdata.total', 0
+                    ]
+                  }
+                ]
+              }
+            }
+          }, {
+            '$sort': {
+              'difference': -1
+            }
+          }
+          //  ,{
+          //   '$skip': 0
+          // }, {
+          //   '$limit': 10
+          // }
+        ]
+
+
+
+
+        var countArrayFilter = []
+        countArrayFilter = [...filter]
+        var newObj = {}
+        newObj['$count'] = 'total'
+
+        countArrayFilter.push(newObj)
+
+        var count = await db.collection(user_collection).aggregate(countArrayFilter).toArray();
+
+        var obj = {}
+        obj['$skip'] = skip
+        var obj1 = {}
+        obj1['$limit'] = limit
+
+
+        filter.push(obj)
+        filter.push(obj1)
+
+        console.log(filter)
+        var data = await db.collection(user_collection).aggregate(filter).toArray();
+
+        console.log('DataCount', count)
+        if(data.length > 0){
+          resolve({ 'users': data, 'total':count[0]['total']});
+        } else {
+          resolve(false)
+        }
+      })
+  })
+}
+
+
 // Huzaifa Ends Here
 
 
