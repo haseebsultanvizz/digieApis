@@ -29234,17 +29234,17 @@ function get_atg_total_count_vs_atg_actual_count(exchange, application_mode, ski
       conn.then(async (db) => {
 
         var user_collection = 'users';
+        var kraken_user_collection = 'kraken_credentials';
         var orders_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
         var atg_collection =  exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
 
 
 
-        var filter = [
+        var binance_filter = [
           {
             '$match': {
               'is_api_key_valid': 'yes',
               'trading_status': 'on',
-              'default_exchange': exchange
             }
           }, {
             '$project': {
@@ -29345,25 +29345,96 @@ function get_atg_total_count_vs_atg_actual_count(exchange, application_mode, ski
               'first_name': 1,
               'last_name': 1,
               '_id': 1,
+              // 'buy_orders_count': {
+              //   '$arrayElemAt': [
+              //     '$orderdata.total', 0
+              //   ]
+              // },
+              // 'atg_count': {
+              //   '$arrayElemAt': [
+              //     '$ATGTotalOrders.total', 0
+              //   ]
+              // },
+              // 'difference': {
+              //   '$subtract': [
+              //     {
+              //       '$arrayElemAt': [
+              //         '$ATGTotalOrders.total', 0
+              //       ]
+              //     }, {
+              //       '$arrayElemAt': [
+              //         '$orderdata.total', 0
+              //       ]
+              //     }
+              //   ]
+              // }
               'buy_orders_count': {
-                '$arrayElemAt': [
-                  '$orderdata.total', 0
+                '$cond': [
+                  {
+                    '$gte': [
+                      {
+                        '$arrayElemAt': [
+                          '$orderdata.total', 0
+                        ]
+                      }, 0
+                    ]
+                  }, {
+                    '$arrayElemAt': [
+                      '$orderdata.total', 0
+                    ]
+                  }, 0
                 ]
               },
               'atg_count': {
-                '$arrayElemAt': [
-                  '$ATGTotalOrders.total', 0
+                '$cond': [
+                  {
+                    '$gte': [
+                      {
+                        '$arrayElemAt': [
+                          '$ATGTotalOrders.total', 0
+                        ]
+                      }, 0
+                    ]
+                  }, {
+                    '$arrayElemAt': [
+                      '$ATGTotalOrders.total', 0
+                    ]
+                  }, 0
                 ]
               },
               'difference': {
                 '$subtract': [
                   {
-                    '$arrayElemAt': [
-                      '$ATGTotalOrders.total', 0
+                    '$cond': [
+                      {
+                        '$gte': [
+                          {
+                            '$arrayElemAt': [
+                              '$ATGTotalOrders.total', 0
+                            ]
+                          }, 0
+                        ]
+                      }, {
+                        '$arrayElemAt': [
+                          '$ATGTotalOrders.total', 0
+                        ]
+                      }, 0
                     ]
                   }, {
-                    '$arrayElemAt': [
-                      '$orderdata.total', 0
+                    '$cond': [
+                      {
+                        '$gte': [
+                          {
+                            '$arrayElemAt': [
+                              '$orderdata.total', 0
+                            ]
+                          }, 0
+                        ]
+                      }, {
+                        '$arrayElemAt': [
+                          '$orderdata.total', 0
+                        ]
+                      }, 0
                     ]
                   }
                 ]
@@ -29382,28 +29453,303 @@ function get_atg_total_count_vs_atg_actual_count(exchange, application_mode, ski
         ]
 
 
+        var kraken_filter = [
+            {
+              '$match': {
+                'is_api_key_valid': 'yes',
+                'trading_status': 'on'
+              }
+            }, {
+              '$lookup': {
+                'from': user_collection,
+                'let': {
+                  'admin_id': {
+                    '$toObjectId': '$user_id'
+                  }
+                },
+                'pipeline': [
+                  {
+                    '$match': {
+                      '$expr': {
+                        '$and': [
+                          {
+                            '$eq': [
+                              '$_id', '$$admin_id'
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }, {
+                    '$project': {
+                      'first_name': 1,
+                      'last_name': 1,
+                      'username': 1,
+                      '_id': {
+                        '$toString': '$_id'
+                      }
+                    }
+                  }
+                ],
+                'as': 'userdata'
+              }
+            }, {
+              '$project': {
+                '_id': 0,
+                'first_name': {
+                  '$arrayElemAt': [
+                    '$userdata.first_name', 0
+                  ]
+                },
+                'last_name': {
+                  '$arrayElemAt': [
+                    '$userdata.last_name', 0
+                  ]
+                },
+                'username': {
+                  '$arrayElemAt': [
+                    '$userdata.username', 0
+                  ]
+                },
+                '_id': {
+                  '$arrayElemAt': [
+                    '$userdata._id', 0
+                  ]
+                }
+              }
+            }, {
+              '$lookup': {
+                'from': orders_collection,
+                'let': {
+                  'admin_id': '$_id',
+                  'status': [
+                    'new', 'takingOrder'
+                  ]
+                },
+                'pipeline': [
+                  {
+                    '$match': {
+                      '$expr': {
+                        '$and': [
+                          {
+                            '$eq': [
+                              '$auto_trade_generator', 'yes'
+                            ]
+                          }, {
+                            '$eq': [
+                              '$parent_status', 'parent'
+                            ]
+                          }, {
+                            '$eq': [
+                              '$application_mode', application_mode
+                            ]
+                          }, {
+                            '$in': [
+                              '$status', '$$status'
+                            ]
+                          }, {
+                            '$eq': [
+                              '$admin_id', '$$admin_id'
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }, {
+                    '$count': 'total'
+                  }
+                ],
+                'as': 'orderdata'
+              }
+            }, {
+              '$lookup': {
+                'from': atg_collection,
+                'let': {
+                  'admin_id': '$_id'
+                },
+                'pipeline': [
+                  {
+                    '$match': {
+                      '$expr': {
+                        '$and': [
+                          {
+                            '$eq': [
+                              '$application_mode', application_mode
+                            ]
+                          }, {
+                            '$eq': [
+                              '$user_id', '$$admin_id'
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }, {
+                    '$project': {
+                      '_id': 0,
+                      'total': {
+                        '$multiply': [
+                          {
+                            '$size': '$step_2.coins'
+                          }, {
+                            '$size': '$step_3.bots'
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                'as': 'ATGTotalOrders'
+              }
+            }, {
+              '$project': {
+                'username': 1,
+                'first_name': 1,
+                'last_name': 1,
+                '_id': 1,
+                // 'buy_orders_count': {
+                //   '$arrayElemAt': [
+                //     '$orderdata.total', 0
+                //   ]
+                // },
+                // 'atg_count': {
+                //   '$arrayElemAt': [
+                //     '$ATGTotalOrders.total', 0
+                //   ]
+                // },
+                // 'difference': {
+                //   '$subtract': [
+                //     {
+                //       '$arrayElemAt': [
+                //         '$ATGTotalOrders.total', 0
+                //       ]
+                //     }, {
+                //       '$arrayElemAt': [
+                //         '$orderdata.total', 0
+                //       ]
+                //     }
+                //   ]
+                // }
+                'buy_orders_count': {
+                  '$cond': [
+                    {
+                      '$gte': [
+                        {
+                          '$arrayElemAt': [
+                            '$orderdata.total', 0
+                          ]
+                        }, 0
+                      ]
+                    }, {
+                      '$arrayElemAt': [
+                        '$orderdata.total', 0
+                      ]
+                    }, 0
+                  ]
+                },
+                'atg_count': {
+                  '$cond': [
+                    {
+                      '$gte': [
+                        {
+                          '$arrayElemAt': [
+                            '$ATGTotalOrders.total', 0
+                          ]
+                        }, 0
+                      ]
+                    }, {
+                      '$arrayElemAt': [
+                        '$ATGTotalOrders.total', 0
+                      ]
+                    }, 0
+                  ]
+                },
+                'difference': {
+                  '$subtract': [
+                    {
+                      '$cond': [
+                        {
+                          '$gte': [
+                            {
+                              '$arrayElemAt': [
+                                '$ATGTotalOrders.total', 0
+                              ]
+                            }, 0
+                          ]
+                        }, {
+                          '$arrayElemAt': [
+                            '$ATGTotalOrders.total', 0
+                          ]
+                        }, 0
+                      ]
+                    }, {
+                      '$cond': [
+                        {
+                          '$gte': [
+                            {
+                              '$arrayElemAt': [
+                                '$orderdata.total', 0
+                              ]
+                            }, 0
+                          ]
+                        }, {
+                          '$arrayElemAt': [
+                            '$orderdata.total', 0
+                          ]
+                        }, 0
+                      ]
+                    }
+                  ]
+                }
+              }
+            }, {
+              '$sort': {
+                'difference': -1
+              }
+            }
+            // , {
+            //   '$skip': 0
+            // }, {
+            //   '$limit': 10
+            // }
+        ]
+
+
 
 
         var countArrayFilter = []
-        countArrayFilter = [...filter]
+        countArrayFilter = exchange == 'binance' ? [...binance_filter] : [...kraken_filter];
         var newObj = {}
         newObj['$count'] = 'total'
 
-        countArrayFilter.push(newObj)
 
-        var count = await db.collection(user_collection).aggregate(countArrayFilter).toArray();
+
+
+        countArrayFilter.push(newObj)
+        if(exchange == 'binance'){
+            var  main_collection = user_collection
+        } else {
+            var main_collection = kraken_user_collection
+        }
+
+
+
+
+        var count = await db.collection(main_collection).aggregate(countArrayFilter).toArray();
 
         var obj = {}
         obj['$skip'] = skip
         var obj1 = {}
         obj1['$limit'] = limit
 
+        var userArrayFilter = []
+        userArrayFilter = exchange == 'binance' ? [...binance_filter] : [...kraken_filter];
 
-        filter.push(obj)
-        filter.push(obj1)
+        userArrayFilter.push(obj)
+        userArrayFilter.push(obj1)
 
-        console.log(filter)
-        var data = await db.collection(user_collection).aggregate(filter).toArray();
+
+        var data = await db.collection(main_collection).aggregate(userArrayFilter).toArray();
 
         console.log('DataCount', count)
         if(data.length > 0){
