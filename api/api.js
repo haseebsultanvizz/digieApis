@@ -11500,16 +11500,17 @@ router.post('/saveKrakenCredentials', (req, resp) => {
     api_key = api_key.trim()
     api_secret = api_secret.trim()
 
-    conn.then((db) => {
+    conn.then( async(db) => {
         let insertArr = {};
         insertArr['user_id'] = user_id;
         insertArr['api_key'] = api_key;
         insertArr['api_secret'] = api_secret;
         insertArr['modified_date'] = new Date();
 
-
+        // huzaifa Added Shahzad & Asim Said
         let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(user_id)) }, {_id:0, trading_ip:1})
         insertArr['trading_ip'] = userObj['trading_ip']
+        // huzaifa Added Shahzad & Asim Said
         let set = {};
         set['$set'] = insertArr;
         let where = {};
@@ -11559,6 +11560,10 @@ router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
         insertArr['api_key_secondary'] = api_key;
         insertArr['api_secret_secondary'] = api_secret;
         insertArr['modified_date_secondary'] = new Date();
+        // huzaifa Added Shahzad & Asim Said
+        let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(user_id)) }, {_id:0, trading_ip:1})
+        insertArr['trading_ip'] = userObj['trading_ip']
+        // huzaifa Added Shahzad & Asim Said
         let set = {};
         set['$set'] = insertArr;
         let where = {};
@@ -11607,6 +11612,10 @@ router.post('/saveKrakenCredentialsThirdKey', (req, resp) => {
         insertArr['api_key_third_key'] = api_key;
         insertArr['api_secret_third_key'] = api_secret;
         insertArr['modified_date_third_key'] = new Date();
+        // huzaifa Added Shahzad & Asim Said
+        let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(user_id)) }, {_id:0, trading_ip:1})
+        insertArr['trading_ip'] = userObj['trading_ip']
+        // huzaifa Added Shahzad & Asim Said
         let set = {};
         set['$set'] = insertArr;
         let where = {};
