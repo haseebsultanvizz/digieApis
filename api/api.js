@@ -29136,7 +29136,8 @@ function order_move_sold_to_buy(exchange, order_id) {
 
                         var doc_id = result.insertedId
                         var updated_data_in_cost_avg_array = []
-                        data['cost_avg_array'][0]['buy_order_id'] = doc_id.toString()
+                        // data['cost_avg_array'][0]['buy_order_id'] = doc_id.toString()
+                        data['cost_avg_array'][0]['buy_order_id'] = doc_id
 
                         // console.log(doc_id, data['cost_avg_array'])
                         var update_inserted_order = await db.collection(collection_name).updateOne({_id: ObjectID(doc_id)}, {$set: {cost_avg_array: data['cost_avg_array']}})
