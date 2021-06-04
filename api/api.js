@@ -11005,6 +11005,8 @@ router.post('/update_user_info', function (req, res, next) {
                         let update_arr = new Object(post_data);
                         delete update_arr.user_id;
 
+                        update_arr['trading_ip'] = data['trading_ip'];
+
                         let fieldsArr = ['api_key', 'api_secret', 'pass_phrase']
                         for (let [key, value] of Object.entries(update_arr)) {
                             if (!fieldsArr.includes(key)) {
@@ -11504,6 +11506,10 @@ router.post('/saveKrakenCredentials', (req, resp) => {
         insertArr['api_key'] = api_key;
         insertArr['api_secret'] = api_secret;
         insertArr['modified_date'] = new Date();
+
+
+        let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(user_id)) }, {_id:0, trading_ip:1})
+        insertArr['trading_ip'] = userObj['trading_ip']
         let set = {};
         set['$set'] = insertArr;
         let where = {};
