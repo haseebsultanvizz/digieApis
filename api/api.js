@@ -11554,7 +11554,7 @@ router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
     var api_key = req.body.api_key_secondary;
     var api_secret = req.body.api_secret_secondary;
 
-    conn.then((db) => {
+    conn.then(async (db) => {
         let insertArr = {};
         insertArr['user_id'] = user_id;
         insertArr['api_key_secondary'] = api_key;
@@ -11606,7 +11606,7 @@ router.post('/saveKrakenCredentialsThirdKey', (req, resp) => {
     var api_key = req.body.api_key_third_key;
     var api_secret = req.body.api_secret_third_key;
 
-    conn.then((db) => {
+    conn.then(async (db) => {
         let insertArr = {};
         insertArr['user_id'] = user_id;
         insertArr['api_key_third_key'] = api_key;
