@@ -5480,6 +5480,17 @@ router.post('/makeCostAvg', async (req, resp) => {
 
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
 
+
+
+
+            var pricesObj = await get_current_market_prices(exchange, getBuyOrder[0]['symbol'])
+            var currentMarketPrice = pricesObj[coinSymbol]
+
+            var percentage =  8
+            var percentageDown   = (currentMarketPrice * percentage) / 100
+            var perctDownPrice     = percentageDown -  currentMarketPrice;
+
+
             if (tab == 'lthTab' || tab == 'openTab'){
                 var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
             }else if(tab == 'soldTab'){
@@ -5532,11 +5543,16 @@ router.post('/makeCostAvg', async (req, resp) => {
                     update['$set']['lth_profit'] = ''
                     update['$set']['is_lth_order'] = ''
                     update['$set']['move_to_cost_avg'] = 'yes'
+
                 }
             }
 
             if (tab == 'lthTab'){
                 update['$set']['avg_sell_price'] = parseFloat(sell_price)
+                update['$set']['percentage'] = parseFloat(percentage)
+                update['$set']['percentageDown'] = parseFloat(percentageDown)
+                update['$set']['perctDownPrice'] = parseFloat(perctDownPrice)
+
             }
 
             let result = await db.collection(collectionName).updateOne(where, update)
