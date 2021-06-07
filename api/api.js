@@ -5488,7 +5488,8 @@ router.post('/makeCostAvg', async (req, resp) => {
 
             var percentage =  8
             var percentageDown   = (currentMarketPrice * percentage) / 100
-            var perctDownPrice     = percentageDown -  currentMarketPrice;
+            // var perctDownPrice     = percentageDown -  currentMarketPrice;
+            var perctDownPrice     = currentMarketPrice - percentageDown;
 
 
             if (tab == 'lthTab' || tab == 'openTab'){
@@ -29073,7 +29074,7 @@ function order_move_sold_to_buy(exchange, order_id) {
 
                     var percentage =  8
                     var percentageDown   = (currentMarketPrice * percentage) / 100
-                    var perctDownPrice     = percentageDown -  currentMarketPrice;
+                    var perctDownPrice     = currentMarketPrice - percentageDown;
 
 
                     // If Comming from Sold Tab
