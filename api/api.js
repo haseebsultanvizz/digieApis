@@ -29057,7 +29057,7 @@ function order_move_sold_to_buy(exchange, order_id) {
       where['_id'] = {'$in' :[order_id, ObjectID(order_id)]};
       conn.then((db) => {
           let collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
-          db.collection(collectionName).find(where).toArray((err, result) => {
+          db.collection(collectionName).find(where).toArray( async (err, result) => {
               if (err) {
                   resolve(err)
               } else {
