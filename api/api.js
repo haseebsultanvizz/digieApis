@@ -29069,7 +29069,7 @@ function order_move_sold_to_buy(exchange, order_id) {
 
 
                     var pricesObj = await get_current_market_prices(exchange, data['symbol'])
-                    var currentMarketPrice = pricesObj[coinSymbol]
+                    var currentMarketPrice = pricesObj[data['symbol']]
 
                     var percentage =  8
                     var percentageDown   = (currentMarketPrice * percentage) / 100
