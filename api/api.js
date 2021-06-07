@@ -5491,14 +5491,6 @@ router.post('/makeCostAvg', async (req, resp) => {
             var perctDownPrice     = percentageDown -  currentMarketPrice;
 
 
-            var new_child_buy_price = []
-            var new_child_buy_price_obj = {};
-            new_child_buy_price_obj['percentage'] = parseFloat(percentage);
-            new_child_buy_price_obj['percentageDown'] = parseFloat(percentageDown);
-            new_child_buy_price_obj['perctDownPrice'] = parseFloat(perctDownPrice);
-            new_child_buy_price.push(new_child_buy_price_obj);
-
-
             if (tab == 'lthTab' || tab == 'openTab'){
                 var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
             }else if(tab == 'soldTab'){
@@ -5557,7 +5549,7 @@ router.post('/makeCostAvg', async (req, resp) => {
 
             if (tab == 'lthTab'){
                 update['$set']['avg_sell_price'] = parseFloat(sell_price)
-                update['$set']['new_child_buy_price'] = new_child_buy_price;
+                update['$set']['new_child_buy_price'] = parseFloat(perctDownPrice);
             }
 
             let result = await db.collection(collectionName).updateOne(where, update)
@@ -29084,14 +29076,6 @@ function order_move_sold_to_buy(exchange, order_id) {
                     var perctDownPrice     = percentageDown -  currentMarketPrice;
 
 
-                    var new_child_buy_price = []
-                    var new_child_buy_price_obj = {};
-                    new_child_buy_price_obj['percentage'] = parseFloat(percentage);
-                    new_child_buy_price_obj['percentageDown'] = parseFloat(percentageDown);
-                    new_child_buy_price_obj['perctDownPrice'] = parseFloat(perctDownPrice);
-                    new_child_buy_price.push(new_child_buy_price_obj);
-
-
                     // If Comming from Sold Tab
                     data['cost_avg_buy'] = 'yes'
                     data['move_to_cost_avg'] = 'yes'
@@ -29160,7 +29144,7 @@ function order_move_sold_to_buy(exchange, order_id) {
                     cost_avg_array_obj['avg_purchase_price'] = data['avg_purchase_price'];
 
                     data['cost_avg_array'].push(cost_avg_array_obj)
-                    data['new_child_buy_price'] = new_child_buy_price
+                    data['new_child_buy_price'] = parseFloat(perctDownPrice);
 
 
 
