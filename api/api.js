@@ -5481,15 +5481,16 @@ router.post('/makeCostAvg', async (req, resp) => {
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
 
 
+            if(tab == 'lthTab_admin'){
+                var pricesObj = await get_current_market_prices(exchange, getBuyOrder[0]['symbol'])
+                var currentMarketPrice = pricesObj[getBuyOrder[0]['symbol']]
 
+                var percentage =  8
+                var percentageDown   = (currentMarketPrice * percentage) / 100
+                // var perctDownPrice     = percentageDown -  currentMarketPrice;
+                var perctDownPrice     = currentMarketPrice - percentageDown;
+            }
 
-            var pricesObj = await get_current_market_prices(exchange, getBuyOrder[0]['symbol'])
-            var currentMarketPrice = pricesObj[getBuyOrder[0]['symbol']]
-
-            var percentage =  8
-            var percentageDown   = (currentMarketPrice * percentage) / 100
-            // var perctDownPrice     = percentageDown -  currentMarketPrice;
-            var perctDownPrice     = currentMarketPrice - percentageDown;
 
 
             if (tab == 'lthTab' || tab == 'openTab'){
@@ -5536,7 +5537,7 @@ router.post('/makeCostAvg', async (req, resp) => {
                 update['$unset']['avg_sell_price'] = '';
             }
 
-            if (tab == 'lthTab' || tab == 'openTab') {
+            if (tab == 'lthTab' || tab == 'openTab' || tab == 'lthTab_admin') {
                 if (!isNaN(parseFloat(sell_price))){
                     update['$set']['sell_price'] = parseFloat(sell_price)
                     update['$set']['status'] = 'FILLED'
@@ -5550,6 +5551,9 @@ router.post('/makeCostAvg', async (req, resp) => {
 
             if (tab == 'lthTab'){
                 update['$set']['avg_sell_price'] = parseFloat(sell_price)
+            }
+
+            if(tab == 'lthTab_admin'){
                 update['$set']['new_child_buy_price'] = parseFloat(perctDownPrice);
             }
 
@@ -5564,7 +5568,7 @@ router.post('/makeCostAvg', async (req, resp) => {
             let tabName = ''
             if (tab == 'openTab'){
                 tabName = 'Open '
-            } else if (tab == 'lthTab'){
+            } else if (tab == 'lthTab' || tab == 'lthTab_admin'){
                 tabName = 'LTH '
 
                 let tttttorder = {}
