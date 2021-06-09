@@ -5153,6 +5153,9 @@ router.post('/get_user_coins', async (req, resp) => {
     });
 }) //End of manageCoins
 
+
+
+
 //list global cons for an exchange
 function listGlobalCoins() {
     return new Promise((resolve) => {
@@ -15156,7 +15159,7 @@ async function update_user_balance(user_id, res='') {
           resolve('Data inserted in Collection')
         } else {
           console.log('else')
-          resolve(body['status'])
+          resolve(true)
         }
       }
     });
@@ -29241,8 +29244,11 @@ function update_sub_document(id2, collection, value, field) {
     });
   });
 }
-
 // Cost Avg New logic Things End Here
+
+
+
+// Total ATG Orders & Actual ATG Orders Things
 router.post('/get_atg_total_count_vs_atg_actual_count', async (req, resp) => {
 
   let exchange = req.body.exchange;
@@ -29270,9 +29276,7 @@ router.post('/get_atg_total_count_vs_atg_actual_count', async (req, resp) => {
   });
   }
 
-}) //End of order_move_sold_to_buy
-
-
+}) //End of get_atg_total_count_vs_atg_actual_count
 function get_atg_total_count_vs_atg_actual_count(exchange, application_mode, skip, limit){
   return new Promise((resolve) => {
       conn.then(async (db) => {
@@ -29804,6 +29808,118 @@ function get_atg_total_count_vs_atg_actual_count(exchange, application_mode, ski
       })
   })
 }
+// Total ATG Orders & Actual ATG Orders Things
+
+
+
+
+
+
+
+
+//post call to all user coins
+router.post('/addUserFavouriteCoin', async function (req, res, next) {
+
+    conn.then(async (db) => {
+
+        let exchange = req.body.exchange
+        let symbols = req.body.symbols
+        let user_id = req.body.user_id
+        if (typeof symbols == 'undefined' || typeof user_id == 'undefined' || user_id == '' || typeof exchange == 'undefined' || exchange == '') {
+            res.send({
+                'status': true,
+                'message': 'exchange, user_id and symbols array are required'
+            });
+        } else {
+
+            let coins_collection = (exchange == 'binance' ? 'coins' : 'coins_' + exchange)
+            let favourite_coins_collection = (exchange == 'binance' ? 'favourite_coins' : 'favourite_coins_' + exchange)
+            //Delete all user coins
+            db.collection(favourite_coins_collection).deleteMany({
+                "user_id": user_id
+            });
+
+            //insert user coins
+            if (symbols.length > 0) {
+                let where = {
+                    'user_id': 'global',
+                    'symbol': {
+                        '$in': symbols
+                    },
+                }
+                if (coins_collection == 'coins') {
+                    where['exchange_type'] = 'binance'
+                }
+
+                let data1 = await db.collection(coins_collection).find(where).toArray();
+                let add_coins = [];
+                if (data1.length > 0) {
+                    await Promise.all(data1.map(coin => {
+                        let obj = {
+                            "user_id": user_id,
+                            "symbol": coin['symbol'],
+                            "coin_name": coin['coin_name'],
+                            "coin_logo": coin['coin_logo'],
+                        }
+                        if (exchange == 'binance') {
+                            obj["exchange_type"] = exchange
+                        }
+                        add_coins.push(obj)
+                    }))
+                    if (add_coins.length > 0) {
+                        let ins = await db.collection(favourite_coins_collection).insertMany(add_coins);
+                        let updateBalance = update_user_balance(user_id)
+                    }
+                }
+            }
+            res.send({
+                'status': true,
+                'message': 'Coins updated successfully'
+            });
+        }
+    })
+})
+router.post('/get_user_favourite_coins', async (req, resp) => {
+
+    let exchange = req.body.exchange
+    let admin_id = req.body.admin_id
+
+    var userFavouriteCoinsPromise = getUserFavouriteCoins(admin_id, exchange);
+    // var globalCoinsPromise = getGlobalCoins(exchange);
+    var promisesResult = await Promise.all([userFavouriteCoinsPromise]);
+    var responseReslt = {};
+    responseReslt['userFavouriteCoins'] = promisesResult[0];
+    // responseReslt['globalCoins'] = promisesResult[1];
+    resp.status(200).send({
+        message: responseReslt
+    });
+}) //End of get_user_favourite_coins
+
+//function for getting user favourite coins
+async function getUserFavouriteCoins(userId, exchange) {
+    return new Promise((resolve) => {
+        let where = {};
+        where.user_id = userId;
+        // where.symbol = {
+        //     '$nin': ['', null, 'BTC', 'BNBBTC', 'NCASHBTC', 'POEBTC']
+        // };
+        where.symbol = {
+            '$nin': ['', null, 'BTC', 'NCASHBTC', 'POEBTC']
+        };
+        conn.then(async (db) => {
+
+            let coins_collection = (exchange == 'binance' ? 'favourite_coins' : 'favourite_coins_' + exchange)
+
+            db.collection(coins_collection).find(where).toArray(async (err, data) => {
+                if (err) {
+                    resolve(err)
+                } else {
+                    resolve(data)
+                }
+            })
+        })
+    })
+} //End of getUserFavouriteCoins
 
 
 // Huzaifa Ends Here
