@@ -5560,7 +5560,6 @@ router.post('/makeCostAvg', async (req, resp) => {
 
             if(tab == 'lthTab_admin'){
                 update['$set']['new_child_buy_price'] = parseFloat(perctDownPrice);
-
                 update['$set']['cost_avg_array'] = []
                     var cost_avg_array_obj ={}
                     // Buy Fraction Array
@@ -5598,7 +5597,6 @@ router.post('/makeCostAvg', async (req, resp) => {
             if (tab == 'openTab'){
                 tabName = 'Open '
             } else if (tab == 'lthTab' || tab == 'lthTab_admin'){
-                tabName = 'LTH '
 
                 let tttttorder = {}
                 if(tab == 'lthTab'){
@@ -5607,6 +5605,7 @@ router.post('/makeCostAvg', async (req, resp) => {
                 await updateAvgSellFullTransactionPrice(order_id, exchange, getBuyOrder['symbol'])
                 await updateAvgSellThreeTransactionPrice(order_id, exchange, getBuyOrder['symbol'])
 
+                tabName = 'LTH '
             } else if (tab == 'soldTab'){
                 tabName = 'Sold '
             }
