@@ -5143,11 +5143,13 @@ router.post('/get_user_coins', async (req, resp) => {
     let admin_id = req.body.admin_id
 
     var urserCoinsPromise = getUserCoins(admin_id, exchange);
+    var userFavouriteCoinsPromise = getUserFavouriteCoins(admin_id, exchange);
     var globalCoinsPromise = getGlobalCoins(exchange);
-    var promisesResult = await Promise.all([urserCoinsPromise, globalCoinsPromise]);
+    var promisesResult = await Promise.all([urserCoinsPromise, globalCoinsPromise, userFavouriteCoinsPromise]);
     var responseReslt = {};
     responseReslt['userCoins'] = promisesResult[0];
     responseReslt['globalCoins'] = promisesResult[1];
+    responseReslt['userFavouriteCoins'] = promisesResult[2];
     resp.status(200).send({
         message: responseReslt
     });
