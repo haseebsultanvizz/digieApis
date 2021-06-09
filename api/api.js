@@ -5559,6 +5559,7 @@ router.post('/makeCostAvg', async (req, resp) => {
             }
 
             if(tab == 'lthTab_admin'){
+                update['$set']['avg_sell_price'] = parseFloat(sell_price)
                 update['$set']['new_child_buy_price'] = parseFloat(perctDownPrice);
                 update['$set']['cost_avg_array'] = []
                     var cost_avg_array_obj ={}
