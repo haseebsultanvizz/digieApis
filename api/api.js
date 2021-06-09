@@ -5498,7 +5498,7 @@ router.post('/makeCostAvg', async (req, resp) => {
 
 
 
-            if (tab == 'lthTab' || tab == 'openTab'){
+            if (tab == 'lthTab' || tab == 'openTab'|| tab == 'lthTab_admin'){
                 var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
             }else if(tab == 'soldTab'){
                 var collectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange
