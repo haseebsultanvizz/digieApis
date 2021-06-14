@@ -11,6 +11,9 @@ var app = express();
 var auth = require('basic-auth')
 var compare = require('tsscmp')
 var googleAuthenticator = require('authenticator');
+var jwt = require('jsonwebtoken');
+
+var secret = 'digiebot_trading'
 
 const Bowser = require("bowser");
 const { ObjectId } = require('bson');
@@ -129,6 +132,44 @@ async function blockLoginAttempt(username, action) {
         })
     })
 } //end blockLoginAttempt
+
+async function generatejwtToken(){
+    return new Promise(async function (resolve, reject) {
+    var today = new Date();
+      var exp = new Date(today);
+      exp.setDate(today.getDate() + 60);
+
+      let token =  jwt.sign({
+        id: this._id,
+        username: this.username,
+        exp: parseInt(exp.getTime() / 1000),
+      }, secret);
+
+      resolve(token);
+    });
+}
+
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization']
+    const token = authHeader && authHeader.split(' ')[1]
+
+    if (token == null) return res.sendStatus(401)
+
+    jwt.verify(token,secret, (err, user) => {
+      console.log(err)
+
+      if (err) return res.sendStatus(403)
+
+
+
+      console.log(user)
+
+      req.user = user
+
+      next()
+    })
+  }
+
 //when first time user login call this function
 router.post('/authenticate', async function (req, resp, next) {
     conn.then(async (db) => {
@@ -197,13 +238,16 @@ router.post('/authenticate', async function (req, resp, next) {
                                 app_mode = 'live'
                             }
 
+
+                            var token = await generatejwtToken(userArr['_id']);
+
                             respObj.id = userArr['_id'];
                             respObj.username = userArr['username'];
                             respObj.firstName = userArr['first_name'];
                             respObj.lastName = userArr['last_name'];
                             respObj.profile_image = userArr['profile_image'];
                             respObj.role = 'admin'; //userArr['user_role'];
-                            respObj.token = `fake-jwt-token.`;
+                            respObj.token = token;
                             respObj.email_address = userArr['email_address'];
                             respObj.timezone = userArr['timezone'];
                             respObj.check_api_settings = check_api_settings;
@@ -228,6 +272,9 @@ router.post('/authenticate', async function (req, resp, next) {
                             }
 
                             respObj.userPackage = await getUserPackage(String(userArr['_id']));
+
+
+                            console.log(respObj);
 
                             resp.send(respObj);
 
@@ -295,13 +342,20 @@ router.post('/authenticate', async function (req, resp, next) {
                                     app_mode = 'live'
                                 }
 
+
+
+                                var token = await generatejwtToken(userArr['_id']);
+
+
+
+
                                 respObj.id = userArr['_id'];
                                 respObj.username = userArr['username'];
                                 respObj.firstName = userArr['first_name'];
                                 respObj.lastName = userArr['last_name'];
                                 respObj.profile_image = userArr['profile_image'];
                                 respObj.role = 'admin'; //userArr['user_role'];
-                                respObj.token = `fake-jwt-token.`;
+                                respObj.token = token;
                                 respObj.email_address = userArr['email_address'];
                                 respObj.timezone = userArr['timezone'];
                                 respObj.check_api_settings = check_api_settings;
