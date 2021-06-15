@@ -3918,6 +3918,10 @@ router.post('/listOrderListing', async (req, resp) => {
 
                     let costAvgData = await getCostAvgPLandUsdWorth(cost_avg_order_ids, exchange)
 
+
+
+
+
                     if (Object.keys(costAvgData).length >0){
                         order['profitLossPercentageHtml'] = '<span class="text-' + costAvgData['curr_avg_profit_color'] + '"><b>' + costAvgData['curr_avg_profit'] + '%</b> (' + cost_avg_order_ids.length + ')</span>';
                         order['coinPriceInBtc'] = costAvgData['total_usd_worth']
@@ -3925,6 +3929,11 @@ router.post('/listOrderListing', async (req, resp) => {
                         order['quantity'] = costAvgData['totalQuantity']
                         // order['targetPrice'] = orderListing[index]['defined_sell_percentage']
                     }
+                    // if(orderListing[index]['cost_avg_array'] != 'undefined'){
+                    //     console.log('Working')
+                    //     let totalCostAvgChildOrders = typeof orderListing[index]['cost_avg_array'] != 'undefined' ? orderListing[index]['cost_avg_array'].length : -1
+                    //     order['profitLossPercentageHtml'] = '<span class="text-' + costAvgData['curr_avg_profit_color'] + '"><b>' + costAvgData['curr_avg_profit'] + '%</b> (' + totalCostAvgChildOrders > -1 ? totalCostAvgChildOrders : cost_avg_order_ids.length + ')</span>';
+                    // }
                 }
 
                 if (typeof orderListing[index]['is_sell_order'] != 'undefined' && orderListing[index]['is_sell_order'] == 'sold'){
@@ -3932,7 +3941,7 @@ router.post('/listOrderListing', async (req, resp) => {
                 }else{
                     order['actualSoldPrice'] = '---'
                 }
-
+                // New Cost Avg Checks added
             }
 
         }
@@ -4456,7 +4465,7 @@ async function listOrderListing(postDAta3, dbConnection) {
 
     if (postDAta.status == 'errors') {
         filter['parent_status'] = { '$exists': false };
-        filter['status'] = { '$nin': ['new', 'FILLED', 'fraction_submitted_buy', 'canceled', 'LTH', 'submitted', 'submitted_for_sell', 'fraction_submitted_sell'] }
+        filter['status'] = { '$nin': ['new', 'FILLED', 'fraction_submitted_buy', 'canceled', 'LTH', 'submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'CA_TAKING_CHILD'] }
     }
 
     if (postDAta.status == 'submitted') {
@@ -23832,7 +23841,7 @@ async function getOrderStats(postData2){
 
         //:::::::::::; filter_errors for count all Errors orders ::::::::::::;
         var filter_errors = {};
-        filter_errors['status'] = { '$nin': ['new', 'FILLED', 'fraction_submitted_buy', 'canceled', 'LTH', 'submitted', 'submitted_for_sell', 'fraction_submitted_sell'] }
+        filter_errors['status'] = { '$nin': ['new', 'FILLED', 'fraction_submitted_buy', 'canceled', 'LTH', 'submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'CA_TAKING_CHILD'] }
         filter_errors['parent_status'] = { '$exists': false };
         filter_errors['admin_id'] = admin_id;
         filter_errors['application_mode'] = application_mode;
@@ -23875,6 +23884,9 @@ async function getOrderStats(postData2){
         filter_5['status'] = 'error';
         filter_5['admin_id'] = admin_id;
         filter_5['application_mode'] = application_mode;
+        filter_5['status'] = {
+          $nin: ['CA_TAKING_CHILD']
+        };
 
         if (postDAta.start_date != '' || postDAta.end_date != '') {
             let obj = {}
