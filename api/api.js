@@ -5618,12 +5618,13 @@ router.post('/makeCostAvg', async (req, resp) => {
             }
 
             if (tab == 'lthTab'){
-                update['$set']['avg_sell_price'] = parseFloat(sell_price)
+                update['$set']['avg_sell_price'] = parseFloat(sell_price);
             }
 
             if(tab == 'lthTab_admin'){
-                update['$set']['avg_sell_price'] = parseFloat(sell_price)
+                update['$set']['avg_sell_price'] = parseFloat(sell_price);
                 update['$set']['new_child_buy_price'] = parseFloat(perctDownPrice);
+                update['$set']['buyTimeDate'] = new Date();
                 update['$set']['cost_avg_array'] = []
                     var cost_avg_array_obj ={}
                     // Buy Fraction Array
@@ -30013,6 +30014,211 @@ async function getUserFavouriteCoins(userId, exchange) {
         })
     })
 } //End of getUserFavouriteCoins
+
+
+//sellCostAvgOrder_new
+router.post('/sellCostAvgOrder_new', async (req, resp) => {
+
+    let orderType = req.body.orderType
+    let exchange = req.body.exchange
+    let order_id = req.body.order_id
+    let parent_id = req.body.parent_id
+    let tab = req.body.tab
+    let action = typeof req.body.action != 'undefined' && req.body.action != '' ? req.body.action : '';
+
+    let sellNow = true
+
+    if (typeof orderType != 'undefined' && orderType != '' && typeof exchange != 'undefined' && exchange != '' && typeof order_id != 'undefined' && order_id != '') {
+
+        //get order
+        let order = await listOrderById(parent_id, exchange);
+        if (order.length > 0) {
+
+            order = order[0]
+            let symbol = order['symbol']
+            //get currentMarket price
+            let coinData = await listmarketPriceMinNotationCoinArr(symbol, exchange)
+            let currentmarketPrice = coinData[symbol]['currentmarketPrice'];
+
+
+
+            var avg_sell_price_three   =    currentmarketPrice -  (currentmarketPrice *  0.5/100);
+            var last_three_ids = [];
+            last_three_ids[0] = order_id;
+            var quantity_three = order['quantity'];
+            var avg_price_three_upd = 'yes';
+            //send sell request if costAvg child order
+            if (orderType == 'costAvgChild') {
+
+                if (action != '') {
+                    if (action == 'isResumeExchange') {
+                        //only move
+                        await migrate_order(order_id, exchange, action)
+                        sellNow = false
+                    } else if (action == 'isResume'){
+                        //move then sell
+                        await migrate_order(order_id, exchange, action)
+                    }
+                }
+
+                if (sellNow && false){
+                    var options = {
+                        method: 'POST',
+                        // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                        url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                        headers: {
+                            'cache-control': 'no-cache',
+                            'Connection': 'keep-alive',
+                            'Accept-Encoding': 'gzip, deflate',
+                            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                            'Cache-Control': 'no-cache',
+                            'Accept': '*/*',
+                            'User-Agent': 'PostmanRuntime/7.20.1',
+                            'Content-Type': 'application/json'
+                        },
+                        json: {
+                            'orderId': order_id,
+                            'exchange': exchange,
+                            'currentMarketPriceByCoin': currentmarketPrice,
+                        }
+                    };
+                    request(options, function (error, response, body) { });
+                }
+
+
+                var updatedObj = {}
+
+                updatedObj['avg_sell_price_three'] = avg_sell_price_three;
+                updatedObj['last_three_ids'] = last_three_ids;
+                updatedObj['quantity_three'] = quantity_three;
+                updatedObj['avg_price_three_upd'] = avg_price_three_upd;
+                updatedObj['modified_date'] = new Date();
+
+
+                let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+                conn.then(async (db) => {
+                    var update_inserted_order = await db.collection(buyCollection).updateOne({_id: ObjectID(parent_id)}, {$set: updatedObj});
+                    resp.status(200).send({
+                        status: true,
+                        message: 'Order submit for sell successfully'
+                    })
+                });
+
+
+
+
+            } else if (orderType == 'costAvgParent') {
+
+                const db = await conn
+                let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+
+                //loop all childs and send sell API call
+                let ids = []
+                ids.push(order_id)
+                if (typeof order['avg_orders_ids'] != 'undefined'){
+                    ids = ids.concat(order['avg_orders_ids'])
+                }
+
+                let childsCount = ids.length
+
+                if (typeof tab != 'undefined' && tab == 'costAvgTab'){
+                    // await db.collection(buyCollection).updateOne({ '_id': ObjectID(order_id) }, { '$set': { 'cost_avg': 'completed', 'move_to_cost_avg':'yes'}})
+                }
+
+                //sell parent by adding all open child quantity
+                let allChildTrades = []
+                let totalCostAvgQty = 0;
+                let childIds = []
+                for (let i = 0; i < ids.length; i++) {
+                    childIds.push(new ObjectID(String(ids[i])))
+                }
+                whereChilds = {
+                    '_id': { '$in': childIds }
+                }
+                allChildTrades = await db.collection(buyCollection).find(whereChilds).toArray()
+                if (allChildTrades.length > 0) {
+                    allChildTrades.forEach(item => totalCostAvgQty += parseFloat(item.quantity))
+                }
+                // console.log('totalCostAvgQty ', totalCostAvgQty)
+                // process.exit(0)
+
+                for (let i = 0; i < childsCount; i++) {
+
+                    // if (action != '') {
+                    //     if (action == 'isResumeExchange') {
+                    //         //only move
+                    //         await migrate_order(String(ids[i]), exchange, action)
+                    //         sellNow = false
+                    //     } else if (action == 'isResume') {
+                    //         //move then sell
+                    //         await migrate_order(String(ids[i]), exchange, action)
+                    //     }
+                    // }
+
+                    if (false && sellNow){
+                        // var options = {
+                        //     method: 'POST',
+                        //     // url: 'http://localhost:3010/apiEndPoint/apiEndPoint/sellOrderManually',
+                        //     url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                        //     headers: {
+                        //         'cache-control': 'no-cache',
+                        //         'Connection': 'keep-alive',
+                        //         'Accept-Encoding': 'gzip, deflate',
+                        //         'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                        //         'Cache-Control': 'no-cache',
+                        //         'Accept': '*/*',
+                        //         'User-Agent': 'PostmanRuntime/7.20.1',
+                        //         'Content-Type': 'application/json'
+                        //     },
+                        //     json: {
+                        //         'orderId': String(ids[i]),
+                        //         'exchange': exchange,
+                        //         'currentMarketPriceByCoin': currentmarketPrice,
+                        //     }
+                        // };
+                        // request(options, function (error, response, body) { });
+                    } else if (sellNow){
+                        var options = {
+                            method: 'POST',
+                            // url: 'http://localhost:3010/apiEndPoint/sellOrderManually',
+                            url: 'https://digiapis.digiebot.com/apiEndPoint/sellOrderManually',
+                            headers: {
+                                'cache-control': 'no-cache',
+                                'Connection': 'keep-alive',
+                                'Accept-Encoding': 'gzip, deflate',
+                                'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+                                'Cache-Control': 'no-cache',
+                                'Accept': '*/*',
+                                'User-Agent': 'PostmanRuntime/7.20.1',
+                                'Content-Type': 'application/json'
+                            },
+                            json: {
+                                'orderId': String(order_id),
+                                'exchange': exchange,
+                                'currentMarketPriceByCoin': currentmarketPrice,
+                                'costAvgParent': true,
+                                'costAvgParentAddedQty': totalCostAvgQty,
+                            }
+                        };
+                        request(options, function (error, response, body) { });
+                        break;
+                    }
+                }
+            }
+        } else {
+            resp.status(200).send({
+                status: false,
+                message: 'An error occured'
+            })
+        }
+    } else {
+        resp.status(200).send({
+            status: false,
+            message: 'orderType, exchange, order_id is required'
+        })
+    }
+
+}) //End of sellCostAvgOrder_new
 
 
 // Huzaifa Ends Here
