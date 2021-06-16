@@ -5623,7 +5623,7 @@ router.post('/makeCostAvg', async (req, resp) => {
 
             if(tab == 'lthTab_admin'){
                 // update['$set']['avg_sell_price'] = parseFloat(sell_price);
-                update['$unset']['avg_sell_price'] = '';
+                update['$set']['avg_sell_price'] = '';
                 update['$set']['new_child_buy_price'] = parseFloat(perctDownPrice);
                 update['$set']['buyTimeDate'] = new Date();
                 update['$set']['cost_avg_array'] = []
