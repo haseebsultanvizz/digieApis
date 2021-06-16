@@ -2080,7 +2080,7 @@ router.post('/editAutoOrder', async (req, resp) => {
         delete order['cost_avg']
 
     } else if (!isParent && buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
-        await updateCostAvgChildOrders(orderId, order, exchange)
+        // await updateCostAvgChildOrders(orderId, order, exchange)
     }
 
     var ttt_is_custom_stop_loss_possitive = typeof order['stop_loss_type'] != 'undefined' && order['stop_loss_type'] == 'positive' ? true : false
