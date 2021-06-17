@@ -5648,7 +5648,7 @@ router.post('/makeCostAvg', async (req, resp) => {
 
                     cost_avg_array_obj['order_sold'] = 'no';
                     cost_avg_array_obj['buy_order_id'] = getBuyOrder[0]['_id'];
-                    cost_avg_array_obj['buyTimeDate'] = new Date();
+                    cost_avg_array_obj['buyTimeDate'] = getBuyOrder[0]['created_date'];
 
                     update['$set']['cost_avg_array'].push(cost_avg_array_obj)
             }
