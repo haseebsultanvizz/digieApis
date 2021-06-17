@@ -30039,13 +30039,10 @@ router.post('/sellCostAvgOrder_new', async (req, resp) => {
 
             order = order[0]
             let symbol = order['symbol']
-            //get currentMarket price
-            let coinData = await listmarketPriceMinNotationCoinArr(symbol, exchange)
-            let currentmarketPrice = coinData[symbol]['currentmarketPrice'];
 
 
 
-            var avg_sell_price_three = currentmarketPrice - (currentmarketPrice *  0.5/100);
+
             var last_three_ids = [];
             last_three_ids[0] = order_id;
             var quantity_three
@@ -30055,6 +30052,14 @@ router.post('/sellCostAvgOrder_new', async (req, resp) => {
               }
             })
             var avg_price_three_upd = 'yes';
+            //get currentMarket price
+            let coinData = await listmarketPriceMinNotationCoinArr(symbol, exchange)
+            let currentmarketPrice = coinData[symbol]['currentmarketPrice'];
+            var avg_sell_price_three = currentmarketPrice - (currentmarketPrice *  0.5/100);
+
+
+
+
             //send sell request if costAvg child order
             if (orderType == 'costAvgChild') {
 
@@ -30118,11 +30123,11 @@ router.post('/sellCostAvgOrder_new', async (req, resp) => {
             } else if (orderType == 'costAvgParent') {
                 var avg_price_all_upd = 'yes';
                 var avg_sell_price   =    currentmarketPrice -  (currentmarketPrice *  0.5/100);
-                var all_buy_ids = typeof order['cost_avg_array'] != 'undefined' ? order['cost_avg_array'].filter(single_order => single_order.order_sold == 'yes').map(inside_order => inside_order.buy_order_id) : [];
+                var all_buy_ids = typeof order['cost_avg_array'] != 'undefined' ? order['cost_avg_array'].filter(single_order => single_order.order_sold == 'no').map(inside_order => inside_order.buy_order_id) : [];
                 var quantity_total = 0;
                 if(typeof order['cost_avg_array'] != 'undefined'){
-                    order['cost_avg_array'].filter(single_order => single_order.order_sold == 'yes').map(inside_order =>{
-                        quantity_total += inside_order.buy_order_id
+                    order['cost_avg_array'].filter(single_order => single_order.order_sold == 'no').map(inside_order =>{
+                        quantity_total += inside_order.filledQtyBuy
                     });
                 }
                 var quantity_all = quantity_total;
