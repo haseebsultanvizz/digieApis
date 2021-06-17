@@ -30127,7 +30127,7 @@ router.post('/sellCostAvgOrder_new', async (req, resp) => {
                 var quantity_total = 0;
                 if(typeof order['cost_avg_array'] != 'undefined'){
                     order['cost_avg_array'].filter(single_order => single_order.order_sold == 'no').map(inside_order =>{
-                        quantity_total += inside_order.filledQtyBuy
+                        quantity_total += +inside_order.filledQtyBuy
                     });
                 }
                 var quantity_all = quantity_total;
