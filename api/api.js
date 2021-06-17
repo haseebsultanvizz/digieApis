@@ -2080,6 +2080,7 @@ router.post('/editAutoOrder', async (req, resp) => {
         delete order['cost_avg']
 
     } else if (!isParent && buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
+        // Commented By Huzaifa Comming From Shahzad
         // await updateCostAvgChildOrders(orderId, order, exchange)
     }
 
