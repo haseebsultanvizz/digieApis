@@ -30044,10 +30044,15 @@ router.post('/sellCostAvgOrder_new', async (req, resp) => {
 
 
 
-            var avg_sell_price_three   =    currentmarketPrice -  (currentmarketPrice *  0.5/100);
+            var avg_sell_price_three = currentmarketPrice - (currentmarketPrice *  0.5/100);
             var last_three_ids = [];
             last_three_ids[0] = order_id;
-            var quantity_three = order['quantity'];
+            var quantity_three
+            order['cost_avg_array'].map(single_order => {
+              if(single_order.buy_order_id == order_id){
+                quantity_three = single_order.filledQtyBuy
+              }
+            })
             var avg_price_three_upd = 'yes';
             //send sell request if costAvg child order
             if (orderType == 'costAvgChild') {
