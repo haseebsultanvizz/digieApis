@@ -29186,6 +29186,8 @@ function order_move_sold_to_buy(exchange, order_id) {
 
 
 
+
+
                     var pricesObj = await get_current_market_prices(exchange, data['symbol'])
                     var currentMarketPrice = pricesObj[data['symbol']]
 
@@ -29194,7 +29196,45 @@ function order_move_sold_to_buy(exchange, order_id) {
                     var perctDownPrice     = currentMarketPrice - percentageDown;
 
 
+
+
+
+
+
+
+
+
+
+                    var totalCAProfit = 0;
+                    var last_ca_ledger_loss = 0;
+                    if(typeof data['cost_avg_array'] != 'undefined' && data['cost_avg_array'].length > 0){
+                      data['cost_avg_array'].filter(actual_order => actual_order.order_sold == 'yes').map(order => {
+
+
+                        console.log(order['filledPriceSell'], order['filledPriceBuy'])
+                        totalCAProfit += getPercentageDiff(+order['filledPriceSell'], +order['filledPriceBuy']);
+                        console.log(totalCAProfit)
+                      });
+                    }
+
+                    var avgCAProfit = +totalCAProfit
+
+                    console.log(totalCAProfit, 'totalCAProfit', avgCAProfit, 'avgCAProfit')
+                    if(data['defined_sell_percentage'] >= 3){
+                      last_ca_ledger_loss = data['defined_sell_percentage'] - (avgCAProfit);
+                    } else {
+                      last_ca_ledger_loss = 3 - (avgCAProfit);
+                    }
+
+
+
+
+                    console.log('last_ca_ledger_loss', last_ca_ledger_loss)
+
+
+
                     // If Comming from Sold Tab
+                    data['last_ca_ledger_loss'] = last_ca_ledger_loss;
                     data['cost_avg_buy'] = 'yes'
                     data['move_to_cost_avg'] = 'yes'
                     data['avg_price_three_upd'] = ''
