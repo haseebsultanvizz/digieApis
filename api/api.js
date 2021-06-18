@@ -3744,8 +3744,15 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatus += '<span class="badge badge-' + statusClass + '">' + err_lth_filled + '</span>';
                 htmlStatusArr.push(err_lth_filled)
             } else if(status != 'pause') {
-                htmlStatus += '<span class="badge badge-' + statusClass + '">' + status + '</span>';
-                htmlStatusArr.push(status)
+              if(is_sell_order == 'sold' && orderListing[index].move_to_cost_avg == 'yes' && status == 'CA_SOLD_MOVE'){
+                htmlStatus += '<span class="badge badge-warning">WAITING FOR BUY</span>';
+                htmlStatusArr.push('WAITING FOR BUY');
+              } else {
+                htmlStatus += '<span class="badge huzaifaa badge-' + statusClass + '">' + status + '</span>';
+                htmlStatusArr.push(status);
+              }
+
+
             }
         }
 
