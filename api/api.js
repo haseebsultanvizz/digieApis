@@ -3904,7 +3904,13 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatusArr.push('Cost Avg')
             }
 
-            if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'completed' && typeof orderListing[index]['avg_orders_ids'] != 'undefined' && orderListing[index]['avg_orders_ids'].length > 0) {
+            // if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'completed' && typeof orderListing[index]['avg_orders_ids'] != 'undefined' && orderListing[index]['avg_orders_ids'].length > 0) {
+            //     htmlStatus += ' <span class="badge badge-success">Cost Avg Completed</span> ';
+            //     htmlStatusArr.push('Cost Avg Completed')
+            // }
+
+
+            if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'completed') {
                 htmlStatus += ' <span class="badge badge-success">Cost Avg Completed</span> ';
                 htmlStatusArr.push('Cost Avg Completed')
             }
