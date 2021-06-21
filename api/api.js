@@ -5661,7 +5661,7 @@ router.post('/makeCostAvg', async (req, resp) => {
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
 
 
-            if(tab == 'lthTab_admin'){
+            if(tab == 'lthTab_admin' || tab == 'openTab_admin'){
                 var pricesObj = await get_current_market_prices(exchange, getBuyOrder[0]['symbol'])
                 var currentMarketPrice = pricesObj[getBuyOrder[0]['symbol']]
 
@@ -5673,7 +5673,7 @@ router.post('/makeCostAvg', async (req, resp) => {
 
 
 
-            if (tab == 'lthTab' || tab == 'openTab'|| tab == 'lthTab_admin'){
+            if (tab == 'lthTab' || tab == 'openTab'|| tab == 'lthTab_admin' || tab == 'openTab_admin'){
                 var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
             }else if(tab == 'soldTab'){
                 var collectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange
@@ -5717,7 +5717,7 @@ router.post('/makeCostAvg', async (req, resp) => {
                 update['$unset']['avg_sell_price'] = '';
             }
 
-            if (tab == 'lthTab' || tab == 'openTab' || tab == 'lthTab_admin') {
+            if (tab == 'lthTab' || tab == 'openTab' || tab == 'lthTab_admin' || tab == 'openTab_admin') {
                 if (!isNaN(parseFloat(sell_price))){
                     update['$set']['sell_price'] = parseFloat(sell_price)
                     update['$set']['status'] = 'FILLED'
@@ -5726,6 +5726,9 @@ router.post('/makeCostAvg', async (req, resp) => {
                     update['$set']['is_lth_order'] = ''
                     update['$set']['move_to_cost_avg'] = 'yes'
 
+                }
+                if(tab == 'openTab_admin'){
+                    update['$set']['iniatial_trail_stop'] = currentMarketPrice + (currentMarketPrice + 0.05)
                 }
             }
 
@@ -5766,14 +5769,14 @@ router.post('/makeCostAvg', async (req, resp) => {
 
             let result = await db.collection(collectionName).updateOne(where, update)
 
-            if (tab == 'openTab' && result.modifiedCount > 0){
+            if ((tab == 'openTab' || tab == 'openTab_admin') && result.modifiedCount > 0){
                 //Revert CA parent
                 let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
                 db.collection(buy_collection).updateOne({ '_id': getBuyOrder[0]['buy_parent_id'], 'status': {'$ne':'canceled'} },{'$set':{'status':'new'}})
             }
 
             let tabName = ''
-            if (tab == 'openTab'){
+            if (tab == 'openTab' || tab == 'openTab_admin'){
                 tabName = 'Open '
             } else if (tab == 'lthTab' || tab == 'lthTab_admin'){
 
