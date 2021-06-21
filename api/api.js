@@ -5667,8 +5667,8 @@ router.post('/makeCostAvg', async (req, resp) => {
 
                 var percentage =  8
                 var percentageDown   = (currentMarketPrice * percentage) / 100
-                // var perctDownPrice     = percentageDown -  currentMarketPrice;
-                var perctDownPrice     = currentMarketPrice + percentageDown;
+                var perctDownPrice     = percentageDown -  currentMarketPrice;
+                // var perctDownPrice     = currentMarketPrice + percentageDown;
             }
 
 
