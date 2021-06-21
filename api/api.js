@@ -177,22 +177,6 @@ function authenticateToken(req, res, next) {
 
 function getUserGoogleAuth(user_id){
     return new Promise(async function (resolve, reject) {
-
-
-
-        // url = "https://users.digiebot.com/apis/"
-
-        // payload = {"type" : "google_auth_status","id" :user_id}
-        // headers = {
-        //     'authorization': "Basic IUAjJCVeJiooKTohQCMkJV4mKigp",
-        //     'content-type': "application/json",
-        //     'cache-control': "no-cache",
-        //     'postman-token': "c582684f-db19-e005-4933-4ec3f6395c81"
-        // }
-
-        // response = request.request("POST", url, data=payload, headers=headers)
-
-        // resolve(response.status);
         var options = {
             method: 'POST',
             url: 'https://users.digiebot.com/apis/',
@@ -202,13 +186,13 @@ function getUserGoogleAuth(user_id){
                 'cache-control': "no-cache",
                 'postman-token': "c582684f-db19-e005-4933-4ec3f6395c81"
             },
-            json: {"type" : "validate_google_auth","id" : " "},
+            json: {"type" : "google_auth_status","id" : user_id},
         };
         request(options, function (error, response, body) {
             if (error) {
                 resolve(false);
             } else {
-                if (body.status) {
+                if (body.success) {
                     resolve(true)
                 }else{
                    resolve(false)
@@ -219,6 +203,35 @@ function getUserGoogleAuth(user_id){
 
 
 
+    });
+}
+
+
+function getUserGoogleAuthValidation(user_id, code){
+    return new Promise(async function (resolve, reject) {
+
+        var options = {
+            method: 'POST',
+            url: 'https://users.digiebot.com/apis/',
+            headers: {
+                'authorization': "Basic IUAjJCVeJiooKTohQCMkJV4mKigp",
+                'content-type': "application/json",
+                'cache-control': "no-cache",
+                'postman-token': "c582684f-db19-e005-4933-4ec3f6395c81"
+            },
+            json: {"type" : "validate_google_auth","id" : user_id, "code": code},
+        };
+        request(options, function (error, response, body) {
+            if (error) {
+                resolve(false);
+            } else {
+                if (body.success) {
+                    resolve(true)
+                }else{
+                   resolve(false)
+                }
+            }
+        })
     });
 }
 
@@ -416,9 +429,13 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.user_role = userArr['user_role'];
                                 respObj.special_role = userArr['special_role'];
                                 // respObj.google_auth = userArr['google_auth'];
+
+
+                                console.log(userArr['google_auth'], 'in DB')
                                 if(userArr['google_auth'] != 'yes'){
                                     var google_auth = await getUserGoogleAuth(String(userArr['_id']))
                                     // set google_auth functionality
+                                    console.log('No in Local DB & in users DB', google_auth)
                                     if(google_auth == true){
                                         respObj.google_auth = 'yes';
                                     } else {
@@ -976,10 +993,19 @@ router.post('/enableGoogleAuth', async function (req, resp) {
                     message: 'Google Auth Enabled.'
                 });
             } else {
-                resp.status(200).send({
-                    status: false,
-                    message: 'Google Auth Failed.'
-                });
+
+                var google_auth_validator = await getUserGoogleAuthValidation(admin_id, token)
+                if(google_auth_validator){
+                    resp.status(200).send({
+                        status: true,
+                        message: 'Google Auth Enabled.'
+                    });
+                } else{
+                    resp.status(200).send({
+                        status: false,
+                        message: 'Google Auth Failed.'
+                    });
+                }
             }
         }
     })
@@ -5642,7 +5668,7 @@ router.post('/makeCostAvg', async (req, resp) => {
                 var percentage =  8
                 var percentageDown   = (currentMarketPrice * percentage) / 100
                 // var perctDownPrice     = percentageDown -  currentMarketPrice;
-                var perctDownPrice     = currentMarketPrice - percentageDown;
+                var perctDownPrice     = currentMarketPrice + percentageDown;
             }
 
 
