@@ -29202,7 +29202,7 @@ function order_move_sold_to_buy(exchange, order_id) {
 
                     var percentage =  8
                     var percentageDown   = (currentMarketPrice * percentage) / 100
-                    var perctDownPrice     = currentMarketPrice - percentageDown;
+                    var perctDownPrice     = currentMarketPrice + percentageDown;
 
 
 
