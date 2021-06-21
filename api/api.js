@@ -149,6 +149,10 @@ async function generatejwtToken(){
     });
 }
 
+
+
+
+
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization']
     const token = authHeader && authHeader.split(' ')[1]
@@ -168,7 +172,55 @@ function authenticateToken(req, res, next) {
 
       next()
     })
-  }
+}
+
+
+function getUserGoogleAuth(user_id){
+    return new Promise(async function (resolve, reject) {
+
+
+
+        // url = "https://users.digiebot.com/apis/"
+
+        // payload = {"type" : "google_auth_status","id" :user_id}
+        // headers = {
+        //     'authorization': "Basic IUAjJCVeJiooKTohQCMkJV4mKigp",
+        //     'content-type': "application/json",
+        //     'cache-control': "no-cache",
+        //     'postman-token': "c582684f-db19-e005-4933-4ec3f6395c81"
+        // }
+
+        // response = request.request("POST", url, data=payload, headers=headers)
+
+        // resolve(response.status);
+        var options = {
+            method: 'POST',
+            url: 'https://users.digiebot.com/apis/',
+            headers: {
+                'authorization': "Basic IUAjJCVeJiooKTohQCMkJV4mKigp",
+                'content-type': "application/json",
+                'cache-control': "no-cache",
+                'postman-token': "c582684f-db19-e005-4933-4ec3f6395c81"
+            },
+            json: {"type" : "validate_google_auth","id" : " "},
+        };
+        request(options, function (error, response, body) {
+            if (error) {
+                resolve(false);
+            } else {
+                if (body.status) {
+                    resolve(true)
+                }else{
+                   resolve(false)
+                }
+            }
+        })
+
+
+
+
+    });
+}
 
 //when first time user login call this function
 router.post('/authenticate', async function (req, resp, next) {
@@ -363,7 +415,18 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.leftmenu = userArr['leftmenu'];
                                 respObj.user_role = userArr['user_role'];
                                 respObj.special_role = userArr['special_role'];
-                                respObj.google_auth = userArr['google_auth'];
+                                // respObj.google_auth = userArr['google_auth'];
+                                if(userArr['google_auth'] != 'yes'){
+                                    var google_auth = await getUserGoogleAuth(String(userArr['_id']))
+                                    // set google_auth functionality
+                                    if(google_auth == true){
+                                        respObj.google_auth = 'yes';
+                                    } else {
+                                        respObj.google_auth = 'no';
+                                    }
+                                } else {
+                                    respObj.google_auth = userArr['google_auth'];
+                                }
                                 respObj.trigger_enable = userArr['trigger_enable'];
                                 respObj.is_global_user = 'no';
                                 respObj.exchangesArr = exchangesArr;
