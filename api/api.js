@@ -5658,6 +5658,8 @@ router.post('/makeCostAvg', async (req, resp) => {
 
         if (getBuyOrder.length > 0){
 
+
+
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
 
 
@@ -5718,17 +5720,23 @@ router.post('/makeCostAvg', async (req, resp) => {
             }
 
             if (tab == 'lthTab' || tab == 'openTab' || tab == 'lthTab_admin' || tab == 'openTab_admin') {
+
+
+
+
                 if (!isNaN(parseFloat(sell_price))){
                     update['$set']['sell_price'] = parseFloat(sell_price)
                     update['$set']['status'] = 'FILLED'
                     update['$set']['lth_functionality'] = 'no'
                     update['$set']['lth_profit'] = ''
                     update['$set']['is_lth_order'] = ''
-                    update['$set']['move_to_cost_avg'] = 'yes'
-
+                }
+                if(tab == 'lthTab' || tab == 'openTab' || tab == 'lthTab_admin'){
+                  update['$set']['move_to_cost_avg'] = 'yes'
                 }
                 if(tab == 'openTab_admin'){
-                    update['$set']['iniatial_trail_stop'] = currentMarketPrice + (currentMarketPrice + 0.05)
+                    update['$set']['iniatial_trail_stop'] = currentMarketPrice + (currentMarketPrice + 0.05);
+                    update['$set']['is_sell_order'] = 'yes';
                 }
             }
 
@@ -5737,10 +5745,8 @@ router.post('/makeCostAvg', async (req, resp) => {
             }
 
             if(tab == 'lthTab_admin'){
-                // update['$set']['avg_sell_price'] = parseFloat(sell_price);
                 update['$set']['avg_sell_price'] = '';
-                if(perctDownPrice == Nan)
-                update['$set']['new_child_buy_price'] = parseFloat(perctDownPrice);
+                update['$set']['new_child_buy_price'] = isNaN(parseFloat(perctDownPrice)) ?  '': parseFloat(perctDownPrice);
 
                 update['$set']['cost_avg_array'] = []
                     var cost_avg_array_obj ={}
@@ -30256,11 +30262,31 @@ router.post('/sellCostAvgOrder_new', async (req, resp) => {
 
                 var updatedObj = {}
 
+
+                // find index of object inside array
+                const orderSellHitActivated = (element) => element.buy_order_id == order_id;
+                var order_index = order['cost_avg_array'].findIndex(orderSellHitActivated);
+
+
+                // Add new Field inside Selected object
+                var newInsertedObject = {};
+                newInsertedObject = order['cost_avg_array'][order_index];
+                newInsertedObject['sell_activated'] = 'yes';
+
+
+                console.log(order_index)
+
+
+                // Update Array with New Object & delete Previous Object
+                updatedObj['cost_avg_array'] = order['cost_avg_array'].splice(order_index, 1, newInsertedObject);
                 updatedObj['avg_sell_price_three'] = avg_sell_price_three;
                 updatedObj['last_three_ids'] = last_three_ids;
                 updatedObj['quantity_three'] = quantity_three;
                 updatedObj['avg_price_three_upd'] = avg_price_three_upd;
                 updatedObj['modified_date'] = new Date();
+
+
+                console.log(order['cost_avg_array'], updatedObj['cost_avg_array'])
 
 
                 let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
