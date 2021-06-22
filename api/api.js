@@ -5739,6 +5739,7 @@ router.post('/makeCostAvg', async (req, resp) => {
             if(tab == 'lthTab_admin'){
                 // update['$set']['avg_sell_price'] = parseFloat(sell_price);
                 update['$set']['avg_sell_price'] = '';
+                if(perctDownPrice == Nan)
                 update['$set']['new_child_buy_price'] = parseFloat(perctDownPrice);
 
                 update['$set']['cost_avg_array'] = []
@@ -29403,7 +29404,7 @@ function order_move_sold_to_buy(exchange, order_id) {
                     cost_avg_array_obj['avg_purchase_price'] = data['avg_purchase_price'];
 
                     data['cost_avg_array'].push(cost_avg_array_obj)
-                    data['new_child_buy_price'] = parseFloat(perctDownPrice);
+                    data['new_child_buy_price'] = isNaN(parseFloat(perctDownPrice)) ? '': parseFloat(perctDownPrice);
 
 
 
