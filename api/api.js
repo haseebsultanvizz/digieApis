@@ -432,7 +432,7 @@ router.post('/authenticate', async function (req, resp, next) {
 
 
                                 console.log(userArr['google_auth'], 'in DB')
-                                if(userArr['google_auth'] != 'yes'){
+                                // if(userArr['google_auth'] != 'yes'){
                                     var google_auth = await getUserGoogleAuth(String(userArr['_id']))
                                     // set google_auth functionality
                                     console.log('No in Local DB & in users DB', google_auth)
@@ -441,9 +441,9 @@ router.post('/authenticate', async function (req, resp, next) {
                                     } else {
                                         respObj.google_auth = 'no';
                                     }
-                                } else {
-                                    respObj.google_auth = userArr['google_auth'];
-                                }
+                                // } else {
+                                //     respObj.google_auth = userArr['google_auth'];
+                                // }
                                 respObj.trigger_enable = userArr['trigger_enable'];
                                 respObj.is_global_user = 'no';
                                 respObj.exchangesArr = exchangesArr;
