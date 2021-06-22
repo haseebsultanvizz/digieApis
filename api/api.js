@@ -5669,8 +5669,8 @@ router.post('/makeCostAvg', async (req, resp) => {
 
                 var percentage =  8
                 var percentageDown   = (currentMarketPrice * percentage) / 100
-                var perctDownPrice     = percentageDown -  currentMarketPrice;
-                // var perctDownPrice     = currentMarketPrice + percentageDown;
+                // var perctDownPrice     = percentageDown -  currentMarketPrice;
+                var perctDownPrice     = currentMarketPrice + percentageDown;
             }
 
 
@@ -30263,30 +30263,31 @@ router.post('/sellCostAvgOrder_new', async (req, resp) => {
                 var updatedObj = {}
 
 
-                // find index of object inside array
-                const orderSellHitActivated = (element) => element.buy_order_id == order_id;
-                var order_index = order['cost_avg_array'].findIndex(orderSellHitActivated);
+
 
 
                 // Add new Field inside Selected object
-                var newInsertedObject = {};
-                newInsertedObject = [...order['cost_avg_array'][order_index]];
-                newInsertedObject['sell_activated'] = 'yes';
 
 
-                console.log(order_index)
+
+                for(let i=0;i<order['cost_avg_array'].length;i++){
+                  if(order['cost_avg_array'][i]['buy_order_id'] == order_id){
+                    order['cost_avg_array'][i]['sell_activated'] = 'yes';
+                    break;
+                  } else {
+                    continue;
+                  }
+                }
 
 
                 // Update Array with New Object & delete Previous Object
-                updatedObj['cost_avg_array'] = [...order['cost_avg_array']].splice(order_index, 1, newInsertedObject);
+                updatedObj['cost_avg_array'] = order['cost_avg_array']
                 updatedObj['avg_sell_price_three'] = avg_sell_price_three;
                 updatedObj['last_three_ids'] = last_three_ids;
                 updatedObj['quantity_three'] = quantity_three;
                 updatedObj['avg_price_three_upd'] = avg_price_three_upd;
                 updatedObj['modified_date'] = new Date();
 
-
-                console.log(order['cost_avg_array'], updatedObj['cost_avg_array'])
 
 
                 let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
