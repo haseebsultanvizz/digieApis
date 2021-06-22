@@ -30270,7 +30270,7 @@ router.post('/sellCostAvgOrder_new', async (req, resp) => {
 
                 // Add new Field inside Selected object
                 var newInsertedObject = {};
-                newInsertedObject = order['cost_avg_array'][order_index];
+                newInsertedObject = [...order['cost_avg_array'][order_index]];
                 newInsertedObject['sell_activated'] = 'yes';
 
 
@@ -30278,7 +30278,7 @@ router.post('/sellCostAvgOrder_new', async (req, resp) => {
 
 
                 // Update Array with New Object & delete Previous Object
-                updatedObj['cost_avg_array'] = order['cost_avg_array'].splice(order_index, 1, newInsertedObject);
+                updatedObj['cost_avg_array'] = [...order['cost_avg_array']].splice(order_index, 1, newInsertedObject);
                 updatedObj['avg_sell_price_three'] = avg_sell_price_three;
                 updatedObj['last_three_ids'] = last_three_ids;
                 updatedObj['quantity_three'] = quantity_three;
