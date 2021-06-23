@@ -2175,10 +2175,10 @@ router.post('/editAutoOrder', async (req, resp) => {
 
 
     // Check Added by Huzaifa
-    if(typeof order['move_to_cost_avg'] != 'undefined' && order['cavg_parent'] == 'yes' && typeof order['move_to_cost_avg'] != 'undefined' && order['move_to_cost_avg'] == 'yes'){
+    if(typeof order['cavg_parent'] != 'undefined' && order['cavg_parent'] == 'yes' && typeof order['move_to_cost_avg'] != 'undefined' && order['move_to_cost_avg'] == 'yes'){
       let db1 = await conn
       let tempCol1 = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+ exchange
-      await db1.collection(tempCol1).updateOne({ '_id': buyOrderArr[0]['_id'] }, { '$unset': { 'last_three_ids': '', 'quantity_three': '', 'avg_price_three_upd':'', 'avg_sell_price_three':'', 'avg_sell_price':'', 'avg_price_all_upd':'', 'all_buy_ids':'', 'quantity_all':'' }})
+      await db1.collection(tempCol1).updateOne({ '_id': buyOrderArr[0]['_id'] }, { '$set': { 'last_three_ids': '', 'quantity_three': '', 'avg_price_three_upd':'', 'avg_sell_price_three':'', 'avg_sell_price':'', 'avg_price_all_upd':'', 'all_buy_ids':'', 'quantity_all':'' }})
     }//End here
 
 
