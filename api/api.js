@@ -3801,8 +3801,17 @@ router.post('/listOrderListing', async (req, resp) => {
                 //if order is sold and no child is buy
                 if (postDAta.status == 'costAvgTab' && typeof orderListing[index].cavg_parent != 'undefined' && orderListing[index].cavg_parent == 'yes' && typeof orderListing[index].move_to_cost_avg != 'undefined' && orderListing[index].move_to_cost_avg == 'yes' && (typeof orderListing[index].avg_orders_ids == 'undefined' || orderListing[index].avg_orders_ids.length == 0)){
 
-                    htmlStatus += '<span class="badge badge-warning">WAITING FOR BUY</span>';
+
+
+                  var totalBuyOrders = typeof orderListing[index]['cost_avg_array'] != 'undefined' && orderListing[index]['cost_avg_array'].length > 0 ? orderListing[index]['cost_avg_array'].filter(order => order.order_sold == 'no').map(order => order.order_sold) : []
+
+                  if(totalBuyOrders.length > 0){
+                    htmlStatus += '<span class="badge umerr badge-info">WAITING FOR SELL</span>';
+                    htmlStatusArr.push('WAITING FOR SELL')
+                  } else {
+                    htmlStatus += '<span class="badge umerr badge-warning">WAITING FOR BUY</span>';
                     htmlStatusArr.push('WAITING FOR BUY')
+                  }
 
                     //if order is sold and child exists
                 } else if (postDAta.status == 'costAvgTab' && typeof orderListing[index].cavg_parent != 'undefined' && orderListing[index].cavg_parent == 'yes' && typeof orderListing[index].move_to_cost_avg != 'undefined' && orderListing[index].move_to_cost_avg == 'yes' && typeof orderListing[index].avg_orders_ids != 'undefined' && orderListing[index].avg_orders_ids.length > 0){
@@ -3846,7 +3855,7 @@ router.post('/listOrderListing', async (req, resp) => {
                 htmlStatus += '<span class="badge badge-warning">WAITING FOR BUY</span>';
                 htmlStatusArr.push('WAITING FOR BUY');
               } else if(status == 'CA_TAKING_CHILD'){
-                htmlStatus += '<span class="badge badge-warning">WAITING FOR SELL</span>';
+                htmlStatus += '<span class="badge badge-info">WAITING FOR SELL</span>';
                 htmlStatusArr.push('WAITING FOR SELL');
               } else {
                 htmlStatus += '<span class="badge huzaifaa badge-' + statusClass + '">' + status + '</span>';
