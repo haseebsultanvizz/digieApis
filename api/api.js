@@ -5670,10 +5670,9 @@ router.post('/makeCostAvg', async (req, resp) => {
                 var pricesObj = await get_current_market_prices(exchange, getBuyOrder[0]['symbol'])
                 var currentMarketPrice = pricesObj[getBuyOrder[0]['symbol']]
 
-                var percentage =  8
+                var percentage =  7
                 var percentageDown   = (currentMarketPrice * percentage) / 100
-                // var perctDownPrice     = percentageDown -  currentMarketPrice;
-                var perctDownPrice     = currentMarketPrice + percentageDown;
+                var perctDownPrice     = currentMarketPrice - percentageDown;
             }
 
 
