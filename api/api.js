@@ -3845,6 +3845,9 @@ router.post('/listOrderListing', async (req, resp) => {
               if(is_sell_order == 'sold' && orderListing[index].move_to_cost_avg == 'yes' && status == 'CA_SOLD_MOVE'){
                 htmlStatus += '<span class="badge badge-warning">WAITING FOR BUY</span>';
                 htmlStatusArr.push('WAITING FOR BUY');
+              } else if(status == 'CA_TAKING_CHILD'){
+                htmlStatus += '<span class="badge badge-warning">WAITING FOR SELL</span>';
+                htmlStatusArr.push('WAITING FOR SELL');
               } else {
                 htmlStatus += '<span class="badge huzaifaa badge-' + statusClass + '">' + status + '</span>';
                 htmlStatusArr.push(status);
