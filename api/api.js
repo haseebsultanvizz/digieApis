@@ -133,15 +133,15 @@ async function blockLoginAttempt(username, action) {
     })
 } //end blockLoginAttempt
 
-async function generatejwtToken(){
+async function generatejwtToken(user_id, user_name){
     return new Promise(async function (resolve, reject) {
     var today = new Date();
       var exp = new Date(today);
       exp.setDate(today.getDate() + 60);
 
       let token =  jwt.sign({
-        id: this._id,
-        username: this.username,
+        id: user_id,
+        username: user_name,
         exp: parseInt(exp.getTime() / 1000),
       }, secret);
 
@@ -304,7 +304,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             }
 
 
-                            var token = await generatejwtToken(userArr['_id']);
+                            var token = await generatejwtToken(userArr['_id'], userArr['username']);
 
                             respObj.id = userArr['_id'];
                             respObj.username = userArr['username'];
@@ -409,7 +409,7 @@ router.post('/authenticate', async function (req, resp, next) {
 
 
 
-                                var token = await generatejwtToken(userArr['_id']);
+                                var token = await generatejwtToken(userArr['_id'], userArr['username']);
 
 
 
