@@ -30330,11 +30330,22 @@ router.post('/sellCostAvgOrder_new', async (req, resp) => {
 
 
                 var updatedObj = {}
+                for(let i=0;i<order['cost_avg_array'].length;i++){
+                    if(order['cost_avg_array'][i]['buy_order_id'] == order_id){
+                      order['cost_avg_array'][i]['sell_activated'] = 'yes';
+                      break;
+                    } else {
+                      continue;
+                    }
+                  }
+
+
 
                 updatedObj['avg_price_all_upd'] = avg_price_all_upd;
                 updatedObj['avg_sell_price'] = avg_sell_price;
                 updatedObj['all_buy_ids'] = all_buy_ids;
                 updatedObj['quantity_all'] = quantity_all;
+                updatedObj['cost_avg_array'] = order['cost_avg_array']
                 updatedObj['modified_date'] = new Date();
 
 
