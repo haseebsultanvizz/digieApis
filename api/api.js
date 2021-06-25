@@ -29460,7 +29460,7 @@ function order_move_sold_to_buy(exchange, order_id) {
 
                         // console.log(doc_id, data['cost_avg_array'])
                         var update_inserted_order = await db.collection(collection_name).updateOne({_id: ObjectID(doc_id)}, {$set: {cost_avg_array: data['cost_avg_array']}})
-                        var move_costAvg_completed = await db.collection(collectionName).updateOne(where, {$set: {move_costAvg: "completed", status:'CA_SOLD_COMPLETE'}})
+                        var move_costAvg_completed = await db.collection(collectionName).updateOne(where, {$set: {move_costAvg: "completed", status:'CA_SOLD_COMPLETE', show_order: 'no'}})
                         resolve('Inserted Successfully to Buy Collection')
                       }
                     })
