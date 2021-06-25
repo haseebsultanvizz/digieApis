@@ -29424,6 +29424,8 @@ function order_move_sold_to_buy(exchange, order_id) {
                     cost_avg_array_obj['order_sold'] = 'yes'
                     cost_avg_array_obj['avg_purchase_price'] = data['avg_purchase_price'];
 
+                    cost_avg_array_obj['buyTimeDate'] = data['created_date'];
+
                     data['cost_avg_array'].push(cost_avg_array_obj)
                     data['new_child_buy_price'] = isNaN(parseFloat(perctDownPrice)) ? '': parseFloat(perctDownPrice);
 
