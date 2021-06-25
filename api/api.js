@@ -3821,7 +3821,7 @@ router.post('/listOrderListing', async (req, resp) => {
                     htmlStatus += '<span class="badge badge-info">WAITING FOR SELL</span>';
                     htmlStatusArr.push('WAITING FOR SELL')
 
-                }else{
+                } else {
                     htmlStatus += '<span class="badge badge-warning">LTH</span> <span class="badge badge-success">Sold</span>';
                     htmlStatusArr.push('LTH')
                     htmlStatusArr.push('Sold')
@@ -5751,6 +5751,7 @@ router.post('/makeCostAvg', async (req, resp) => {
                 if(tab == 'openTab_admin'){
                     update['$set']['iniatial_trail_stop'] = currentMarketPrice + (currentMarketPrice + 0.05);
                     update['$set']['is_sell_order'] = 'yes';
+                    update['$set']['order_to_ca_activated'] = 'yes';
                 }
             }
 
