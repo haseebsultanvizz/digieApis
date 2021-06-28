@@ -322,6 +322,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.special_role = userArr['special_role'];
                             // respObj.google_auth = userArr['google_auth'];
                             respObj.trigger_enable = userArr['trigger_enable'];
+                            respObj.trading_ip = userArr['trading_ip'];
                             respObj.is_global_user = 'yes';
                             respObj.exchangesArr = exchangesArr;
                             respObj.default_exchange = typeof userArr['default_exchange'] != 'undefined' && userArr['default_exchange'] != '' ? userArr['default_exchange'] : (exchangesArr.length > 0 ? exchangesArr[0] : 'binance');
@@ -428,6 +429,7 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.leftmenu = userArr['leftmenu'];
                                 respObj.user_role = userArr['user_role'];
                                 respObj.special_role = userArr['special_role'];
+                                respObj.trading_ip = userArr['trading_ip'];
                                 // respObj.google_auth = userArr['google_auth'];
 
 
