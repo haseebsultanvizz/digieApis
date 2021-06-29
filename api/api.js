@@ -14,7 +14,7 @@ var googleAuthenticator = require('authenticator');
 var jwt = require('jsonwebtoken');
 
 
-var auth = require('./auth');
+var auth_token = require('./auth');
 
 
 
@@ -3583,7 +3583,7 @@ function listCurrentMarketPriceArr(coin, exchange) {
 } //End of listCurrentMarketPriceArr
 
 //function for getting order list from order-list angular  component
-router.post('/listOrderListing', auth.required , async (req, resp) => {
+router.post('/listOrderListing', auth_token.required , async (req, resp) => {
 
 
 
