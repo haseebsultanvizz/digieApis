@@ -3593,7 +3593,7 @@ router.post('/listOrderListing', auth.required , async (req, resp) => {
     var admin_id = req.payload.id
 
 
-    console.log(admin_id, req.payload.id, req)
+    // console.log(admin_id, req.payload.id, req)
     var application_mode = req.body.postData.application_mode;
     var postDAta = req.body.postData;
     var exchange = postDAta.exchange;
