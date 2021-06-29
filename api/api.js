@@ -14,6 +14,9 @@ var googleAuthenticator = require('authenticator');
 var jwt = require('jsonwebtoken');
 
 
+var auth = require('./auth');
+
+
 
 
 var crypto = require('crypto');
@@ -157,6 +160,9 @@ async function generatejwtToken(user_id, user_name){
 
 
 
+
+
+
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization']
     const token = authHeader && authHeader.split(' ')[1]
@@ -169,11 +175,8 @@ function authenticateToken(req, res, next) {
       if (err) return res.sendStatus(403)
 
 
-
       console.log(user)
-
       req.user = user
-
       next()
     })
 }
@@ -3580,9 +3583,17 @@ function listCurrentMarketPriceArr(coin, exchange) {
 } //End of listCurrentMarketPriceArr
 
 //function for getting order list from order-list angular  component
-router.post('/listOrderListing', async (req, resp) => {
+router.post('/listOrderListing', auth.required , async (req, resp) => {
 
-    var admin_id = req.body.postData.admin_id;
+
+
+    // var admin_id = req.body.postData.admin_id;
+
+
+    var admin_id = req.payload.id
+
+
+    console.log(admin_id, req.payload.id, req)
     var application_mode = req.body.postData.application_mode;
     var postDAta = req.body.postData;
     var exchange = postDAta.exchange;
