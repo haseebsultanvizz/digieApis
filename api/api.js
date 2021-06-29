@@ -966,55 +966,70 @@ router.post('/enableGoogleAuth', async function (req, resp) {
     let token = req.body.token
     // let verified = await verifyGoogleAuthToken(admin_id, token);
 
-    var options = {
-        method: 'POST',
-        url: 'https://app.digiebot.com/admin/Api_calls/very_google_auth_code',
-        headers: {
-            'cache-control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Accept-Encoding': 'gzip, deflate',
-            'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-            'Cache-Control': 'no-cache',
-            'Accept': '*/*',
-            'User-Agent': 'PostmanRuntime/7.20.1',
-            'Content-Type': 'application/json'
-        },
-        json: {
-            'user_id': admin_id,
-            'code': token
-        }
-    };
-    request(options, async function (error, response, body) {
-        if (error) {
-            resp.send({
-                'status': false,
-                'message': 'Something went wrong.'
-            });
-        } else {
-            if (body.status) {
-                let secret = await getGoogleAuthSecret(admin_id)
-                let enable = setGoogleAuthSecret(admin_id, secret, true)
-                resp.status(200).send({
-                    status: true,
-                    message: 'Google Auth Enabled.'
-                });
-            } else {
 
-                var google_auth_validator = await getUserGoogleAuthValidation(admin_id, token)
-                if(google_auth_validator){
-                    resp.status(200).send({
-                        status: true,
-                        message: 'Google Auth Enabled.'
-                    });
-                } else{
-                    resp.status(200).send({
-                        status: false,
-                        message: 'Google Auth Failed.'
-                    });
-                }
-            }
-        }
-    })
+
+    var google_auth_validator = await getUserGoogleAuthValidation(admin_id, token)
+    if(google_auth_validator){
+        resp.status(200).send({
+            status: true,
+            message: 'Google Auth Enabled.'
+        });
+    } else{
+        resp.status(200).send({
+            status: false,
+            message: 'Google Auth Failed.'
+        });
+    }
+
+    // var options = {
+    //     method: 'POST',
+    //     url: 'https://app.digiebot.com/admin/Api_calls/very_google_auth_code',
+    //     headers: {
+    //         'cache-control': 'no-cache',
+    //         'Connection': 'keep-alive',
+    //         'Accept-Encoding': 'gzip, deflate',
+    //         'Postman-Token': '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+    //         'Cache-Control': 'no-cache',
+    //         'Accept': '*/*',
+    //         'User-Agent': 'PostmanRuntime/7.20.1',
+    //         'Content-Type': 'application/json'
+    //     },
+    //     json: {
+    //         'user_id': admin_id,
+    //         'code': token
+    //     }
+    // };
+    // request(options, async function (error, response, body) {
+    //     if (error) {
+    //         resp.send({
+    //             'status': false,
+    //             'message': 'Something went wrong.'
+    //         });
+    //     } else {
+    //         if (body.status) {
+    //             let secret = await getGoogleAuthSecret(admin_id)
+    //             let enable = setGoogleAuthSecret(admin_id, secret, true)
+    //             resp.status(200).send({
+    //                 status: true,
+    //                 message: 'Google Auth Enabled.'
+    //             });
+    //         } else {
+
+    //             var google_auth_validator = await getUserGoogleAuthValidation(admin_id, token)
+    //             if(google_auth_validator){
+    //                 resp.status(200).send({
+    //                     status: true,
+    //                     message: 'Google Auth Enabled.'
+    //                 });
+    //             } else{
+    //                 resp.status(200).send({
+    //                     status: false,
+    //                     message: 'Google Auth Failed.'
+    //                 });
+    //             }
+    //         }
+    //     }
+    // })
 
 
     // if (verified) {
@@ -11164,6 +11179,73 @@ async function get_market_price(coin) {
 
 
 
+
+
+
+
+
+
+
+async function verify_user_info(user_ip, admin_id, exchange){
+    return new Promise(async function (resolve, reject) {
+
+        let ip = user_ip;
+        let port = 2500
+
+        let url = 'http://' + ip +':'+ port + '/apiKeySecret/apiKeySecret'
+
+        console.log(url)
+        request.post({
+            url: url,
+            json: {
+                "user_id": admin_id,
+                "exchange": exchange
+            },
+            headers: {
+                'content-type': 'application/json'
+            }
+        }, function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                console.log(body, "get User API for Verify");
+                resolve(true);
+            } else {
+                resolve(false)
+            }
+        });
+    });
+}
+
+
+
+
+//post call for verify user info
+router.post('/verify_user_info', async function (req, res, next) {
+
+    var user_ip = req.body.trading_ip;
+    var user_id = req.body.user_id;
+    var exchange = req.body.exchange;
+
+    var data = await verify_user_info(user_ip, user_id, exchange)
+
+
+    console.log(data, 'Verify User Info')
+
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 async function generatejwtTokenForUserInfo(api_key, api_secret){
     return new Promise(async function (resolve, reject) {
     var today = new Date();
@@ -11191,6 +11273,38 @@ async function authenticatejwtTokenForUserInfo(token) {
                 resolve(data)
             }
         })
+    });
+}
+
+
+
+
+
+async function get_api_secret(user_ip, admin_id){
+    return new Promise(async function (resolve, reject) {
+
+        let ip = user_ip;
+        let port = 2500
+
+        let url = 'http://' + ip +':'+ port + '/apiKeySecret/getKeySecret'
+
+        console.log(url)
+        request.post({
+            url: url,
+            json: {
+                "user_id": admin_id,
+            },
+            headers: {
+                'content-type': 'application/json'
+            }
+        }, function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                console.log(body, "get User API");
+                resolve(true);
+            } else {
+                resolve(false)
+            }
+        });
     });
 }
 
@@ -11230,7 +11344,9 @@ router.post('/get_user_info', function (req, res, next) {
                                 'password',
                                 'timezone',
                                 'default_exchange',
-                                'hash'
+                                'trading_ip',
+                                'hash',
+                                '_id'
                             ]
 
                             for (let [key, value] of Object.entries(data)) {
@@ -11241,14 +11357,24 @@ router.post('/get_user_info', function (req, res, next) {
 
 
 
-                            if(typeof data['hash'] != 'undefined' && data['hash'] != ''){
-                                var allData = await authenticatejwtTokenForUserInfo(data['hash'])
-                                console.log(allData)
+                            // if(typeof data['hash'] != 'undefined' && data['hash'] != ''){
+                            //     var allData = await authenticatejwtTokenForUserInfo(data['hash'])
+                            //     console.log(allData)
 
 
-                                data['api_key'] = allData['api_key']
-                                data['api_secret'] = allData['api_secret']
-                            }
+                            //     data['api_key'] = allData['api_key']
+                            //     data['api_secret'] = allData['api_secret']
+                            // }
+
+
+                            // console.log(data, 'USER')
+
+
+                            var userInfo = await get_api_secret(data['trading_ip'], (data['_id']).toString());
+
+
+                            // console.log(userInfo)
+                            // return false
 
 
 
