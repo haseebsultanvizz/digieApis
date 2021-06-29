@@ -11186,49 +11186,53 @@ async function get_market_price(coin) {
 
 
 
-async function verify_user_info(user_ip, admin_id, exchange){
+async function verify_user_info(api_key, user_ip, admin_id, exchange){
     return new Promise(async function (resolve, reject) {
-
         let ip = user_ip;
-        let port = 2500
-
-        let url = 'http://' + ip +':'+ port + '/apiKeySecret/apiKeySecret'
-
-        console.log(url)
+        let port = 2500;
+        let url = 'http://' + ip +':'+ port + '/apiKeySecret/validateapiKeySecret'
+        // console.log(url)
         request.post({
             url: url,
             json: {
                 "user_id": admin_id,
-                "exchange": exchange
+                "exchange": exchange,
+                "api_key":api_key
             },
             headers: {
                 'content-type': 'application/json'
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                console.log(body, "get User API for Verify");
-                resolve(true);
+                resolve(body);
             } else {
                 resolve(false)
             }
         });
     });
 }
-
-
-
-
 //post call for verify user info
 router.post('/verify_user_info', async function (req, res, next) {
 
     var user_ip = req.body.trading_ip;
     var user_id = req.body.user_id;
     var exchange = req.body.exchange;
+    var api_key = req.body.api_key;
 
-    var data = await verify_user_info(user_ip, user_id, exchange)
-
-
-    console.log(data, 'Verify User Info')
+    var data = await verify_user_info(api_key, user_ip, user_id, exchange)
+    if(data.success){
+        res.status(200).send({
+            "success": true,
+            "status": 200,
+            "message": "Valid Api Key"
+        })
+    } else {
+        res.status(204).send({
+            "success": false,
+            "status": 204,
+            "message": "Invalid API key"
+        })
+    }
 
 })
 
@@ -11286,9 +11290,9 @@ async function get_api_secret(user_ip, admin_id){
         let ip = user_ip;
         let port = 2500
 
-        let url = 'http://' + ip +':'+ port + '/apiKeySecret/getKeySecret'
+        let url = 'http://' + ip +':'+ port + '/apiKeySecret/getapiKeySecret'
 
-        console.log(url)
+        // console.log(url)
         request.post({
             url: url,
             json: {
@@ -11299,17 +11303,18 @@ async function get_api_secret(user_ip, admin_id){
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                console.log(body, "get User API");
-                resolve(true);
+                // console.log(body, "get User API");
+                if(body.success){
+                  resolve(body.api_key);
+                } else {
+                  resolve(false);
+                }
             } else {
                 resolve(false)
             }
         });
     });
 }
-
-
-
 //post call for getting user info for manage user component
 router.post('/get_user_info', function (req, res, next) {
     var post_data = req.body;
@@ -11372,6 +11377,14 @@ router.post('/get_user_info', function (req, res, next) {
 
                             var userInfo = await get_api_secret(data['trading_ip'], (data['_id']).toString());
 
+                            if(userInfo == false){
+                              data['api_key'] = '';
+                              data['api_secret'] = ''
+                            } else{
+                              data['api_key'] = userInfo;
+                              data['api_secret'] = ''
+                            }
+
 
                             // console.log(userInfo)
                             // return false
@@ -11417,6 +11430,43 @@ router.post('/get_user_info', function (req, res, next) {
 
 
 
+
+
+
+async function add_user_info(user_ip, admin_id, api_key, api_secret){
+    return new Promise(async function (resolve, reject) {
+
+        let ip = user_ip;
+        let port = 2500
+
+        let url = 'http://' + ip +':'+ port + '/apiKeySecret/saveapiKeySecret'
+
+        // console.log(url)
+        request.post({
+            url: url,
+            json: {
+                "user_id": admin_id,
+                "api_key": api_key,
+                "api_secret": api_secret
+            },
+            headers: {
+                'content-type': 'application/json'
+            }
+        }, function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                // console.log(body, "get User API");
+                if(body.success){
+                  resolve(body);
+                } else {
+                  resolve(false);
+                }
+            } else {
+                resolve(false)
+            }
+        });
+    });
+}
+
 //post call for edit user info
 router.post('/update_user_info', function (req, res, next) {
     var post_data = req.body;
@@ -11442,7 +11492,7 @@ router.post('/update_user_info', function (req, res, next) {
 
                         update_arr['trading_ip'] = data['trading_ip'];
 
-                        let fieldsArr = ['api_key', 'api_secret', 'pass_phrase']
+                        let fieldsArr = ['api_key', 'api_secret', 'pass_phrase', 'trading_ip']
                         for (let [key, value] of Object.entries(update_arr)) {
                             if (!fieldsArr.includes(key)) {
                                 delete update_arr[key]
@@ -11451,13 +11501,28 @@ router.post('/update_user_info', function (req, res, next) {
 
 
 
-                        console.log(update_arr)
+                        // console.log(update_arr)
 
-                        var data = await generatejwtTokenForUserInfo(update_arr['api_key'], update_arr['api_secret'])
-                        update_arr['hash'] = data;
-                        // delete update_arr['api_key'];
-                        // delete update_arr['api_secret'];
-                        // delete update_arr['pass_phrase'];
+
+                        var data = await add_user_info(update_arr['trading_ip'], update_arr['user_id'], update_arr['api_key'], update_arr['api_secret'])
+                        // console.log(data, 'NEW REturn')
+
+
+                        if(data.success){
+                            res.status(200).send({
+                                "success": true,
+                                "status": 200,
+                                "message": "Submitted on Digie Platform Successfully"
+                            })
+                        } else {
+                            res.status(201).send({
+                                "success": false,
+                                "status": 201,
+                                "message": "Not Submitted on Digie Platform Please Try Again"
+                            })
+                        }
+
+                        return false;
 
 
                         db.collection("users").updateOne(search_arr, {
