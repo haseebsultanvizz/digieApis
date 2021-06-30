@@ -5048,7 +5048,17 @@ router.post('/getMergeOrders', async (req, res)=>{
 
 })
 
-router.post('/mergeAndMigrate', async (req, res)=>{
+router.post('/mergeAndMigrate', auth_token.required, async (req, res)=>{
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let mergedOrder = req.body.mergedOrder
     let user_id = req.body.user_id
@@ -5477,7 +5487,16 @@ router.post('/manageCoins', async (req, resp) => {
     });
 }) //End of manageCoins
 
-router.post('/get_user_coins', async (req, resp) => {
+router.post('/get_user_coins', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let exchange = req.body.exchange
     let admin_id = req.body.admin_id
@@ -5547,7 +5566,17 @@ function getGlobalCoins(exchange) {
 } //End of listGlobalCoins
 
 //play parent orders from order listing page
-router.post('/playOrder', async (req, resp) => {
+router.post('/playOrder', auth_token.required, async (req, resp) => {
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
     var playPromise = pausePlayParentOrder(req.body.orderId, req.body.status, req.body.exchange);
     let show_hide_log = 'yes';
     let type = 'play pause';
@@ -5587,7 +5616,17 @@ function pausePlayParentOrder(orderId, status, exchange) {
 
 
 //post order for play and pause parent orders
-router.post('/togglePausePlayOrder', async (req, resp) => {
+router.post('/togglePausePlayOrder', auth_token.required, async (req, resp) => {
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     var playPromise = togglePausePlayOrder(req.body.orderId, req.body.status, req.body.exchange);
     let show_hide_log = 'yes';
