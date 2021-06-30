@@ -5487,7 +5487,7 @@ router.post('/manageCoins', async (req, resp) => {
     });
 }) //End of manageCoins
 
-router.post('/get_user_coins' async (req, resp) => {
+router.post('/get_user_coins', async (req, resp) => {
 
     // var user_exist = await getUserByID(req.payload.id);
     // // console.log(user_exist)
