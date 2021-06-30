@@ -2130,7 +2130,16 @@ router.post('/makeManualOrderSetForSell', async (req, resp) => {
 }) //End of makeManualOrderSetForSell
 
 //Post call from angular component for creating parent order
-router.post('/createAutoOrder', async (req, resp) => {
+router.post('/createAutoOrder', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
 
@@ -12011,6 +12020,7 @@ function listBamUserCoins(admin_id) {
 
 //save bam credentials from setting component
 router.post('/saveBamCredentials', (req, resp) => {
+    var auth_token = req.headers.authorization;
     var user_id = req.body.user_id;
     var api_key = req.body.api_key;
     var api_secret = req.body.api_secret;
@@ -12040,6 +12050,9 @@ router.post('/saveBamCredentials', (req, resp) => {
                 var reqObj = {
                     'type': 'POST',
                     'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                    'header':{
+                      'Authorization': auth_token
+                    },
                     'payload': {
                         'user_id': String(user_id),
                         'type': 'api_key_updated',
@@ -12064,6 +12077,8 @@ router.post('/saveBamCredentials', (req, resp) => {
 
 //save kraken credentials from setting component
 router.post('/saveKrakenCredentials', (req, resp) => {
+
+    var auth_token = req.headers.authorization;
     var user_id = req.body.user_id;
     var api_key = req.body.api_key;
     var api_secret = req.body.api_secret;
@@ -12097,6 +12112,9 @@ router.post('/saveKrakenCredentials', (req, resp) => {
                 var reqObj = {
                     'type': 'POST',
                     'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                    'headers':{
+                      'Authorization': auth_token
+                    },
                     'payload': {
                         'user_id': String(user_id),
                         'type': 'api_key_updated',
@@ -12121,6 +12139,7 @@ router.post('/saveKrakenCredentials', (req, resp) => {
 
 //save kraken credentials from setting component
 router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
+    var auth_token = req.headers.authorization;
     var user_id = req.body.user_id;
     var api_key = req.body.api_key_secondary;
     var api_secret = req.body.api_secret_secondary;
@@ -12150,6 +12169,9 @@ router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
                 var reqObj = {
                     'type': 'POST',
                     'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                    'headers':{
+                      'Authorization': auth_token
+                    },
                     'payload': {
                         'user_id': String(user_id),
                         'type': 'api_key_updated',
@@ -12173,6 +12195,7 @@ router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
 }) //End of saveKrakenCredentialsSecondary
 
 router.post('/saveKrakenCredentialsThirdKey', (req, resp) => {
+    var auth_token = req.headers.authorization;
     var user_id = req.body.user_id;
     var api_key = req.body.api_key_third_key;
     var api_secret = req.body.api_secret_third_key;
@@ -12202,6 +12225,9 @@ router.post('/saveKrakenCredentialsThirdKey', (req, resp) => {
                 var reqObj = {
                     'type': 'POST',
                     'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                    'headers':{
+                      'Authorization': auth_token
+                    },
                     'payload': {
                         'user_id': String(user_id),
                         'type': 'api_key_updated',
@@ -13263,6 +13289,8 @@ router.post('/is_bnb_balance_enough', async (req, resp) => {
 
 router.post('/is_trading_points_exceeded', async (req, resp) => {
 
+    var auth_token = req.headers.authorization;
+
     const db = await conn
     var admin_id = req.body.user_id;
 
@@ -13273,6 +13301,9 @@ router.post('/is_trading_points_exceeded', async (req, resp) => {
         let reqObj = {
             'type': 'POST',
             'url': 'https://app.digiebot.com/admin/Api_calls/get_user_current_trading_points',
+            'headers':{
+              'Authorization': auth_token
+            },
             'payload': {
                 'user_id' : admin_id
             },
@@ -15590,8 +15621,9 @@ async function send_notification(admin_id, type, priority, message, order_id = '
 router.post('/update_user_balance', async (req, res)=>{
 
     let user_id = req.body.user_id
+    let auth_token = req.headers.authorization;
     if(typeof user_id != 'undefined' && user_id != ''){
-        var updateWallet = await update_user_balance(user_id, 'shahzad_check')
+        var updateWallet = await update_user_balance(user_id, 'shahzad_check', auth_token)
         if(updateWallet || updateWallet == true){
           console.log(updateWallet)
           res.send({
@@ -15621,7 +15653,7 @@ router.post('/update_user_balance', async (req, res)=>{
 
 })
 
-async function update_user_balance(user_id, res='') {
+async function update_user_balance(user_id, res='', auth_token='') {
 
 
   return new Promise(async resolve=>{
@@ -15642,7 +15674,8 @@ async function update_user_balance(user_id, res='') {
             'Cache-Control'  : 'no-cache',
             'Accept'         : '*/*',
             'User-Agent'     : 'PostmanRuntime/7.20.1',
-            'Content-Type'   : 'application/json'
+            'Content-Type'   : 'application/json',
+            'Authorization'  :  auth_token
         },
         json: {}
     };
@@ -15660,7 +15693,8 @@ async function update_user_balance(user_id, res='') {
             'Cache-Control'  : 'no-cache',
             'Accept'         : '*/*',
             'User-Agent'     : 'PostmanRuntime/7.20.1',
-            'Content-Type'   : 'application/json'
+            'Content-Type'   : 'application/json',
+            'Authorization'  :  auth_token
         },
         json: {}
     };
@@ -16592,6 +16626,9 @@ router.post('/get_user_manual_triggers', async (req,res) => {
 //saveAutoTradeSettings
 router.post('/saveAutoTradeSettings', async (req, res) => {
 
+
+    var auth_token = req.headers.authorization;
+
     let user_id = req.body.user_id
     let exchange = req.body.exchange
     let dataArr = req.body.data
@@ -16677,6 +16714,9 @@ router.post('/saveAutoTradeSettings', async (req, res) => {
                 var reqObj = {
                     'type': 'POST',
                     'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                    'headers':{
+                      'Authorization': auth_token
+                    },
                     'payload': {
                         'user_id': String(user_id),
                         'type': 'ATG',
@@ -22612,7 +22652,7 @@ router.post('/find_available_btc_usdt_atg', async (req, res)=>{
         'dailTradeAbleBalancePercentage': dailTradeAbleBalancePercentage,
     }
 
-    let result = await newAtgApiCall(data)
+    let result = await newAtgApiCall(data, req)
 
     if (result){
         res.send(result)
@@ -22624,7 +22664,9 @@ router.post('/find_available_btc_usdt_atg', async (req, res)=>{
     }
 })
 
-async function newAtgApiCall(payload){
+async function newAtgApiCall(payload, req=''){
+
+    var auth_token = req.headers.authorization;
 
     return new Promise(async resolve =>{
 
@@ -22645,7 +22687,8 @@ async function newAtgApiCall(payload){
             'url': 'https://app.digiebot.com/admin/trading_reports/Atg/' + cron_name,
             'headers': {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': auth_token
             },
             'payload': payload,
         }
@@ -24900,6 +24943,7 @@ router.post('/get_username', async (req, res) => {
 })
 
 router.post('/getAvailableTradingPoints', async (req, res) => {
+    var auth_token = req.headers.authorization;
     var user_id = req.body.user_id;
     var exchange = req.body.exchange;
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' ) {
@@ -24915,7 +24959,8 @@ router.post('/getAvailableTradingPoints', async (req, res) => {
                 'Cache-Control': 'no-cache',
                 'Accept': '*/*',
                 'User-Agent': 'PostmanRuntime/7.20.1',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': auth_token
             },
             json: {
                 'user_id': user_id,
@@ -25171,6 +25216,7 @@ router.post('/isKeyUpdated', async (req,res) =>{
 })
 
 router.post('/validateApiKeys', async (req, res)=>{
+    var auth_token = req.headers.authorization;
     let user_id = req.body.user_id
     let exchange = req.body.exchange
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != ''){
@@ -25262,7 +25308,7 @@ router.post('/validateApiKeys', async (req, res)=>{
 
             //key1 validity
             if (settings.length > 0 && typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && settings[0]['api_key'] != null && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '' && settings[0]['api_secret'] != null) {
-                let resKey1 = await validate_binance_credentials(settings[0]['api_key'], settings[0]['api_secret']);
+                let resKey1 = await validate_binance_credentials(settings[0]['api_key'], settings[0]['api_secret'], auth_token);
 
                 if (resKey1) {
                     apiKey1Status = 'valid'
@@ -25288,7 +25334,7 @@ router.post('/validateApiKeys', async (req, res)=>{
             //key1 validity
             if (settings.length > 0 && typeof settings[0]['api_key'] != 'undefined' && settings[0]['api_key'] != '' && settings[0]['api_key'] != null && typeof settings[0]['api_secret'] != 'undefined' && settings[0]['api_secret'] != '' && settings[0]['api_secret'] != null) {
 
-                let resKey1 = await validate_bam_credentials_app(settings[0]['api_key'], settings[0]['api_secret']);
+                let resKey1 = await validate_bam_credentials_app(settings[0]['api_key'], settings[0]['api_secret'], auth_token);
 
                 if (resKey1) {
                     apiKey1Status = 'valid'
@@ -25317,12 +25363,15 @@ router.post('/validateApiKeys', async (req, res)=>{
     }
 })
 
-async function validate_binance_credentials(api_key, api_secret){
+async function validate_binance_credentials(api_key, api_secret, token){
     return new Promise(async resolve =>{
 
         let reqObj = {
             'type': 'POST',
             'url': 'https://app.digiebot.com/admin/Api_calls/validate_binance_credentials',
+            'headers':{
+              'Authorization': token
+            },
             'payload': {
                 'APIKEY': api_key,
                 'APISECRET': api_secret,
@@ -25333,12 +25382,15 @@ async function validate_binance_credentials(api_key, api_secret){
     })
 }
 
-async function validate_bam_credentials_app(api_key, api_secret){
+async function validate_bam_credentials_app(api_key, api_secret, token){
     return new Promise(async resolve =>{
 
         let reqObj = {
             'type': 'POST',
             'url': 'https://app.digiebot.com/admin/Api_calls/validate_bam_credentials',
+            'headers':{
+              'Authorization': token
+            },
             'payload': {
                 'APIKEY': api_key,
                 'APISECRET': api_secret,
