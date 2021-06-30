@@ -10340,7 +10340,16 @@ function listSellOrderByBuyOrderId(ID, exchange) {
 
 
 //post call for Edit manual by order
-router.post('/lisEditManualOrderById', async (req, resp) => {
+router.post('/lisEditManualOrderById', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let orderId = req.body.orderId;
     let exchange = req.body.exchange;
     var buyOrderResp = await listOrderById(orderId, exchange);
@@ -10442,7 +10451,16 @@ router.post('/lisEditManualOrderById', async (req, resp) => {
 
 
 //post call for updating manual orders
-router.post('/updateManualOrder', async (req, resp) => {
+router.post('/updateManualOrder', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
   let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
 
@@ -11132,7 +11150,18 @@ router.post('/updateManualOrder', async (req, resp) => {
 }) //End of updateManualOrder
 
 //post call for set manual order
-router.post('/setForSell', async (req, resp) => {
+router.post('/setForSell', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
     let sellOrderArr = req.body.sellOrderArr;
     var buy_order_id = (typeof sellOrderArr['buy_order_id'] == 'undefined') ? '' : sellOrderArr['buy_order_id'];
 
