@@ -1178,7 +1178,17 @@ async function setGoogleAuthSecret(admin_id, secret, enable = false) {
 /****************** End Google Authentication *******************/
 
 //Function call for dashboard data
-router.post('/listDashboardData', async (req, resp) => {
+router.post('/listDashboardData', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist, 'USER EXIST')
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     //Function to get all user coins
     let userCoinsArr = await listUserCoins(req.body._id);
     let exchange = req.body.exchange;
@@ -1630,7 +1640,17 @@ router.post('/listmarketPriceMinNotation', async (req, resp) => {
     });
 }) //End of listmarketPriceMinNotation
 
-router.post('/getPricesArr', async (req, resp) => {
+router.post('/getPricesArr', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist, 'USER EXIST')
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let coinArr = req.body.coinArr;
     let exchange = req.body.exchange;
@@ -1703,14 +1723,14 @@ async function listmarketPriceMinNotation(coin, exchange){
 router.post('/createManualOrder', auth_token.required, async (req, resp) => {
 
 
-  var user_exist = await getUserByID(req.payload.id);
-  // console.log(user_exist, 'USER EXIST')
-  if(!user_exist){
-      resp.status(401).send({
-          message: 'User Not exist'
-      });
-      return false;
-  }
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist, 'USER EXIST')
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     conn.then(async (db) => {
         let orders = req.body.orderArr;
