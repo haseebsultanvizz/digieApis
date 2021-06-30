@@ -1700,7 +1700,17 @@ async function listmarketPriceMinNotation(coin, exchange){
 } //End of listmarketPriceMinNotation
 
 //post call for creating manual order
-router.post('/createManualOrder', (req, resp) => {
+router.post('/createManualOrder', auth_token.required, async (req, resp) => {
+
+
+  var user_exist = await getUserByID(req.payload.id);
+  console.log(user_exist, 'USER EXIST')
+  if(!user_exist){
+      resp.status(401).send({
+          message: 'User Not exist'
+      });
+      return false;
+  }
 
     conn.then(async (db) => {
         let orders = req.body.orderArr;
@@ -3587,6 +3597,9 @@ function listCurrentMarketPriceArr(coin, exchange) {
 
 
 async function getUserByID(admin_id){
+
+
+  console.log(admin_id)
     return new Promise((resolve) => {
         conn.then((db) => {
 
@@ -3615,10 +3628,10 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
 
 
     // var admin_id = req.body.postData.admin_id;
-    console.log(req.payload.id)
+    // console.log(req.payload.id)
 
     var user_exist = await getUserByID(req.payload.id);
-    console.log(user_exist)
+    // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
