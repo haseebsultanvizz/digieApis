@@ -1704,7 +1704,7 @@ router.post('/createManualOrder', auth_token.required, async (req, resp) => {
 
 
   var user_exist = await getUserByID(req.payload.id);
-  console.log(user_exist, 'USER EXIST')
+  // console.log(user_exist, 'USER EXIST')
   if(!user_exist){
       resp.status(401).send({
           message: 'User Not exist'
@@ -1991,7 +1991,17 @@ router.post('/createManualOrder', auth_token.required, async (req, resp) => {
 
 
 //post call from chart for creating manual order
-router.post('/createManualOrderByChart', (req, resp) => {
+router.post('/createManualOrderByChart', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then((db) => {
         let orders = req.body.orderArr;
 
@@ -2073,7 +2083,16 @@ router.post('/createManualOrderByChart', (req, resp) => {
 
 
 //post call from set for sell component the function set buy manual order for sell
-router.post('/makeManualOrderSetForSell', async (req, resp) => {
+router.post('/makeManualOrderSetForSell', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then((db) => {
         let orders = req.body.orderArr;
         let orderId = req.body.orderId;
@@ -2183,7 +2202,16 @@ router.post('/createAutoOrder', auth_token.required, async (req, resp) => {
 }) //End of createAutoOrder
 
 //post call from angular to edit triggers orders
-router.post('/editAutoOrder', async (req, resp) => {
+router.post('/editAutoOrder', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+      resp.status(401).send({
+          message: 'User Not exist'
+      });
+      return false;
+    }
 
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     let order = req.body.orderArr;
@@ -2420,7 +2448,17 @@ router.post('/editAutoOrder', async (req, resp) => {
 }) //End of editAutoOrder
 
 //post call from angular to edit editCostAvgOrder orders
-router.post('/editCostAvgOrder', async (req, resp) => {
+router.post('/editCostAvgOrder', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+      resp.status(401).send({
+          message: 'User Not exist'
+      });
+      return false;
+    }
 
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     let order = req.body.orderArr;
