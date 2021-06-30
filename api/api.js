@@ -11603,7 +11603,17 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange){
     });
 }
 //post call for verify user info
-router.post('/verify_user_info', async function (req, res, next) {
+router.post('/verify_user_info', auth_token.required, async function (req, res, next) {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     var user_ip = req.body.trading_ip;
     var user_id = req.body.user_id;
@@ -11707,7 +11717,17 @@ async function get_api_secret(user_ip, admin_id){
     });
 }
 //post call for getting user info for manage user component
-router.post('/get_user_info', function (req, res, next) {
+router.post('/get_user_info', auth_token.required, async function (req, res, next) {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var post_data = req.body;
     let post_data_key_array = Object.keys(post_data);
     if (post_data_key_array.length == 0) {
@@ -11859,7 +11879,19 @@ async function add_user_info(user_ip, admin_id, api_key, api_secret){
 }
 
 //post call for edit user info
-router.post('/update_user_info', function (req, res, next) {
+router.post('/update_user_info', auth_token.required, async function (req, res, next) {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
     var post_data = req.body;
     let post_data_key_array = Object.keys(post_data);
     if (post_data_key_array.length == 0) {
@@ -12104,7 +12136,17 @@ router.post('/createManualOrderGlobally', (req, resp) => {
 
 
 //post call for adding user coins from global coins
-router.post('/addUserCoins', function (req, res, next) {
+router.post('/addUserCoins', auth_token.required, async function (req, res, next) {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var post_data = req.body;
     let post_data_key_array = Object.keys(post_data);
     if (post_data_key_array.length == 0) {
@@ -12151,7 +12193,17 @@ router.post('/addUserCoins', function (req, res, next) {
 
 
 //post call to all user coins
-router.post('/addUserCoin', async function (req, res, next) {
+router.post('/addUserCoin', auth_token.required, async function (req, res, next) {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     conn.then(async (db) => {
 
