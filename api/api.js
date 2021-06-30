@@ -2002,6 +2002,8 @@ router.post('/createManualOrderByChart', auth_token.required, async (req, resp) 
         });
         return false;
     }
+
+
     conn.then((db) => {
         let orders = req.body.orderArr;
 
