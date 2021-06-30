@@ -13089,7 +13089,17 @@ async function update_user_wallet_kraken(user_id){
 }
 
 //check error in sell for buy orders
-router.post('/get_error_in_sell', async (req, resp) => {
+router.post('/get_error_in_sell', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let order_id = req.body.order_id;
     let exchange = req.body.exchange;
@@ -13150,7 +13160,16 @@ router.post('/get_error_in_sell', async (req, resp) => {
 }) //End of get_error_in_sell
 
 //remove error from orders
-router.post('/remove_error', async (req, resp) => {
+router.post('/remove_error', auth_token.required, async (req, resp) => {
+
+  var user_exist = await getUserByID(req.payload.id);
+  // console.log(user_exist)
+  if(!user_exist){
+      resp.status(401).send({
+          message: 'User Not exist'
+      });
+      return false;
+  }
 
   let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
   let order_id = req.body.order_id;
@@ -13422,7 +13441,16 @@ function get_error_in_sell(order_id, exchange) {
 } //End of get_error_in_sell
 
 //function for removing error in sell
-router.post('/removeOrderManually', async (req, resp) => {
+router.post('/removeOrderManually', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let order_id = req.body.order_id;
     let exchange = req.body.exchange;
 
@@ -13478,7 +13506,15 @@ router.post('/removeOrderManually', async (req, resp) => {
 }) //End of removeOrderManually
 
 //validate user password for updting exchange credentials
-router.post('/validate_user_password', async (req, resp) => {
+router.post('/validate_user_password', auth_token.required, async (req, resp) => {
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var password = req.body.user_password;
     password = password.trim();
     let md5Pass = md5(password);
