@@ -6147,7 +6147,17 @@ function deleteOrder(orderId, exchange) {
 
 //When we click on move to LTH Button from order listing opentab it move the open order to LTH for any exchange
 //Changing the target profit to  LTH profit rather than normal profit
-router.post('/orderMoveToLth', async (req, resp) => {
+router.post('/orderMoveToLth', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     let exchange = req.body.exchange;
@@ -6238,7 +6248,17 @@ function orderMoveToLth(orderId, lth_profit, exchange, sell_price) {
 
 
 //post call for getting order by id
-router.post('/listOrderById', async (req, resp) => {
+router.post('/listOrderById', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     // console.log(req.body)
 
@@ -6309,7 +6329,16 @@ router.post('/listOrderById', async (req, resp) => {
 }) //End of listOrderById
 
 //post call for getting order log by id //Umer Abbas [2-1-19]
-router.post('/listOrderLogById', async (req, resp) => {
+router.post('/listOrderLogById', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let orderId = req.body.orderId;
     let exchange = req.body.exchange;
     var timezone = req.body.timezone;
