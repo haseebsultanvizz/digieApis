@@ -13762,7 +13762,16 @@ function listUserBalancebyCoin(admin_id, symbol, exchange) {
 } //End of listUserBalancebyCoin
 
 //function if bnb balance is enough
-router.post('/is_bnb_balance_enough', async (req, resp) => {
+router.post('/is_bnb_balance_enough', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var admin_id = req.body.admin_id;
     var symbol = req.body.symbol;
     var exchange = req.body.exchange;
@@ -13800,7 +13809,23 @@ router.post('/is_bnb_balance_enough', async (req, resp) => {
 })
 
 
-router.post('/is_trading_points_exceeded', async (req, resp) => {
+router.post('/is_trading_points_exceeded', auth_token.required, async (req, resp) => {
+
+
+
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
+
 
     var auth_token = req.headers.authorization;
 
