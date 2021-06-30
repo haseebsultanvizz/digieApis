@@ -12738,7 +12738,17 @@ function getKrakenCredentials(user_id) {
 } //End of getKrakenCredentials
 
 //post call for calculating average profit for order listing
-router.post('/calculate_average_profit', async (req, resp) => {
+router.post('/calculate_average_profit', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var soldOrderArr = await calculateAverageOrdersProfit(req.body.postData);
     var total_profit = 0;
     var total_quantity = 0;
@@ -12795,7 +12805,16 @@ router.post('/calculate_average_profit', async (req, resp) => {
 })
 
 //post call for validating bam credentials
-router.post('/validate_bam_credentials', async (req, resp) => {
+router.post('/validate_bam_credentials', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let APIKEY = req.body.APIKEY;
     let APISECRET = req.body.APISECRET;
     var credentials = await validate_bam_credentials(APIKEY, APISECRET);
@@ -12874,7 +12893,17 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
 } //End of validate_bam_credentials
 
 //post call for validating kraken credentials
-router.post('/validate_kraken_credentials', async (req, resp) => {
+router.post('/validate_kraken_credentials', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let APIKEY = req.body.APIKEY;
     let APISECRET = req.body.APISECRET;
     let user_id = req.body.user_id;
@@ -12928,7 +12957,17 @@ function validate_kraken_credentials(APIKEY, APISECRET, user_id = '') {
     })
 } //End of validate_kraken_credentials
 
-router.post('/update_user_wallet_kraken', async (req, resp)=>{
+router.post('/update_user_wallet_kraken', auth_token.required, async (req, resp)=>{
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
 
