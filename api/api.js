@@ -12393,7 +12393,19 @@ function listBamUserCoins(admin_id) {
 } //End of listBamUserCoins
 
 //save bam credentials from setting component
-router.post('/saveBamCredentials', (req, resp) => {
+router.post('/saveBamCredentials', auth_token.required, async(req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
     var auth_token = req.headers.authorization;
     var user_id = req.body.user_id;
     var api_key = req.body.api_key;
@@ -12450,7 +12462,18 @@ router.post('/saveBamCredentials', (req, resp) => {
 }) //End of saveBamCredentials
 
 //save kraken credentials from setting component
-router.post('/saveKrakenCredentials', (req, resp) => {
+router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
+
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     var auth_token = req.headers.authorization;
     var user_id = req.body.user_id;
@@ -12512,7 +12535,17 @@ router.post('/saveKrakenCredentials', (req, resp) => {
 }) //End of saveKrakenCredentials
 
 //save kraken credentials from setting component
-router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
+router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
     var auth_token = req.headers.authorization;
     var user_id = req.body.user_id;
     var api_key = req.body.api_key_secondary;
@@ -12568,7 +12601,19 @@ router.post('/saveKrakenCredentialsSecondary', (req, resp) => {
 
 }) //End of saveKrakenCredentialsSecondary
 
-router.post('/saveKrakenCredentialsThirdKey', (req, resp) => {
+router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
     var auth_token = req.headers.authorization;
     var user_id = req.body.user_id;
     var api_key = req.body.api_key_third_key;
@@ -12623,7 +12668,15 @@ router.post('/saveKrakenCredentialsThirdKey', (req, resp) => {
 
 }) //End of saveKrakenCredentialsThirdKey
 
-router.post('/getBamCredentials', async (req, resp) => {
+router.post('/getBamCredentials', auth_token.required, async (req, resp) => {
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var user_id = req.body.user_id;
     var bamCredentials = await getBamCredentials(user_id);
     resp.status(200).send({
@@ -12648,7 +12701,18 @@ function getBamCredentials(user_id) {
     })
 } //End of getBamCredentials
 
-router.post('/getKrakenCredentials', async (req, resp) => {
+router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
     var user_id = req.body.user_id;
     var krakenCredentials = await getKrakenCredentials(user_id);
     resp.status(200).send({
