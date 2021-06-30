@@ -5699,7 +5699,18 @@ function recordOrderLog(order_id, log_msg, type, show_hide_log, exchange) {
     })
 } //End of function(recordOrderLogQuery)
 //post call for getting orders details
-router.post('/listOrderDetail', async (req, resp) => {
+router.post('/listOrderDetail', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
     let orderId = req.body.orderId;
     let exchange = req.body.exchange;
     //get buy_order by id
@@ -5767,7 +5778,18 @@ function listOrderById(orderId, exchange) {
 } //End of listOrderById
 
 //post call from component for deleting orders
-router.post('/deleteOrder', async (req, resp) => {
+router.post('/deleteOrder', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     var respPromise = deleteOrder(req.body.orderId, req.body.exchange);
     let show_hide_log = 'yes';
@@ -5821,7 +5843,17 @@ router.post('/deleteOrder', async (req, resp) => {
 }) //End of deleteOrder
 
 //post call from component for deleting orders permanently
-router.post('/deleteOrderPermanently', async (req, resp) => {
+router.post('/deleteOrderPermanently', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let order_id = req.body.orderId
     let exchange = req.body.exchange
@@ -5845,7 +5877,16 @@ router.post('/deleteOrderPermanently', async (req, resp) => {
 
 
 //post call from component for makeCostAvg
-router.post('/makeCostAvg', async (req, resp) => {
+router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let order_id = req.body.orderId
     let exchange = req.body.exchange
