@@ -5487,16 +5487,16 @@ router.post('/manageCoins', async (req, resp) => {
     });
 }) //End of manageCoins
 
-router.post('/get_user_coins', auth_token.required, async (req, resp) => {
+router.post('/get_user_coins' async (req, resp) => {
 
-    var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'User Not exist'
-        });
-        return false;
-    }
+    // var user_exist = await getUserByID(req.payload.id);
+    // // console.log(user_exist)
+    // if(!user_exist){
+    //     resp.status(401).send({
+    //         message: 'User Not exist'
+    //     });
+    //     return false;
+    // }
 
     let exchange = req.body.exchange
     let admin_id = req.body.admin_id
@@ -6449,7 +6449,17 @@ async function listOrderLog(orderId, exchange, order_mode, order_created_date, s
 
 
 //post call for getting order by id
-router.post('/costAvgChildLogs', async (req, resp) => {
+router.post('/costAvgChildLogs', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let orderIds = req.body.orderIds;
     let exchange = req.body.exchange;
     var timezone = req.body.timezone;
@@ -6573,7 +6583,16 @@ async function costAvgChildLogs(orderId, exchange, order_mode, order_created_dat
 } //End of costAvgChildLogs
 
 //post call for sell order manually from order listing page
-router.post('/sellOrderManually', async (req, resp) => {
+router.post('/sellOrderManually', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     let orderId = req.body.orderId;
@@ -7486,7 +7505,17 @@ async function is_sell_migrate_order_normally(order_id){
 }
 
 
-router.post('/test_user_api_key', async (req, resp)=>{
+router.post('/test_user_api_key', auth_token.required, async (req, resp)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
     let result = await verify_migrate_user_api_key('5c09134cfc9aadaac61dd09c')
     resp.send({result:result})
 })
@@ -7701,7 +7730,16 @@ function find(collectionName, search) {
 } //End of findOne
 
 //post call from order listing to buy order
-router.post('/buyOrderManually', async (req, resp) => {
+router.post('/buyOrderManually', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     var orderId = req.body.orderId;
@@ -8183,7 +8221,18 @@ function updateSingle(collection, searchQuery, updateQuery, upsert) {
 } //End of update
 
 //post call frol listing order on chart
-router.post('/listOrdersForChart', async (req, resp) => {
+router.post('/listOrdersForChart', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
     var admin_id = req.body.admin_id;
     var exchange = req.body.exchange;
     var application_mode = req.body.application_mode;
@@ -8463,7 +8512,17 @@ function listselTempOrders(ID, exchange) {
 
 
 //post call for updaing buy price from chart if order is not buyed
-router.post('/updateBuyPriceFromDragging', async (req, resp) => {
+router.post('/updateBuyPriceFromDragging', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var exchange = req.body.exchange;
     var orderId = req.body.orderId;
     var previous_buy_price = parseFloat(req.body.previous_buy_price);
@@ -8598,7 +8657,17 @@ router.post('/updateBuyPriceFromDragging', async (req, resp) => {
 
 }) //End of updateBuyPriceFromDragging
 //post call for update profit and loss percentage for a specific order from chart
-router.post('/updateOrderfromdraging', async (req, resp) => {
+router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
     var exchange = req.body.exchange;
     var orderId = req.body.orderId;
     var side = req.body.side;
@@ -9217,7 +9286,17 @@ router.post('/updateOrderfromdraging', async (req, resp) => {
 
 
 //post call for updaing buy price from chart if order is not buyed
-router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
+router.post('/updateBuyPriceFromDraggingChart', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var exchange = req.body.exchange;
     var orderId = req.body.orderId;
     var previous_buy_price = parseFloat(req.body.previous_buy_price);
@@ -9372,7 +9451,15 @@ router.post('/updateBuyPriceFromDraggingChart', async (req, resp) => {
 
 
 //post call for updating digieSignal from chart
-router.post('/updateDigieSignalChart', async (req, resp) => {
+router.post('/updateDigieSignalChart', auth_token.required, async (req, resp) => {
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var exchange = req.body.exchange;
     var orderId = req.body.orderId;
     var buy_signal = req.body.buy_signal;
@@ -9469,7 +9556,16 @@ router.post('/updateDigieSignalChart', async (req, resp) => {
 
 
 //post call for update Buy Trail from chart
-router.post('/updateBuyTrailChart', async (req, resp) => {
+router.post('/updateBuyTrailChart', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var exchange = req.body.exchange;
     var orderId = req.body.orderId;
     var buy_trail_data = req.body.buy_trail_info;
@@ -9554,7 +9650,17 @@ router.post('/updateBuyTrailChart', async (req, resp) => {
 
 
 //post call for updating Sell Trail from chart
-router.post('/updateSellTrailChart', async (req, resp) => {
+router.post('/updateSellTrailChart', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var exchange = req.body.exchange;
     var orderId = req.body.orderId;
     var lth_functionality = req.body.sell_trail_info;
@@ -9668,7 +9774,16 @@ router.post('/updateSellTrailChart', async (req, resp) => {
 }) //End of updateSellTrailChart
 
 //post call for updating lth profit from chart
-router.post('/updateLthProfitChart', async (req, resp) => {
+router.post('/updateLthProfitChart', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var exchange = req.body.exchange;
     var orderId = req.body.orderId;
     var lth_functionality = req.body.lth_functionality;
@@ -9773,7 +9888,16 @@ router.post('/updateLthProfitChart', async (req, resp) => {
 
 }) //End of updateLthProfitChart
 
-router.post('/updateOrderfromdragingChart', async (req, resp) => {
+router.post('/updateOrderfromdragingChart', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var exchange = req.body.exchange;
     var orderId = req.body.orderId;
     var side = req.body.side;
