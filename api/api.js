@@ -376,6 +376,9 @@ router.post('/authenticate', async function (req, resp, next) {
                 }]
                 where['status'] = '0';
                 where['user_soft_delete'] = '0';
+
+
+                console.log('else working')
                 conn.then((db) => {
                     let UserPromise = db.collection('users').find(where).toArray();
                     UserPromise.then(async (userArr) => {
@@ -3582,18 +3585,51 @@ function listCurrentMarketPriceArr(coin, exchange) {
 
 } //End of listCurrentMarketPriceArr
 
+
+async function getUserByID(admin_id){
+    return new Promise((resolve) => {
+        conn.then((db) => {
+
+            let collectionName = 'users';
+            let where = {};
+            where._id = ObjectID(admin_id);
+            db.collection(collectionName).find(where).toArray((err, result) => {
+                if (err) {
+                    console.log(err)
+                    resolve(false);
+                } else {
+                    if (result.length > 0) {
+                        resolve(true)
+                    } else {
+                        resolve(false)
+                    }
+                }
+            })
+        })
+    })
+}
+
 //function for getting order list from order-list angular  component
 router.post('/listOrderListing', auth_token.required , async (req, resp) => {
 
 
 
     // var admin_id = req.body.postData.admin_id;
+    console.log(req.payload.id)
+
+    var user_exist = await getUserByID(req.payload.id);
+    console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
 
     var admin_id = req.payload.id
 
 
-    // console.log(admin_id, req.payload.id, req)
     var application_mode = req.body.postData.application_mode;
     var postDAta = req.body.postData;
     var exchange = postDAta.exchange;
@@ -4256,7 +4292,7 @@ function countATGExpectedOrders(collectionName, filter) {
         conn.then(async (db) => {
 
             var data = await db.collection(collectionName).aggregate(filter).toArray();
-            console.log('Data', data)
+            // console.log('Data', data)
             if(data.length > 0){
                 resolve(data[0]['total']);
             } else {
