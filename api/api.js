@@ -11608,6 +11608,10 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
           url = 'http://35.153.9.225:3006/validateapiKeySecretKraken'
         }
       }
+
+
+
+      // console.log(url)
         request.post({
             url: url,
             json: {
@@ -11620,7 +11624,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-              console.log(body,api_key, exchange, 'BODY in user info')
+              // console.log(body,api_key, exchange, 'BODY in user info')
                 resolve(body);
             } else {
                 resolve(false)
@@ -11736,7 +11740,7 @@ async function get_api_secret(user_ip, admin_id){
 
       let url = 'https://'+ ip +'/apiKeySecret/getapiKeySecret'
 
-        console.log(url)
+        // console.log(url)
         request.post({
             url: url,
             json: {
@@ -11747,9 +11751,9 @@ async function get_api_secret(user_ip, admin_id){
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                console.log(body, "get User API");
+                // console.log(body, "get User API");
                 if(body.success){
-                  console.log(body)
+                  // console.log(body)
                   resolve(body.api_key);
                 } else {
                   resolve(false);
@@ -11827,7 +11831,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                             // }
 
 
-                            console.log(data, 'USER')
+                            // console.log(data, 'USER')
 
 
                             var userInfo = await get_api_secret(data['trading_ip'], (data['_id']).toString());
@@ -11909,7 +11913,7 @@ async function add_user_info(user_ip, admin_id, api_key, api_secret){
 
       let url = 'https://'+ ip +'/apiKeySecret/saveapiKeySecret'
 
-        console.log(url)
+        // console.log(url)
         request.post({
             url: url,
             json: {
@@ -11952,7 +11956,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
     var post_data = req.body;
 
 
-    console.log(post_data)
+    // console.log(post_data)
     let post_data_key_array = Object.keys(post_data);
     if (post_data_key_array.length == 0) {
         res.status(400).send({
@@ -11984,11 +11988,11 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
 
-                        console.log(update_arr,user_id )
+                        // console.log(update_arr,user_id )
 
 
                         var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'])
-                        console.log(data, 'NEW REturn')
+                        // console.log(data, 'NEW REturn')
 
 
                         if(data.success){
