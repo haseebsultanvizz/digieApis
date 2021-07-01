@@ -19417,7 +19417,16 @@ async function createAutoTradeParentsNow(user_id, exchange, application_mode) {
     })
 }
 
-router.post('/createAutoTradeParentsNow', async (req, res) => {
+router.post('/createAutoTradeParentsNow', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let autoTradeParents = await createAutoTradeParentsNow(user_id, exchange, application_mode)
     res.send({ 'status': true, 'data': coinData })
 })
@@ -19889,7 +19898,17 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
 }
 
 //resetAutoTradeGenerator
-router.post('/resetAutoTradeGenerator', async (req, res) => {
+router.post('/resetAutoTradeGenerator', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let exchange = req.body.exchange
@@ -19962,7 +19981,17 @@ async function resetAutoTradeGenerator(user_id, exchange, application_mode) {
 
 
 //getRemainingTestBalance
-router.post('/getRemainingTestBalance', async (req, res) => {
+router.post('/getRemainingTestBalance', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let exchange = req.body.exchange
@@ -20040,7 +20069,17 @@ async function getRemainingTestBalance(user_id, exchange, application_mode) {
 
 
 //getOpenBalance
-router.post('/getOpenBalance', async (req, res) => {
+router.post('/getOpenBalance', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let exchange = req.body.exchange
@@ -20533,7 +20572,17 @@ async function getCostAvgBalance_current_market(user_id, exchange) {
 }
 
 //getLTHBalance
-router.post('/getLTHBalance', async (req, res) => {
+router.post('/getLTHBalance', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let exchange = req.body.exchange
@@ -20942,7 +20991,16 @@ async function getOpenLTHBTCUSDTBalance_current_market(user_id, exchange) {
     })
 }
 //getOrderById
-router.post('/getOrderById', async (req, res) => {
+router.post('/getOrderById', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let order_id = req.body.order_id
     let exchange = req.body.exchange
@@ -20964,7 +21022,16 @@ router.post('/getOrderById', async (req, res) => {
 
 
 //getResumeOrderByOrderId
-router.post('/getResumeOrderByOrderId', async (req, res) => {
+router.post('/getResumeOrderByOrderId', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let order_id = req.body.order_id
     let exchange = req.body.exchange
@@ -21016,7 +21083,16 @@ router.post('/getResumeOrderByOrderId', async (req, res) => {
 
 // ****************** BNB auto Buy ****************************** //
 
-router.post('/buyCoin', (req, res) => {
+router.post('/buyCoin', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let data = req.body.data
         let exchange = data.exchange
