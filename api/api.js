@@ -15975,7 +15975,16 @@ function getPercentageDiff(currentMarketPrice, purchased_price) {
 
 
 //sellCostAvgOrder
-router.post('/sellCostAvgOrder', async (req, resp) => {
+router.post('/sellCostAvgOrder', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let orderType = req.body.orderType
     let exchange = req.body.exchange
@@ -16157,7 +16166,16 @@ router.post('/sellCostAvgOrder', async (req, resp) => {
 
 
 
-router.post('/latest_user_activity', (req, res) => {
+router.post('/latest_user_activity', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         const user_id = req.body.user_id
 
@@ -16305,7 +16323,17 @@ async function send_notification(admin_id, type, priority, message, order_id = '
     return true;
 }
 
-router.post('/update_user_balance', async (req, res)=>{
+router.post('/update_user_balance', auth_token.required, async (req, res)=>{
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let auth_token = req.headers.authorization;
@@ -16672,7 +16700,17 @@ async function getSubscription(user_id){
     })
 }
 
-router.post('/updateUserPackage', async (req, res)=>{
+router.post('/updateUserPackage', auth_token.required, async (req, res)=>{
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let userPackage = req.body.userPackage
