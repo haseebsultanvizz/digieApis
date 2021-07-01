@@ -11577,12 +11577,27 @@ async function get_market_price(coin) {
 
 
 
-async function verify_user_info(api_key, user_ip, admin_id, exchange){
+async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=''){
     return new Promise(async function (resolve, reject) {
-        let ip = user_ip;
-        let port = 2500;
-        let url = 'http://' + ip +':'+ port + '/apiKeySecret/validateapiKeySecret'
-        // console.log(url)
+
+      let ip;
+      let port;
+      let url;
+
+      if(exchange == 'binance'){
+        ip = user_ip;
+        port = 2500;
+        url = 'http://' + ip +':'+ port + '/apiKeySecret/validateapiKeySecret'
+      } else if(exchange == 'kraken') {
+
+        if(kraken_id == 'second'){
+          url = 'http://35.153.9.225:3006/validateapiKeySecretKraken2'
+        } else if(kraken_id == 'third'){
+          url = 'http://35.153.9.225:3006/validateapiKeySecretKraken3'
+        } else {
+          url = 'http://35.153.9.225:3006/validateapiKeySecretKraken'
+        }
+      }
         request.post({
             url: url,
             json: {
@@ -11595,6 +11610,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange){
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
+              console.log(body,api_key, exchange, 'BODY in user info')
                 resolve(body);
             } else {
                 resolve(false)
@@ -11620,20 +11636,24 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
     var exchange = req.body.exchange;
     var api_key = req.body.api_key;
 
-    var data = await verify_user_info(api_key, user_ip, user_id, exchange)
-    if(data.success){
-        res.status(200).send({
-            "success": true,
-            "status": 200,
-            "message": "Valid Api Key"
-        })
-    } else {
-        res.status(204).send({
-            "success": false,
-            "status": 204,
-            "message": "Invalid API key"
-        })
-    }
+
+
+      var data = await verify_user_info(api_key, user_ip, user_id, exchange)
+      if(data.success){
+          res.status(200).send({
+              "success": true,
+              "status": 200,
+              "message": "Valid Api Key"
+          })
+      } else {
+          res.status(204).send({
+              "success": false,
+              "status": 204,
+              "message": "Invalid API key"
+          })
+      }
+
+
 
 })
 
@@ -12714,28 +12734,147 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
 
 
     var user_id = req.body.user_id;
-    var krakenCredentials = await getKrakenCredentials(user_id);
+    var krakenCredentials1 = await getKrakenCredentials(user_id);
+    var krakenCredentials2 = await getKrakenCredentials2(user_id);
+    var krakenCredentials3 = await getKrakenCredentials3(user_id);
+
+
+    var obj = {}
+
+
+    // First Secret Key
+    if(krakenCredentials1 == false){
+      obj['api_key'] = '';
+    } else {
+      obj['api_key'] = krakenCredentials1
+    }
+
+    // Second Secret Key
+    if(krakenCredentials2 == false){
+      obj['api_key_secondary'] = '';
+    } else {
+      obj['api_key_secondary'] = krakenCredentials2
+    }
+
+    // Third Secret Key
+    if(krakenCredentials3 == false){
+      obj['api_key_third_key'] = '';
+    } else {
+      obj['api_key_third_key'] = krakenCredentials3
+    }
+
+
+    obj['api_secret'] = '';
+    obj['api_secret_secondary'] = '';
+    obj['api_secret_third_key'] = '';
+
+
+    var arr = [];
+    arr.push(obj);
+
+
     resp.status(200).send({
-        response: krakenCredentials
+        response: arr
     })
 
 }) //End of getKrakenCredentials
 
 function getKrakenCredentials(user_id) {
     return new Promise((resolve, reject) => {
-        conn.then((db) => {
-            let where = {};
-            where['user_id'] = user_id;
-            db.collection('kraken_credentials').find(where).toArray((err, result) => {
-                if (err) {
-                    reject(err);
+
+        let url1 = 'http://35.153.9.225:3006/getapiKeySecretKraken';
+        request.post({
+            url: url1,
+            json: {
+                "user_id": user_id,
+            },
+            headers: {
+                'content-type': 'application/json'
+            }
+        }, function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                console.log(body, "get User API1");
+                if(body.success){
+                  resolve(body.api_key);
                 } else {
-                    resolve(result);
+                  resolve(false);
                 }
-            })
-        })
+            } else {
+                resolve(false)
+            }
+        });
+
+        // conn.then((db) => {
+        //     let where = {};
+        //     where['user_id'] = user_id;
+        //     db.collection('kraken_credentials').find(where).toArray((err, result) => {
+        //         if (err) {
+        //             reject(err);
+        //         } else {
+        //             resolve(result);
+        //         }
+        //     })
+        // })
     })
 } //End of getKrakenCredentials
+function getKrakenCredentials2(user_id) {
+  return new Promise((resolve, reject) => {
+
+
+
+
+      let url2 = 'http://35.153.9.225:3006/getapiKeySecretKraken2';
+      request.post({
+          url: url2,
+          json: {
+              "user_id": user_id,
+          },
+          headers: {
+              'content-type': 'application/json'
+          }
+      }, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+              console.log(body, "get User API2");
+              if(body.success){
+                resolve(body.api_key);
+              } else {
+                resolve(false);
+              }
+          } else {
+              resolve(false)
+          }
+      });
+  })
+} //End of getKrakenCredentials
+function getKrakenCredentials3(user_id) {
+  return new Promise((resolve, reject) => {
+
+
+
+      let url3 = 'http://35.153.9.225:3006/getapiKeySecretKraken3';
+      request.post({
+          url: url3,
+          json: {
+              "user_id": user_id,
+          },
+          headers: {
+              'content-type': 'application/json'
+          }
+      }, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+              console.log(body, "get User API3");
+              if(body.success){
+                resolve(body.api_key);
+              } else {
+                resolve(false);
+              }
+          } else {
+              resolve(false)
+          }
+      });
+  })
+} //End of getKrakenCredentials
+
 
 //post call for calculating average profit for order listing
 router.post('/calculate_average_profit', auth_token.required, async (req, resp) => {
@@ -12905,9 +13044,14 @@ router.post('/validate_kraken_credentials', auth_token.required, async (req, res
         return false;
     }
     let APIKEY = req.body.APIKEY;
-    let APISECRET = req.body.APISECRET;
     let user_id = req.body.user_id;
-    var credentials = await validate_kraken_credentials(APIKEY, APISECRET, user_id);
+    let exchange = req.body.exchange;
+    let kraken_id = req.body.kraken_id;
+
+    // var credentials = await validate_kraken_credentials(APIKEY, APISECRET, user_id);
+
+    var credentials = await verify_user_info(APIKEY, '', user_id, exchange, kraken_id);
+
     resp.status(200).send({
         message: credentials
     });
