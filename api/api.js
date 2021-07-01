@@ -12525,6 +12525,103 @@ router.post('/saveBamCredentials', auth_token.required, async(req, resp) => {
 
 }) //End of saveBamCredentials
 
+
+
+async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret){
+  return new Promise(async function (resolve, reject) {
+
+    let url = 'http://35.153.9.225:3006/saveapiKeySecretKraken'
+
+      console.log(url)
+      request.post({
+          url: url,
+          json: {
+              "user_id": admin_id,
+              "api_key": api_key,
+              "api_secret": api_secret
+          },
+          headers: {
+              'content-type': 'application/json'
+          }
+      }, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+              // console.log(body, "get User API");
+              if(body.success){
+                resolve(body);
+              } else {
+                resolve(false);
+              }
+          } else {
+              resolve(false)
+          }
+      });
+  });
+}
+async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret){
+  return new Promise(async function (resolve, reject) {
+
+
+
+    let url = 'http://35.153.9.225:3006/saveapiKeySecretKraken2'
+
+      console.log(url)
+      request.post({
+          url: url,
+          json: {
+              "user_id": admin_id,
+              "api_key": api_key,
+              "api_secret": api_secret
+          },
+          headers: {
+              'content-type': 'application/json'
+          }
+      }, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+              // console.log(body, "get User API");
+              if(body.success){
+                resolve(body);
+              } else {
+                resolve(false);
+              }
+          } else {
+              resolve(false)
+          }
+      });
+  });
+}
+async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret){
+  return new Promise(async function (resolve, reject) {
+
+
+
+    let url = 'http://35.153.9.225:3006/saveapiKeySecretKraken3'
+
+      console.log(url)
+      request.post({
+          url: url,
+          json: {
+              "user_id": admin_id,
+              "api_key": api_key,
+              "api_secret": api_secret
+          },
+          headers: {
+              'content-type': 'application/json'
+          }
+      }, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+              // console.log(body, "get User API");
+              if(body.success){
+                resolve(body);
+              } else {
+                resolve(false);
+              }
+          } else {
+              resolve(false)
+          }
+      });
+  });
+}
+
 //save kraken credentials from setting component
 router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
 
@@ -12547,12 +12644,40 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     api_key = api_key.trim()
     api_secret = api_secret.trim()
 
+
+
+
+    var data = await add_user_info_kraken1('',user_id,api_key,api_secret);
+    if(data.success){
+      resp.status(200).send({
+        "success": true,
+        "status": 200,
+        "message": "Credentials Saved Successfully"
+      });
+    } else {
+      resp.status(200).send({
+        "success": false,
+        "message": "Credentials Not Saved"
+      });
+    }
+
+
+
+
+
+    return false;
+    // Old Code
     conn.then( async(db) => {
         let insertArr = {};
         insertArr['user_id'] = user_id;
         insertArr['api_key'] = api_key;
         insertArr['api_secret'] = api_secret;
         insertArr['modified_date'] = new Date();
+
+
+
+
+
 
         // huzaifa Added Shahzad & Asim Said
         let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(user_id)) }, {_id:0, trading_ip:1})
@@ -12614,6 +12739,28 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
     var user_id = req.body.user_id;
     var api_key = req.body.api_key_secondary;
     var api_secret = req.body.api_secret_secondary;
+
+
+    var data = await add_user_info_kraken2('',user_id,api_key,api_secret);
+    if(data.success){
+      resp.status(200).send({
+        "success": true,
+        "status": 200,
+        "message": "Credentials Saved Successfully"
+      });
+    } else {
+      resp.status(200).send({
+        "success": false,
+        "message": "Credentials Not Saved"
+      });
+    }
+
+
+
+
+
+    return false;
+    // Old Code
 
     conn.then(async (db) => {
         let insertArr = {};
@@ -12682,6 +12829,29 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
     var user_id = req.body.user_id;
     var api_key = req.body.api_key_third_key;
     var api_secret = req.body.api_secret_third_key;
+
+
+
+    var data = await add_user_info_kraken3('',user_id,api_key,api_secret);
+    if(data.success){
+      resp.status(200).send({
+        "success": true,
+        "status": 200,
+        "message": "Credentials Saved Successfully"
+      });
+    } else {
+      resp.status(200).send({
+        "success": false,
+        "message": "Credentials Not Saved"
+      });
+    }
+
+
+
+
+
+    return false;
+    // Old Code
 
     conn.then(async (db) => {
         let insertArr = {};
