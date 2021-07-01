@@ -21357,7 +21357,16 @@ async function coinAutoBuy(buyArr, exchange) {
 }//End coinAutoBuy
 
 //hit_auto_buy_cron
-router.post('/hit_auto_buy_cron', async (req, res) => {
+router.post('/hit_auto_buy_cron', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined'){
         hit_auto_buy_cron(req.body.user_id, req.body.exchange)
     }
@@ -21507,7 +21516,16 @@ async function saveBnbAutoBuyHistory(user_id, exchange, response, buyType='autoB
 }
 
 //getBnbBuyHistory
-router.post('/getBnbBuyHistory', async (req, res) => {
+router.post('/getBnbBuyHistory', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined') {
         let history = await getBnbBuyHistory(req.body.user_id, req.body.exchange)
         res.send({
@@ -21536,7 +21554,15 @@ async function getBnbBuyHistory(user_id, exchange) {
 }
 
 //getBnbBuySettings
-router.post('/getBnbBuySettings', async (req, res) => {
+router.post('/getBnbBuySettings', auth_token.required, async (req, res) => {
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined') {
         let history = await getBnbBuySettings(req.body.user_id, req.body.exchange)
         res.send({
@@ -21574,7 +21600,17 @@ async function setDafaultBnbBuy(user_id){
 
 // ****************** Buy/Sell Required or Extra balance respectively ****************************** //
 
-router.post('/buySellCoinBalance', (req, res) => {
+router.post('/buySellCoinBalance', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let data = req.body.data
         let exchange = data.exchange
@@ -21816,7 +21852,16 @@ async function saveBuySellCoinBalanceHistory(user_id, exchange, response, action
 // ****************** END Buy/Sell Required or Extra balance respectively ************************* //
 
 /* CRON SCRIPT for update_qty_from_usd_worth */
-router.post('/update_qty_from_usd_worth', (req, res) => {
+router.post('/update_qty_from_usd_worth', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let user_id = req.body.user_id
     let exchange = req.body.exchange
     let symbol = req.body.symbol
@@ -22156,7 +22201,16 @@ async function isMinQtyValid(symbol, qty, exchange){
 /* Code for Number of trades to buy */
 
 //getUserDailyBuyTrades
-router.post('/getUserDailyBuyTrades', async (req, res) => {
+router.post('/getUserDailyBuyTrades', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let application_mode = req.body.application_mode
@@ -22231,7 +22285,17 @@ async function getUserDailyBuyTrades(where, exchange) {
 }
 
 //updateUserDailyBuyTrades
-router.post('/updateUserDailyBuyTrades', async (req, res) => {
+router.post('/updateUserDailyBuyTrades', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let currency = req.body.currency
@@ -22302,7 +22366,16 @@ async function updateUserDailyBuyTrades(where, exchange, currency, decrement) {
 
 
 //getTradeBuyLimitCheck
-router.post('/getTradeBuyLimitCheck', async (req, res) => {
+router.post('/getTradeBuyLimitCheck', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let exchange = req.body.exchange
