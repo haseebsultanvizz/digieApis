@@ -14043,7 +14043,18 @@ function check(name, pass) {
     return valid
 }
 
-router.post('/get_order_levels', async (req, resp) => {
+router.post('/get_order_levels', auth_token.required, async (req, resp) => {
+
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         levels = await db.collection('order_levels').find({}).toArray();
         resp.status(200).send({
@@ -14052,7 +14063,19 @@ router.post('/get_order_levels', async (req, resp) => {
     }) //End of conn
 })
 
-router.post('/get_user_wallet', async (req, resp) => {
+router.post('/get_user_wallet', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
     let admin_id = req.body.admin_id
     let exchange = req.body.exchange
 
@@ -14111,7 +14134,17 @@ function get_user_wallet(admin_id, exchange) {
 }
 
 
-router.post('/pause_sold_order', (req, res) => {
+router.post('/pause_sold_order', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     conn.then(async (db) => {
 
@@ -14207,7 +14240,17 @@ router.post('/pause_sold_order', (req, res) => {
 })
 //End pause_sold_order
 
-router.post('/pause_lth_order', (req, res) => {
+router.post('/pause_lth_order', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     conn.then(async (db) => {
 
@@ -14276,7 +14319,17 @@ router.post('/pause_lth_order', (req, res) => {
 })
 //End pause_lth_order
 
-router.post('/getUserbalance', (req, res) => {
+router.post('/getUserbalance', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let exchange = req.body.exchange
         let admin_id = req.body.user_id
@@ -14308,7 +14361,17 @@ router.post('/getUserbalance', (req, res) => {
 })
 //End getUserbalance
 
-router.post('/resume_order', (req, res) => {
+router.post('/resume_order', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
@@ -14378,7 +14441,17 @@ router.post('/resume_order', (req, res) => {
 })
 //End resume_order
 
-router.post('/resume_order_minQty', (req, res) => {
+router.post('/resume_order_minQty', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
@@ -14602,7 +14675,17 @@ router.post('/resume_order_minQty', (req, res) => {
 
 // ******************* Resume / Pause APIs **************** //
 
-router.post('/resume_order_test', (req, res) => {
+router.post('/resume_order_test', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
@@ -14778,7 +14861,16 @@ router.post('/resume_order_test', (req, res) => {
 })
 //End resume_order
 
-router.post('/resume_already_paused_test', (req, res) => {
+router.post('/resume_already_paused_test', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
@@ -14950,7 +15042,15 @@ router.post('/resume_already_paused_test', (req, res) => {
 })
 //End resume_already_paused_test
 
-router.post('/pause_lth_order_test', (req, res) => {
+router.post('/pause_lth_order_test', auth_token.required, async (req, res) => {
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
@@ -15101,7 +15201,17 @@ router.post('/pause_lth_order_test', (req, res) => {
 })
 //End pause_lth_order_test
 
-router.post('/pause_sold_order_test', (req, res) => {
+router.post('/pause_sold_order_test', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
@@ -15262,7 +15372,17 @@ router.post('/pause_sold_order_test', (req, res) => {
 })
 //End pause_sold_order_test
 
-router.post('/genral_order_update', (req, res) => {
+router.post('/genral_order_update', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
@@ -15348,7 +15468,16 @@ router.post('/genral_order_update', (req, res) => {
 //End genral_order_update
 
 
-router.post('/pauseAlreadyResumedOrder', (req, res) => {
+router.post('/pauseAlreadyResumedOrder', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
