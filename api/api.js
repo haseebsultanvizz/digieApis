@@ -17233,7 +17233,17 @@ router.post('/updateUserPackage', auth_token.required, async (req, res)=>{
     }
 })
 
-router.post('/getUserPackage', async (req, res)=>{
+router.post('/getUserPackage', auth_token.required, async (req, res)=>{
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
 
@@ -17396,8 +17406,17 @@ async function get_item_by_id(collection, _id) {
 
 // ***************** Auto Trading Module APIs **************** //
 //getPrice
-router.post('/getPrice', async (req, res) => {
+router.post('/getPrice', auth_token.required, async (req, res) => {
 
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let symbol = req.body.symbol
     let exchange = req.body.exchange
     if (typeof symbol != 'undefined' && symbol != '' && typeof exchange != 'undefined' && exchange != ''){
@@ -17460,7 +17479,17 @@ router.post('/getPrice', async (req, res) => {
 })//end getPrice
 
 //listCurrentUserExchanges
-router.post('/listCurrentUserExchanges', async (req, res) => {
+router.post('/listCurrentUserExchanges', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let application_mode = req.body.application_mode
@@ -17628,7 +17657,16 @@ async function getUserExchangesWithAPISet(user_id){
     })
 }
 
-router.post('/get_user_exchanges', async (req,res) => {
+router.post('/get_user_exchanges', auth_token.required, async (req,res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''
     if(user_id != ''){
         let result =  await getUserExchangesWithAPISet(user_id)
@@ -17647,13 +17685,18 @@ router.post('/get_user_exchanges', async (req,res) => {
 
 
 
-
-
-
-
-
 //getAutoTradeSettings
-router.post('/getAutoTradeSettings', async (req, res) => {
+router.post('/getAutoTradeSettings', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let application_mode = req.body.application_mode
@@ -17741,7 +17784,17 @@ async function getAutoTradeParents(user_id, exchange, application_mode) {
 }
 
 //getAutoTradeSettings
-router.post('/getAutoTradeParents', async (req, res) => {
+router.post('/getAutoTradeParents', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let user_id = req.body.user_id
     let application_mode = req.body.application_mode
     let exchange = req.body.exchange
@@ -17818,7 +17871,16 @@ router.post('/getAutoTradeParents', async (req, res) => {
 })//end getAutoTradeSettings
 
 // get User Manual Triggers
-router.post('/get_user_manual_triggers', async (req,res) => {
+router.post('/get_user_manual_triggers', auth_token.required, async (req,res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : ''
     let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
@@ -17846,7 +17908,17 @@ router.post('/get_user_manual_triggers', async (req,res) => {
 });
 
 //saveAutoTradeSettings
-router.post('/saveAutoTradeSettings', async (req, res) => {
+router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
 
     var auth_token = req.headers.authorization;
@@ -18027,7 +18099,17 @@ async function checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode){
 }
 
 
-router.get('/checkBnbMissingUsers', async (req, res)=>{
+router.get('/checkBnbMissingUsers', auth_token.required, async (req, res)=>{
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     const db = await conn
 
@@ -18069,7 +18151,16 @@ router.get('/checkBnbMissingUsers', async (req, res)=>{
 })
 
 //getBtcUsdtBalance
-router.post('/getBtcUsdtBalance', async (req, res) => {
+router.post('/getBtcUsdtBalance', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let exchange = req.body.exchange
