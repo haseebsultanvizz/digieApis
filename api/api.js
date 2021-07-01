@@ -12530,7 +12530,29 @@ router.post('/saveBamCredentials', auth_token.required, async(req, resp) => {
 async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret){
   return new Promise(async function (resolve, reject) {
 
-    let url = 'http://35.153.9.225:3006/saveapiKeySecretKraken'
+
+
+
+
+    let ip = '';
+    let port = 2500
+
+
+    if(user_ip == '3.227.143.115'){
+      ip = 'ip1-kraken.digiebot.com'
+    } else if(user_ip == '3.228.180.22'){
+      ip = 'ip2-kraken.digiebot.com'
+    } else if(user_ip == '3.226.226.217'){
+      ip = 'ip3-kraken.digiebot.com'
+    } else if(user_ip == '3.228.245.92'){
+      ip = 'ip4-kraken.digiebot.com'
+    } else if(user_ip == '35.153.9.225'){
+      ip = 'ip5-kraken.digiebot.com'
+    }
+
+    // let url = 'http://'+ip+
+
+    let url = 'https://'+ip+'/saveapiKeySecretKraken';
 
       console.log(url)
       request.post({
@@ -12561,8 +12583,25 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret){
   return new Promise(async function (resolve, reject) {
 
 
+    let ip = '';
+    let port = 2500
 
-    let url = 'http://35.153.9.225:3006/saveapiKeySecretKraken2'
+
+    if(user_ip == '3.227.143.115'){
+      ip = 'ip1-kraken.digiebot.com'
+    } else if(user_ip == '3.228.180.22'){
+      ip = 'ip2-kraken.digiebot.com'
+    } else if(user_ip == '3.226.226.217'){
+      ip = 'ip3-kraken.digiebot.com'
+    } else if(user_ip == '3.228.245.92'){
+      ip = 'ip4-kraken.digiebot.com'
+    } else if(user_ip == '35.153.9.225'){
+      ip = 'ip5-kraken.digiebot.com'
+    }
+
+    let url = 'https://'+ip+'/saveapiKeySecretKraken2';
+
+
 
       console.log(url)
       request.post({
@@ -12594,7 +12633,23 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret){
 
 
 
-    let url = 'http://35.153.9.225:3006/saveapiKeySecretKraken3'
+    let ip = '';
+    let port = 2500
+
+
+    if(user_ip == '3.227.143.115'){
+      ip = 'ip1-kraken.digiebot.com'
+    } else if(user_ip == '3.228.180.22'){
+      ip = 'ip2-kraken.digiebot.com'
+    } else if(user_ip == '3.226.226.217'){
+      ip = 'ip3-kraken.digiebot.com'
+    } else if(user_ip == '3.228.245.92'){
+      ip = 'ip4-kraken.digiebot.com'
+    } else if(user_ip == '35.153.9.225'){
+      ip = 'ip5-kraken.digiebot.com'
+    }
+
+    let url = 'https://'+ip+'/saveapiKeySecretKraken3';
 
       console.log(url)
       request.post({
@@ -12640,6 +12695,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     var user_id = req.body.user_id;
     var api_key = req.body.api_key;
     var api_secret = req.body.api_secret;
+    var trading_ip = req.body.trading_ip;
 
     api_key = api_key.trim()
     api_secret = api_secret.trim()
@@ -12647,7 +12703,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
 
 
 
-    var data = await add_user_info_kraken1('',user_id,api_key,api_secret);
+    var data = await add_user_info_kraken1(trading_ip,user_id,api_key,api_secret);
     if(data.success){
       resp.status(200).send({
         "success": true,
@@ -12739,9 +12795,10 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
     var user_id = req.body.user_id;
     var api_key = req.body.api_key_secondary;
     var api_secret = req.body.api_secret_secondary;
+    var trading_ip = req.body.trading_ip;
 
 
-    var data = await add_user_info_kraken2('',user_id,api_key,api_secret);
+    var data = await add_user_info_kraken2(trading_ip,user_id,api_key,api_secret);
     if(data.success){
       resp.status(200).send({
         "success": true,
@@ -12829,10 +12886,11 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
     var user_id = req.body.user_id;
     var api_key = req.body.api_key_third_key;
     var api_secret = req.body.api_secret_third_key;
+    var trading_ip = req.body.trading_ip;
 
 
 
-    var data = await add_user_info_kraken3('',user_id,api_key,api_secret);
+    var data = await add_user_info_kraken3(trading_ip,user_id,api_key,api_secret);
     if(data.success){
       resp.status(200).send({
         "success": true,
@@ -12948,9 +13006,14 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
 
 
     var user_id = req.body.user_id;
-    var krakenCredentials1 = await getKrakenCredentials(user_id);
-    var krakenCredentials2 = await getKrakenCredentials2(user_id);
-    var krakenCredentials3 = await getKrakenCredentials3(user_id);
+    var trading_ip = req.body.trading_ip;
+    var krakenCredentials1 = await getKrakenCredentials(trading_ip, user_id);
+    var krakenCredentials2 = await getKrakenCredentials2(trading_ip, user_id);
+    var krakenCredentials3 = await getKrakenCredentials3(trading_ip, user_id);
+
+
+
+    console.log(krakenCredentials1, krakenCredentials2, krakenCredentials3)
 
 
     var obj = {}
@@ -12993,10 +13056,31 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
 
 }) //End of getKrakenCredentials
 
-function getKrakenCredentials(user_id) {
+function getKrakenCredentials(trading_ip, user_id) {
     return new Promise((resolve, reject) => {
 
-        let url1 = 'http://35.153.9.225:3006/getapiKeySecretKraken';
+
+
+
+        let ip = '';
+        let port = 2500
+
+
+        if(trading_ip == '3.227.143.115'){
+          ip = 'ip1-kraken.digiebot.com'
+        } else if(trading_ip == '3.228.180.22'){
+          ip = 'ip2-kraken.digiebot.com'
+        } else if(trading_ip == '3.226.226.217'){
+          ip = 'ip3-kraken.digiebot.com'
+        } else if(trading_ip == '3.228.245.92'){
+          ip = 'ip4-kraken.digiebot.com'
+        } else if(trading_ip == '35.153.9.225'){
+          ip = 'ip5-kraken.digiebot.com'
+        }
+
+        let url1 = 'https://'+ip+'/getapiKeySecretKraken';
+
+        // let url1 = 'http://35.153.9.225:3006/getapiKeySecretKraken';
         request.post({
             url: url1,
             json: {
@@ -13031,13 +13115,32 @@ function getKrakenCredentials(user_id) {
         // })
     })
 } //End of getKrakenCredentials
-function getKrakenCredentials2(user_id) {
+function getKrakenCredentials2(trading_ip, user_id) {
   return new Promise((resolve, reject) => {
 
 
 
+    let ip = '';
+    let port = 2500
 
-      let url2 = 'http://35.153.9.225:3006/getapiKeySecretKraken2';
+
+    if(trading_ip == '3.227.143.115'){
+      ip = 'ip1-kraken.digiebot.com'
+    } else if(trading_ip == '3.228.180.22'){
+      ip = 'ip2-kraken.digiebot.com'
+    } else if(trading_ip == '3.226.226.217'){
+      ip = 'ip3-kraken.digiebot.com'
+    } else if(trading_ip == '3.228.245.92'){
+      ip = 'ip4-kraken.digiebot.com'
+    } else if(trading_ip == '35.153.9.225'){
+      ip = 'ip5-kraken.digiebot.com'
+    }
+
+    let url2 = 'https://'+ip+'/getapiKeySecretKraken2';
+
+
+
+      // let url2 = 'http://35.153.9.225:3006/getapiKeySecretKraken2';
       request.post({
           url: url2,
           json: {
@@ -13060,12 +13163,31 @@ function getKrakenCredentials2(user_id) {
       });
   })
 } //End of getKrakenCredentials
-function getKrakenCredentials3(user_id) {
+function getKrakenCredentials3(trading_ip, user_id) {
   return new Promise((resolve, reject) => {
 
+    let ip = '';
+    let port = 2500
 
 
-      let url3 = 'http://35.153.9.225:3006/getapiKeySecretKraken3';
+    if(trading_ip == '3.227.143.115'){
+      ip = 'ip1-kraken.digiebot.com'
+    } else if(trading_ip == '3.228.180.22'){
+      ip = 'ip2-kraken.digiebot.com'
+    } else if(trading_ip == '3.226.226.217'){
+      ip = 'ip3-kraken.digiebot.com'
+    } else if(trading_ip == '3.228.245.92'){
+      ip = 'ip4-kraken.digiebot.com'
+    } else if(trading_ip == '35.153.9.225'){
+      ip = 'ip5-kraken.digiebot.com'
+    }
+
+    let url3 = 'https://'+ip+'/getapiKeySecretKraken3';
+
+
+
+
+      // let url3 = 'http://35.153.9.225:3006/getapiKeySecretKraken3';
       request.post({
           url: url3,
           json: {
