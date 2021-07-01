@@ -11580,14 +11580,24 @@ async function get_market_price(coin) {
 async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=''){
     return new Promise(async function (resolve, reject) {
 
-      let ip;
-      let port;
+
+      let ip ='';
+      let port = 2500;
       let url;
 
       if(exchange == 'binance'){
-        ip = user_ip;
-        port = 2500;
-        url = 'http://' + ip +':'+ port + '/apiKeySecret/validateapiKeySecret'
+        if(user_ip == '3.227.143.115'){
+          ip = 'ip1.digiebot.com'
+        } else if(user_ip == '3.228.180.22'){
+          ip = 'ip2.digiebot.com'
+        } else if(user_ip == '3.226.226.217'){
+          ip = 'ip3.digiebot.com'
+        } else if(user_ip == '3.228.245.92'){
+          ip = 'ip4.digiebot.com'
+        } else if(user_ip == '35.153.9.225'){
+          ip = 'ip5.digiebot.com'
+        }
+        url = 'https://'+ ip +'/apiKeySecret/validateapiKeySecret'
       } else if(exchange == 'kraken') {
 
         if(kraken_id == 'second'){
@@ -11708,10 +11718,23 @@ async function authenticatejwtTokenForUserInfo(token) {
 async function get_api_secret(user_ip, admin_id){
     return new Promise(async function (resolve, reject) {
 
-        let ip = user_ip;
-        let port = 2500
+      let ip = '';
+      let port = 2500
 
-        let url = 'http://' + ip +':'+ port + '/apiKeySecret/getapiKeySecret'
+
+      if(user_ip == '3.227.143.115'){
+        ip = 'ip1.digiebot.com'
+      } else if(user_ip == '3.228.180.22'){
+        ip = 'ip2.digiebot.com'
+      } else if(user_ip == '3.226.226.217'){
+        ip = 'ip3.digiebot.com'
+      } else if(user_ip == '3.228.245.92'){
+        ip = 'ip4.digiebot.com'
+      } else if(user_ip == '35.153.9.225'){
+        ip = 'ip5.digiebot.com'
+      }
+
+      let url = 'https://'+ ip +'/apiKeySecret/getapiKeySecret'
 
         // console.log(url)
         request.post({
@@ -11867,10 +11890,23 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
 async function add_user_info(user_ip, admin_id, api_key, api_secret){
     return new Promise(async function (resolve, reject) {
 
-        let ip = user_ip;
-        let port = 2500
+      let ip = '';
+      let port = 2500
 
-        let url = 'http://' + ip +':'+ port + '/apiKeySecret/saveapiKeySecret'
+
+      if(user_ip == '3.227.143.115'){
+        ip = 'ip1.digiebot.com'
+      } else if(user_ip == '3.228.180.22'){
+        ip = 'ip2.digiebot.com'
+      } else if(user_ip == '3.226.226.217'){
+        ip = 'ip3.digiebot.com'
+      } else if(user_ip == '3.228.245.92'){
+        ip = 'ip4.digiebot.com'
+      } else if(user_ip == '35.153.9.225'){
+        ip = 'ip5.digiebot.com'
+      }
+
+      let url = 'https://'+ ip +'/apiKeySecret/saveapiKeySecret'
 
         // console.log(url)
         request.post({
