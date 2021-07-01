@@ -15545,7 +15545,17 @@ router.post('/pauseAlreadyResumedOrder', auth_token.required, async (req, res) =
 })
 //End pauseAlreadyResumedOrder
 
-router.post('/resumeAlreadyPausedOrder', (req, res) => {
+router.post('/resumeAlreadyPausedOrder', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let exchange = req.body.exchange
         let order_id = req.body.order_id
@@ -15618,7 +15628,17 @@ router.post('/resumeAlreadyPausedOrder', (req, res) => {
 
 // ******************* Cost Avg APIs ******************** //
 
-router.post('/getCostAvgOrders', async (req, res) => {
+router.post('/getCostAvgOrders', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let order_ids = req.body.ids
     let exchange = req.body.exchange
