@@ -11584,7 +11584,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
       let ip ='';
       let port = 2500;
       let url;
-
+      // If Binance
       if(exchange == 'binance'){
         if(user_ip == '3.227.143.115'){
           ip = 'ip1.digiebot.com'
@@ -11598,20 +11598,36 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
           ip = 'ip5.digiebot.com'
         }
         url = 'https://'+ ip +'/apiKeySecret/validateapiKeySecret'
-      } else if(exchange == 'kraken') {
+      }
+      // If Kraken
+      else if(exchange == 'kraken') {
+
+
+
+        if(user_ip == '3.227.143.115'){
+          ip = 'ip1-kraken.digiebot.com'
+        } else if(user_ip == '3.228.180.22'){
+          ip = 'ip2-kraken.digiebot.com'
+        } else if(user_ip == '3.226.226.217'){
+          ip = 'ip3-kraken.digiebot.com'
+        } else if(user_ip == '3.228.245.92'){
+          ip = 'ip4-kraken.digiebot.com'
+        } else if(user_ip == '35.153.9.225'){
+          ip = 'ip5-kraken.digiebot.com'
+        }
 
         if(kraken_id == 'second'){
-          url = 'http://35.153.9.225:3006/validateapiKeySecretKraken2'
+          url = 'https://'+ ip +'/validateapiKeySecretKraken2'
         } else if(kraken_id == 'third'){
-          url = 'http://35.153.9.225:3006/validateapiKeySecretKraken3'
+          url = 'https://'+ ip +'/validateapiKeySecretKraken3'
         } else {
-          url = 'http://35.153.9.225:3006/validateapiKeySecretKraken'
+          url = 'https://'+ ip +'/validateapiKeySecretKraken'
         }
       }
 
 
 
-      // console.log(url)
+      console.log(url)
         request.post({
             url: url,
             json: {
@@ -13381,12 +13397,13 @@ router.post('/validate_kraken_credentials', auth_token.required, async (req, res
     }
     let APIKEY = req.body.APIKEY;
     let user_id = req.body.user_id;
+    let trading_ip = req.body.trading_ip
     let exchange = req.body.exchange;
     let kraken_id = req.body.kraken_id;
 
     // var credentials = await validate_kraken_credentials(APIKEY, APISECRET, user_id);
 
-    var credentials = await verify_user_info(APIKEY, '', user_id, exchange, kraken_id);
+    var credentials = await verify_user_info(APIKEY, trading_ip, user_id, exchange, kraken_id);
 
     resp.status(200).send({
         message: credentials
