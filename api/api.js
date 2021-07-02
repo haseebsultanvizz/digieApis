@@ -22453,7 +22453,15 @@ async function getTradeBuyLimitCheck(where, exchange) {
 /* End Code for Number of trades to buy */
 
 /* CRON SCRIPT for setUserDailyBuyTrades */
-router.post('/setUserDailyBuyTrades', async (req, res) => {
+router.post('/setUserDailyBuyTrades', auth_token.required, async (req, res) => {
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let user_id = req.body.user_id
     let exchange = req.body.exchange
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != ''){
@@ -22870,7 +22878,17 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
 
 }
 
-router.post('/updateDailyTradeSettings_digie', async (req, res) => {
+router.post('/updateDailyTradeSettings_digie', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     // let myIp = req.headers['x-forwarded-for']
     // console.log(req.body.user_id, '============================================================== Request Ip ::: ', JSON.stringify(req.headers))
@@ -22983,7 +23001,16 @@ async function  updateDailyTradeSettings(user_id, exchange, application_mode='li
 
 }
 
-router.post('/updateDailyTradeSettings_digie_manual_run', async (req, res) => {
+router.post('/updateDailyTradeSettings_digie_manual_run', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let exchange = 'binance'
     let application_mode = 'live'
@@ -23061,7 +23088,16 @@ async function updateATGSettingsArr(user_id, exchange, application_mode, updateO
 
 /* CRON SCRIPT for update Actual TradeAble BTC/USDT and total Tradeable in USD  */
 
-router.post('/updateDailyActualTradeAbleAutoTradeGen', async (req, res) => {
+router.post('/updateDailyActualTradeAbleAutoTradeGen', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var user_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : 'live'
@@ -24095,7 +24131,16 @@ function findFrequentOccuringVal(arr) {
     ).pop();
 }
 
-router.post('/find_available_btc_usdt_atg', async (req, res)=>{
+router.post('/find_available_btc_usdt_atg', auth_token.required, async (req, res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let reqData = req.body.data
     let user_id = reqData.user_id
@@ -24162,7 +24207,16 @@ async function newAtgApiCall(payload, req=''){
     })
 }
 
-router.get('/findCustomPackageVal', async (req,res)=>{
+router.get('/findCustomPackageVal', auth_token.required, async (req,res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     const db = await conn
 
     let exchange = 'binance'
@@ -24373,7 +24427,16 @@ async function is_trade_limit_exceeded(user_id, exchange) {
     })
 }
 
-router.post('/is_trade_limit_exceeded', async (req, res)=>{
+router.post('/is_trade_limit_exceeded', auth_token.required, async (req, res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let user_id = req.body.user_id
     let exchange = req.body.exchange
     let trade_limit_exceeded = await is_trade_limit_exceeded(user_id, exchange)
@@ -24537,7 +24600,16 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
 /* End CRON SCRIPT for update Actual TradeAble BTC/USDT and total Tradeable in USD  */
 
 
-router.post('/getBtcUsdtPackages', async (req, res)=>{
+router.post('/getBtcUsdtPackages', auth_token.required, async (req, res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let exchange = req.body.exchange
@@ -24574,7 +24646,16 @@ router.post('/getBtcUsdtPackages', async (req, res)=>{
 
 
 //get_latest_buy_sell_details
-router.post('/get_latest_buy_sell_details', async (req, res) => {
+router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let exchange = req.body.exchange
     let admin_id = req.body.user_id
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
@@ -24648,7 +24729,15 @@ router.post('/get_latest_buy_sell_details', async (req, res) => {
 
 
 
-router.post('/get_btcusdt_coin_quantity', async (req, res) => {
+router.post('/get_btcusdt_coin_quantity', auth_token.required, async (req, res) => {
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
   let exchange = req.body.exchange
   let admin_id = req.body.user_id
   if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
@@ -24895,7 +24984,16 @@ async function get_costAvgBalance_quantity(user_id, exchange){
 }
 
 //get_dashboard_wallet
-router.post('/get_dashboard_wallet', async (req, res) => {
+router.post('/get_dashboard_wallet', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let exchange = req.body.exchange
     let admin_id = req.body.user_id
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
@@ -25026,7 +25124,16 @@ async function get_dashboard_wallet(admin_id, exchange){
 }
 
 //getParentsGridData
-router.post('/getParentsGridData', async (req, res) => {
+router.post('/getParentsGridData', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let admin_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = req.body.application_mode
@@ -25120,7 +25227,17 @@ router.get('/req_info', async (req, res) => {
     })
 })
 
-router.get('/fixUsdWorth', async (req, res) => {
+router.get('/fixUsdWorth', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     // process.exit(0)
 
     //Calculate usd_worth for orders that not exist
@@ -26279,7 +26396,16 @@ async function getOrderStats(postData2){
 }
 
 //getOrderStats
-router.post('/getOrderStats', async (req, res) => {
+router.post('/getOrderStats', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let admin_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = req.body.application_mode
@@ -26307,7 +26433,16 @@ router.post('/getOrderStats', async (req, res) => {
 })//end getOrderStats
 
 
-router.post('/get_user_id', async (req, res) => {
+router.post('/get_user_id', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var username = req.body.username;
     if (typeof username != 'undefined' && username != '') {
         var db = await conn
@@ -26337,7 +26472,16 @@ router.post('/get_user_id', async (req, res) => {
     }
 })
 
-router.post('/check_parent_exists', async (req, res) => {
+router.post('/check_parent_exists', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let orderArr = req.body.orderArr
     let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
@@ -26378,7 +26522,17 @@ router.post('/check_parent_exists', async (req, res) => {
     }
 })
 
-router.post('/get_username', async (req, res) => {
+router.post('/get_username', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var id = req.body.id;
     if (typeof id != 'undefined' && id != '') {
         var db = await conn
@@ -26404,7 +26558,17 @@ router.post('/get_username', async (req, res) => {
     }
 })
 
-router.post('/getAvailableTradingPoints', async (req, res) => {
+router.post('/getAvailableTradingPoints', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var auth_token = req.headers.authorization;
     var user_id = req.body.user_id;
     var exchange = req.body.exchange;
@@ -26504,7 +26668,17 @@ async function customApiRequest(reqObj){
 }
 
 // ********************** Dashboard setting APIs ****************************/
-router.post('/save_dashboard_settings', async (req, res) => {
+router.post('/save_dashboard_settings', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var user_id = req.body.user_id;
     var settings = req.body.settingsArr;
     var exchange = req.body.exchange;
@@ -26544,7 +26718,16 @@ router.post('/save_dashboard_settings', async (req, res) => {
     }
 })
 
-router.post('/get_dashboard_settings', async (req, res) => {
+router.post('/get_dashboard_settings', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var user_id = req.body.user_id;
     var exchange = req.body.exchange;
     if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && user_id != '') {
@@ -26641,7 +26824,16 @@ async function get_current_market_prices(exchange, coins=[]) {
 /* ******************** End Get current market prices ************************* */
 
 
-router.post('/isKeyUpdated', async (req,res) =>{
+router.post('/isKeyUpdated', auth_token.required, async (req,res) =>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let exchange = req.body.exchange
     let user_id = req.body.user_id
@@ -26677,7 +26869,16 @@ router.post('/isKeyUpdated', async (req,res) =>{
 
 })
 
-router.post('/validateApiKeys', async (req, res)=>{
+router.post('/validateApiKeys', auth_token.required, async (req, res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var auth_token = req.headers.authorization;
     let user_id = req.body.user_id
     let exchange = req.body.exchange
@@ -26863,7 +27064,17 @@ async function validate_bam_credentials_app(api_key, api_secret, token){
     })
 }
 
-router.post('/disable_exchange_key', async (req, res) => {
+router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
     let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''
     let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
     let keyNo = typeof req.body.keyNo != 'undefined' && req.body.keyNo != '' ? req.body.keyNo : ''
@@ -26929,7 +27140,16 @@ router.post('/disable_exchange_key', async (req, res) => {
 })
 
 
-router.get('/testKrakenBuyApi', async (req, res)=>{
+router.get('/testKrakenBuyApi', auth_token.required, async (req, res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
 
     const KrakenClient = require('kraken-api');
@@ -26964,7 +27184,16 @@ router.get('/testKrakenBuyApi', async (req, res)=>{
     res.send({})
 })
 
-router.post('/swap_kraken_api_keys', async (req, res)=>{
+router.post('/swap_kraken_api_keys', auth_token.required, async (req, res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     const db = await conn
 
@@ -27262,7 +27491,16 @@ router.post('/swap_kraken_api_keys', async (req, res)=>{
 })
 
 
-router.get('/get_CA_shift_user_ids', async (req,res)=>{
+router.get('/get_CA_shift_user_ids', auth_token.required, async (req,res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     const db = await conn
 
@@ -27364,7 +27602,16 @@ router.get('/get_CA_shift_user_ids', async (req,res)=>{
 
 })
 
-router.get('/move_CA_ledgers', async (req,res)=>{
+router.get('/move_CA_ledgers', auth_token.required, async (req,res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     const db = await conn
 
@@ -27791,7 +28038,15 @@ router.get('/move_CA_ledgers', async (req,res)=>{
 })
 
 
-router.get('/getComittedBalance', async (req, res)=>{
+router.get('/getComittedBalance', auth_token.required, async (req, res)=>{
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     await getCommittedBalance('5eb5a5a628914a45246bacc6', 'XMRBTC', 'binance')
     res.send()
 })
@@ -27938,7 +28193,16 @@ async function getCommittedBalance(user_id, symbol, exchange){
     })
 }
 
-router.get('/test_move_logs_function', async (req, res)=>{
+router.get('/test_move_logs_function', auth_token.required, async (req, res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let result = await move_order_logs('6022a4ed7510bb2486a02eda', 'binance', 'live', new Date('2021-02-09T15:13:40Z'), 'kraken')
 
@@ -28354,9 +28618,19 @@ async function countTradeHistory(pipeline, collectionName) {
     return { 'buyCount': buyCountRes, 'soldCount': soldCountRes }
 }
 
-router.post('/checkBinanceDuplicatesForTradeHistory', async (req, res)=>{
+router.post('/checkBinanceDuplicatesForTradeHistory', auth_token.required, async (req, res)=>{
 
-    console.log(req.body)
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+    // console.log(req.body)
 
     let user_id = req.body.user_id
     let exchange = req.body.exchange
@@ -29247,7 +29521,16 @@ async function filterMappedAndDuplicateTrades(trades, exchange){
     })
 }
 
-router.get('/checkDuplicateTrades', async (req, res)=>{
+router.get('/checkDuplicateTrades', auth_token.required, async (req, res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     checkDuplicateTrades()
 
@@ -30419,7 +30702,16 @@ async function getUserTimezone(user_id){
 
 }
 
-router.post('/getTradeHistory', async (req, res)=>{
+router.post('/getTradeHistory', auth_token.required, async (req, res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let where = req.body.postData
     let timezone = req.body.timezone;
@@ -30607,7 +30899,17 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     return resultObj
 }
 
-router.post('/mapTrade', async (req, res) => {
+router.post('/mapTrade', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let exchange = req.body.exchange
     let user_id = req.body.data.user_id
@@ -30669,7 +30971,16 @@ router.post('/mapTrade', async (req, res) => {
 
 })
 
-router.post('/mapSoldTrade', async (req, res) => {
+router.post('/mapSoldTrade', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let exchange = req.body.exchange
     let user_id = req.body.data.user_id
@@ -30754,7 +31065,16 @@ router.post('/mapSoldTrade', async (req, res) => {
 
 })
 
-router.get('/get_current_market_prices', async (req, res)=>{
+router.get('/get_current_market_prices', auth_token.required, async (req, res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let arr = []
     var exchange = 'binance'
@@ -30778,7 +31098,16 @@ router.get('/get_current_market_prices', async (req, res)=>{
     res.send(arr)
 })
 
-router.post('/checkBinanceApiSecret', async (req, res) => {
+router.post('/checkBinanceApiSecret', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let APIKEY = req.body.api_key
     let APISECRET = req.body.api_secret
@@ -30874,7 +31203,16 @@ async function candleCoins() {
 
 
 
-router.post('/findQtyFromUsdWorth', async (req, res)=>{
+router.post('/findQtyFromUsdWorth', auth_token.required, async (req, res)=>{
+
+  var user_exist = await getUserByID(req.payload.id);
+  // console.log(user_exist)
+  if(!user_exist){
+      resp.status(401).send({
+          message: 'User Not exist'
+      });
+      return false;
+  }
   let symbol = req.body.symbol
   let exchange = req.body.exchange
   let usdAmount = req.body.usdAmount
@@ -30947,7 +31285,7 @@ async function findQtyFromUsdWorth(coin, usd, exchange){
 
 router.all('/getAllGlobalCoins', async (req, res) => {
 
-    console.log(req.body)
+    // console.log(req.body)
 
     if (typeof req.body.candleCoins != 'undefined' && req.body.candleCoins == 'candleCoins') {
 
@@ -30999,7 +31337,16 @@ router.all('/getAllGlobalCoins', async (req, res) => {
 })
 
 
-router.get('/createATGFromScriptForUser', async (req, res)=>{
+router.get('/createATGFromScriptForUser', auth_token.required, async (req, res)=>{
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     createATGFromScriptForUser()
 
@@ -31100,7 +31447,17 @@ async function createATGFromScriptForUser(){
 
 
 // Cost Avg New Logic Things
-router.post('/order_move_sold_to_buy', async (req, resp) => {
+router.post('/order_move_sold_to_buy', auth_token.required, async (req, resp) => {
+
+
+  var user_exist = await getUserByID(req.payload.id);
+  // console.log(user_exist)
+  if(!user_exist){
+      resp.status(401).send({
+          message: 'User Not exist'
+      });
+      return false;
+  }
 
   let exchange = req.body.exchange;
   let order_id = req.body.order_id;
@@ -31358,7 +31715,17 @@ function update_sub_document(id2, collection, value, field) {
 
 
 // Total ATG Orders & Actual ATG Orders Things
-router.post('/get_atg_total_count_vs_atg_actual_count', async (req, resp) => {
+router.post('/get_atg_total_count_vs_atg_actual_count', auth_token.required, async (req, resp) => {
+
+
+  var user_exist = await getUserByID(req.payload.id);
+  // console.log(user_exist)
+  if(!user_exist){
+      resp.status(401).send({
+          message: 'User Not exist'
+      });
+      return false;
+  }
 
   let exchange = req.body.exchange;
   let application_mode = req.body.application_mode;
@@ -31927,7 +32294,17 @@ function get_atg_total_count_vs_atg_actual_count(exchange, application_mode, ski
 
 
 //post call to all user coins
-router.post('/addUserFavouriteCoin', async function (req, res, next) {
+router.post('/addUserFavouriteCoin', auth_token.required, async function (req, res, next) {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     conn.then(async (db) => {
 
@@ -31988,7 +32365,16 @@ router.post('/addUserFavouriteCoin', async function (req, res, next) {
         }
     })
 })
-router.post('/get_user_favourite_coins', async (req, resp) => {
+router.post('/get_user_favourite_coins', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let exchange = req.body.exchange
     let admin_id = req.body.admin_id
@@ -32032,7 +32418,17 @@ async function getUserFavouriteCoins(userId, exchange) {
 
 
 //sellCostAvgOrder_new
-router.post('/sellCostAvgOrder_new', async (req, resp) => {
+router.post('/sellCostAvgOrder_new', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let orderType = req.body.orderType
     let exchange = req.body.exchange
