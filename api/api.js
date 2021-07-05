@@ -12008,10 +12008,12 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
                         var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'])
-                        // console.log(data, 'NEW REturn')
 
 
+                        var apikey = update_arr['api_key'].substring(0, 5);
+                        var apisecret = update_arr['api_secret'].substring(0, 5);
                         if(data.success){
+                          var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret}});
                             res.status(200).send({
                                 "success": true,
                                 "status": 200,
