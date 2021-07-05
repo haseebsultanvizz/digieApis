@@ -26639,16 +26639,20 @@ router.post('/getAvailableTradingPoints', auth_token.required, async (req, res) 
                 });
             } else {
 
-                if (body.status) {
-                    res.send({
-                        "status": true,
-                        "availableTradingPoints": body.current_trading_points
-                    })
-                } else {
-                    res.send({
-                        status: false,
-                    });
-                }
+              if(body.status == 401){
+                res.status(401).send({
+                  "message": "User not Exist"
+                });
+              } else if (body.status && response.statusCode == 200) {
+                  res.send({
+                      "status": true,
+                      "availableTradingPoints": body.current_trading_points
+                  })
+              } else {
+                res.send({
+                    status: false,
+                });
+              }
             }
         })
 
