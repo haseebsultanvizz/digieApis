@@ -11821,7 +11821,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                                 'username',
                                 'email_address',
                                 'phone_number',
-                                'password',
+                                // 'password',
                                 'timezone',
                                 'default_exchange',
                                 'trading_ip',
