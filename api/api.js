@@ -12718,25 +12718,53 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     api_key = api_key.trim()
     api_secret = api_secret.trim()
 
-
-
-
     var data = await add_user_info_kraken1(trading_ip,user_id,api_key,api_secret);
-    var apikey = api_key.substring(0, 5);
-    var apisecret = api_secret.substring(0, 5);
-    let where = {};
-    where['user_id'] = user_id;
+
+
+    console.log(data, "DATA")
     if(data.success){
-      var update_on_kraken_credentials_collection = await db.collection("kraken_credentials").updateOne(where, {$set: {'api_key':apikey, 'api_secret': apisecret}});
-      resp.status(200).send({
-        "success": true,
-        "status": 200,
-        "message": "Credentials Saved Successfully"
+
+
+
+      // Update kraken_credentials Document
+      conn.then((db) => {
+        let insertArr = {};
+        insertArr['user_id'] = user_id;
+        insertArr['api_key'] = api_key.substring(0, 5);
+        insertArr['api_secret'] = api_secret.substring(0, 5);
+        let set = {};
+        set['$set'] = insertArr;
+        let where = {};
+        where['user_id'] = user_id; {
+            upsert: true
+        }
+        let upsert = {
+            upsert: true
+        };
+
+
+        console.log(where, set, upsert)
+        db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
+          if(err){
+            console.log(err);
+            resp.status(200).send({
+              "success": false,
+              "message": "Credentials Not Saved on Kraken Credentials"
+            });
+          } else {
+            resp.status(200).send({
+              "success": true,
+              "status": 200,
+              "message": "Credentials Saved Successfully"
+            });
+          }
+        });
       });
+
     } else {
       resp.status(200).send({
         "success": false,
-        "message": "Credentials Not Saved"
+        "message": "Credentials Not Saved on Shahzad End"
       });
     }
 
