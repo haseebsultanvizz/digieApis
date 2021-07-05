@@ -12722,7 +12722,12 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
 
 
     var data = await add_user_info_kraken1(trading_ip,user_id,api_key,api_secret);
+    var apikey = api_key.substring(0, 5);
+    var apisecret = api_secret.substring(0, 5);
+    let where = {};
+    where['user_id'] = user_id;
     if(data.success){
+      var update_on_kraken_credentials_collection = await db.collection("kraken_credentials").updateOne(where, {$set: {'api_key':apikey, 'api_secret': apisecret}});
       resp.status(200).send({
         "success": true,
         "status": 200,
@@ -12814,6 +12819,10 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
     var api_key = req.body.api_key_secondary;
     var api_secret = req.body.api_secret_secondary;
     var trading_ip = req.body.trading_ip;
+
+
+
+
 
 
     var data = await add_user_info_kraken2(trading_ip,user_id,api_key,api_secret);
