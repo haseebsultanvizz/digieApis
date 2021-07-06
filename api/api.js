@@ -11441,7 +11441,7 @@ function setForSell(sellOrderArr, exchange, buy_order_id) {
 //         });
 //     }) //End of manageCoins
 
-router.post('/get_orders_post', auth_token.required, function (req, res, next) {
+router.post('/get_orders_post', auth_token.required, async function (req, res, next) {
 
     var user_exist = await getUserByID(req.payload.id);
     // console.log(user_exist)
@@ -12182,7 +12182,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 @  Order will create from Mobile App
 @  Order will create from dashboard
 */
-router.post('/createManualOrderGlobally', auth_token.required, (req, resp) => {
+router.post('/createManualOrderGlobally', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
     // console.log(user_exist)
