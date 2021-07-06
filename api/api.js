@@ -1274,7 +1274,17 @@ router.post('/listDashboardData', auth_token.required, async (req, resp) => {
 
 }) //End of listDashboardData
 //When adding manual order first time when page load call this function for get user coins so we can select coin and create order against this coin
-router.post('/listManualOrderComponent', async (req, resp) => {
+router.post('/listManualOrderComponent', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist, 'USER EXIST')
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     //Get coins on the bases of user
     var listUserCoinsArr = await listUserCoins(req.body._id);
     resp.status(200).send({
@@ -1377,7 +1387,17 @@ async function getUserCoins(userId, exchange) {
 } //End of getUserCoins
 
 //Depricated //Umer Abbas [25-11-19] => please use the API calls provided by waqar (Bam)[http://35.171.172.15:3001/api/listCurrentmarketPrice],params['coin', 'exchange'], (Binance)[http://35.171.172.15:3000/api/listCurrentmarketPrice], params['coin', 'exchange']
-router.post('/listCurrentmarketPrice', async (req, resp) => {
+router.post('/listCurrentmarketPrice', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist, 'USER EXIST')
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     // let myIp = req.headers['x-forwarded-for']
     // console.log('============================================================== Request Ip ::: ', myIp)
@@ -1570,7 +1590,17 @@ function listMarketHistory(coin) {
 } //End of listMarketHistory
 
 //post call for getting manual order detail
-router.post('/listManualOrderDetail', async (req, resp) => {
+router.post('/listManualOrderDetail', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist, 'USER EXIST')
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let exchange = req.body.exchange;
     var urserCoinsPromise = listUserCoins(req.body._id);
 
@@ -1601,7 +1631,17 @@ router.post('/listManualOrderDetail', async (req, resp) => {
 
 }) //End of listManualOrderDetail
 //post call for getting auto order detail
-router.post('/listAutoOrderDetail', async (req, resp) => {
+router.post('/listAutoOrderDetail', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist, 'USER EXIST')
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     let exchange = req.body.exchange;
     //get user coin on the base of exchange
     if (exchange == 'bam') {
@@ -1630,7 +1670,18 @@ router.post('/listAutoOrderDetail', async (req, resp) => {
 }) //End of listAutoOrderDetail
 
 
-router.post('/listmarketPriceMinNotation', async (req, resp) => {
+router.post('/listmarketPriceMinNotation', auth_token.required, async (req, resp) => {
+
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist, 'USER EXIST')
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     //get market min notation for a coin minnotation mean minimum qty required for an order buy or sell and also detail for hoh many fraction point allow for an order
     // var marketMinNotationPromise = marketMinNotation(req.body.coin);
 
@@ -4916,7 +4967,17 @@ function list_orders_by_filter(collectionName, filter, pagination, limit, skip) 
 } //End of list_orders
 
 
-router.post('/getMergeOrders', async (req, res)=>{
+router.post('/getMergeOrders', auth_token.required, async (req, res)=>{
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     let symbol = req.body.symbol
@@ -5485,7 +5546,16 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
 }
 
 //post call from manage coins component
-router.post('/manageCoins', async (req, resp) => {
+router.post('/manageCoins', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     var urserCoinsPromise = listUserCoins(req.body.admin_id);
     var globalCoinsPromise = listGlobalCoins();
     var promisesResult = await Promise.all([urserCoinsPromise, globalCoinsPromise]);
@@ -11371,7 +11441,16 @@ function setForSell(sellOrderArr, exchange, buy_order_id) {
 //         });
 //     }) //End of manageCoins
 
-router.post('/get_orders_post', function (req, res, next) {
+router.post('/get_orders_post', auth_token.required, function (req, res, next) {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(db => {
 
 
@@ -12103,7 +12182,16 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 @  Order will create from Mobile App
 @  Order will create from dashboard
 */
-router.post('/createManualOrderGlobally', (req, resp) => {
+router.post('/createManualOrderGlobally', auth_token.required, (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then((db) => {
         let orderArr = req.body.orderArr;
 
@@ -17066,7 +17154,16 @@ async function update_user_balance(user_id, res='', auth_token='') {
 
 }
 
-router.post('/getNotifications', (req, res) => {
+router.post('/getNotifications', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
 
         let admin_id = req.body.user_id
@@ -17125,7 +17222,16 @@ router.post('/getNotifications', (req, res) => {
     })
 })
 
-router.post('/readNotifications', (req, res) => {
+router.post('/readNotifications', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
     conn.then(async (db) => {
         let notification_ids = req.body.notification_ids
         let admin_id = req.body.user_id
@@ -17161,7 +17267,17 @@ router.post('/readNotifications', (req, res) => {
     })
 })
 
-router.post('/getSubscription', async (req, res) => {
+router.post('/getSubscription', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let user_id = req.body.user_id
     if (typeof user_id != 'undefined' && user_id != ''){
@@ -31336,7 +31452,17 @@ async function findQtyFromUsdWorth(coin, usd, exchange){
 
 
 
-router.all('/getAllGlobalCoins', async (req, res) => {
+router.all('/getAllGlobalCoins', auth_token.required, async (req, res) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     // console.log(req.body)
 
