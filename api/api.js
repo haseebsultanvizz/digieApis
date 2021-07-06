@@ -31452,17 +31452,17 @@ async function findQtyFromUsdWorth(coin, usd, exchange){
 
 
 
-router.all('/getAllGlobalCoins', auth_token.required, async (req, res) => {
+router.all('/getAllGlobalCoins',async (req, res) => {
 
 
-    var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'User Not exist'
-        });
-        return false;
-    }
+    // var user_exist = await getUserByID(req.payload.id);
+    // // console.log(user_exist)
+    // if(!user_exist){
+    //     resp.status(401).send({
+    //         message: 'User Not exist'
+    //     });
+    //     return false;
+    // }
 
     // console.log(req.body)
 
