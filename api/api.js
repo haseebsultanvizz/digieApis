@@ -518,6 +518,8 @@ router.post('/authenticate', async function (req, resp, next) {
 //resetPassword //Umer Abbas [19-11-19]
 router.post('/resetPassword', async function (req, resp) {
     conn.then(async (db) => {
+
+        var auth_token = req.headers.authorization;
         let post_data = req.body;
         let user_id = req.body.user_id;
         let password = req.body.password;
@@ -545,6 +547,9 @@ router.post('/resetPassword', async function (req, resp) {
                     var reqObj = {
                         'type': 'POST',
                         'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
+                        'headers':{
+                            'Authorization': auth_token
+                        },
                         'payload': {
                             'user_id': String(user_id),
                             'type': 'password_updated',
@@ -873,6 +878,7 @@ async function getClientInfo(req){
 
 async function sendTempBlockEmail(req){
     let clientInfo = await getClientInfo(req)
+    var auth_token = req.headers.authorization;
 
     //Send block email call
     var options = {
@@ -886,7 +892,8 @@ async function sendTempBlockEmail(req){
             'Cache-Control': 'no-cache',
             'Accept': '*/*',
             'User-Agent': 'PostmanRuntime/7.20.1',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': auth_token
         },
         json: clientInfo
     };
@@ -899,6 +906,8 @@ async function sendTempBlockEmail(req){
 //generateGoogleAuthSecret
 router.post('/generateGoogleAuthSecret', async function (req, res) {
 
+    var auth_token = req.headers.authorization;
+
     var options = {
         method: 'POST',
         url: 'https://app.digiebot.com/admin/Api_calls/get_google_auth_secret',
@@ -910,7 +919,8 @@ router.post('/generateGoogleAuthSecret', async function (req, res) {
             'Cache-Control': 'no-cache',
             'Accept': '*/*',
             'User-Agent': 'PostmanRuntime/7.20.1',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': auth_token
         },
         json: {}
     };
@@ -11586,13 +11596,13 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
       let url;
       // If Binance
       if(exchange == 'binance'){
-        if(user_ip == '54.156.91.55'){
+        if(user_ip == '3.227.143.115'){
           ip = 'ip1.digiebot.com'
-        } else if(user_ip == '54.196.65.169'){
+        } else if(user_ip == '3.228.180.22'){
           ip = 'ip2.digiebot.com'
-        } else if(user_ip == '34.232.239.139'){
+        } else if(user_ip == '3.226.226.217'){
           ip = 'ip3.digiebot.com'
-        } else if(user_ip == '44.194.82.97'){
+        } else if(user_ip == '3.228.245.92'){
           ip = 'ip4.digiebot.com'
         } else if(user_ip == '35.153.9.225'){
           ip = 'ip5.digiebot.com'
@@ -11604,13 +11614,13 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
 
 
 
-        if(user_ip == '54.156.91.55'){
+        if(user_ip == '3.227.143.115'){
           ip = 'ip1-kraken-balance.digiebot.com'
-        } else if(user_ip == '54.196.65.169'){
+        } else if(user_ip == '3.228.180.22'){
           ip = 'ip2-kraken-balance.digiebot.com'
-        } else if(user_ip == '34.232.239.139'){
+        } else if(user_ip == '3.226.226.217'){
           ip = 'ip3-kraken-balance.digiebot.com'
-        } else if(user_ip == '44.194.82.97'){
+        } else if(user_ip == '3.228.245.92'){
           ip = 'ip4-kraken-balance.digiebot.com'
         } else if(user_ip == '35.153.9.225'){
           ip = 'ip5-kraken-balance.digiebot.com'
@@ -11742,13 +11752,13 @@ async function get_api_secret(user_ip, admin_id){
       let port = 2500
 
 
-      if(user_ip == '54.156.91.55'){
+      if(user_ip == '3.227.143.115'){
         ip = 'ip1.digiebot.com'
-      } else if(user_ip == '54.196.65.169'){
+      } else if(user_ip == '3.228.180.22'){
         ip = 'ip2.digiebot.com'
-      } else if(user_ip == '34.232.239.139'){
+      } else if(user_ip == '3.226.226.217'){
         ip = 'ip3.digiebot.com'
-      } else if(user_ip == '44.194.82.97'){
+      } else if(user_ip == '3.228.245.92'){
         ip = 'ip4.digiebot.com'
       } else if(user_ip == '35.153.9.225'){
         ip = 'ip5.digiebot.com'
@@ -11915,13 +11925,13 @@ async function add_user_info(user_ip, admin_id, api_key, api_secret){
       let port = 2500
 
 
-      if(user_ip == '54.156.91.55'){
+      if(user_ip == '3.227.143.115'){
         ip = 'ip1.digiebot.com'
-      } else if(user_ip == '54.196.65.169'){
+      } else if(user_ip == '3.228.180.22'){
         ip = 'ip2.digiebot.com'
-      } else if(user_ip == '34.232.239.139'){
+      } else if(user_ip == '3.226.226.217'){
         ip = 'ip3.digiebot.com'
-      } else if(user_ip == '44.194.82.97'){
+      } else if(user_ip == '3.228.245.92'){
         ip = 'ip4.digiebot.com'
       } else if(user_ip == '35.153.9.225'){
         ip = 'ip5.digiebot.com'
@@ -12556,13 +12566,13 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret){
     let port = 2500
 
 
-    if(user_ip == '54.156.91.55'){
+    if(user_ip == '3.227.143.115'){
       ip = 'ip1-kraken-balance.digiebot.com'
-    } else if(user_ip == '54.196.65.169'){
+    } else if(user_ip == '3.228.180.22'){
       ip = 'ip2-kraken-balance.digiebot.com'
-    } else if(user_ip == '34.232.239.139'){
+    } else if(user_ip == '3.226.226.217'){
       ip = 'ip3-kraken-balance.digiebot.com'
-    } else if(user_ip == '44.194.82.97'){
+    } else if(user_ip == '3.228.245.92'){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(user_ip == '35.153.9.225'){
       ip = 'ip5-kraken-balance.digiebot.com'
@@ -12605,13 +12615,13 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret){
     let port = 2500
 
 
-    if(user_ip == '54.156.91.55'){
+    if(user_ip == '3.227.143.115'){
       ip = 'ip1-kraken-balance.digiebot.com'
-    } else if(user_ip == '54.196.65.169'){
+    } else if(user_ip == '3.228.180.22'){
       ip = 'ip2-kraken-balance.digiebot.com'
-    } else if(user_ip == '34.232.239.139'){
+    } else if(user_ip == '3.226.226.217'){
       ip = 'ip3-kraken-balance.digiebot.com'
-    } else if(user_ip == '44.194.82.97'){
+    } else if(user_ip == '3.228.245.92'){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(user_ip == '35.153.9.225'){
       ip = 'ip5-kraken-balance.digiebot.com'
@@ -12655,13 +12665,13 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret){
     let port = 2500
 
 
-    if(user_ip == '54.156.91.55'){
+    if(user_ip == '3.227.143.115'){
       ip = 'ip1-kraken-balance.digiebot.com'
-    } else if(user_ip == '54.196.65.169'){
+    } else if(user_ip == '3.228.180.22'){
       ip = 'ip2-kraken-balance.digiebot.com'
-    } else if(user_ip == '34.232.239.139'){
+    } else if(user_ip == '3.226.226.217'){
       ip = 'ip3-kraken-balance.digiebot.com'
-    } else if(user_ip == '44.194.82.97'){
+    } else if(user_ip == '3.228.245.92'){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(user_ip == '35.153.9.225'){
       ip = 'ip5-kraken-balance.digiebot.com'
@@ -13121,13 +13131,13 @@ function getKrakenCredentials(trading_ip, user_id) {
         let port = 2500
 
 
-        if(trading_ip == '54.156.91.55'){
+        if(trading_ip == '3.227.143.115'){
           ip = 'ip1-kraken-balance.digiebot.com'
-        } else if(trading_ip == '54.196.65.169'){
+        } else if(trading_ip == '3.228.180.22'){
           ip = 'ip2-kraken-balance.digiebot.com'
-        } else if(trading_ip == '34.232.239.139'){
+        } else if(trading_ip == '3.226.226.217'){
           ip = 'ip3-kraken-balance.digiebot.com'
-        } else if(trading_ip == '44.194.82.97'){
+        } else if(trading_ip == '3.228.245.92'){
           ip = 'ip4-kraken-balance.digiebot.com'
         } else if(trading_ip == '35.153.9.225'){
           ip = 'ip5-kraken-balance.digiebot.com'
@@ -13179,13 +13189,13 @@ function getKrakenCredentials2(trading_ip, user_id) {
     let port = 2500
 
 
-    if(trading_ip == '54.156.91.55'){
+    if(trading_ip == '3.227.143.115'){
       ip = 'ip1-kraken-balance.digiebot.com'
-    } else if(trading_ip == '54.196.65.169'){
+    } else if(trading_ip == '3.228.180.22'){
       ip = 'ip2-kraken-balance.digiebot.com'
-    } else if(trading_ip == '34.232.239.139'){
+    } else if(trading_ip == '3.226.226.217'){
       ip = 'ip3-kraken-balance.digiebot.com'
-    } else if(trading_ip == '44.194.82.97'){
+    } else if(trading_ip == '3.228.245.92'){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(trading_ip == '35.153.9.225'){
       ip = 'ip5-kraken-balance.digiebot.com'
@@ -13225,13 +13235,13 @@ function getKrakenCredentials3(trading_ip, user_id) {
     let port = 2500
 
 
-    if(trading_ip == '54.156.91.55'){
+    if(trading_ip == '3.227.143.115'){
       ip = 'ip1-kraken-balance.digiebot.com'
-    } else if(trading_ip == '54.196.65.169'){
+    } else if(trading_ip == '3.228.180.22'){
       ip = 'ip2-kraken-balance.digiebot.com'
-    } else if(trading_ip == '34.232.239.139'){
+    } else if(trading_ip == '3.226.226.217'){
       ip = 'ip3-kraken-balance.digiebot.com'
-    } else if(trading_ip == '44.194.82.97'){
+    } else if(trading_ip == '3.228.245.92'){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(trading_ip == '35.153.9.225'){
       ip = 'ip5-kraken-balance.digiebot.com'
