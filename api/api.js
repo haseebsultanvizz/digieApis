@@ -12,6 +12,7 @@ var auth = require('basic-auth')
 var compare = require('tsscmp')
 var googleAuthenticator = require('authenticator');
 var jwt = require('jsonwebtoken');
+const CryptoJS = require("crypto-js");
 
 
 var auth_token = require('./auth');
@@ -12093,14 +12094,33 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
 
-                        // console.log(update_arr,user_id )
+                        // console.log(update_arr )
 
+
+                        var key1  = CryptoJS.AES.decrypt(update_arr['api_key'], 'digiebot_trading');
+                        update_arr['api_key'] = key1.toString(CryptoJS.enc.Utf8);
+
+
+
+                        var secret1  = CryptoJS.AES.decrypt(update_arr['api_secret'], 'digiebot_trading');
+                        update_arr['api_secret'] = secret1.toString(CryptoJS.enc.Utf8);
+
+
+
+                        // console.log(update_arr['api_key'], update_arr['api_secret'] )
+
+
+                        // return false;
 
                         var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'])
 
 
                         var apikey = update_arr['api_key'].substring(0, 5);
                         var apisecret = update_arr['api_secret'].substring(0, 5);
+
+
+
+
                         if(data.success){
                           var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret}});
                             res.status(200).send({
