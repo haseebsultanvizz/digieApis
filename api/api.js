@@ -5497,16 +5497,16 @@ router.post('/manageCoins', async (req, resp) => {
     });
 }) //End of manageCoins
 
-router.post('/get_user_coins', async (req, resp) => {
+router.post('/get_user_coins', auth_token.required, async (req, resp) => {
 
-    // var user_exist = await getUserByID(req.payload.id);
-    // // console.log(user_exist)
-    // if(!user_exist){
-    //     resp.status(401).send({
-    //         message: 'User Not exist'
-    //     });
-    //     return false;
-    // }
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
     let exchange = req.body.exchange
     let admin_id = req.body.admin_id
