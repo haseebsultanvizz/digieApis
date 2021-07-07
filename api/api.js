@@ -17200,25 +17200,41 @@ async function update_user_balance(user_id, res='', auth_token='') {
     let port = ':3006'
 
     if (user.length > 0 && typeof user[0]['trading_ip'] != 'undefined' && user[0]['trading_ip'] != ''){
-        ip = user[0]['trading_ip']
+        // ip = user[0]['trading_ip']
+        if(user[0]['trading_ip'] == '3.227.143.115'){
+            ip = 'ip1-kraken-balance.digiebot.com'
+          } else if(user[0]['trading_ip'] == '3.228.180.22'){
+            ip = 'ip2-kraken-balance.digiebot.com'
+          } else if(user[0]['trading_ip'] == '3.226.226.217'){
+            ip = 'ip3-kraken-balance.digiebot.com'
+          } else if(user[0]['trading_ip'] == '3.228.245.92'){
+            ip = 'ip4-kraken-balance.digiebot.com'
+          } else if(user[0]['trading_ip'] == '35.153.9.225'){
+            ip = 'ip5-kraken-balance.digiebot.com'
+          }
     }
-    let url = 'http://' + ip + port + '/updateUserBalance'
 
 
-    db.collection('kraken_user_balance_update').insertOne({ 'user_id': user_id, 'trading_ip' : ip, 'exchange' : 'kraken'}, async (err, result) => {
-      if (err) {
-          console.log(err)
-      } else {
+    // https://ip1-kraken-balance.digiebot.com/updateUserBalance
 
-        if(res == 'shahzad_check'){
-          console.log('if')
-          resolve('Data inserted in Collection')
-        } else {
-          console.log('else')
-          resolve(true)
-        }
-      }
-    });
+
+    let url = 'https://' + ip +'/updateUserBalance'
+
+
+    // db.collection('kraken_user_balance_update').insertOne({ 'user_id': user_id, 'trading_ip' : ip, 'exchange' : 'kraken'}, async (err, result) => {
+    //   if (err) {
+    //       console.log(err)
+    //   } else {
+
+    //     if(res == 'shahzad_check'){
+    //       console.log('if')
+    //       resolve('Data inserted in Collection')
+    //     } else {
+    //       console.log('else')
+    //       resolve(true)
+    //     }
+    //   }
+    // });
 
 
 
@@ -17234,43 +17250,43 @@ async function update_user_balance(user_id, res='', auth_token='') {
 
 
 
-    // var options = {
-    //     method: 'POST',
-    //     url: url,
-    //     headers: {
-    //         'cache-control'   : 'no-cache',
-    //         'Connection'      : 'keep-alive',
-    //         'Accept-Encoding' : 'gzip, deflate',
-    //         'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
-    //         'Cache-Control'   : 'no-cache',
-    //         'Accept'          : '*/*',
-    //         'User-Agent'      : 'PostmanRuntime/7.20.1',
-    //         'Content-Type'    : 'application/json'
-    //     },
-    //     json: {
-    //         'user_id': user_id,
-    //     }
-    // };
-    // request(options, function (error, response, body) {
-    //   if(error){
+    var options = {
+        method: 'POST',
+        url: url,
+        headers: {
+            'cache-control'   : 'no-cache',
+            'Connection'      : 'keep-alive',
+            'Accept-Encoding' : 'gzip, deflate',
+            'Postman-Token'   : '0f775934-0a34-46d5-9278-837f4d5f1598,e130f9e1-c850-49ee-93bf-2d35afbafbab',
+            'Cache-Control'   : 'no-cache',
+            'Accept'          : '*/*',
+            'User-Agent'      : 'PostmanRuntime/7.20.1',
+            'Content-Type'    : 'application/json'
+        },
+        json: {
+            'user_id': user_id,
+        }
+    };
+    request(options, function (error, response, body) {
+      if(error){
 
-    //       if(res == 'shahzad_check'){
-    //         console.log('error_if', error)
-    //         resolve(false)
-    //       } else {
-    //         console.log('error_else', error)
-    //         resolve(false)
-    //       }
-    //   }else{
-    //     if(res == 'shahzad_check'){
-    //       console.log('if')
-    //       resolve(body)
-    //     } else {
-    //       console.log('else')
-    //       resolve(body['status'])
-    //     }
-    //   }
-    // });
+          if(res == 'shahzad_check'){
+            console.log('error_if', error)
+            resolve(false)
+          } else {
+            console.log('error_else', error)
+            resolve(false)
+          }
+      }else{
+        if(res == 'shahzad_check'){
+          console.log('if')
+          resolve(body)
+        } else {
+          console.log('else')
+          resolve(body['status'])
+        }
+      }
+    });
   })
 
 
