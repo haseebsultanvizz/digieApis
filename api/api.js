@@ -256,6 +256,12 @@ router.post('/authenticate', async function (req, resp, next) {
         } else {
             let username = req.body.username.toLowerCase();
             let pass     = req.body.password;
+
+            var encrypted_pass = CryptoJS.AES.decrypt(pass, 'digiebot_trading');
+            pass = encrypted_pass.toString(CryptoJS.enc.Utf8);
+
+
+
             pass = pass.trim();
             //Convert password to md5
             let md5Pass = md5(pass);
