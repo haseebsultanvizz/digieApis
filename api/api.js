@@ -12839,8 +12839,24 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     var api_secret = req.body.api_secret;
     var trading_ip = req.body.trading_ip;
 
+
+
+
+    var key1  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
+    api_key = key1.toString(CryptoJS.enc.Utf8);
+
+
+
+    var secret1  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
+    api_secret = secret1.toString(CryptoJS.enc.Utf8);
+
+
+
     api_key = api_key.trim()
     api_secret = api_secret.trim()
+
+    // console.log(api_key, api_secret)
+    // return false;
 
     var data = await add_user_info_kraken1(trading_ip,user_id,api_key,api_secret);
 
