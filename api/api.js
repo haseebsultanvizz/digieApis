@@ -12128,7 +12128,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
                         if(data.success){
-                          var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret}});
+                          var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'info_modified_date': new Date()}});
                             res.status(200).send({
                                 "success": true,
                                 "status": 200,
@@ -12872,18 +12872,17 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
         insertArr['user_id'] = user_id;
         insertArr['api_key'] = api_key.substring(0, 5);
         insertArr['api_secret'] = api_secret.substring(0, 5);
+        insertArr['modified_date'] = new Date();
         let set = {};
         set['$set'] = insertArr;
         let where = {};
-        where['user_id'] = user_id; {
-            upsert: true
-        }
+        where['user_id'] = user_id;
         let upsert = {
             upsert: true
         };
 
 
-        console.log(where, set, upsert)
+        // console.log(where, set, upsert)
         db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
           if(err){
             console.log(err);
@@ -13006,10 +13005,40 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
 
     var data = await add_user_info_kraken2(trading_ip,user_id,api_key,api_secret);
     if(data.success){
-      resp.status(200).send({
-        "success": true,
-        "status": 200,
-        "message": "Credentials Saved Successfully"
+
+
+      // Update kraken_credentials Document
+      conn.then((db) => {
+        let insertArr = {};
+        insertArr['user_id'] = user_id;
+        insertArr['api_key_secondary'] = api_key.substring(0, 5);
+        insertArr['api_secret_secondary'] = api_secret.substring(0, 5);
+        insertArr['modified_date_secondary'] = new Date();
+        let set = {};
+        set['$set'] = insertArr;
+        let where = {};
+        where['user_id'] = user_id;
+        let upsert = {
+            upsert: true
+        };
+
+
+        // console.log(where, set, upsert)
+        db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
+          if(err){
+            console.log(err);
+            resp.status(200).send({
+              "success": false,
+              "message": "Credentials Not Saved on Kraken Credentials"
+            });
+          } else {
+            resp.status(200).send({
+              "success": true,
+              "status": 200,
+              "message": "Credentials Saved Successfully"
+            });
+          }
+        });
       });
     } else {
       resp.status(200).send({
@@ -13110,11 +13139,40 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
 
     var data = await add_user_info_kraken3(trading_ip,user_id,api_key,api_secret);
     if(data.success){
-      resp.status(200).send({
-        "success": true,
-        "status": 200,
-        "message": "Credentials Saved Successfully"
-      });
+
+
+        conn.then((db) => {
+            let insertArr = {};
+            insertArr['user_id'] = user_id;
+            insertArr['api_key_third_key'] = api_key.substring(0, 5);
+            insertArr['api_secret_third_key'] = api_secret.substring(0, 5);
+            insertArr['modified_date_third_key'] = new Date();
+            let set = {};
+            set['$set'] = insertArr;
+            let where = {};
+            where['user_id'] = user_id;
+            let upsert = {
+                upsert: true
+            };
+
+
+            // console.log(where, set, upsert)
+            db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
+              if(err){
+                console.log(err);
+                resp.status(200).send({
+                  "success": false,
+                  "message": "Credentials Not Saved on Kraken Credentials"
+                });
+              } else {
+                resp.status(200).send({
+                  "success": true,
+                  "status": 200,
+                  "message": "Credentials Saved Successfully"
+                });
+              }
+            });
+          });
     } else {
       resp.status(200).send({
         "success": false,
