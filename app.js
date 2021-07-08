@@ -4,13 +4,13 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
-//var indexRouter = require('./routes/index');
-//var usersRouter = require('./routes/users');
 var apiRouter  = require('./api/api');
 var graphicalTradingRouter  = require('./api/chart3');
 var digie_apis = require('./api/rabi_api');
-//var coinMetaRouter  = require('./api/coin_meta');
 var chart3_umer  = require('./api/chart3_umer');
+//var indexRouter = require('./routes/index');
+//var usersRouter = require('./routes/users');
+//var coinMetaRouter  = require('./api/coin_meta');
 
 var app = express();
 

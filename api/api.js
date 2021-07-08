@@ -17131,13 +17131,35 @@ async function update_user_balance(user_id, res='', auth_token='') {
   return new Promise(async resolve=>{
 
 
+    const db = await conn
+    let user = await db.collection('users').find({ '_id': new ObjectID(String(user_id)) }).project({ trading_ip:1}).toArray();
 
+
+    let url_binance = ''
+    if (user.length > 0 && typeof user[0]['trading_ip'] != 'undefined' && user[0]['trading_ip'] != ''){
+      if(user[0]['trading_ip'] == '3.227.143.115'){
+        ip = 'ip1.digiebot.com'
+      } else if(user[0]['trading_ip'] == '3.228.180.22'){
+        ip = 'ip2.digiebot.com'
+      } else if(user[0]['trading_ip'] == '3.226.226.217'){
+        ip = 'ip3.digiebot.com'
+      } else if(user[0]['trading_ip'] == '3.228.245.92'){
+        ip = 'ip4.digiebot.com'
+      } else if(user[0]['trading_ip'] == '35.153.9.225'){
+        ip = 'ip5.digiebot.com'
+      }
+      url_binance = 'https://'+ ip +'/apiKeySecret/updateUserBalance'
+    }
+
+
+
+    // console.log(url_binance)
 
 
     //Update Binance Balance
     var options = {
-        method: 'GET',
-        url: 'https://app.digiebot.com/admin/Updatebalance/update_user_vallet/' + user_id,
+        method: 'POST',
+        url: url_binance,
         headers: {
             'cache-control'  : 'no-cache',
             'Connection'     : 'keep-alive',
@@ -17149,7 +17171,9 @@ async function update_user_balance(user_id, res='', auth_token='') {
             'Content-Type'   : 'application/json',
             'Authorization'  :  auth_token
         },
-        json: {}
+        json: {
+          'user_id': user_id,
+      }
     };
     request(options, function (error, response, body) { });
 
@@ -17194,13 +17218,11 @@ async function update_user_balance(user_id, res='', auth_token='') {
 
 
     //get user IP for sending request
-    const db = await conn
-    let user = await db.collection('users').find({ '_id': new ObjectID(String(user_id)) }).project({ trading_ip:1}).toArray();
+
     let ip = '35.153.9.225'
     let port = ':3006'
 
     if (user.length > 0 && typeof user[0]['trading_ip'] != 'undefined' && user[0]['trading_ip'] != ''){
-        // ip = user[0]['trading_ip']
         if(user[0]['trading_ip'] == '3.227.143.115'){
             ip = 'ip1-kraken-balance.digiebot.com'
           } else if(user[0]['trading_ip'] == '3.228.180.22'){
@@ -17215,41 +17237,11 @@ async function update_user_balance(user_id, res='', auth_token='') {
     }
 
 
-    // https://ip1-kraken-balance.digiebot.com/updateUserBalance
-
-
     let url = 'https://' + ip +'/updateUserBalance'
-
-
-    // db.collection('kraken_user_balance_update').insertOne({ 'user_id': user_id, 'trading_ip' : ip, 'exchange' : 'kraken'}, async (err, result) => {
-    //   if (err) {
-    //       console.log(err)
-    //   } else {
-
-    //     if(res == 'shahzad_check'){
-    //       console.log('if')
-    //       resolve('Data inserted in Collection')
-    //     } else {
-    //       console.log('else')
-    //       resolve(true)
-    //     }
-    //   }
-    // });
-
-
-
-
-
-
-
-
     // console.log(url)
 
+
     //Update Kraken Balance
-
-
-
-
     var options = {
         method: 'POST',
         url: url,
