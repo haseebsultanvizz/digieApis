@@ -243,6 +243,64 @@ function getUserGoogleAuthValidation(user_id, code){
     });
 }
 
+
+function getUserSiteScore(url){
+  return new Promise(async function (resolve, reject) {
+
+    let ip = '';
+    let port = 2500
+
+
+    // let url = `https://www.google.com/recaptcha/api/siteverify?secret=` +
+    //   `${this.SECRET_KEY}&response=${token}`
+
+
+    let url_google = url
+
+
+
+      console.log(url_google)
+      request.post({
+          url: url_google,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest',
+          }
+      }, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+              // console.log(JSON.parse(body));
+              if(JSON.parse(body).success == true){
+                resolve(JSON.parse(body));
+              } else {
+                resolve(false);
+              }
+          } else {
+              resolve(false)
+          }
+      });
+  });
+}
+
+
+
+router.post('/site_score', async (req,res)=>{
+
+  var user_score = await getUserSiteScore(req.body.site_score);
+  console.log(user_score, 'Score Object in Route')
+
+
+  if(user_score.success){
+    console.log('if')
+    res.status(200).send( user_score )
+  } else {
+    console.log('else')
+    res.status(201).send( user_score )
+  }
+
+  // res.send({ 'count': result[0]['log_ids'].length })
+
+})
+
 //when first time user login call this function
 router.post('/authenticate', async function (req, resp, next) {
     conn.then(async (db) => {
@@ -17194,7 +17252,10 @@ async function update_user_balance(user_id, res='', auth_token='') {
         },
         json: {}
     };
-    request(options, function (error, response, body) { });
+    request(options, function (error, response, body) {
+
+      console.log(body, 'body for binance')
+    });
 
     // //Update kraken Balance
     // var options = {
