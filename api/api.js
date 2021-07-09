@@ -17188,7 +17188,7 @@ async function update_user_balance(user_id, res='', auth_token='') {
 
   return new Promise(async resolve=>{
 
-
+    let ip_bianance = ''
     const db = await conn
     let user = await db.collection('users').find({ '_id': new ObjectID(String(user_id)) }).project({ trading_ip:1}).toArray();
 
@@ -17196,17 +17196,17 @@ async function update_user_balance(user_id, res='', auth_token='') {
     let url_binance = ''
     if (user.length > 0 && typeof user[0]['trading_ip'] != 'undefined' && user[0]['trading_ip'] != ''){
       if(user[0]['trading_ip'] == '3.227.143.115'){
-        ip = 'ip1.digiebot.com'
+        ip_bianance = 'ip1.digiebot.com'
       } else if(user[0]['trading_ip'] == '3.228.180.22'){
-        ip = 'ip2.digiebot.com'
+        ip_bianance = 'ip2.digiebot.com'
       } else if(user[0]['trading_ip'] == '3.226.226.217'){
-        ip = 'ip3.digiebot.com'
+        ip_bianance = 'ip3.digiebot.com'
       } else if(user[0]['trading_ip'] == '3.228.245.92'){
-        ip = 'ip4.digiebot.com'
+        ip_bianance = 'ip4.digiebot.com'
       } else if(user[0]['trading_ip'] == '35.153.9.225'){
-        ip = 'ip5.digiebot.com'
+        ip_bianance = 'ip5.digiebot.com'
       }
-      url_binance = 'https://'+ ip +'/apiKeySecret/updateUserBalance'
+      url_binance = 'https://'+ ip_bianance +'/apiKeySecret/updateUserBalance'
     }
 
 
