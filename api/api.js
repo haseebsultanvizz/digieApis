@@ -12156,6 +12156,9 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
                 let search_arr = {
                     "_id": ObjectID(user_id)
                 };
+                let search_arr_investment = {
+                  "admin_id": user_id
+                };
                 db.collection("users").findOne(search_arr,async function (err, data) {
                     if (err) throw err;
                     if (Object.keys(data).length > 0) {
@@ -12201,7 +12204,8 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
                         if(data.success){
-                          var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'info_modified_date': new Date()}});
+                          var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date()}});
+                          var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date()}});
                             res.status(200).send({
                                 "success": true,
                                 "status": 200,
