@@ -13002,7 +13002,6 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
 
 
         // console.log(where, set, upsert)
-
         let search_arr_investment = {
           "admin_id": user_id
         };
