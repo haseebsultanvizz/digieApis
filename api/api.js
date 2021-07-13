@@ -11869,21 +11869,26 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
             "message": "Valid Api Key"
         })
       } else {
-
-
-        console.log(data.error)
-        if(data.error){
-          res.status(201).send({
+        if(exchange == 'binance'){
+          if(data.error){
+            res.status(201).send({
+                "success": false,
+                "status": 201,
+                "message":data.error
+            })
+          } else {
+            res.status(201).send({
               "success": false,
               "status": 201,
-              "message":data.error
-          })
+              "message":'Something Went Wrong'
+            })
+          }
         } else {
           res.status(201).send({
             "success": false,
             "status": 201,
-            "message":'Something Went Wrong'
-        })
+            "message":'Key Not Valid or May be something went Wrong.'
+          })
         }
       }
 
