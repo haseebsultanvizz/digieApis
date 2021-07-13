@@ -11825,14 +11825,49 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
     var api_key = req.body.api_key;
 
 
+    let search_arr = {
+      "_id": ObjectID(user_id)
+    };
+    let search_arr_investment = {
+      "admin_id": user_id
+    };
+    let search_arr_kraken_credentials = {
+      "user_id": user_id
+    };
+
+
+
+    kraken_collection = 'kraken_credentials'
+    binance_collection = 'users'
+    investment_collection = 'user_investment_'+exchange
+
+
+
+    var updateArray = {
+      'is_api_key_valid'      :  "yes",
+      'count_invalid_api'     :  0,
+      'account_block'         :  'no',
+      'api_key_valid_checking': new Date()
+    };
+
+
+
 
       var data = await verify_user_info(api_key, user_ip, user_id, exchange)
       if(data.success){
-          res.status(200).send({
-              "success": true,
-              "status": 200,
-              "message": "Valid Api Key"
-          })
+
+
+        var update_on_user_investment_binance_collection = await db.collection(investment_collection).updateOne(search_arr_investment, {$set: {'exchange_enabled':'yes'}});
+        if(exchange == 'binance' ){
+          var update_on_binance_collection = await db.collection(binance_collection).updateOne(search_arr, {$set: updateArray});
+        } else {
+          var update_on_kraken_collection = await db.collection(kraken_collection).updateOne(search_arr_kraken_credentials, {$set: updateArray});
+        }
+        res.status(200).send({
+            "success": true,
+            "status": 200,
+            "message": "Valid Api Key"
+        })
       } else {
 
 
