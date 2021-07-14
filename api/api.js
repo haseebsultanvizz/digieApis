@@ -12248,6 +12248,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
                         if(data.success){
                           var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes'}});
                           var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date()}});
+                          await update_user_wallet_binance(user_id)
                             res.status(200).send({
                                 "success": true,
                                 "status": 200,
@@ -33053,6 +33054,69 @@ router.post('/sellCostAvgOrder_new', auth_token.required, async (req, resp) => {
     }
 
 }) //End of sellCostAvgOrder_new
+
+
+
+function update_user_wallet_binance(user_id){
+    return new Promise((resolve) => {
+        var options = {
+            method: 'POST',
+            url: 'https://ip1.digiebot.com/apiKeySecret/update_user_vallet',
+            json: {
+                user_id:user_id
+            },
+        };
+        request(options, function (error, response, body) {
+            if (error) {
+                resolve({
+                    'success': false,
+                    'message': 'Something went wrong.'
+                });
+            } else {
+                resolve({
+                    "success": true,
+                    "body": body
+                })
+            }
+        })
+    })
+}
+
+// update_user_wallet_binance
+router.post('/update_user_wallet_binance', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
+
+    let data = await update_user_wallet_binance(user_id);
+
+    if(data.sucess == true){
+        resp.status(200).send({
+            success: true,
+            message: 'User wallet Updated Successfully Binance'
+        })
+    } else {
+        resp.status(201).send({
+            success: false,
+            message: 'Respose False From Backend side'
+        })
+    }
+
+
+
+
+
+
+}) //End of update_user_wallet_binance
 
 
 // Huzaifa Ends Here
