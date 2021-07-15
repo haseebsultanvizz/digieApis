@@ -33100,17 +33100,14 @@ function update_user_wallet_binance(user_id){
             },
         };
         request(options, function (error, response, body) {
-            // console.log(body)
-            if (error) {
+            console.log(body)
+            if (body.success == false) {
                 resolve({
                     'success': false,
                     'message': 'Something went wrong.'
                 });
             } else {
-                resolve({
-                    "success": true,
-                    "body": body
-                })
+                resolve(body)
             }
         })
     })
@@ -33136,7 +33133,7 @@ router.post('/update_user_wallet_binance', auth_token.required, async (req, resp
 
     let data = await update_user_wallet_binance(user_id);
 
-    if(data.sucess == true){
+    if(data.success == true){
         resp.status(200).send({
             success: true,
             message: 'User wallet Updated Successfully Binance'
