@@ -13485,7 +13485,7 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
         resp.status(200).send({
             success: true,
             status: 200,
-            data:arr_mobile
+            kraken_data:arr_mobile
         })
     } else {
         resp.status(200).send({
