@@ -13444,20 +13444,20 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
 
     // Second Secret Key
     if(krakenCredentials2 == false){
-      obj['api_key_secondary'] = '';
-      obj2_mobile['api_key_secondary'] = '';
+      obj['api_key'] = '';
+      obj2_mobile['api_key'] = '';
     } else {
-      obj['api_key_secondary'] = krakenCredentials2
-      obj2_mobile['api_key_secondary'] = krakenCredentials2
+      obj['api_key'] = krakenCredentials2
+      obj2_mobile['api_key'] = krakenCredentials2
     }
 
     // Third Secret Key
     if(krakenCredentials3 == false){
-      obj['api_key_third_key'] = '';
-      obj3_mobile['api_key_third_key'] = '';
+      obj['api_key'] = '';
+      obj3_mobile['api_key'] = '';
     } else {
-      obj['api_key_third_key'] = krakenCredentials3
-      obj3_mobile['api_key_third_key'] = krakenCredentials3
+      obj['api_key'] = krakenCredentials3
+      obj3_mobile['api_key'] = krakenCredentials3
     }
 
 
@@ -13466,8 +13466,8 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
     obj['api_secret_third_key'] = '';
 
     obj1_mobile['api_secret'] = ''
-    obj2_mobile['api_secret_secondary'] = ''
-    obj3_mobile['api_secret_third_key'] = ''
+    obj2_mobile['api_secret'] = ''
+    obj3_mobile['api_secret'] = ''
 
 
     var arr = [];
