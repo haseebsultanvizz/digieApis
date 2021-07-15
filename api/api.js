@@ -13417,6 +13417,7 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
 
     var user_id = req.body.user_id;
     var trading_ip = req.body.trading_ip;
+    var interface = typeof (req.body.interface != 'undefined') ? req.body.interface : 'web';
     var krakenCredentials1 = await getKrakenCredentials(trading_ip, user_id);
     var krakenCredentials2 = await getKrakenCredentials2(trading_ip, user_id);
     var krakenCredentials3 = await getKrakenCredentials3(trading_ip, user_id);
@@ -13460,9 +13461,20 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
     arr.push(obj);
 
 
-    resp.status(200).send({
-        response: arr
-    })
+
+    if(interface == 'mobile'){
+        resp.status(200).send({
+            success: true,
+            status: 200,
+            data:obj
+        })
+    } else {
+        resp.status(200).send({
+            response: arr
+        })
+    }
+
+
 
 }) //End of getKrakenCredentials
 
@@ -33059,6 +33071,7 @@ router.post('/sellCostAvgOrder_new', auth_token.required, async (req, resp) => {
 
 
 function update_user_wallet_binance(user_id){
+    // console.log(user_id)
     return new Promise((resolve) => {
         var options = {
             method: 'POST',
@@ -33068,6 +33081,7 @@ function update_user_wallet_binance(user_id){
             },
         };
         request(options, function (error, response, body) {
+            // console.log(body)
             if (error) {
                 resolve({
                     'success': false,
