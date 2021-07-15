@@ -33115,9 +33115,11 @@ function update_user_wallet_binance(user_id){
         })
     })
 }
-
 // update_user_wallet_binance
 router.post('/update_user_wallet_binance', auth_token.required, async (req, resp) => {
+
+
+
 
 
     var user_exist = await getUserByID(req.payload.id);
@@ -33129,6 +33131,7 @@ router.post('/update_user_wallet_binance', auth_token.required, async (req, resp
         return false;
     }
 
+    var user_id = req.body.user_id
 
 
     let data = await update_user_wallet_binance(user_id);
@@ -33151,6 +33154,66 @@ router.post('/update_user_wallet_binance', auth_token.required, async (req, resp
 
 
 }) //End of update_user_wallet_binance
+
+
+function updateUserTradeHistory(user_id, exchange){
+    // console.log(user_id)
+    return new Promise((resolve) => {
+        var options = {
+            method: 'POST',
+            url: 'https://ip1.digiebot.com/apiKeySecret/updateUserTradeHistory',
+            json: {
+                user_id:user_id,
+                exchange:exchange
+            },
+        };
+        request(options, function (error, response, body) {
+            console.log('Lo gi',body)
+            if (error) {
+                resolve({
+                    'success': false,
+                    'message': 'Something went wrong.'
+                });
+            } else {
+                resolve({
+                    "success": true,
+                    "body": body
+                })
+            }
+        })
+    })
+}
+
+router.post('/updateUserTradeHistory', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+    var user_id = req.body.user_id;
+    var exchange = req.body.exchange;
+
+    let data = await updateUserTradeHistory(user_id, exchange);
+
+    if(data.sucess == true){
+        resp.status(200).send({
+            success: true,
+            message: 'User wallet Updated Successfully Binance'
+        })
+    } else {
+        resp.status(201).send({
+            success: false,
+            message: 'Respose False From Backend side'
+        })
+    }
+
+}) //End of updateUserTradeHistory
 
 
 // Huzaifa Ends Here
