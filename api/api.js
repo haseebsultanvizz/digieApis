@@ -33157,7 +33157,7 @@ function updateUserTradeHistory(user_id, exchange){
     // console.log(user_id)
     return new Promise((resolve) => {
         var options = {
-            method: 'POST',
+            method: 'GET',
             url: 'https://ip1.digiebot.com/apiKeySecret/updateUserTradeHistory',
             json: {
                 user_id:user_id,
