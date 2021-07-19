@@ -12034,6 +12034,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                                 'email_address',
                                 'phone_number',
                                 // 'password',
+                                'permission_for',
                                 'timezone',
                                 'default_exchange',
                                 'trading_ip',
@@ -12244,11 +12245,14 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
                         var apisecret = update_arr['api_secret'].substring(0, 5);
 
 
+                        var permision_for = update_arr['pass_phrase']
+
+
 
 
                         if(data.success){
-                          var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes'}});
-                          var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date()}});
+                          var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes', 'permission_for': permision_for}});
+                          var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date(), 'permission_for': permision_for}});
                           await update_user_wallet_binance(user_id)
                             res.status(200).send({
                                 "success": true,
