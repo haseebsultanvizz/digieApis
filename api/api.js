@@ -33089,12 +33089,46 @@ router.post('/sellCostAvgOrder_new', auth_token.required, async (req, resp) => {
 
 
 
-function update_user_wallet_binance(user_id){
+function update_user_wallet_binance(user_id, trading_ip){
     // console.log(user_id)
+
+
+
+
+
+
+
     return new Promise((resolve) => {
+      let ip = '35.153.9.225'
+      if(trading_ip == '3.227.143.115'){
+        ip = 'ip1.digiebot.com'
+      } else if(trading_ip == '3.228.180.22'){
+        ip = 'ip2.digiebot.com'
+      } else if(trading_ip == '3.226.226.217'){
+        ip = 'ip3.digiebot.com'
+      } else if(trading_ip == '3.228.245.92'){
+        ip = 'ip4.digiebot.com'
+      } else if(trading_ip == '35.153.9.225'){
+        ip = 'ip5.digiebot.com'
+      }
+
+
+      let url = 'https://'+ip+'/apiKeySecret/update_user_vallet'
+
+
+
+
+
+
+
+
+
+
+      console.log(url)
+
         var options = {
             method: 'POST',
-            url: 'https://ip1.digiebot.com/apiKeySecret/update_user_vallet',
+            url: url,
             json: {
                 user_id:user_id
             },
@@ -33128,10 +33162,11 @@ router.post('/update_user_wallet_binance', auth_token.required, async (req, resp
         return false;
     }
 
-    var user_id = req.body.user_id
+    var user_id = req.body.user_id;
+    var trading_ip = req.body.trading_ip;
 
 
-    let data = await update_user_wallet_binance(user_id);
+    let data = await update_user_wallet_binance(user_id, trading_ip);
 
     if(data.success == true){
         resp.status(200).send({
