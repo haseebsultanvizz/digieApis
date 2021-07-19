@@ -33124,7 +33124,7 @@ function update_user_wallet_binance(user_id, trading_ip){
 
 
 
-      console.log(url)
+      // console.log(url)
 
         var options = {
             method: 'POST',
