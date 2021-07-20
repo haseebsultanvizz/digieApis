@@ -33172,9 +33172,6 @@ router.post('/update_user_wallet_binance', auth_token.required, async (req, resp
 
     let data = await update_user_wallet_binance(user_id, trading_ip);
 
-
-    con
-
     if(data.success == true){
         resp.status(200).send({
             success: true,
