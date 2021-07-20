@@ -11794,7 +11794,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-              // console.log(body,api_key, exchange, 'BODY in user info')
+              console.log(body,api_key, exchange, 'BODY in user info')
                 resolve(body);
             } else {
               if(body){
@@ -11860,7 +11860,7 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
         conn.then(async db => {
           var update_on_user_investment_binance_collection = await db.collection(investment_collection).updateOne(search_arr_investment, {$set: {'exchange_enabled':'yes'}});
           if(exchange == 'binance' ){
-            await update_user_wallet_binance(user_id)
+            await update_user_wallet_binance(user_id, user_ip)
             var update_on_binance_collection = await db.collection(binance_collection).updateOne(search_arr, {$set: updateArray});
           } else {
             var update_on_kraken_collection = await db.collection(kraken_collection).updateOne(search_arr_kraken_credentials, {$set: updateArray});
@@ -12253,7 +12253,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
                         if(data.success){
                           var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes', 'permission_for': permision_for}});
                           var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date(), 'permission_for': permision_for}});
-                          await update_user_wallet_binance(user_id)
+                          await update_user_wallet_binance(user_id, update_arr['trading_ip'])
                             res.status(200).send({
                                 "success": true,
                                 "status": 200,
@@ -33094,7 +33094,7 @@ router.post('/sellCostAvgOrder_new', auth_token.required, async (req, resp) => {
 
 
 function update_user_wallet_binance(user_id, trading_ip){
-    // console.log(user_id)
+    console.log(trading_ip)
 
 
 
@@ -33128,7 +33128,7 @@ function update_user_wallet_binance(user_id, trading_ip){
 
 
 
-      // console.log(url)
+      console.log(url, 'update_balace')
 
         var options = {
             method: 'POST',
@@ -33171,6 +33171,9 @@ router.post('/update_user_wallet_binance', auth_token.required, async (req, resp
 
 
     let data = await update_user_wallet_binance(user_id, trading_ip);
+
+
+    con
 
     if(data.success == true){
         resp.status(200).send({
