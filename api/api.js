@@ -146,7 +146,7 @@ async function generatejwtToken(user_id, user_name){
     return new Promise(async function (resolve, reject) {
     var today = new Date();
       var exp = new Date(today);
-      exp.setDate(today.getDate() + 60);
+      exp.setDate(today.getDate() + 7);
 
       let token =  jwt.sign({
         id: user_id,
@@ -33248,6 +33248,53 @@ router.post('/updateUserTradeHistory', auth_token.required, async (req, resp) =>
             message: 'Respose False From Backend side'
         })
     }
+
+}) //End of updateUserTradeHistory
+
+
+
+router.post('/getUserData', auth_token.required, async (req, resp) => {
+
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+
+    var user_id = req.body.user_id;
+
+
+    conn.then(db => {
+        let search_arr = {
+            "_id": ObjectID(user_id)
+        };
+
+        let array = {}
+        db.collection("users").findOne(search_arr, async function (err, data) {
+
+            if (err) throw err;
+            if (data != undefined || data != null) {
+              console.log(data)
+                resp.status(200).send({
+                    "success": true,
+                    "is_api_key_valid": data['is_api_key_valid'],
+                    "last_key_updated_date": data['info_modified_date'],
+                    "message": "User data against _id " + user_id + " has been fetched successfully"
+                })
+            } else {
+                resp.status(201).send({
+                    "success": false,
+                    "message": "Something Went Wrong"
+                })
+            }
+
+        })
+    })
 
 }) //End of updateUserTradeHistory
 
