@@ -33279,7 +33279,6 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
 
             if (err) throw err;
             if (data != undefined || data != null) {
-              console.log(data)
                 resp.status(200).send({
                     "success": true,
                     "is_api_key_valid": data['is_api_key_valid'],
