@@ -23596,7 +23596,7 @@ router.post('/updateDailyActualTradeAbleAutoTradeGen', auth_token.required, asyn
                     // await updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, application_mode)
 
 
-                    await updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, application_mode)
+                    await updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, application_mode, req)
 
                     // await findLimitExceedUsers(user_id, exchange, application_mode)
                 }
@@ -24412,7 +24412,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
     })
 }
 
-async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, application_mode = 'live') {
+async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, application_mode = 'live', req='') {
     return new Promise(async (resolve) => {
 
         // console.log('************** Cron Testing ****************')
@@ -24456,7 +24456,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, ap
                 'dailTradeAbleBalancePercentage': dailTradeAbleBalancePercentage,
             }
 
-            let result = await newAtgApiCall(data)
+            let result = await newAtgApiCall(data, req)
 
             if (result) {
 
@@ -24757,7 +24757,7 @@ router.get('/findCustomPackageVal', auth_token.required, async (req,res)=>{
     res.send({})
 })
 
-async function is_trade_limit_exceeded(user_id, exchange) {
+async function is_trade_limit_exceeded(user_id, exchange, req='') {
     return new Promise(async (resolve) => {
 
         var db = await conn
@@ -24788,7 +24788,7 @@ async function is_trade_limit_exceeded(user_id, exchange) {
                 'dailTradeAbleBalancePercentage': dailTradeAbleBalancePercentage,
             }
 
-            let result = await newAtgApiCall(reqObj)
+            let result = await newAtgApiCall(reqObj, req)
             let data = typeof result != 'undefined' && typeof result.data != 'undefined' ? result.data : false
 
             if(data === false){
@@ -24907,7 +24907,7 @@ router.post('/is_trade_limit_exceeded', auth_token.required, async (req, res)=>{
     }
     let user_id = req.body.user_id
     let exchange = req.body.exchange
-    let trade_limit_exceeded = await is_trade_limit_exceeded(user_id, exchange)
+    let trade_limit_exceeded = await is_trade_limit_exceeded(user_id, exchange, req)
     if (trade_limit_exceeded){
         res.send({
             'status':true,
