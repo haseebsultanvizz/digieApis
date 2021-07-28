@@ -12993,7 +12993,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     var interface = typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'ios' : 'other';
 
 
-
+    console.log('-=-=-=-=-=-=-=-=-=-', interface)
 
     if(interface== 'ios'){
         var key1 = decrypt(api_key)
@@ -13018,7 +13018,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     api_key = api_key.trim()
     api_secret = api_secret.trim()
 
-    // console.log(api_key, api_secret)
+    console.log(api_key, api_secret)
     // return false;
 
     var data = await add_user_info_kraken1(trading_ip,user_id,api_key,api_secret);
