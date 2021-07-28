@@ -12993,7 +12993,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     var interface = typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'ios' : 'other';
 
 
-    console.log('-=-=-=-=-=-=-=-=-=-', interface)
+    console.log('-=-=-=-=-=-=-=-=-=-', interface, api_key)
 
     if(interface== 'ios'){
         var key1 = decrypt(api_key)
