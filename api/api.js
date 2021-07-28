@@ -12168,6 +12168,16 @@ async function add_user_info(user_ip, admin_id, api_key, api_secret){
     });
 }
 
+const cry = require('crypto');
+
+function decrypt(text) {
+    let encryptedText = Buffer.from(text, 'Base64');
+    let decipher = cry.createDecipheriv('aes-128-cbc', Buffer.from('digiebot_trading'), 'digiebot_trading');
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+}
+
 //post call for edit user info
 router.post('/update_user_info', auth_token.required, async function (req, res, next) {
 
@@ -12183,6 +12193,9 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
     var post_data = req.body;
+
+    // console.log(post_data['interface'])
+    post_data['interface'] = typeof post_data['interface'] != 'undefined' && post_data['interface'] != '' ? 'ios' : 'other';
 
 
     // console.log(post_data)
@@ -12211,7 +12224,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
                         update_arr['trading_ip'] = data['trading_ip'];
 
-                        let fieldsArr = ['api_key', 'api_secret', 'pass_phrase', 'trading_ip', 'user_id']
+                        let fieldsArr = ['api_key', 'api_secret', 'pass_phrase', 'trading_ip', 'user_id', 'interface']
                         for (let [key, value] of Object.entries(update_arr)) {
                             if (!fieldsArr.includes(key)) {
                                 delete update_arr[key]
@@ -12223,13 +12236,24 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
                         // console.log(update_arr )
 
 
-                        var key1  = CryptoJS.AES.decrypt(update_arr['api_key'], 'digiebot_trading');
-                        update_arr['api_key'] = key1.toString(CryptoJS.enc.Utf8);
+
+                        if(update_arr['interface'] == 'ios'){
+                          var key1 = decrypt(update_arr['api_key'])
+                          update_arr['api_key'] = key1;
+                          var secret1 = decrypt(update_arr['api_secret'])
+                          update_arr['api_secret'] = secret1;
+                        } else {
+                          var key1  = CryptoJS.AES.decrypt(update_arr['api_key'], 'digiebot_trading');
+                          update_arr['api_key'] = key1.toString(CryptoJS.enc.Utf8);
 
 
 
-                        var secret1  = CryptoJS.AES.decrypt(update_arr['api_secret'], 'digiebot_trading');
-                        update_arr['api_secret'] = secret1.toString(CryptoJS.enc.Utf8);
+                          var secret1  = CryptoJS.AES.decrypt(update_arr['api_secret'], 'digiebot_trading');
+                          update_arr['api_secret'] = secret1.toString(CryptoJS.enc.Utf8);
+                        }
+
+
+
 
 
 
