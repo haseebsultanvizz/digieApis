@@ -13528,7 +13528,7 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
     arr_mobile = [];
     arr_mobile.push(obj1_mobile)
     arr_mobile.push(obj2_mobile)
-    arr_mobile.push(obj3_mobile)
+    // arr_mobile.push(obj3_mobile)
 
 
 
