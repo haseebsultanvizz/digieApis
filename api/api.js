@@ -13186,7 +13186,7 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
 
 
 
-    // console.log(api_key, api_secret)
+    console.log(api_key, api_secret)
     // return false;
 
 
