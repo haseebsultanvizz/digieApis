@@ -12987,17 +12987,28 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     var api_key = req.body.api_key;
     var api_secret = req.body.api_secret;
     var trading_ip = req.body.trading_ip;
+    var interface = typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'ios' : 'other';
 
 
 
 
-    var key1  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
-    api_key = key1.toString(CryptoJS.enc.Utf8);
+    if(interface== 'ios'){
+        var key1 = decrypt(api_key)
+        api_key = key1;
+        var secret1 = decrypt(api_secret)
+        api_secret = secret1;
+    } else {
+        var key1  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
+        api_key = key1.toString(CryptoJS.enc.Utf8);
 
 
 
-    var secret1  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
-    api_secret = secret1.toString(CryptoJS.enc.Utf8);
+        var secret1  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
+        api_secret = secret1.toString(CryptoJS.enc.Utf8);
+    }
+
+
+
 
 
 
@@ -13148,14 +13159,26 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
     var api_key = req.body.api_key_secondary;
     var api_secret = req.body.api_secret_secondary;
     var trading_ip = req.body.trading_ip;
-
-    var key2  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
-    api_key = key2.toString(CryptoJS.enc.Utf8);
+    var interface = typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'ios' : 'other';
 
 
 
-    var secret2  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
-    api_secret = secret2.toString(CryptoJS.enc.Utf8);
+
+    if(interface== 'ios'){
+        var key2 = decrypt(api_key)
+        api_key = key2;
+        var secret2 = decrypt(api_secret)
+        api_secret = secret2;
+    } else {
+        var key2  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
+        api_key = key2.toString(CryptoJS.enc.Utf8);
+
+
+
+        var secret2  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
+        api_secret = secret2.toString(CryptoJS.enc.Utf8);
+    }
+
 
 
 
