@@ -12272,7 +12272,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
                         var permision_for = update_arr['pass_phrase']
 
 
-                        console.log(data, 'Huzaifa binance Data ', update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'])
+                        // console.log(data, 'Huzaifa binance Data ', update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'])
 
 
 
