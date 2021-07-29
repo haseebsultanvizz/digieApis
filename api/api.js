@@ -321,6 +321,7 @@ router.post('/authenticate', async function (req, resp, next) {
 
 
             pass = pass.trim();
+            username = username.trim();
             //Convert password to md5
             let md5Pass = md5(pass);
             let where = {};
@@ -13165,7 +13166,7 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
     var interface = typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'ios' : 'other';
 
 
-    console.log(interface, api_key, api_secret, '-=-=-=-=-=-=-=-=-=-=-')
+    // console.log(interface, api_key, api_secret, '-=-=-=-=-=-=-=-=-=-=-')
 
     if(interface== 'ios'){
         var key2 = decrypt(api_key)
@@ -13186,7 +13187,7 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
 
 
 
-    console.log(api_key, api_secret)
+    // console.log(api_key, api_secret)
     // return false;
 
 
@@ -18776,6 +18777,9 @@ async function runDailyLimitUpdateCron(user_id, exchange){
         let where = {
             'user_id': user_id,
         }
+
+
+        // console.log(user_id, exchange, limit_collection)
         let dailyLimit = await db.collection(limit_collection).find(where).toArray()
 
         // console.log('CRONE 11111 ============================ ', dailyLimit)
@@ -18840,6 +18844,9 @@ async function runDailyLimitUpdateCron(user_id, exchange){
             }
             var apiResult = await customApiRequest(reqObj)
         }
+
+
+        // console.log('Before Cron 2')
 
         //Hit Cron2
         var cron_name = exchange == 'binance' ? 'unset_pick_parent_based_on_base_currency_daily_limit' : 'unset_pick_parent_based_on_base_currency_daily_limit_' + exchange
@@ -19103,11 +19110,16 @@ async function createAutoTradeParents(settings){
             //     console.log('no')
             // }
             // return false
-
+            // if(coin == 'BTCUSDT'){
+            //   console.log(quantity, minReqQty)
+            // }
             if (quantity < minReqQty) {
                 //Create trades with minReqQty
                 for (let index in bots){
                   console.log(i)
+                  // if(coin == 'BTCUSDT'){
+                  //   console.log(quantity, minReqQty)
+                  // }
                     level = bots[index]
 
                     // IF Replace Manual Order is NO
@@ -19219,6 +19231,9 @@ async function createAutoTradeParents(settings){
                 //Create trades with defined quantity
                 for (let index in bots) {
                     console.log(i)
+                    // if(coin == 'BTCUSDT'){
+                    //   console.log(quantity, minReqQty)
+                    // }
                     level = bots[index]
 
                     // IF Replace Manual Order is NO
@@ -19361,6 +19376,9 @@ async function createAutoTradeParents(settings){
                 'modified_date': new Date()
             };
             let parents = await db.collection(collectionName).find(filter).project({ '_id': 1, 'application_mode': 1, 'created_date': 1 }).toArray()
+
+
+            // console.log('Working Till there', parents.length)
             if (parents.length > 0) {
                 let deleted = await db.collection(collectionName).updateMany(filter, set)
 
@@ -19377,12 +19395,16 @@ async function createAutoTradeParents(settings){
             }
         }
 
+
+
+        // console.log('Before remove duplicate')
         //TODO: cancel duplicate orders if loop end here
         if (typeof remove_duplicates != 'undefined' && remove_duplicates == 'yes' && (coins.length * bots.length) == keepParentIdsArr.length) {
             removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode, keepParentIdsArr)
         }
 
 
+        // console.log('Before run DailyLimitCron')
         //send update Daily trade limit call on ATG update
         let runDailyCron = await runDailyLimitUpdateCron(user_id, exchange)
 
