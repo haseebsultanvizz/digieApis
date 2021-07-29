@@ -33339,24 +33339,45 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
 
 
     var user_id = req.body.user_id;
+    var exchange = req.body.exchange;
 
 
     conn.then(db => {
-        let search_arr = {
-            "_id": ObjectID(user_id)
-        };
+
+        if(exchange == 'binance'){
+          var search_arr = {
+              "_id": ObjectID(user_id)
+          };
+        } else{
+          var search_arr = {
+            "user_id": user_id
+          };
+        }
 
         let array = {}
-        db.collection("users").findOne(search_arr, async function (err, data) {
+        var collectionName = exchange == 'binance' ? 'users' : 'kraken_credentials';
+
+        console.log(collectionName, exchange)
+        db.collection(collectionName).findOne(search_arr, async function (err, data) {
 
             if (err) throw err;
             if (data != undefined || data != null) {
+              if(exchange == 'binance'){
                 resp.status(200).send({
                     "success": true,
                     "is_api_key_valid": data['is_api_key_valid'],
                     "last_key_updated_date": data['info_modified_date'],
                     "message": "User data against _id " + user_id + " has been fetched successfully"
                 })
+              } else {
+                resp.status(200).send({
+                  "success": true,
+                  "is_api_key_valid": data['is_api_key_valid'],
+                  "last_key_updated_date_kraken1": data['api_key_valid_checking'],
+                  "last_key_updated_date_kraken2": data['modified_date_secondary'],
+                  "message": "User data against _id " + user_id + " has been fetched successfully"
+                })
+              }
             } else {
                 resp.status(201).send({
                     "success": false,
