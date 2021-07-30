@@ -18610,7 +18610,7 @@ async function checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode, trad
                     'updated_date': new Date(),
                 }
                 if (await coinAutoBuy(buyArr, exchange)) {
-                    hit_auto_buy_cron(user_id, exchange, trading_id)
+                    hit_auto_buy_cron(user_id, exchange)
                 }
             }
         }
@@ -21931,8 +21931,8 @@ router.post('/hit_auto_buy_cron', auth_token.required, async (req, res) => {
         });
         return false;
     }
-    if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined' && typeof req.body.trading_ip != 'undefined'){
-        hit_auto_buy_cron(req.body.user_id, req.body.exchange, req.body.trading_ip)
+    if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined'){
+        hit_auto_buy_cron(req.body.user_id, req.body.exchange)
     } else {
         res.send({
             status:false,
@@ -21948,7 +21948,7 @@ router.post('/hit_auto_buy_cron', auth_token.required, async (req, res) => {
 })//end hit_auto_buy_cron
 
 //hit_auto_buy_cron
-async function hit_auto_buy_cron(user_id='', exchange, trading_ip='') {
+async function hit_auto_buy_cron(user_id='', exchange) {
 
     conn.then(async (db) => {
         //updated_date 2 days before
@@ -21963,10 +21963,19 @@ async function hit_auto_buy_cron(user_id='', exchange, trading_ip='') {
 
         let collectionName = exchange == 'binance' ? 'auto_buy' : 'auto_buy_' + exchange
         let autoBuyUsers = await db.collection(collectionName).find(where).limit(5).toArray()
+
         if (autoBuyUsers.length > 0){
             let count = autoBuyUsers.length
             for (let i = 0; i < count; i++){
+
                 let obj = autoBuyUsers[i]
+
+                var newObj = {};
+                newObj['_id'] = new ObjectID(obj['admin_id'])
+                let userTrading_IP = await db.collection('users').findOne(newObj)
+
+                var trading_ip = userTrading_IP['trading_ip']
+
 
                 let buy_currency = obj['buy_currency']
                 let auto_buy = obj['auto_buy']
