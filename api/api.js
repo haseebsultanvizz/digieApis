@@ -18446,6 +18446,7 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
     let exchange = req.body.exchange
     let dataArr = req.body.data
     let application_mode = req.body.application_mode
+    let trading_ip = req.body.trading_ip
     // let exchangesArr = ['binance', 'bam', 'kraken']
 
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != '') {
@@ -18496,7 +18497,7 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
 
                 saveATGLog(user_id, exchange, 'update', 'Auto trade settings update manually successful', application_mode)
 
-                await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode)
+                await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode, trading_ip)
 
                 if(application_mode == 'live'){
                     await createAutoTradeParents(autoTradeData)
@@ -18559,7 +18560,7 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
 
                 saveATGLog(user_id, exchange, 'new', 'Auto trade settings added manually successful', application_mode)
 
-                await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode)
+                await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode, trading_ip)
 
                 if (application_mode == 'live') {
 
@@ -18587,7 +18588,7 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
 
 })//end saveAutoTradeSettings
 
-async function checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode){
+async function checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode, trading_id=''){
     return new Promise(async resolve=>{
         //set BNB if not already set
         if ((exchange == 'binance' || exchange == 'bam') && application_mode == 'live') {
@@ -18609,7 +18610,7 @@ async function checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode){
                     'updated_date': new Date(),
                 }
                 if (await coinAutoBuy(buyArr, exchange)) {
-                    hit_auto_buy_cron(user_id, exchange)
+                    hit_auto_buy_cron(user_id, exchange, trading_id)
                 }
             }
         }
@@ -21646,6 +21647,8 @@ router.post('/buyCoin', auth_token.required, async (req, res) => {
         let trigger_buy_usdt_worth = data.trigger_buy_usdt_worth
         let auto_buy_usdt_worth = data.auto_buy_usdt_worth
 
+        let trading_ip = data.auto_buy_usdt_worth
+
         let created_date = new Date()
         let updated_date = new Date()
 
@@ -21684,7 +21687,7 @@ router.post('/buyCoin', auth_token.required, async (req, res) => {
 
                 //Update or Insert CoinAutoBuy settings
                 if (await coinAutoBuy(buyArr, exchange)){
-                    hit_auto_buy_cron(admin_id, exchange)
+                    hit_auto_buy_cron(admin_id, exchange, trading_ip)
                     res.send({
                         'status': true,
                         'message': 'Auto Buy settings saved successfully.'
@@ -21719,7 +21722,7 @@ router.post('/buyCoin', auth_token.required, async (req, res) => {
                             'created_date': created_date,
                         }
                         //TODO: send for buyNow
-                        if(await coinBuyNow(buyArr, exchange, 'buyNow')){
+                        if(await coinBuyNow(buyArr, exchange, 'buyNow', trading_ip)){
                             res.send({
                                 'status': true,
                                 'message': 'Buy now request sent successfully.'
@@ -21745,7 +21748,7 @@ router.post('/buyCoin', auth_token.required, async (req, res) => {
 })//End buyCoin
 
 //coinBuyNow
-async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
+async function coinBuyNow(buyArr, exchange, buyType='autoBuy', trading_ip='') {
     //Hit API request for coin buy
     if (typeof buyArr.user_id != 'undefined' && buyArr.user_id != '' && typeof buyArr.coin != 'undefined' && buyArr.coin != '' && typeof buyArr.quantity != 'undefined' && buyArr.quantity != '' && typeof buyArr.currency != 'undefined' && buyArr.currency != ''){
 
@@ -21767,10 +21770,31 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy') {
 
         if(exchange == 'binance'){
             // console.log(exchange)
+
+
+            let url_binance = ''
+            if (typeof trading_ip != 'undefined' && trading_ip != ''){
+                if(trading_ip == '3.227.143.115'){
+                    ip_bianance = 'ip1.digiebot.com'
+                } else if(trading_ip == '3.228.180.22'){
+                    ip_bianance = 'ip2.digiebot.com'
+                } else if(trading_ip == '3.226.226.217'){
+                    ip_bianance = 'ip3.digiebot.com'
+                } else if(trading_ip == '3.228.245.92'){
+                    ip_bianance = 'ip4.digiebot.com'
+                } else if(trading_ip == '35.153.9.225'){
+                    ip_bianance = 'ip5.digiebot.com'
+                }
+                url_binance = 'https://'+ ip_bianance +'/buyBNBPost'
+            } else {
+                return false;
+            }
+
             var options = {
                 method: 'POST',
                 // url: 'http://52.22.53.12:3600/buyBNBPost',
-                url: 'http://52.7.57.119:3600/buyBNBPost',
+                // url: 'http://52.7.57.119:3600/buyBNBPost',
+                url:url_binance,
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -21907,8 +21931,13 @@ router.post('/hit_auto_buy_cron', auth_token.required, async (req, res) => {
         });
         return false;
     }
-    if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined'){
-        hit_auto_buy_cron(req.body.user_id, req.body.exchange)
+    if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined' && typeof req.body.trading_ip != 'undefined'){
+        hit_auto_buy_cron(req.body.user_id, req.body.exchange, req.body.trading_ip)
+    } else {
+        res.send({
+            status:false,
+            message:'failed',
+        })
     }
 
     res.send({
@@ -21919,7 +21948,7 @@ router.post('/hit_auto_buy_cron', auth_token.required, async (req, res) => {
 })//end hit_auto_buy_cron
 
 //hit_auto_buy_cron
-async function hit_auto_buy_cron(user_id='', exchange) {
+async function hit_auto_buy_cron(user_id='', exchange, trading_ip='') {
 
     conn.then(async (db) => {
         //updated_date 2 days before
@@ -22008,7 +22037,7 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                             'quantity': quantity,
                             'currency': buy_currency,
                         }
-                        coinBuyNow(buyArr, exchange, 'autoBuy')
+                        coinBuyNow(buyArr, exchange, 'autoBuy', trading_ip)
                     }
                 }
 
