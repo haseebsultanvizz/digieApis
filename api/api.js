@@ -25247,6 +25247,7 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
              }
              if(typeof symbol !== 'undefined' && symbol !== ''){
                 where1['symbol'] = symbol
+                where1['trigger_type'] = 'no'
              }
 
 
@@ -25269,6 +25270,7 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
             }
             if(typeof where2 !== 'undefined' && symbol !== ''){
                 where2['symbol'] = symbol
+                where2['trigger_type'] = 'no'
             }
 
 
