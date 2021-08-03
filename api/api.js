@@ -25236,6 +25236,7 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
     }
     let exchange = req.body.exchange
     let admin_id = req.body.user_id
+    let symbol = req.body.symbol
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
 
         conn.then(async (db) => {
@@ -25244,6 +25245,11 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
                 'application_mode': 'live',
                 'buy_date':{'$exists':true},
              }
+             if(typeof symbol !== 'undefined' && symbol !== ''){
+                where1['symbol'] = symbol
+             }
+
+
              let project1 = {
                  'admin_id':1,
                  'application_mode':1,
@@ -25261,6 +25267,12 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
                 'application_mode': 'live',
                 'sell_date': { '$exists': true },
             }
+            if(typeof where2 !== 'undefined' && symbol !== ''){
+                where2['symbol'] = symbol
+            }
+
+
+            console.log(where1, 'where1', where2, 'where2')
             let project2 = {
                 'admin_id': 1,
                 'application_mode': 1,
