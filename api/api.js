@@ -7910,7 +7910,8 @@ router.post('/buyOrderManually', auth_token.required, async (req, resp) => {
             var update = {};
             update['modified_date'] = new Date();
             update['is_manual_buy'] = 'yes';
-            update['buyRightAway'] == 'yes'
+            update['buyRightAway']  = 'yes';
+            update['sentforbuytoDigieiptrading']  = 'yes';
             var filter = {};
             filter['_id'] = new ObjectID(orderId);
             let collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
