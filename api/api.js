@@ -11751,6 +11751,8 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
           ip = 'ip4.digiebot.com'
         } else if(user_ip == '35.153.9.225'){
           ip = 'ip5.digiebot.com'
+        } else if(user_ip == '54.157.102.20'){
+          ip = 'ip6.digiebot.com'
         }
         url = 'https://'+ ip +'/apiKeySecret/validateapiKeySecret'
       }
@@ -11769,6 +11771,8 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
           ip = 'ip4-kraken-balance.digiebot.com'
         } else if(user_ip == '35.153.9.225'){
           ip = 'ip5-kraken-balance.digiebot.com'
+        } else if(user_ip == '54.157.102.20'){
+          ip = 'ip6-kraken-balance.digiebot.com'
         }
 
         if(kraken_id == 'second'){
@@ -11965,6 +11969,8 @@ async function get_api_secret(user_ip, admin_id){
         ip = 'ip4.digiebot.com'
       } else if(user_ip == '35.153.9.225'){
         ip = 'ip5.digiebot.com'
+      } else if(user_ip == '54.157.102.20'){
+        ip = 'ip6.digiebot.com'
       }
 
       let url = 'https://'+ ip +'/apiKeySecret/getapiKeySecret'
@@ -12139,6 +12145,8 @@ async function add_user_info(user_ip, admin_id, api_key, api_secret){
         ip = 'ip4.digiebot.com'
       } else if(user_ip == '35.153.9.225'){
         ip = 'ip5.digiebot.com'
+      } else if(user_ip == '54.157.102.20'){
+        ip = 'ip6.digiebot.com'
       }
 
       let url = 'https://'+ ip +'/apiKeySecret/saveapiKeySecret'
@@ -12843,6 +12851,8 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(user_ip == '35.153.9.225'){
       ip = 'ip5-kraken-balance.digiebot.com'
+    } else if(user_ip == '54.157.102.20'){
+      ip = 'ip6-kraken-balance.digiebot.com'
     }
 
     // let url = 'http://'+ip+
@@ -12892,6 +12902,8 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(user_ip == '35.153.9.225'){
       ip = 'ip5-kraken-balance.digiebot.com'
+    } else if(user_ip == '54.157.102.20'){
+      ip = 'ip6-kraken-balance.digiebot.com'
     }
 
     let url = 'https://'+ip+'/saveapiKeySecretKraken2';
@@ -12942,6 +12954,8 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(user_ip == '35.153.9.225'){
       ip = 'ip5-kraken-balance.digiebot.com'
+    } else if(user_ip == '54.157.102.20'){
+      ip = 'ip6-kraken-balance.digiebot.com'
     }
 
     let url = 'https://'+ip+'/saveapiKeySecretKraken3';
@@ -13572,6 +13586,8 @@ function getKrakenCredentials(trading_ip, user_id) {
           ip = 'ip4-kraken-balance.digiebot.com'
         } else if(trading_ip == '35.153.9.225'){
           ip = 'ip5-kraken-balance.digiebot.com'
+        } else if(trading_ip == '54.157.102.20'){
+          ip = 'ip6-kraken-balance.digiebot.com'
         }
 
         let url1 = 'https://'+ip+'/getapiKeySecretKraken';
@@ -13630,6 +13646,8 @@ function getKrakenCredentials2(trading_ip, user_id) {
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(trading_ip == '35.153.9.225'){
       ip = 'ip5-kraken-balance.digiebot.com'
+    } else if(trading_ip == '54.157.102.20'){
+      ip = 'ip6-kraken-balance.digiebot.com'
     }
 
     let url2 = 'https://'+ip+'/getapiKeySecretKraken2';
@@ -13676,6 +13694,8 @@ function getKrakenCredentials3(trading_ip, user_id) {
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(trading_ip == '35.153.9.225'){
       ip = 'ip5-kraken-balance.digiebot.com'
+    } else if(trading_ip == '54.157.102.20'){
+      ip = 'ip6-kraken-balance.digiebot.com'
     }
 
     let url3 = 'https://'+ip+'/getapiKeySecretKraken3';
@@ -17367,6 +17387,8 @@ async function update_user_balance(user_id, res='', auth_token='') {
         ip_bianance = 'ip4.digiebot.com'
       } else if(user[0]['trading_ip'] == '35.153.9.225'){
         ip_bianance = 'ip5.digiebot.com'
+      } else if(user[0]['trading_ip'] == '54.157.102.20'){
+        ip_bianance = 'ip6-kraken-balance.digiebot.com'
       }
       url_binance = 'https://'+ ip_bianance +'/apiKeySecret/updateUserBalance'
     }
@@ -17456,6 +17478,8 @@ async function update_user_balance(user_id, res='', auth_token='') {
             ip = 'ip4-kraken-balance.digiebot.com'
           } else if(user[0]['trading_ip'] == '35.153.9.225'){
             ip = 'ip5-kraken-balance.digiebot.com'
+          } else if(user[0]['trading_ip'] == '54.157.102.20'){
+            ip = 'ip6-kraken-balance.digiebot.com'
           }
     }
 
@@ -21784,6 +21808,8 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy', trading_ip='') {
                     ip_bianance = 'ip4.digiebot.com'
                 } else if(trading_ip == '35.153.9.225'){
                     ip_bianance = 'ip5.digiebot.com'
+                } else if(trading_ip == '54.157.102.20'){
+                    ip_bianance = 'ip6.digiebot.com'
                 }
                 url_binance = 'https://'+ ip_bianance +'/buyBNBPost'
             } else {
@@ -33238,6 +33264,8 @@ function update_user_wallet_binance(user_id, trading_ip){
         ip = 'ip4.digiebot.com'
       } else if(trading_ip == '35.153.9.225'){
         ip = 'ip5.digiebot.com'
+      } else if(trading_ip == '54.157.102.20'){
+        ip = 'ip6.digiebot.com'
       }
 
 
@@ -33425,7 +33453,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                 resp.status(200).send({
                   "success": true,
                   "is_api_key_valid": data['is_api_key_valid'],
-                  "last_key_updated_date_kraken1": data['api_key_valid_checking'],
+                  "last_key_updated_date_kraken1": data['modified_date'],
                   "last_key_updated_date_kraken2": data['modified_date_secondary'],
                   "message": "User data against _id " + user_id + " has been fetched successfully"
                 })
