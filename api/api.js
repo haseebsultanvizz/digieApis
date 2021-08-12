@@ -8245,7 +8245,7 @@ function orderReadyForBuy(buy_order_id, buy_quantity, market_value, coin_symbol,
     return new Promise((resolve) => {
         conn.then((db) => {
             var insert_arr = {};
-            insert_arr['buy_order_id'] = buy_order_id;
+            insert_arr['buy_order_id'] = new ObjectID(String(buy_order_id));
             insert_arr['buy_quantity'] = buy_quantity;
             insert_arr['market_value'] = market_value;
             insert_arr['coin_symbol'] = coin_symbol;
@@ -18037,7 +18037,7 @@ router.post('/listCurrentUserExchanges', auth_token.required, async (req, res) =
 
     let user_id = req.body.user_id
     let application_mode = req.body.application_mode
-    let exchangesArr = ['binance', 'bam', 'kraken']
+    let exchangesArr = ['binance', 'kraken']
 
     if (typeof application_mode != 'undefined' && application_mode == 'test' && typeof user_id != 'undefined' && user_id != ''){
 
