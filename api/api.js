@@ -18097,9 +18097,9 @@ router.post('/listCurrentUserExchanges', auth_token.required, async (req, res) =
                 if (binance){
                     available_exchanges.push('binance')
                 }
-                if (bam){
-                    available_exchanges.push('bam')
-                }
+                // if (bam){
+                //     available_exchanges.push('bam')
+                // }
                 if (kraken){
                     available_exchanges.push('kraken')
                 }
