@@ -18083,11 +18083,11 @@ router.post('/listCurrentUserExchanges', auth_token.required, async (req, res) =
                     binance = myPromises[0][0]
                     binance = typeof binance.api_key != 'undefined' && binance.api_key != '' && typeof binance.api_secret != 'undefined' && binance.api_secret != '' ? true : false
                 }
-                let bam = false
-                if (myPromises[1].length){
-                    bam = myPromises[1][0]
-                    bam = typeof bam.api_key != 'undefined' && bam.api_key != '' && typeof bam.api_secret != 'undefined' && bam.api_secret != '' ? true : false
-                }
+                // let bam = false
+                // if (myPromises[1].length){
+                //     bam = myPromises[1][0]
+                //     bam = typeof bam.api_key != 'undefined' && bam.api_key != '' && typeof bam.api_secret != 'undefined' && bam.api_secret != '' ? true : false
+                // }
                 let kraken = false
                 if (myPromises[2].length > 0){
                     kraken = myPromises[2][0]
