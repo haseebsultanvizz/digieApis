@@ -27819,6 +27819,14 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
                     await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_third_key': '', 'api_secret_third_key': '' } })
 
                     actionSuccess = true
+                } else {
+                    await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': '' } })
+
+                    actionSuccess = true
+                    res.send({
+                        'status': true,
+                        'message': 'Trading disabled successfully',
+                    });
                 }
             }else{
                 let collection_name = exchange+'_credentials'
