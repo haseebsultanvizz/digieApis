@@ -27687,6 +27687,78 @@ async function validate_bam_credentials_app(api_key, api_secret, token){
     })
 }
 
+
+async function remove_api_key(user_ip, user_id, exchange){
+    return new Promise(async resolve =>{
+
+
+
+        console.log(user_ip, user_id, exchange)
+
+      let ip ='';
+      let port = 2500;
+      let url;
+      // If Binance
+      if(exchange == 'binance'){
+        if(user_ip == '3.227.143.115'){
+          ip = 'ip1.digiebot.com'
+        } else if(user_ip == '3.228.180.22'){
+          ip = 'ip2.digiebot.com'
+        } else if(user_ip == '3.226.226.217'){
+          ip = 'ip3.digiebot.com'
+        } else if(user_ip == '3.228.245.92'){
+          ip = 'ip4.digiebot.com'
+        } else if(user_ip == '35.153.9.225'){
+          ip = 'ip5.digiebot.com'
+        } else if(user_ip == '54.157.102.20'){
+          ip = 'ip6.digiebot.com'
+        }
+        url = 'https://'+ ip +'/apiKeySecret/disableTrading'
+      }
+      // If Kraken
+      else if(exchange == 'kraken') {
+        if(user_ip == '3.227.143.115'){
+          ip = 'ip1-kraken-balance.digiebot.com'
+        } else if(user_ip == '3.228.180.22'){
+          ip = 'ip2-kraken-balance.digiebot.com'
+        } else if(user_ip == '3.226.226.217'){
+          ip = 'ip3-kraken-balance.digiebot.com'
+        } else if(user_ip == '3.228.245.92'){
+          ip = 'ip4-kraken-balance.digiebot.com'
+        } else if(user_ip == '35.153.9.225'){
+          ip = 'ip5-kraken-balance.digiebot.com'
+        } else if(user_ip == '54.157.102.20'){
+          ip = 'ip6-kraken-balance.digiebot.com'
+        }
+
+        url = 'https://'+ ip +'/disableTrading'
+
+      }
+
+
+
+        console.log(url);
+        var options = {
+            method: 'POST',
+            url: url,
+            json: {
+                user_id:user_id
+            },
+        };
+        request(options, function (error, response, body) {
+            // console.log(body)
+            if (body.success == false) {
+                resolve({
+                    'success': false,
+                    'message': 'Something went wrong.'
+                });
+            } else {
+                resolve(body)
+            }
+        })
+    })
+}
+
 router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
     var user_exist = await getUserByID(req.payload.id);
     // console.log(user_exist)
@@ -27699,6 +27771,7 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
 
 
     let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''
+    let user_ip = typeof req.body.trading_ip != 'undefined' && req.body.trading_ip != '' ? req.body.trading_ip : ''
     let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
     let keyNo = typeof req.body.keyNo != 'undefined' && req.body.keyNo != '' ? req.body.keyNo : ''
 
@@ -27707,52 +27780,78 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
         const db = await conn
         let actionSuccess = false
 
-        if(exchange == 'binance'){
-            await db.collection('users').updateOne({ _id: new ObjectID(user_id) }, { '$unset': { 'api_key': '', 'api_secret': ''}})
 
-            // await db.collection('user_wallet').deleteMany({'user_id': user_id})
-            await db.collection('buy_orders').updateMany({'application_mode':'live', 'admin_id': user_id, 'parent_status':'parent', 'status':{'$ne':'canceled'}}, {'$set':{'pick_parent':'no', 'pick_parent_no':'api_key_removed'}})
 
-            actionSuccess = true
-        } else if (exchange == 'kraken'){
-            if (keyNo == 'primary'){
-                await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': '' } })
 
-                actionSuccess = true
-            } else if (keyNo == 'secondary'){
-                await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_secondary': '', 'api_secret_secondary': '' } })
+        var data = await remove_api_key(user_ip, user_id, exchange)
+
+        console.log(data)
+
+        if(data.success == true){
+            if(exchange == 'binance'){
+                await db.collection('users').updateOne({ _id: new ObjectID(user_id) }, { '$unset': { 'api_key': '', 'api_secret': ''}})
+                await db.collection('buy_orders').updateMany({'application_mode':'live', 'admin_id': user_id, 'parent_status':'parent', 'status':{'$ne':'canceled'}}, {'$set':{'pick_parent':'no', 'pick_parent_no':'api_key_removed'}})
 
                 actionSuccess = true
-            } else if (keyNo == 'third'){
-                await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_third_key': '', 'api_secret_third_key': '' } })
+                res.send({
+                    'status': true,
+                    'message': 'Trading disabled successfully',
+                });
+                return false;
+            } else if (exchange == 'kraken'){
+                if (keyNo == 'primary'){
+                    await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': '' } })
+
+                    actionSuccess = true
+                    res.send({
+                        'status': true,
+                        'message': 'Trading disabled successfully',
+                    });
+                } else if (keyNo == 'secondary'){
+                    await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_secondary': '', 'api_secret_secondary': '' } })
+
+                    actionSuccess = true
+                    res.send({
+                        'status': true,
+                        'message': 'Trading disabled successfully',
+                    });
+                } else if (keyNo == 'third'){
+                    await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_third_key': '', 'api_secret_third_key': '' } })
+
+                    actionSuccess = true
+                }
+            }else{
+                let collection_name = exchange+'_credentials'
+
+                let wallet_collection = 'user_wallet_'+exchange
+                let buy_collection = 'buy_orders_'+exchange
+
+                await db.collection(collection_name).updateOne({ 'user_id': user_id }, { '$unset': { 'api_key': '', 'api_secret': '' } })
+
+                // await db.collection(wallet_collection).deleteMany({ 'user_id': user_id })
+                await db.collection(buy_collection).updateMany({ 'application_mode': 'live', 'admin_id': user_id, 'parent_status': 'parent', 'status': { '$ne': 'canceled' } }, { '$set': { 'pick_parent': 'no', 'pick_parent_no': 'api_key_removed' } })
 
                 actionSuccess = true
             }
-        }else{
-            let collection_name = exchange+'_credentials'
 
-            let wallet_collection = 'user_wallet_'+exchange
-            let buy_collection = 'buy_orders_'+exchange
-
-            await db.collection(collection_name).updateOne({ 'user_id': user_id }, { '$unset': { 'api_key': '', 'api_secret': '' } })
-
-            // await db.collection(wallet_collection).deleteMany({ 'user_id': user_id })
-            await db.collection(buy_collection).updateMany({ 'application_mode': 'live', 'admin_id': user_id, 'parent_status': 'parent', 'status': { '$ne': 'canceled' } }, { '$set': { 'pick_parent': 'no', 'pick_parent_no': 'api_key_removed' } })
-
-            actionSuccess = true
-        }
-
-        if (actionSuccess){
-            res.send({
-                'status': true,
-                'message': 'Trading disabled successfully',
-            })
-        }else{
+        } else {
             res.send({
                 'status': false,
                 'message': 'Something went wrog',
             })
         }
+
+        // if (actionSuccess){
+        //     res.send({
+        //         'status': true,
+        //         'message': 'Trading disabled successfully',
+        //     })
+        // }else{
+        //     res.send({
+        //         'status': false,
+        //         'message': 'Something went wrog',
+        //     })
+        // }
 
     } else {
         res.send({
