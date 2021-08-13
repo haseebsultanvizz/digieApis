@@ -31500,10 +31500,46 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     }
 
     let pipeline = [
+
+
         {
             '$match': {
-                'user_id': user_id,
-                '$and': [{ 'status': { '$ne':'fractionChild'}}]
+              'user_id': user_id,
+              '$and': [
+                {
+                  'status': {
+                    '$ne': 'fractionChild'
+                  }
+                }
+              ]
+            }
+        },
+        {
+            '$addFields': {
+              'convertedId': {
+                '$toObjectId': '$user_id'
+              }
+            }
+        },
+        {
+            '$lookup': {
+              'from': 'users',
+              'localField': 'convertedId',
+              'foreignField': '_id',
+              'as': 'string'
+            }
+        },
+        {
+            '$project': {
+              'username': {
+                '$arrayElemAt': [
+                  '$string.username', 0
+                ]
+              },
+              'user_id': 1,
+              'status': 1,
+              'symbol': 1,
+              'trades': 1
             }
         },
         {
