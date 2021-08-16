@@ -29340,14 +29340,14 @@ async function countTradeHistory(pipeline, collectionName) {
     let buyCountPipeLine = Object.assign([], countPipeline)
     buyCountPipeLine.push({ '$count': 'totalItems' })
     buyCountPipeLine[0]['$match']['trades.value.type'] = 'buy'
-    let buyCountRes = await db.collection(collectionName).aggregate(buyCountPipeLine).toArray()
+    let buyCountRes = await db.collection(collectionName).aggregate(buyCountPipeLine, { allowDiskUse: true }).toArray()
     buyCountRes = buyCountRes.length > 0 ? buyCountRes[0].totalItems : 0
 
     //sold count
     let soldCountPipeLine = Object.assign([], countPipeline)
     soldCountPipeLine.push({ '$count': 'totalItems' })
     soldCountPipeLine[0]['$match']['trades.value.type'] = 'sell'
-    let soldCountRes = await db.collection(collectionName).aggregate(soldCountPipeLine).toArray()
+    let soldCountRes = await db.collection(collectionName).aggregate(soldCountPipeLine, { allowDiskUse: true }).toArray()
     soldCountRes = soldCountRes.length > 0 ? soldCountRes[0].totalItems : 0
 
     return { 'buyCount': buyCountRes, 'soldCount': soldCountRes }
@@ -31617,7 +31617,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
 
     console.log(pipeline)
-    let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
+    let trades = await db.collection(collectionName).aggregate(pipeline, { allowDiskUse: true }).toArray()
 
     // console.log(trades)
     // console.log(trades[0]['trades']['value'])
