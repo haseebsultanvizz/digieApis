@@ -25326,8 +25326,8 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
             let soldPromise = db.collection(soldCollection).find(where2).sort(sort2).project(project2).limit(10).toArray()
 
             let myPromise = await Promise.all([buyPromise, soldPromise])
-            console.log(myPromise[0].length)
-            console.log(myPromise[1].length)
+            // console.log(myPromise[0].length)
+            // console.log(myPromise[1].length)
             // console.log(myPromise[0], '====>    buyPromise')
             // console.log(myPromise[1].length, '====>    soldPromise')
             let tempOrders = myPromise[0].concat(myPromise[1])
@@ -25342,7 +25342,7 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
             });
 
 
-            console.log(orders)
+            // console.log(orders)
 
             // orders = orders.slice(0, 10);
 
