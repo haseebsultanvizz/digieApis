@@ -25285,6 +25285,9 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
                  'quantity':1,
                  'purchased_price':1,
                  'buy_date':1,
+                 'status':1,
+                 'is_sell_order':1,
+                 'market_sold_price': 1
              }
             let sort1 = { 'buy_date': -1 }
             let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
@@ -25311,6 +25314,8 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
                 'market_sold_price': 1,
                 'buy_date': 1,
                 'sell_date': 1,
+                'status':1,
+                'is_sell_order':1
             }
             let sort2 = { 'sell_date': -1 }
             let soldCollection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
