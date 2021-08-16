@@ -25326,8 +25326,10 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
             let soldPromise = db.collection(soldCollection).find(where2).sort(sort2).project(project2).limit(10).toArray()
 
             let myPromise = await Promise.all([buyPromise, soldPromise])
-            console.log(myPromise[0].length, '====>    buyPromise')
-            console.log(myPromise[1].length, '====>    soldPromise')
+            console.log(myPromise[0].length)
+            console.log(myPromise[1].length)
+            // console.log(myPromise[0], '====>    buyPromise')
+            // console.log(myPromise[1].length, '====>    soldPromise')
             let tempOrders = myPromise[0].concat(myPromise[1])
 
             let orders = []
@@ -25335,11 +25337,14 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
                 order['t_date'] = typeof order['sell_date'] != 'undefined' ? order['sell_date'] : order['buy_date']
                 orders.push(order)
             })
-
             orders.sort(function (a, b) {
-                return new Date(b.t_date) - new Date(a.t_date);
+              return new Date(b.t_date) - new Date(a.t_date);
             });
-            orders = orders.slice(0, 10);
+
+
+            console.log(orders)
+
+            // orders = orders.slice(0, 10);
 
             res.send({
                 status: true,
