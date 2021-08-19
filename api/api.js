@@ -6057,10 +6057,11 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             if(tab == 'lthTab_admin' || tab == 'openTab_admin'){
                 var pricesObj = await get_current_market_prices(exchange, getBuyOrder[0]['symbol'])
                 var currentMarketPrice = pricesObj[getBuyOrder[0]['symbol']]
+                var orderPurchasePrice = getBuyOrder[0]['purchased_price'];
 
                 var percentage =  7
-                var percentageDown   = (currentMarketPrice * percentage) / 100
-                var perctDownPrice     = currentMarketPrice - percentageDown;
+                var percentageDown   = (orderPurchasePrice * percentage) / 100
+                var perctDownPrice     = orderPurchasePrice - percentageDown;
             }
 
 
