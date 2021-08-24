@@ -16973,6 +16973,92 @@ function getPercentageDiff(currentMarketPrice, purchased_price) {
 }
 
 
+
+
+router.post('/soldAll', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+    let orderType = req.body.orderType
+    let exchange = req.body.exchange
+    let order_id = req.body.order_id
+    let tab = req.body.tab
+    let action = typeof req.body.action != 'undefined' && req.body.action != '' ? req.body.action : '';
+
+    let sellNow = true
+
+    if (typeof orderType != 'undefined' && orderType != '' && typeof exchange != 'undefined' && exchange != '' && typeof order_id != 'undefined' && order_id != '') {
+
+        //get order
+        let order = await listOrderById(order_id, exchange);
+        if (order.length > 0) {
+
+            order = order[0]
+            let symbol = order['symbol']
+            //get currentMarket price
+            let coinData = await listmarketPriceMinNotationCoinArr(symbol, exchange)
+            let currentmarketPrice = coinData[symbol]['currentmarketPrice']
+            var orderObj = {};
+
+            //send sell request if costAvg child order
+            if (orderType == 'costAvgParent') {
+
+              orderObj['order_id'] = order['sell_order_id'];
+              orderObj['quantity'] = order['quantity_all'];
+              orderObj['market_price'] = currentmarketPrice;
+              orderObj['coin_symbol'] = order['symbol'];
+              orderObj['admin_id'] = order['admin_id'];
+              orderObj['buy_order_id'] = order['_id'];
+              orderObj['trigger_type'] = "barrier_percentile_trigger";
+              orderObj['order_type'] = "sell_market_order";
+              orderObj['order_status'] = "ready";
+              orderObj['cost_avg'] = "ready";
+              orderObj['global'] = "global";
+              orderObj['cost_avg_sell'] = "cost_avg_all";
+              orderObj['created_date'] = new Date();
+              orderObj['modified_date'] = new Date();
+
+
+
+             const db = await conn
+
+             let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(order['admin_id'])) }, { projection: { _id: 0, trading_ip: 1 } })
+
+            //  console.log(userObj, orderObj)
+
+             orderObj['trading_ip'] = userObj['trading_ip'];
+
+             await db.collection('ready_orders_for_sell_ip_based_cost').insertOne(orderObj);
+
+             resp.status(200).send({
+                 status: true,
+                 message: 'Order Set for Sold Completely'
+             })
+            }
+
+        } else {
+            resp.status(200).send({
+                status: false,
+                message: 'An error occured'
+            })
+        }
+    } else {
+        resp.status(200).send({
+            status: false,
+            message: 'orderType, exchange, order_id is required'
+        })
+    }
+
+}) //End of sellCostAvgOrder
+
+
 //sellCostAvgOrder
 router.post('/sellCostAvgOrder', auth_token.required, async (req, resp) => {
 
