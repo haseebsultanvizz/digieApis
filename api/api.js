@@ -18136,6 +18136,14 @@ router.post('/listCurrentUserExchanges', auth_token.required, async (req, res) =
 
     }else if (typeof user_id != 'undefined' && user_id != '') {
 
+
+        res.send({
+            status: true,
+            data: exchangesArr,
+            message: 'Exchanges found successfully.'
+        });
+        return false;
+
         conn.then(async (db) => {
 
             let settingsArr = {}
