@@ -12972,10 +12972,10 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret){
           },
           headers: {
               'content-type': 'application/json'
-          }/apiEndPoint/get_user_info
+          }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
-              // console.log(body, "get User API");
+              console.log(body, "get User API");
               if(body.success){
                 resolve(body);
               } else {
@@ -25382,7 +25382,8 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
                  'buy_date':1,
                  'status':1,
                  'is_sell_order':1,
-                 'market_sold_price': 1
+                 'market_sold_price': 1,
+                 'sell_profit_percent': 1
              }
             let sort1 = { 'buy_date': -1 }
             let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
