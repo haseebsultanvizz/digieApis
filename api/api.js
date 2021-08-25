@@ -33710,6 +33710,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                   "is_api_key_valid": data['is_api_key_valid'],
                   "last_key_updated_date_kraken1": data['modified_date'],
                   "last_key_updated_date_kraken2": data['modified_date_secondary'],
+                  "last_key_updated_date_kraken3": data['modified_date_third_key'],
                   "message": "User data against _id " + user_id + " has been fetched successfully"
                 })
               }
