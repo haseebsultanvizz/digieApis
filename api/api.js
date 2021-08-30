@@ -18240,7 +18240,7 @@ router.post('/listCurrentUserExchanges', auth_token.required, async (req, res) =
 async function getUserExchangesWithAPISet(user_id){
     return new Promise((resolve)=>{
         conn.then(async (db) => {
-            let exchangesArr = ['binance', 'bam', 'kraken']
+            let exchangesArr = ['binance', 'kraken']
             let settingsArr = {}
             exchangesArr.map(exchange => {
                 let collectionName = exchange == 'binance' ? 'users' : exchange + '_credentials'
