@@ -18290,7 +18290,7 @@ async function getUserExchangesWithAPISet(user_id){
                 if (kraken) {
                     available_exchanges.push('kraken')
                 }
-                resolve(available_exchanges)
+                resolve(exchangesArr)
             }
         })
     })
