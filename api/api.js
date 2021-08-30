@@ -18260,8 +18260,8 @@ async function getUserExchangesWithAPISet(user_id){
                     settingsArr[exchange] = db.collection(collectionName).find(where).project().toArray();
                 }
             })
-            let myPromises = await Promise.all([settingsArr.binance, settingsArr.bam, settingsArr.kraken])
-            if (myPromises[0].length == 0 && myPromises[1].length == 0 && myPromises[2].length == 0) {
+            let myPromises = await Promise.all([settingsArr.binance, settingsArr.kraken])
+            if (myPromises[0].length == 0 && myPromises[1].length == 0) {
                 resolve([])
             } else {
                 let available_exchanges = []
@@ -18270,23 +18270,23 @@ async function getUserExchangesWithAPISet(user_id){
                     binance = myPromises[0][0]
                     binance = typeof binance.api_key != 'undefined' && binance.api_key != '' && typeof binance.api_secret != 'undefined' && binance.api_secret != '' ? true : false
                 }
-                let bam = false
-                if (myPromises[1].length) {
-                    bam = myPromises[1][0]
-                    bam = typeof bam.api_key != 'undefined' && bam.api_key != '' && typeof bam.api_secret != 'undefined' && bam.api_secret != '' ? true : false
-                }
+                // let bam = false
+                // if (myPromises[1].length) {
+                //     bam = myPromises[1][0]
+                //     bam = typeof bam.api_key != 'undefined' && bam.api_key != '' && typeof bam.api_secret != 'undefined' && bam.api_secret != '' ? true : false
+                // }
                 let kraken = false
-                if (myPromises[2].length > 0){
-                    kraken = myPromises[2][0]
+                if (myPromises[1].length > 0){
+                    kraken = myPromises[1][0]
                     kraken = typeof kraken.api_key != 'undefined' && kraken.api_key != '' && typeof kraken.api_secret != 'undefined' && kraken.api_secret != '' ? true : false
                 }
 
                 if (binance) {
                     available_exchanges.push('binance')
                 }
-                if (bam) {
-                    available_exchanges.push('bam')
-                }
+                // if (bam) {
+                //     available_exchanges.push('bam')
+                // }
                 if (kraken) {
                     available_exchanges.push('kraken')
                 }
