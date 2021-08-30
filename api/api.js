@@ -15054,6 +15054,11 @@ router.post('/get_order_levels', auth_token.required, async (req, resp) => {
         });
         return false;
     }
+    var filters = {};
+    if(req.payload.id != "5c0915befc9aadaac61dd1b8" || req.payload.id !=="5c0912b7fc9aadaac61dd072")
+    {
+     filters.enable_status = 'global';   
+    }
     conn.then(async (db) => {
         levels = await db.collection('order_levels').find({}).toArray();
         resp.status(200).send({
