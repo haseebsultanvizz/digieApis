@@ -15055,10 +15055,10 @@ router.post('/get_order_levels', auth_token.required, async (req, resp) => {
         return false;
     }
     var filters = {};
-    
+
     if(req.payload.id != "5c0915befc9aadaac61dd1b8" && req.payload.id !=="5c0912b7fc9aadaac61dd072")
     {
-     filters.enable_status = 'global';   
+     filters.enable_status = 'global';
     }
     //console.log('hassan',req.payload.id,req.body);
     conn.then(async (db) => {
@@ -22103,6 +22103,7 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                 newObj['_id'] = new ObjectID(obj['admin_id'])
                 let userTrading_IP = await db.collection('users').findOne(newObj)
 
+                console.log(userTrading_IP, '-=-=-==-=-=-=-=Huzaifa')
                 var trading_ip = userTrading_IP['trading_ip']
 
 
