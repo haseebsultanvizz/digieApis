@@ -22105,7 +22105,9 @@ async function hit_auto_buy_cron(user_id='', exchange) {
 
                 console.log(newObj, 'huzaifa')
                 let userTrading_IP = await db.collection('users').findOne(newObj)
-
+                if (!userTrading_IP) {
+                  continue;
+                }
                 console.log(userTrading_IP, '-=-=-==-=-=-=-=Huzaifa')
                 var trading_ip = userTrading_IP['trading_ip']
 
