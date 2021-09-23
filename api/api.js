@@ -22101,6 +22101,9 @@ async function hit_auto_buy_cron(user_id='', exchange) {
 
                 var newObj = {};
                 newObj['_id'] = new ObjectID(obj['admin_id'])
+
+
+                console.log(newObj, 'huzaifa')
                 let userTrading_IP = await db.collection('users').findOne(newObj)
 
                 console.log(userTrading_IP, '-=-=-==-=-=-=-=Huzaifa')
