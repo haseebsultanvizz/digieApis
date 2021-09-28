@@ -11861,6 +11861,7 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
 
 
       var data = await verify_user_info(api_key, user_ip, user_id, exchange)
+      console.log(data, '-=-=--=-=-=-=-=-=-=')
       if(data.success){
 
 
@@ -11887,18 +11888,10 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
                 "message":data.error
             })
           } else {
-            res.status(201).send({
-              "success": false,
-              "status": 201,
-              "message":'Something Went Wrong'
-            })
+            res.status(201).send(data)
           }
         } else {
-          res.status(201).send({
-            "success": false,
-            "status": 201,
-            "message":'Key Not Valid or May be something went Wrong.'
-          })
+          res.status(201).send(data)
         }
       }
 
