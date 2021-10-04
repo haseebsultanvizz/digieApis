@@ -11772,7 +11772,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
         } else if(user_ip == '3.228.245.92'){
           ip = 'ip4-kraken-balance.digiebot.com'
         } else if(user_ip == '35.153.9.225'){
-          ip = 'ip5-kraken-balance.digiebot.com'
+          ip = 'ip5-kraken.digiebot.com/api/user'
         } else if(user_ip == '54.157.102.20'){
           ip = 'ip6-kraken-balance.digiebot.com'
         }
@@ -12845,7 +12845,7 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret){
     } else if(user_ip == '3.228.245.92'){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(user_ip == '35.153.9.225'){
-      ip = 'ip5-kraken-balance.digiebot.com'
+      ip = 'ip5-kraken.digiebot.com/api/user'
     } else if(user_ip == '54.157.102.20'){
       ip = 'ip6-kraken-balance.digiebot.com'
     }
@@ -12896,7 +12896,7 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret){
     } else if(user_ip == '3.228.245.92'){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(user_ip == '35.153.9.225'){
-      ip = 'ip5-kraken-balance.digiebot.com'
+      ip = 'ip5-kraken.digiebot.com/api/user'
     } else if(user_ip == '54.157.102.20'){
       ip = 'ip6-kraken-balance.digiebot.com'
     }
@@ -12948,7 +12948,7 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret){
     } else if(user_ip == '3.228.245.92'){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(user_ip == '35.153.9.225'){
-      ip = 'ip5-kraken-balance.digiebot.com'
+      ip = 'ip5-kraken.digiebot.com/api/user'
     } else if(user_ip == '54.157.102.20'){
       ip = 'ip6-kraken-balance.digiebot.com'
     }
@@ -13580,7 +13580,7 @@ function getKrakenCredentials(trading_ip, user_id) {
         } else if(trading_ip == '3.228.245.92'){
           ip = 'ip4-kraken-balance.digiebot.com'
         } else if(trading_ip == '35.153.9.225'){
-          ip = 'ip5-kraken-balance.digiebot.com'
+          ip = 'ip5-kraken.digiebot.com/api/user'
         } else if(trading_ip == '54.157.102.20'){
           ip = 'ip6-kraken-balance.digiebot.com'
         }
@@ -13640,7 +13640,7 @@ function getKrakenCredentials2(trading_ip, user_id) {
     } else if(trading_ip == '3.228.245.92'){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(trading_ip == '35.153.9.225'){
-      ip = 'ip5-kraken-balance.digiebot.com'
+      ip = 'ip5-kraken.digiebot.com/api/user'
     } else if(trading_ip == '54.157.102.20'){
       ip = 'ip6-kraken-balance.digiebot.com'
     }
@@ -13688,7 +13688,7 @@ function getKrakenCredentials3(trading_ip, user_id) {
     } else if(trading_ip == '3.228.245.92'){
       ip = 'ip4-kraken-balance.digiebot.com'
     } else if(trading_ip == '35.153.9.225'){
-      ip = 'ip5-kraken-balance.digiebot.com'
+      ip = 'ip5-kraken.digiebot.com/api/user'
     } else if(trading_ip == '54.157.102.20'){
       ip = 'ip6-kraken-balance.digiebot.com'
     }
@@ -17565,7 +17565,7 @@ async function update_user_balance(user_id, res='', auth_token='') {
           } else if(user[0]['trading_ip'] == '3.228.245.92'){
             ip = 'ip4-kraken-balance.digiebot.com'
           } else if(user[0]['trading_ip'] == '35.153.9.225'){
-            ip = 'ip5-kraken-balance.digiebot.com'
+            ip = 'ip5-kraken.digiebot.com/api/user'
           } else if(user[0]['trading_ip'] == '54.157.102.20'){
             ip = 'ip6-kraken-balance.digiebot.com'
           }
@@ -27843,7 +27843,7 @@ async function remove_api_key(user_ip, user_id, exchange){
         } else if(user_ip == '3.228.245.92'){
           ip = 'ip4-kraken-balance.digiebot.com'
         } else if(user_ip == '35.153.9.225'){
-          ip = 'ip5-kraken-balance.digiebot.com'
+          ip = 'ip5-kraken.digiebot.com/api/user'
         } else if(user_ip == '54.157.102.20'){
           ip = 'ip6-kraken-balance.digiebot.com'
         }
