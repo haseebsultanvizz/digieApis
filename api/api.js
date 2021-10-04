@@ -11797,7 +11797,8 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
                 "api_key":api_key
             },
             headers: {
-                'content-type': 'application/json'
+                'content-type': 'application/json',
+                'Token': 'vizzwebsolutions12345678910'
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
@@ -12863,11 +12864,13 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret){
               "api_secret": api_secret
           },
           headers: {
-              'content-type': 'application/json'
+              'content-type': 'application/json',
+              'Token': 'vizzwebsolutions12345678910'
           }
       }, function (error, response, body) {
+          console.log(error, response, body)
           if (!error && response.statusCode == 200) {
-              // console.log(body, "get User API");
+              console.log(body, "get User API");
               if(body.success){
                 resolve(body);
               } else {
@@ -12914,7 +12917,8 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret){
               "api_secret": api_secret
           },
           headers: {
-              'content-type': 'application/json'
+            'content-type': 'application/json',
+            'Token': 'vizzwebsolutions12345678910'
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
@@ -12964,7 +12968,8 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret){
               "api_secret": api_secret
           },
           headers: {
-              'content-type': 'application/json'
+            'content-type': 'application/json',
+            'Token': 'vizzwebsolutions12345678910'
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
@@ -13028,7 +13033,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     api_key = api_key.trim()
     api_secret = api_secret.trim()
 
-    console.log(api_key, api_secret)
+    console.log(api_key, api_secret,'Huzaifa Test line')
     // return false;
 
     var data = await add_user_info_kraken1(trading_ip,user_id,api_key,api_secret);
@@ -13594,7 +13599,8 @@ function getKrakenCredentials(trading_ip, user_id) {
                 "user_id": user_id,
             },
             headers: {
-                'content-type': 'application/json'
+                'content-type': 'application/json',
+                'Token': 'vizzwebsolutions12345678910'
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
@@ -13656,7 +13662,8 @@ function getKrakenCredentials2(trading_ip, user_id) {
               "user_id": user_id,
           },
           headers: {
-              'content-type': 'application/json'
+            'content-type': 'application/json',
+            'Token': 'vizzwebsolutions12345678910'
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
@@ -13705,7 +13712,8 @@ function getKrakenCredentials3(trading_ip, user_id) {
               "user_id": user_id,
           },
           headers: {
-              'content-type': 'application/json'
+            'content-type': 'application/json',
+            'Token': 'vizzwebsolutions12345678910'
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
@@ -17588,7 +17596,8 @@ async function update_user_balance(user_id, res='', auth_token='') {
             'Cache-Control'   : 'no-cache',
             'Accept'          : '*/*',
             'User-Agent'      : 'PostmanRuntime/7.20.1',
-            'Content-Type'    : 'application/json'
+            'Content-Type'    : 'application/json',
+            'Token': 'vizzwebsolutions12345678910'
         },
         json: {
             'user_id': user_id,
@@ -27858,6 +27867,10 @@ async function remove_api_key(user_ip, user_id, exchange){
         var options = {
             method: 'POST',
             url: url,
+            headers: {
+                'content-type': 'application/json',
+                'Token': 'vizzwebsolutions12345678910'
+            },
             json: {
                 user_id:user_id
             },
