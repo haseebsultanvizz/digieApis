@@ -21936,7 +21936,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy', trading_ip='') {
                     //Do nothing
                     console.log(error)
                 } else {
-                    if (body.success == 'true') {
+                    if (body.success == 'true' || body.success == true) {
 
                         console.log(body)
 
