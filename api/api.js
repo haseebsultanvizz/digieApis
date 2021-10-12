@@ -12868,7 +12868,7 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret){
               'Token': 'vizzwebsolutions12345678910'
           }
       }, function (error, response, body) {
-          console.log(error, response, body)
+        //   console.log(error, response, body)
           if (!error && response.statusCode == 200) {
               console.log(body, "get User API");
               if(body.success){
@@ -17043,7 +17043,11 @@ router.post('/soldAll', auth_token.required, async (req, resp) => {
 
              orderObj['trading_ip'] = userObj['trading_ip'];
 
-             await db.collection('ready_orders_for_sell_ip_based_cost').insertOne(orderObj);
+
+
+            let id_based_collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based_cost' : 'ready_orders_for_sell_ip_based_kraken_cost';
+            await db.collection(id_based_collection).insertOne(orderObj);
+
 
              resp.status(200).send({
                  status: true,
