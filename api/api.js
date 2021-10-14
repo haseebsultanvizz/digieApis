@@ -17167,7 +17167,8 @@ router.post('/sellCostAvgOrder', auth_token.required, async (req, resp) => {
                     childIds.push(new ObjectID(String(ids[i])))
                 }
                 whereChilds = {
-                    '_id': { '$in': childIds }
+                    '_id': { '$in': childIds },
+                    'status': { '$ne': 'canceled' }
                 }
                 allChildTrades = await db.collection(buyCollection).find(whereChilds).toArray()
                 if (allChildTrades.length > 0) {
@@ -17176,7 +17177,7 @@ router.post('/sellCostAvgOrder', auth_token.required, async (req, resp) => {
                 // console.log('totalCostAvgQty ', totalCostAvgQty)
                 // process.exit(0)
 
-                for (let i = 0; i < childsCount; i++) {
+                for (let i = 0; i < allChildTrades.length; i++) {
 
                     // if (action != '') {
                     //     if (action == 'isResumeExchange') {
