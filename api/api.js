@@ -17166,9 +17166,10 @@ router.post('/sellCostAvgOrder', auth_token.required, async (req, resp) => {
                 for (let i = 0; i < ids.length; i++) {
                     childIds.push(new ObjectID(String(ids[i])))
                 }
+                var status_arr = ['canceled', 'new_ERROR']
                 whereChilds = {
                     '_id': { '$in': childIds },
-                    'status': { '$ne': 'canceled' }
+                    'status': { $nin: status_arr }
                 }
                 allChildTrades = await db.collection(buyCollection).find(whereChilds).toArray()
                 if (allChildTrades.length > 0) {
