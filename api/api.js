@@ -17016,7 +17016,44 @@ router.post('/soldAll', auth_token.required, async (req, resp) => {
             var orderObj = {};
 
             //send sell request if costAvg child order
+            const db = await conn
+
+            var collection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+
+            let cavIdsToConsider = [new ObjectID(order_id)]
+            if (typeof order['avg_orders_ids'] != 'undefined' && order['avg_orders_ids'].length > 0){
+                cavIdsToConsider = cavIdsToConsider.concat(order['avg_orders_ids'])
+            }
+
+            // console.log(cavIdsToConsider, 'cavIdsToConsider');
+            let cavgPipeline = [
+                {
+                    '$match': {
+                        '_id': { '$in': cavIdsToConsider},
+                        'status': 'FILLED',
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': null,
+                        'quantitySum': {'$sum': '$quantity'}
+                    }
+                }
+            ]
+
+
+            // console.log(cavgPipeline, 'cavgPipeline')
+            let cvgTotalBuyQty = await db.collection(collection).aggregate(cavgPipeline).toArray()
+            if (cvgTotalBuyQty.length > 0){
+                order['quantity_all'] = cvgTotalBuyQty[0]['quantitySum']
+            }
+            // console.log(order['quantity_all'], 'quantity_all')
+
             if (orderType == 'costAvgParent') {
+
+
+
+              // avg_orders_ids
 
               orderObj['order_id'] = order['sell_order_id'];
               orderObj['quantity'] = order['quantity_all'];
@@ -17035,7 +17072,11 @@ router.post('/soldAll', auth_token.required, async (req, resp) => {
 
 
 
-             const db = await conn
+            //  const db = await conn
+
+
+
+            //  return false;
 
              let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(order['admin_id'])) }, { projection: { _id: 0, trading_ip: 1 } })
 
