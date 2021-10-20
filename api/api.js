@@ -6144,14 +6144,22 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     var cost_avg_array_obj ={}
                     // Buy Fraction Array
                     if(typeof getBuyOrder[0]['buy_fraction_filled_order_arr'] != 'undefined' && getBuyOrder[0]['buy_fraction_filled_order_arr'].length > 0){
-                        cost_avg_array_obj['buyOrderId'] = typeof getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['buyOrderId'] != 'undefined' && getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['buyOrderId'] != '' ? getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['buyOrderId'] : ''
+                        if(exchange == 'binance'){
+                            cost_avg_array_obj['buyOrderId'] = typeof getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['buyOrderId'] != 'undefined' && getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['buyOrderId'] != '' ? getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['buyOrderId'] : ''
+                        } else if(exchange == 'kraken'){
+                            cost_avg_array_obj['buyOrderId'] = typeof getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['orderFilledId'] != 'undefined' && getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['orderFilledId'] != '' ? getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['orderFilledId'] : ''
+                        }
                         cost_avg_array_obj['filledQtyBuy'] = typeof getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['filledQty'] != 'undefined' && getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['filledQty'] != '' ? getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['filledQty'] : ''
                         cost_avg_array_obj['commissionBuy'] = typeof getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['commission'] != 'undefined' && getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['commission'] != '' ? getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['commission'] : ''
                         cost_avg_array_obj['filledPriceBuy'] = typeof getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['filledPrice'] != 'undefined' && getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['filledPrice'] != '' ? getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['filledPrice'] : ''
                         cost_avg_array_obj['orderFilledIdBuy'] = typeof getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['orderFilledId'] != 'undefined' && getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['orderFilledId'] != '' ? getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['orderFilledId'] : ''
                         cost_avg_array_obj['avg_purchase_price'] = typeof getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['filledPrice'] != 'undefined' && getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['filledPrice'] != '' ? parseFloat(getBuyOrder[0]['buy_fraction_filled_order_arr'][0]['filledPrice']) : ''
                     } else{
-                        cost_avg_array_obj['buyOrderId']= typeof getBuyOrder[0]['binance_order_id'] != 'undefined' && getBuyOrder[0]['binance_order_id'] != '' ? getBuyOrder[0]['binance_order_id'] : ''
+                        if(exchange == 'binance'){
+                            cost_avg_array_obj['buyOrderId']= typeof getBuyOrder[0]['binance_order_id'] != 'undefined' && getBuyOrder[0]['binance_order_id'] != '' ? getBuyOrder[0]['binance_order_id'] : ''
+                        } else if(exchange == 'kraken') {
+                            cost_avg_array_obj['buyOrderId']= typeof getBuyOrder[0]['kraken_order_id'] != 'undefined' && getBuyOrder[0]['kraken_order_id'] != '' ? getBuyOrder[0]['kraken_order_id'] : ''
+                        }
                         cost_avg_array_obj['filledQtyBuy']= typeof getBuyOrder[0]['quantity'] != 'undefined' && getBuyOrder[0]['quantity'] != '' ? getBuyOrder[0]['quantity'].toFixed(8) : ''
                         cost_avg_array_obj['commissionBuy']= ''
                         cost_avg_array_obj['filledPriceBuy']= typeof getBuyOrder[0]['purchased_price'] != 'undefined' && getBuyOrder[0]['purchased_price'] != '' ? getBuyOrder[0]['purchased_price'].toFixed(8) : ''
