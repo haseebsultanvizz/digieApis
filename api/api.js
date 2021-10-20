@@ -26970,12 +26970,12 @@ async function getOrderStats(postData2){
         ]
         filter_12['status'] = {'$ne': 'canceled'}
 
-        if (admin_id == '5c0912b7fc9aadaac61dd072') {
-            filter_12['$or'][1] = {
-                'cost_avg': { '$exists': true },
-                'show_order': 'yes'
-            }
-        }
+        // if (admin_id == '5c0912b7fc9aadaac61dd072') {
+        //     filter_12['$or'][1] = {
+        //         'cost_avg': { '$exists': true },
+        //         'show_order': 'yes'
+        //     }
+        // }
 
 
 
