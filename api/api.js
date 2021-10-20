@@ -27966,7 +27966,7 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
 
         if(data.success == true){
             if(exchange == 'binance'){
-                await db.collection('users').updateOne({ _id: new ObjectID(user_id) }, { '$unset': { 'api_key': '', 'api_secret': ''}})
+                await db.collection('users').updateOne({ _id: new ObjectID(user_id) }, { '$unset': { 'api_key': '', 'api_secret': ''}, '$set': {'is_api_key_valid': 'no'} } )
                 await db.collection('buy_orders').updateMany({'application_mode':'live', 'admin_id': user_id, 'parent_status':'parent', 'status':{'$ne':'canceled'}}, {'$set':{'pick_parent':'no', 'pick_parent_no':'api_key_removed'}})
 
                 actionSuccess = true
