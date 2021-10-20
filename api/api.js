@@ -6122,7 +6122,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     update['$set']['lth_profit'] = ''
                     update['$set']['is_lth_order'] = ''
                 }
-                if(tab == 'lthTab' || tab == 'openTab' || tab == 'lthTab_admin'){
+                if(tab == 'lthTab' || tab == 'openTab' || tab == 'lthTab_admin' || tab == 'openTab_admin'){
                   update['$set']['move_to_cost_avg'] = 'yes'
                 }
                 if(tab == 'openTab_admin'){
