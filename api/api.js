@@ -4815,12 +4815,12 @@ async function listOrderListing(postDAta3, dbConnection) {
         ]
         filter['status'] = { '$ne': 'canceled' }
 
-        if (filter['admin_id'] == '5c0912b7fc9aadaac61dd072') {
-            filter['$or'][1] = {
-                'cost_avg': { '$exists': true },
-                'show_order': 'yes'
-            }
-        }
+        // if (filter['admin_id'] == '5c0912b7fc9aadaac61dd072') {
+        //     filter['$or'][1] = {
+        //         'cost_avg': { '$exists': true },
+        //         'show_order': 'yes'
+        //     }
+        // }
 
         var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
     }
