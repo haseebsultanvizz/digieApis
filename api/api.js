@@ -28005,7 +28005,7 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
 
                     actionSuccess = true
                 } else {
-                    await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': '' } })
+                    await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': ''}, '$set': {'is_api_key_valid': 'no'} })
 
                     actionSuccess = true
                     res.send({
