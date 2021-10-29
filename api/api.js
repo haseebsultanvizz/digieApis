@@ -6136,7 +6136,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 update['$set']['avg_sell_price'] = parseFloat(sell_price);
             }
 
-            if(tab == 'lthTab_admin'){
+            if(tab == 'lthTab_admin' ||  tab == 'openTab_admin'){
                 update['$set']['avg_sell_price'] = '';
                 update['$set']['new_child_buy_price'] = isNaN(parseFloat(perctDownPrice)) ?  '': parseFloat(perctDownPrice);
 
@@ -11865,6 +11865,12 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
       'account_block'         :  'no',
       'api_key_valid_checking': new Date()
     };
+    var updateArrayinValid = {
+        'is_api_key_valid'      :  "no",
+        'count_invalid_api'     :  0,
+        'account_block'         :  'no',
+        'api_key_valid_checking': new Date()
+    };
 
 
 
@@ -11875,8 +11881,8 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
 
 
         conn.then(async db => {
-          var update_on_user_investment_binance_collection = await db.collection(investment_collection).updateOne(search_arr_investment, {$set: {'exchange_enabled':'yes'}});
-          if(exchange == 'binance' ){
+            if(exchange == 'binance' ){
+            var update_on_user_investment_binance_collection = await db.collection(investment_collection).updateOne(search_arr_investment, {$set: {'exchange_enabled':'yes'}});
             await update_user_wallet_binance(user_id, user_ip)
             var update_on_binance_collection = await db.collection(binance_collection).updateOne(search_arr, {$set: updateArray});
           } else {
@@ -11889,19 +11895,37 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
           })
         })
       } else {
-        if(exchange == 'binance'){
-          if(data.error){
-            res.status(201).send({
-                "success": false,
-                "status": 201,
-                "message":data.error
-            })
-          } else {
-            res.status(201).send(data)
-          }
-        } else {
-          res.status(201).send(data)
-        }
+        conn.then(async db => {
+            if(exchange == 'binance' ){
+                var update_on_user_investment_binance_collection = await db.collection(investment_collection).updateOne(search_arr_investment, {$set: {'exchange_enabled':'no'}});
+                var update_on_binance_collection = await db.collection(binance_collection).updateOne(search_arr, {$set: updateArrayinValid});
+                if(data.error){
+                    res.status(201).send({
+                        "success": false,
+                        "status": 201,
+                        "message":data.error
+                    })
+                  } else {
+                    res.status(201).send(data)
+                  }
+            } else {
+                var update_on_kraken_collection = await db.collection(kraken_collection).updateOne(search_arr_kraken_credentials, {$set: updateArrayinValid});
+                res.status(201).send(data)
+            }
+        })
+        // if(exchange == 'binance'){
+        //   if(data.error){
+        //     res.status(201).send({
+        //         "success": false,
+        //         "status": 201,
+        //         "message":data.error
+        //     })
+        //   } else {
+        //     res.status(201).send(data)
+        //   }
+        // } else {
+        //   res.status(201).send(data)
+        // }
       }
 
 
