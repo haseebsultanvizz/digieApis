@@ -6136,7 +6136,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 update['$set']['avg_sell_price'] = parseFloat(sell_price);
             }
 
-            if(tab == 'lthTab_admin' ||  tab == 'openTab_admin'){
+            if(tab == 'lthTab_admin'){
                 update['$set']['avg_sell_price'] = '';
                 update['$set']['new_child_buy_price'] = isNaN(parseFloat(perctDownPrice)) ?  '': parseFloat(perctDownPrice);
 
