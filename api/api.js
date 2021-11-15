@@ -33443,7 +33443,7 @@ router.post('/sellCostAvgOrder_new', auth_token.required, async (req, resp) => {
 
 
             var last_three_ids = [];
-            last_three_ids[0] = order_id;
+            last_three_ids[0] =  new ObjectID(order_id);
             var quantity_three
             order['cost_avg_array'].map(single_order => {
               if(single_order.buy_order_id == order_id){
