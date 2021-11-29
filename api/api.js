@@ -11867,10 +11867,10 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
       'api_key_valid_checking': new Date()
     };
     var updateArrayinValid = {
-        'is_api_key_valid'      :  "no",
-        'count_invalid_api'     :  0,
-        'account_block'         :  'no',
-        'api_key_valid_checking': new Date()
+        'is_api_key_valid'      :  "no"
+        // 'count_invalid_api'     :  0,
+        // 'account_block'         :  'yes',
+        // 'api_key_valid_checking': new Date()
     };
 
 
