@@ -12028,6 +12028,7 @@ async function get_api_secret(user_ip, admin_id){
             url: url,
             json: {
                 "user_id": admin_id,
+                "code": "2022@digie"
             },
             headers: {
                 'content-type': 'application/json'
