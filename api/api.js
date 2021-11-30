@@ -3792,6 +3792,25 @@ function listCurrentMarketPriceArr(coin, exchange) {
 } //End of listCurrentMarketPriceArr
 
 
+
+router.post('/find_user_by_id', async(req, res) => {
+
+  var user_exist = await getUserByID(req.body.id);
+  if(!user_exist){
+    res.status(200).send({
+      success: false,
+      message: 'User Not exist'
+    });
+  } else {
+    res.status(200).send({
+      'status': true,
+      'message':'User Exist'
+    })
+  }
+
+})
+
+
 async function getUserByID(admin_id){
 
 
