@@ -12253,8 +12253,11 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
     var post_data = req.body;
 
     // console.log(post_data['interface'])
+    var interface_data = post_data['interface']
     post_data['interface'] = typeof post_data['interface'] != 'undefined' && post_data['interface'] != '' ? 'ios' : 'other';
-
+    if(interface_data == 'web'){
+      post_data['interface'] = 'web'
+    }
 
     // console.log(post_data)
     let post_data_key_array = Object.keys(post_data);
@@ -12291,7 +12294,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
 
-                        // console.log(update_arr )
+                        console.log(update_arr, 'update_arr' )
 
 
 
