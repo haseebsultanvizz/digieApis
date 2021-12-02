@@ -12411,6 +12411,119 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
     }
 })
 
+router.post('/update_user_info_new', auth_token.required, async function (req, res, next) {
+
+
+  var user_exist = await getUserByID(req.payload.id);
+  if(!user_exist){
+      resp.status(401).send({
+          message: 'User Not exist'
+      });
+      return false;
+  }
+
+
+  var post_data = req.body;
+  post_data['interface'] = typeof post_data['interface'] != 'undefined' && post_data['interface'] != '' ? 'ios' : 'other';
+
+
+
+  let post_data_key_array = Object.keys(post_data);
+  if (post_data_key_array.length == 0) {
+      res.status(400).send({
+          "success": "false",
+          "status": 400,
+          "message": "Bad request. No data posted in a post request"
+      })
+  } else {
+      if ('user_id' in post_data) {
+          let user_id = post_data['user_id'];
+          conn.then(db => {
+              let search_arr = {
+                  "_id": ObjectID(user_id)
+              };
+              let search_arr_investment = {
+                "admin_id": user_id
+              };
+              db.collection("users").findOne(search_arr,async function (err, data) {
+                  if (err) throw err;
+                  if (Object.keys(data).length > 0) {
+                      let update_arr = new Object(post_data);
+                      delete update_arr.user_id;
+
+                      update_arr['trading_ip'] = data['trading_ip'];
+
+                      let fieldsArr = ['api_key', 'api_secret', 'pass_phrase', 'trading_ip', 'user_id', 'interface']
+                      for (let [key, value] of Object.entries(update_arr)) {
+                          if (!fieldsArr.includes(key)) {
+                              delete update_arr[key]
+                          }
+                      }
+
+
+
+
+
+
+
+
+                      var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_secret'], '')
+
+
+                      var apisecret = update_arr['api_secret'].substring(0, 5);
+
+
+                      var permision_for = update_arr['pass_phrase']
+
+
+
+
+
+
+
+                      if(data.success){
+                        var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes', 'permission_for': permision_for}});
+                        var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date(), 'permission_for': permision_for, 'interface': update_arr['interface']}});
+                        await update_user_wallet_binance(user_id, update_arr['trading_ip'])
+                          res.status(200).send({
+                              "success": true,
+                              "status": 200,
+                              "message": "Submitted on Digie Platform Successfully"
+                          })
+                      } else {
+                          res.status(201).send({
+                              "success": false,
+                              "status": 201,
+                              "message": "Not Submitted on Digie Platform Please Try Again"
+                          })
+                      }
+
+                      return false;
+                  } else {
+                      res.status(404).send({
+                          "success": "false",
+                          "status": 404,
+                          "message": "user_id " + user_id + " was not found in the database"
+                      })
+                  }
+              })
+          }).catch(err3 => {
+              res.status(500).send({
+                  "success": "false",
+                  "status": 500,
+                  "message": "Database connection problem"
+              })
+          })
+      } else {
+          res.status(400).send({
+              "success": "false",
+              "status": 400,
+              "message": "user_id was required to completed this request..."
+          })
+      }
+  }
+})
+
 
 
 /*  Create Manual order Globally from
@@ -13063,20 +13176,20 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
 
     // console.log('-=-=-=-=-=-=-=-=-=-', interface, api_key)
 
-    if(interface== 'ios'){
-        var key1 = decrypt(api_key)
-        api_key = key1;
-        var secret1 = decrypt(api_secret)
-        api_secret = secret1;
-    } else {
-        var key1  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
-        api_key = key1.toString(CryptoJS.enc.Utf8);
+    // if(interface== 'ios'){
+    //     var key1 = decrypt(api_key)
+    //     api_key = key1;
+    //     var secret1 = decrypt(api_secret)
+    //     api_secret = secret1;
+    // } else {
+    //     var key1  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
+    //     api_key = key1.toString(CryptoJS.enc.Utf8);
 
 
 
-        var secret1  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
-        api_secret = secret1.toString(CryptoJS.enc.Utf8);
-    }
+    //     var secret1  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
+    //     api_secret = secret1.toString(CryptoJS.enc.Utf8);
+    // }
 
 
 
@@ -13089,7 +13202,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     console.log(api_key, api_secret,'Huzaifa Test line')
     // return false;
 
-    var data = await add_user_info_kraken1(trading_ip,user_id,api_key,api_secret);
+    var data = await add_user_info_kraken1(trading_ip,user_id,api_secret, '');
 
 
     console.log(data, "DATA")
@@ -13101,16 +13214,17 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
       conn.then(async (db) => {
         let insertArr = {};
         insertArr['user_id'] = user_id;
-        insertArr['api_key'] = api_key.substring(0, 5);
+        // insertArr['api_key'] = api_key.substring(0, 5);
         insertArr['api_secret'] = api_secret.substring(0, 5);
         insertArr['modified_date'] = new Date();
+        insertArr['modified_date_primary'] = new Date();
 
 
 
-        insertArr['is_api_key_valid'] = 'yes';
-        insertArr['count_invalid_api'] = 0;
-        insertArr['account_block'] = 'no';
-        insertArr['api_key_valid_checking'] = new Date();
+        // insertArr['is_api_key_valid'] = 'yes';
+        // insertArr['count_invalid_api'] = 0;
+        // insertArr['account_block'] = 'no';
+        // insertArr['api_key_valid_checking'] = new Date();
         let set = {};
         set['$set'] = insertArr;
         let where = {};
@@ -13126,7 +13240,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
         };
 
 
-        var update_on_user_investment_binance_collection = await db.collection("user_investment_kraken").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes'}});
+        // var update_on_user_investment_binance_collection = await db.collection("user_investment_kraken").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes'}});
         db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
           if(err){
             console.log(err);
@@ -13151,66 +13265,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
       });
     }
 
-
-
-
-
-    return false;
-    // Old Code
-    conn.then( async(db) => {
-        let insertArr = {};
-        insertArr['user_id'] = user_id;
-        insertArr['api_key'] = api_key;
-        insertArr['api_secret'] = api_secret;
-        insertArr['modified_date'] = new Date();
-
-
-
-
-
-
-        // huzaifa Added Shahzad & Asim Said
-        let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(user_id)) }, {_id:0, trading_ip:1})
-        insertArr['trading_ip'] = userObj['trading_ip']
-        // huzaifa Added Shahzad & Asim Said
-        let set = {};
-        set['$set'] = insertArr;
-        let where = {};
-        where['user_id'] = user_id;
-        let upsert = {
-            upsert: true
-        };
-        db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-
-                var reqObj = {
-                    'type': 'POST',
-                    'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
-                    'headers':{
-                      'Authorization': auth_token
-                    },
-                    'payload': {
-                        'user_id': String(user_id),
-                        'type': 'api_key_updated',
-                        'log': 'kraken primary API key is updated',
-                    },
-                }
-                var apiResult = await customApiRequest(reqObj)
-
-                let updateWallet = update_user_balance(user_id)
-
-                let validation = validate_kraken_credentials(api_key, api_secret, user_id)
-                resp.status(200).send({
-                    "success": "true",
-                    "message": "Credentials Updated Successfully"
-                })
-            }
-        })
-    })
-
-
+    return false
 }) //End of saveKrakenCredentials
 
 //save kraken credentials from setting component
@@ -13235,20 +13290,20 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
 
     // console.log(interface, api_key, api_secret, '-=-=-=-=-=-=-=-=-=-=-')
 
-    if(interface== 'ios'){
-        var key2 = decrypt(api_key)
-        api_key = key2;
-        var secret2 = decrypt(api_secret)
-        api_secret = secret2;
-    } else {
-        var key2  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
-        api_key = key2.toString(CryptoJS.enc.Utf8);
+    // if(interface== 'ios'){
+    //     var key2 = decrypt(api_key)
+    //     api_key = key2;
+    //     var secret2 = decrypt(api_secret)
+    //     api_secret = secret2;
+    // } else {
+    //     var key2  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
+    //     api_key = key2.toString(CryptoJS.enc.Utf8);
 
 
 
-        var secret2  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
-        api_secret = secret2.toString(CryptoJS.enc.Utf8);
-    }
+    //     var secret2  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
+    //     api_secret = secret2.toString(CryptoJS.enc.Utf8);
+    // }
 
 
 
@@ -13259,7 +13314,7 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
 
 
 
-    var data = await add_user_info_kraken2(trading_ip,user_id,api_key,api_secret);
+    var data = await add_user_info_kraken2(trading_ip,user_id,api_secret,'');
     if(data.success){
 
 
@@ -13267,7 +13322,7 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
       conn.then((db) => {
         let insertArr = {};
         insertArr['user_id'] = user_id;
-        insertArr['api_key_secondary'] = api_key.substring(0, 5);
+        // insertArr['api_key_secondary'] = api_key.substring(0, 5);
         insertArr['api_secret_secondary'] = api_secret.substring(0, 5);
         insertArr['modified_date_secondary'] = new Date();
         let set = {};
@@ -13309,55 +13364,6 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
 
     return false;
     // Old Code
-
-    conn.then(async (db) => {
-        let insertArr = {};
-        insertArr['user_id'] = user_id;
-        insertArr['api_key_secondary'] = api_key;
-        insertArr['api_secret_secondary'] = api_secret;
-        insertArr['modified_date_secondary'] = new Date();
-        // huzaifa Added Shahzad & Asim Said
-        let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(user_id)) }, {_id:0, trading_ip:1})
-        insertArr['trading_ip'] = userObj['trading_ip']
-        // huzaifa Added Shahzad & Asim Said
-        let set = {};
-        set['$set'] = insertArr;
-        let where = {};
-        where['user_id'] = user_id;
-        let upsert = {
-            upsert: true
-        };
-        db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-
-                var reqObj = {
-                    'type': 'POST',
-                    'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
-                    'headers':{
-                      'Authorization': auth_token
-                    },
-                    'payload': {
-                        'user_id': String(user_id),
-                        'type': 'api_key_updated',
-                        'log': 'Kraken secondary API key is updated',
-                    },
-                }
-                var apiResult = await customApiRequest(reqObj)
-
-                let updateWallet = update_user_balance(user_id)
-
-                let validation = validate_kraken_credentials(api_key, api_secret, user_id)
-                resp.status(200).send({
-                    "success": "true",
-                    "message": "Credentials Updated Successfully"
-                })
-            }
-        })
-    })
-
-
 }) //End of saveKrakenCredentialsSecondary
 
 router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, resp) => {
@@ -13381,26 +13387,26 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
 
 
 
-    var key3  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
-    api_key = key3.toString(CryptoJS.enc.Utf8);
+    // var key3  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
+    // api_key = key3.toString(CryptoJS.enc.Utf8);
 
 
 
-    var secret3  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
-    api_secret = secret3.toString(CryptoJS.enc.Utf8);
+    // var secret3  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
+    // api_secret = secret3.toString(CryptoJS.enc.Utf8);
 
     // console.log(api_key, api_secret)
     // return false;
 
 
-    var data = await add_user_info_kraken3(trading_ip,user_id,api_key,api_secret);
+    var data = await add_user_info_kraken3(trading_ip,user_id,api_secret,'');
     if(data.success){
 
 
         conn.then((db) => {
             let insertArr = {};
             insertArr['user_id'] = user_id;
-            insertArr['api_key_third_key'] = api_key.substring(0, 5);
+            // insertArr['api_key_third_key'] = api_key.substring(0, 5);
             insertArr['api_secret_third_key'] = api_secret.substring(0, 5);
             insertArr['modified_date_third_key'] = new Date();
             let set = {};
