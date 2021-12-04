@@ -3795,8 +3795,8 @@ function listCurrentMarketPriceArr(coin, exchange) {
 
 router.post('/find_user_by_id', async(req, res) => {
 
-  var user_exist = await getUserByID(req.body.id);
-  if(!user_exist){
+  var user_exist = await getUserByID(req.body.id, 'yes');
+  if(!user_exist.success){
     res.status(200).send({
       success: false,
       message: 'User Not exist'
@@ -3804,6 +3804,7 @@ router.post('/find_user_by_id', async(req, res) => {
   } else {
     res.status(200).send({
       'status': true,
+      'data':user_exist.data,
       'message':'User Exist'
     })
   }
@@ -3811,7 +3812,7 @@ router.post('/find_user_by_id', async(req, res) => {
 })
 
 
-async function getUserByID(admin_id){
+async function getUserByID(admin_id, user_detail='no'){
 
 
   console.log(admin_id)
@@ -3824,12 +3825,34 @@ async function getUserByID(admin_id){
             db.collection(collectionName).find(where).toArray((err, result) => {
                 if (err) {
                     console.log(err)
-                    resolve(false);
+                    if(user_detail == 'yes'){
+                      resolve({
+                        'success': false,
+                        'message': err
+                      });
+                    } else {
+                      resolve(false);
+                    }
                 } else {
                     if (result.length > 0) {
+                      if(user_detail == 'yes'){
+                        resolve({
+                          'success': true,
+                          'message': 'Data Found',
+                          'data': result[0]
+                        });
+                      } else {
                         resolve(true)
+                      }
                     } else {
+                      if(user_detail == 'yes'){
+                        resolve({
+                          'success': false,
+                          'message': 'Data not Found',
+                        });
+                      } else {
                         resolve(false)
+                      }
                     }
                 }
             })
