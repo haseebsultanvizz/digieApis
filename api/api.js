@@ -3795,18 +3795,25 @@ function listCurrentMarketPriceArr(coin, exchange) {
 
 router.post('/find_user_by_id', async(req, res) => {
 
-  var user_exist = await getUserByID(req.body.id, 'yes');
-  if(!user_exist.success){
-    res.status(200).send({
-      'success': false,
-      'message': 'User Not exist'
-    });
+  if(typeof req.body.id != 'undefined' && req.body.id != '') {
+    var user_exist = await getUserByID(req.body.id, 'yes');
+    if(!user_exist.success){
+      res.status(200).send({
+        'success': false,
+        'message': 'User Not exist'
+      });
+    } else {
+      res.status(200).send({
+        'success': true,
+        'data':user_exist.data['trading_ip'],
+        'message':'User Exist'
+      })
+    }
   } else {
     res.status(200).send({
-      'success': true,
-      'data':user_exist.data['trading_ip'],
-      'message':'User Exist'
-    })
+      'success': false,
+      'message': 'User id needed in id param'
+    });
   }
 
 })
@@ -13064,7 +13071,7 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret, int
               'Token': 'vizzwebsolutions12345678910'
           }
       }, function (error, response, body) {
-          console.log(body)
+          // console.log(body)
           if (!error && response.statusCode == 200) {
               console.log(body, "get User API");
               if(body.success){
