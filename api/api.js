@@ -3798,12 +3798,12 @@ router.post('/find_user_by_id', async(req, res) => {
   var user_exist = await getUserByID(req.body.id, 'yes');
   if(!user_exist.success){
     res.status(200).send({
-      success: false,
-      message: 'User Not exist'
+      'success': false,
+      'message': 'User Not exist'
     });
   } else {
     res.status(200).send({
-      'status': true,
+      'success': true,
       'data':user_exist.data['trading_ip'],
       'message':'User Exist'
     })
@@ -13018,7 +13018,7 @@ router.post('/saveBamCredentials', auth_token.required, async(req, resp) => {
 
 
 
-async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret){
+async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret, interface){
   return new Promise(async function (resolve, reject) {
 
 
@@ -13045,22 +13045,26 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret){
 
     // let url = 'http://'+ip+
 
-    let url = 'https://'+ip+'/saveapiKeySecretKraken';
+    let url = 'https://'+ip+'/saveSecretTrading';
 
       console.log(url)
       request.post({
           url: url,
           json: {
               "user_id": admin_id,
+              "trading_ip": user_ip,
               "api_key": api_key,
-              "api_secret": api_secret
+              "secret_1": api_secret,
+              "secret_2": '',
+              "secret_3": '',
+              "source":interface
           },
           headers: {
               'content-type': 'application/json',
               'Token': 'vizzwebsolutions12345678910'
           }
       }, function (error, response, body) {
-        //   console.log(error, response, body)
+          console.log(body)
           if (!error && response.statusCode == 200) {
               console.log(body, "get User API");
               if(body.success){
@@ -13074,7 +13078,7 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret){
       });
   });
 }
-async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret){
+async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret, interface){
   return new Promise(async function (resolve, reject) {
 
 
@@ -13096,7 +13100,7 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret){
       ip = 'ip6-kraken.digiebot.com/api/user'
     }
 
-    let url = 'https://'+ip+'/saveapiKeySecretKraken2';
+    let url = 'https://'+ip+'/saveSecretTrading';
 
 
 
@@ -13104,9 +13108,13 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret){
       request.post({
           url: url,
           json: {
-              "user_id": admin_id,
-              "api_key": api_key,
-              "api_secret": api_secret
+            "user_id": admin_id,
+            "trading_ip": user_ip,
+            "api_key": api_key,
+            "secret_1": '',
+            "secret_2": api_secret,
+            "secret_3": '',
+            "source":interface
           },
           headers: {
             'content-type': 'application/json',
@@ -13114,7 +13122,7 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret){
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
-              // console.log(body, "get User API");
+              console.log(body, "get User API");
               if(body.success){
                 resolve(body);
               } else {
@@ -13126,7 +13134,7 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret){
       });
   });
 }
-async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret){
+async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret, interface){
   return new Promise(async function (resolve, reject) {
 
 
@@ -13149,15 +13157,19 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret){
       ip = 'ip6-kraken.digiebot.com/api/user'
     }
 
-    let url = 'https://'+ip+'/saveapiKeySecretKraken3';
+    let url = 'https://'+ip+'/saveSecretTrading';
 
       console.log(url)
       request.post({
           url: url,
           json: {
-              "user_id": admin_id,
-              "api_key": api_key,
-              "api_secret": api_secret
+            "user_id": admin_id,
+            "trading_ip": user_ip,
+            "api_key": api_key,
+            "secret_1": '',
+            "secret_2": '',
+            "secret_3": api_secret,
+            "source": interface
           },
           headers: {
             'content-type': 'application/json',
@@ -13169,7 +13181,7 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret){
               if(body.success){
                 resolve(body);
               } else {
-                resolve(false);
+                resolve(false);f
               }
           } else {
               resolve(false)
@@ -13197,7 +13209,11 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     var api_key = req.body.api_key;
     var api_secret = req.body.api_secret;
     var trading_ip = req.body.trading_ip;
+    var source = req.body.source;
     var interface = typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'ios' : 'other';
+    if(source == 'web'){
+      interface = source
+    }
 
 
     // console.log('-=-=-=-=-=-=-=-=-=-', interface, api_key)
@@ -13210,9 +13226,6 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     // } else {
     //     var key1  = CryptoJS.AES.decrypt(api_key, 'digiebot_trading');
     //     api_key = key1.toString(CryptoJS.enc.Utf8);
-
-
-
     //     var secret1  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
     //     api_secret = secret1.toString(CryptoJS.enc.Utf8);
     // }
@@ -13228,7 +13241,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     console.log(api_key, api_secret,'Huzaifa Test line')
     // return false;
 
-    var data = await add_user_info_kraken1(trading_ip,user_id,api_secret, '');
+    var data = await add_user_info_kraken1(trading_ip, user_id, api_key, api_secret, interface);
 
 
     console.log(data, "DATA")
@@ -13244,13 +13257,10 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
         insertArr['api_secret'] = api_secret.substring(0, 5);
         insertArr['modified_date'] = new Date();
         insertArr['modified_date_primary'] = new Date();
-
-
-
-        // insertArr['is_api_key_valid'] = 'yes';
-        // insertArr['count_invalid_api'] = 0;
-        // insertArr['account_block'] = 'no';
-        // insertArr['api_key_valid_checking'] = new Date();
+        insertArr['is_api_key_valid'] = 'yes';
+        insertArr['api_key_valid_checking'] = new Date();
+        insertArr['count_invalid_api'] = 0;
+        insertArr['account_block'] = 'no';
         let set = {};
         set['$set'] = insertArr;
         let where = {};
@@ -13265,8 +13275,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
           "admin_id": user_id
         };
 
-
-        // var update_on_user_investment_binance_collection = await db.collection("user_investment_kraken").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes'}});
+        var update_on_user_investment_binance_collection = await db.collection("user_investment_kraken").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes'}});
         db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
           if(err){
             console.log(err);
@@ -13311,7 +13320,16 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
     var api_key = req.body.api_key_secondary;
     var api_secret = req.body.api_secret_secondary;
     var trading_ip = req.body.trading_ip;
+    var source = req.body.source;
     var interface = typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'ios' : 'other';
+    if(source == 'web'){
+      interface = source
+    }
+
+
+
+    api_key = api_key.trim()
+    api_secret = api_secret.trim()
 
 
     // console.log(interface, api_key, api_secret, '-=-=-=-=-=-=-=-=-=-=-')
@@ -13340,7 +13358,7 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
 
 
 
-    var data = await add_user_info_kraken2(trading_ip,user_id,api_secret,'');
+    var data = await add_user_info_kraken2(trading_ip,user_id,api_key,api_secret, interface);
     if(data.success){
 
 
@@ -13410,6 +13428,11 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
     var api_key = req.body.api_key_third_key;
     var api_secret = req.body.api_secret_third_key;
     var trading_ip = req.body.trading_ip;
+    var source = req.body.source;
+    var interface = typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'ios' : 'other';
+    if(source == 'web'){
+      interface = source
+    }
 
 
 
@@ -13424,8 +13447,10 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
     // console.log(api_key, api_secret)
     // return false;
 
+    api_key = api_key.trim()
+    api_secret = api_secret.trim()
 
-    var data = await add_user_info_kraken3(trading_ip,user_id,api_secret,'');
+    var data = await add_user_info_kraken3(trading_ip, user_id, api_key, api_secret, interface);
     if(data.success){
 
 
@@ -13473,54 +13498,6 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
 
 
     return false;
-    // Old Code
-
-    conn.then(async (db) => {
-        let insertArr = {};
-        insertArr['user_id'] = user_id;
-        insertArr['api_key_third_key'] = api_key;
-        insertArr['api_secret_third_key'] = api_secret;
-        insertArr['modified_date_third_key'] = new Date();
-        // huzaifa Added Shahzad & Asim Said
-        let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(user_id)) }, {_id:0, trading_ip:1})
-        insertArr['trading_ip'] = userObj['trading_ip']
-        // huzaifa Added Shahzad & Asim Said
-        let set = {};
-        set['$set'] = insertArr;
-        let where = {};
-        where['user_id'] = user_id;
-        let upsert = {
-            upsert: true
-        };
-        db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-
-                var reqObj = {
-                    'type': 'POST',
-                    'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
-                    'headers':{
-                      'Authorization': auth_token
-                    },
-                    'payload': {
-                        'user_id': String(user_id),
-                        'type': 'api_key_updated',
-                        'log': 'Kraken third API key is updated',
-                    },
-                }
-                var apiResult = await customApiRequest(reqObj)
-
-                let updateWallet = update_user_balance(user_id)
-
-                let validation = validate_kraken_credentials(api_key, api_secret, user_id)
-                resp.status(200).send({
-                    "success": "true",
-                    "message": "Credentials Updated Successfully"
-                })
-            }
-        })
-    })
 
 }) //End of saveKrakenCredentialsThirdKey
 
@@ -33867,6 +33844,12 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                   "last_key_updated_date_kraken1": data['modified_date'],
                   "last_key_updated_date_kraken2": data['modified_date_secondary'],
                   "last_key_updated_date_kraken3": data['modified_date_third_key'],
+                  "api_key_1": typeof data['api_key_1'] != 'undefined' && typeof data['api_key_1'] != '' ? data['api_key_1'] : 'no',
+                  "api_key_2": typeof data['api_key_2'] != 'undefined' && typeof data['api_key_2'] != '' ? data['api_key_2'] : 'no',
+                  "api_key_3": typeof data['api_key_3'] != 'undefined' && typeof data['api_key_3'] != '' ? data['api_key_3'] : 'no',
+                  "secret_1": typeof data['secret_1'] != 'undefined' && typeof data['secret_1'] != '' ? data['secret_1'] : 'no',
+                  "secret_2": typeof data['secret_2'] != 'undefined' && typeof data['secret_2'] != '' ? data['secret_2'] : 'no',
+                  "secret_3": typeof data['secret_3'] != 'undefined' && typeof data['secret_3'] != '' ? data['secret_3'] : 'no',
                   "message": "User data against _id " + user_id + " has been fetched successfully"
                 })
               }
