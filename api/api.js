@@ -3804,7 +3804,7 @@ router.post('/find_user_by_id', async(req, res) => {
   } else {
     res.status(200).send({
       'status': true,
-      'data':user_exist.data,
+      'data':user_exist.data['trading_ip'],
       'message':'User Exist'
     })
   }
