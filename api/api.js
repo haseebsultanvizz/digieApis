@@ -3795,6 +3795,8 @@ function listCurrentMarketPriceArr(coin, exchange) {
 
 router.post('/find_user_by_id', async(req, res) => {
 
+  console.log(req.body, 'find_user_by_id=-=-=-=-=-=-')
+
   if(typeof req.body.id != 'undefined' && req.body.id != '') {
     var user_exist = await getUserByID(req.body.id, 'yes');
     if(!user_exist.success){
