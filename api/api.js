@@ -3793,9 +3793,15 @@ function listCurrentMarketPriceArr(coin, exchange) {
 
 
 
-router.post('/find_user_by_id', async(req, res) => {
+router.post('/find_user_by_id', auth_token.required, async(req, res) => {
 
-  console.log(req.body, 'find_user_by_id=-=-=-=-=-=-')
+    var user_exist = await getUserByID(req.payload.id);
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'Un-Authorized Person'
+        });
+        return false;
+    }
 
   if(typeof req.body.id != 'undefined' && req.body.id != '') {
     var user_exist = await getUserByID(req.body.id, 'yes');
@@ -11801,6 +11807,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
       let ip ='';
       let port = 2500;
       let url;
+      let data = {}
       // If Binance
       if(exchange == 'binance'){
         if(user_ip == '3.227.143.115'){
@@ -11817,6 +11824,12 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
           ip = 'ip6.digiebot.com'
         }
         url = 'https://'+ ip +'/apiKeySecret/validateapiKeySecret'
+
+        data =  {
+            "user_id": admin_id,
+            "exchange": exchange,
+            "api_key":api_key
+        }
       }
       // If Kraken
       else if(exchange == 'kraken') {
@@ -11837,13 +11850,35 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
           ip = 'ip6-kraken.digiebot.com/api/user'
         }
 
+        // if(kraken_id == 'second'){
+        //   url = 'https://'+ ip +'/validateKeyAndSecret'
+        // } else if(kraken_id == 'third'){
+        //   url = 'https://'+ ip +'/validateKeyAndSecret'
+        // } else {
+        //   url = 'https://'+ ip +'/validateKeyAndSecret'
+        // }
+
+
         if(kraken_id == 'second'){
-          url = 'https://'+ ip +'/validateapiKeySecretKraken2'
+            data =  {
+                "user_id": admin_id,
+                "exchange": exchange,
+                "secret_2": api_key
+            }
         } else if(kraken_id == 'third'){
-          url = 'https://'+ ip +'/validateapiKeySecretKraken3'
+            data =  {
+                "user_id": admin_id,
+                "exchange": exchange,
+                "secret_3": api_key
+            }
         } else {
-          url = 'https://'+ ip +'/validateapiKeySecretKraken'
+            data =  {
+                "user_id": admin_id,
+                "exchange": exchange,
+                "secret_1": api_key
+            }
         }
+        url = 'https://'+ ip +'/validateKeyAndSecret'
       }
 
 
@@ -11851,11 +11886,12 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
       console.log(url)
         request.post({
             url: url,
-            json: {
-                "user_id": admin_id,
-                "exchange": exchange,
-                "api_key":api_key
-            },
+            // json: {
+            //     "user_id": admin_id,
+            //     "exchange": exchange,
+            //     "api_key":api_key
+            // },
+            json: data,
             headers: {
                 'content-type': 'application/json',
                 'Token': 'vizzwebsolutions12345678910'
