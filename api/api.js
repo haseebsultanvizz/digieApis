@@ -13558,13 +13558,66 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
     var user_id = req.body.user_id;
     var trading_ip = req.body.trading_ip;
     var interface = typeof (req.body.interface != 'undefined') ? req.body.interface : 'web';
-    var krakenCredentials1 = await getKrakenCredentials(trading_ip, user_id);
-    var krakenCredentials2 = await getKrakenCredentials2(trading_ip, user_id);
-    var krakenCredentials3 = await getKrakenCredentials3(trading_ip, user_id);
+    // var krakenCredentials1 = await getKrakenCredentials(trading_ip, user_id);
+    // var krakenCredentials2 = await getKrakenCredentials2(trading_ip, user_id);
+    // var krakenCredentials3 = await getKrakenCredentials3(trading_ip, user_id);
+
+    var kraken_data = await getKrakenCredentials_new(trading_ip, user_id);
+
+
+    console.log(kraken_data)
+
+    var obj = {}
+    obj['api_secret'] = '';
+    obj['api_secret_secondary'] = '';
+    obj['api_secret_third_key'] = '';
+    obj['api_key'] = '';
+    obj['api_key_secondary'] = '';
+    obj['api_key_third_key'] = '';
+    // First Secret Key
+    if(kraken_data != false){
+        if(kraken_data.secret_1 == ''){
+          obj['api_secret'] = '';
+        } else {
+          obj['api_secret'] = kraken_data.secret_1
+        }
+
+        // Second Secret Key
+        if(kraken_data.secret_2 == ''){
+            obj['api_secret_secondary'] = '';
+        } else {
+            obj['api_secret_secondary'] = kraken_data.secret_2
+        }
+
+        // Third Secret Key
+        if(kraken_data.secret_3 == ''){
+            obj['api_secret_third_key'] = '';
+        } else {
+            obj['api_secret_third_key'] = kraken_data.secret_3
+        }
+
+    }
+
+
+    var arr = [];
+    arr.push(obj);
 
 
 
-    console.log(krakenCredentials1, krakenCredentials2, krakenCredentials3)
+
+    if(interface == 'mobile'){
+        resp.status(200).send({
+            success:true,
+            message:"ALL Good Bro Just Contact Me"
+        })
+    } else {
+        resp.status(200).send({
+            response: arr
+        })
+    }
+    // console.log(krakenCredentials1, krakenCredentials2, krakenCredentials3)
+    return false;
+
 
 
     var obj = {}
@@ -13636,6 +13689,58 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
 
 
 }) //End of getKrakenCredentials
+
+
+function getKrakenCredentials_new(trading_ip, user_id) {
+    return new Promise((resolve, reject) => {
+
+
+
+
+        let ip = '';
+        let port = 2500
+
+
+        if(trading_ip == '3.227.143.115'){
+          ip = 'ip1-kraken.digiebot.com/api/user'
+        } else if(trading_ip == '3.228.180.22'){
+          ip = 'ip2-kraken.digiebot.com/api/user'
+        } else if(trading_ip == '3.226.226.217'){
+          ip = 'ip3-kraken.digiebot.com/api/user'
+        } else if(trading_ip == '3.228.245.92'){
+          ip = 'ip4-kraken.digiebot.com/api/user'
+        } else if(trading_ip == '35.153.9.225'){
+          ip = 'ip5-kraken.digiebot.com/api/user'
+        } else if(trading_ip == '54.157.102.20'){
+          ip = 'ip6-kraken.digiebot.com/api/user'
+        }
+
+        let url1 = 'https://'+ip+'/getApiSecretBalanceTrading';
+        console.log(url1)
+        request.post({
+            url: url1,
+            json: {
+                "user_id": user_id,
+            },
+            headers: {
+                'content-type': 'application/json',
+                'Token': 'vizzwebsolutions12345678910'
+            }
+        }, function (error, response, body) {
+            // console.log(error,body)
+            if (!error && response.statusCode == 200) {
+                console.log(body, "get User API1");
+                if(body.success){
+                  resolve(body);
+                } else {
+                  resolve(false);
+                }
+            } else {
+                resolve(false)
+            }
+        });
+    })
+} //End of getKrakenCredentials_new
 
 function getKrakenCredentials(trading_ip, user_id) {
     return new Promise((resolve, reject) => {
