@@ -3793,15 +3793,15 @@ function listCurrentMarketPriceArr(coin, exchange) {
 
 
 
-router.post('/find_user_by_id', auth_token.required, async(req, res) => {
+router.post('/find_user_by_id', async(req, res) => {
 
-    var user_exist = await getUserByID(req.payload.id);
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'Un-Authorized Person'
-        });
-        return false;
-    }
+    // var user_exist = await getUserByID(req.payload.id);
+    // if(!user_exist){
+    //     resp.status(401).send({
+    //         message: 'Un-Authorized Person'
+    //     });
+    //     return false;
+    // }
 
   if(typeof req.body.id != 'undefined' && req.body.id != '') {
     var user_exist = await getUserByID(req.body.id, 'yes');
@@ -13614,22 +13614,28 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
     if(kraken_data != false){
         if(kraken_data.secret_1 == ''){
           obj['api_secret'] = '';
+          obj['api_key'] = '';
         } else {
-          obj['api_secret'] = kraken_data.secret_1
+          obj['api_secret'] = kraken_data.secret_1;
+          obj['api_key'] = kraken_data.api_key_1;
         }
 
         // Second Secret Key
         if(kraken_data.secret_2 == ''){
             obj['api_secret_secondary'] = '';
+            obj['api_key_secondary'] = '';
         } else {
-            obj['api_secret_secondary'] = kraken_data.secret_2
+            obj['api_secret_secondary'] = kraken_data.secret_2;
+            obj['api_key_secondary'] = kraken_data.api_key_2;
         }
 
         // Third Secret Key
         if(kraken_data.secret_3 == ''){
             obj['api_secret_third_key'] = '';
+            obj['api_key_third_key'] = '';
         } else {
-            obj['api_secret_third_key'] = kraken_data.secret_3
+            obj['api_secret_third_key'] = kraken_data.secret_3;
+            obj['api_key_third_key'] = kraken_data.api_key_3;
         }
 
     }
