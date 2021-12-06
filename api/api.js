@@ -28202,7 +28202,7 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
                 return false;
             } else if (exchange == 'kraken'){
                 if (keyNo == 'primary'){
-                    await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': ''}, '$set': {'is_api_key_valid': 'no'} })
+                    await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': ''}, '$set': {'is_api_key_valid': 'no', 'api_key_1': 'no', 'secret_1': 'no'} })
 
                     actionSuccess = true
                     res.send({
@@ -28210,7 +28210,7 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
                         'message': 'Trading disabled successfully',
                     });
                 } else if (keyNo == 'secondary'){
-                    await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_secondary': '', 'api_secret_secondary': '' }, '$set': {'is_api_key_valid_secondary': 'no'} })
+                    await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_secondary': '', 'api_secret_secondary': '' }, '$set': {'is_api_key_valid_secondary': 'no', 'api_key_2': 'no', 'secret_2': 'no'} })
 
                     actionSuccess = true
                     res.send({
@@ -28218,11 +28218,11 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
                         'message': 'Trading disabled successfully',
                     });
                 } else if (keyNo == 'third'){
-                    await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_third_key': '', 'api_secret_third_key': '' }, '$set': {'is_api_key_valid_third': 'no'} })
+                    await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_third_key': '', 'api_secret_third_key': '' }, '$set': {'is_api_key_valid_third': 'no', 'api_key_3': 'no', 'secret_3': 'no'} })
 
                     actionSuccess = true
                 } else {
-                    await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': ''}, '$set': {'is_api_key_valid': 'no'} })
+                    await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': ''}, '$set': {'is_api_key_valid': 'no', 'api_key_1': 'no', 'secret_1': 'no'} })
 
                     actionSuccess = true
                     res.send({
