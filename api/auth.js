@@ -2,7 +2,6 @@ var jwt = require('express-jwt');
 var secret = 'digiebot_trading';
 
 function getTokenFromHeader(req){
-  console.log(req.headers, 'getTokenFromHeader')
   if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Token' ||
       req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
 
