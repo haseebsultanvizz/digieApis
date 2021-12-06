@@ -28124,9 +28124,11 @@ async function remove_api_key(user_ip, user_id, exchange, keyNo){
           ip = 'ip6-kraken.digiebot.com/api/user'
         }
         if(keyNo== 'secondary'){
-            url = 'https://'+ ip +'/disableTrading2'
+            url = 'https://'+ ip +'/disableKeySecretBalanceTrading2'
+        } else if(keyNo == 'third'){
+            url = 'https://'+ ip +'/disableKeySecretBalanceTrading3'
         } else {
-            url = 'https://'+ ip +'/disableTrading'
+            url = 'https://'+ ip +'/disableKeySecretBalanceTrading1'
         }
 
       }
