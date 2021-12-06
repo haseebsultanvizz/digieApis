@@ -3795,19 +3795,40 @@ function listCurrentMarketPriceArr(coin, exchange) {
 
 router.post('/find_user_by_id',async(req, res) => {
 
+  if(typeof req.body.id != 'undefined' && req.body.id != '') {
+    var user_exist = await getUserByID(req.body.id, 'yes');
+    if(!user_exist.success){
+      res.status(200).send({
+        'success': false,
+        'message': 'User Not exist'
+      });
+    } else {
+      res.status(200).send({
+        'success': true,
+        'message':'User Exist'
+      })
+    }
+  } else {
+    res.status(200).send({
+      'success': false,
+      'message': 'User id needed in id param'
+    });
+  }
 
-  // console.log(typeof req.payload.id, 'find_user_by_id')
+})
 
-    // if(typeof req.payload.id != 'undefined' && req.payload.id != ''){
-    //     var user_exist = await getUserByID(req.payload.id);
-    //     if(!user_exist){
-    //         resp.status(401).send({
-    //             message: 'Un-Authorized Person'
-    //         });
-    //         return false;
-    //     }
-    // }
+router.post('/find_user', auth_token.required, async(req, res) => {
 
+
+
+  var user_exist = await getUserByID(req.payload.id);
+  // console.log(user_exist)
+  if(!user_exist){
+    resp.status(401).send({
+          message: 'User Not exist'
+      });
+      return false;
+  }
 
   if(typeof req.body.id != 'undefined' && req.body.id != '') {
     var user_exist = await getUserByID(req.body.id, 'yes');
