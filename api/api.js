@@ -33902,6 +33902,8 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                 resp.status(200).send({
                   "success": true,
                   "is_api_key_valid": data['is_api_key_valid'],
+                  "is_api_key_valid_secondary": data['is_api_key_valid_secondary'],
+                  "is_api_key_valid_third": data['is_api_key_valid_third'],
                   "last_key_updated_date_kraken1": data['modified_date'],
                   "last_key_updated_date_kraken2": data['modified_date_secondary'],
                   "last_key_updated_date_kraken3": data['modified_date_third_key'],
