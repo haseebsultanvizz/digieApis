@@ -11838,24 +11838,24 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
       // If Binance
       if(exchange == 'binance'){
         if(user_ip == '3.227.143.115'){
-          ip = 'ip1.digiebot.com'
+          ip = 'ip1-kraken.digiebot.com/api/user'
         } else if(user_ip == '3.228.180.22'){
-          ip = 'ip2.digiebot.com'
+          ip = 'ip2-kraken.digiebot.com/api/user'
         } else if(user_ip == '3.226.226.217'){
-          ip = 'ip3.digiebot.com'
+          ip = 'ip3-kraken.digiebot.com/api/user'
         } else if(user_ip == '3.228.245.92'){
-          ip = 'ip4.digiebot.com'
+          ip = 'ip4-kraken.digiebot.com/api/user'
         } else if(user_ip == '35.153.9.225'){
-          ip = 'ip5.digiebot.com'
+          ip = 'ip5-kraken.digiebot.com/api/user'
         } else if(user_ip == '54.157.102.20'){
-          ip = 'ip6.digiebot.com'
+          ip = 'ip6-kraken.digiebot.com/api/user'
         }
-        url = 'https://'+ ip +'/apiKeySecret/validateapiKeySecret'
+        url = 'https://'+ ip +'/validateKeyAndSecret'
 
         data =  {
             "user_id": admin_id,
             "exchange": exchange,
-            "api_key":api_key
+            "secret_1": api_key
         }
       }
       // If Kraken
@@ -12102,43 +12102,52 @@ async function get_api_secret(user_ip, admin_id){
       let port = 2500
 
 
+
+
       if(user_ip == '3.227.143.115'){
-        ip = 'ip1.digiebot.com'
+        ip = 'ip1-kraken.digiebot.com/api/user'
       } else if(user_ip == '3.228.180.22'){
-        ip = 'ip2.digiebot.com'
+        ip = 'ip2-kraken.digiebot.com/api/user'
       } else if(user_ip == '3.226.226.217'){
-        ip = 'ip3.digiebot.com'
+        ip = 'ip3-kraken.digiebot.com/api/user'
       } else if(user_ip == '3.228.245.92'){
-        ip = 'ip4.digiebot.com'
+        ip = 'ip4-kraken.digiebot.com/api/user'
       } else if(user_ip == '35.153.9.225'){
-        ip = 'ip5.digiebot.com'
+        ip = 'ip5-kraken.digiebot.com/api/user'
       } else if(user_ip == '54.157.102.20'){
-        ip = 'ip6.digiebot.com'
+        ip = 'ip6-kraken.digiebot.com/api/user'
       }
 
-      let url = 'https://'+ ip +'/apiKeySecret/getapiKeySecret'
+      let url = 'https://'+ ip +'/getApiSecretBalanceTradingBinance'
 
         console.log(url)
         request.post({
-            url: url,
-            json: {
-                "user_id": admin_id,
-                "code": "2022@digie"
-            },
-            headers: {
-                'content-type': 'application/json'
-            }
+          url: url,
+          json: {
+              "user_id": admin_id,
+              "exchange": 'binance'
+          },
+          headers: {
+              'content-type': 'application/json',
+              'Token': 'vizzwebsolutions12345678910'
+          }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
                 // console.log(body, "get User API");
                 if(body.success){
                   // console.log(body)
-                  resolve(body.api_key);
+                  resolve(body);
                 } else {
-                  resolve(false);
+                  resolve({
+                    success: false,
+                    message: "Value Do not Exist"
+                  });
                 }
             } else {
-                resolve(false)
+                resolve({
+                  success: false,
+                  message: "Error Occured"
+                })
             }
         });
     });
@@ -12216,12 +12225,14 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
 
                             var userInfo = await get_api_secret(data['trading_ip'], (data['_id']).toString());
 
-                            if(userInfo == false){
+                            console.log(userInfo)
+
+                            if(userInfo.success == false){
                               data['api_key'] = '';
                               data['api_secret'] = ''
                             } else{
-                              data['api_key'] = userInfo;
-                              data['api_secret'] = ''
+                              data['api_key'] = userInfo.api_key_1;
+                              data['api_secret'] = userInfo.secret_1;
                             }
 
 
@@ -12272,39 +12283,44 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
 
 
 
-async function add_user_info(user_ip, admin_id, api_key, api_secret){
+async function add_user_info(user_ip, admin_id, api_key, api_secret, interface){
     return new Promise(async function (resolve, reject) {
 
       let ip = '';
       let port = 2500
 
 
+
       if(user_ip == '3.227.143.115'){
-        ip = 'ip1.digiebot.com'
+        ip = 'ip1-kraken.digiebot.com/api/user'
       } else if(user_ip == '3.228.180.22'){
-        ip = 'ip2.digiebot.com'
+        ip = 'ip2-kraken.digiebot.com/api/user'
       } else if(user_ip == '3.226.226.217'){
-        ip = 'ip3.digiebot.com'
+        ip = 'ip3-kraken.digiebot.com/api/user'
       } else if(user_ip == '3.228.245.92'){
-        ip = 'ip4.digiebot.com'
+        ip = 'ip4-kraken.digiebot.com/api/user'
       } else if(user_ip == '35.153.9.225'){
-        ip = 'ip5.digiebot.com'
+        ip = 'ip5-kraken.digiebot.com/api/user'
       } else if(user_ip == '54.157.102.20'){
-        ip = 'ip6.digiebot.com'
+        ip = 'ip6-kraken.digiebot.com/api/user'
       }
 
-      let url = 'https://'+ ip +'/apiKeySecret/saveapiKeySecret'
+      // let url = 'http://'+ip+
 
+      let url = 'https://'+ip+'/saveSecretTradingBinance';
         // console.log(url)
         request.post({
             url: url,
             json: {
                 "user_id": admin_id,
                 "api_key": api_key,
-                "api_secret": api_secret
+                "secret_1": api_secret,
+                "source":interface,
+                "exchange":'binance'
             },
             headers: {
-                'content-type': 'application/json'
+                'content-type': 'application/json',
+                'Token': 'vizzwebsolutions12345678910'
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
@@ -12393,20 +12409,20 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
 
-                        if(update_arr['interface'] == 'ios'){
-                          var key1 = decrypt(update_arr['api_key'])
-                          update_arr['api_key'] = key1;
-                          var secret1 = decrypt(update_arr['api_secret'])
-                          update_arr['api_secret'] = secret1;
-                        } else {
-                          var key1  = CryptoJS.AES.decrypt(update_arr['api_key'], 'digiebot_trading');
-                          update_arr['api_key'] = key1.toString(CryptoJS.enc.Utf8);
+                        // if(update_arr['interface'] == 'ios'){
+                        //   var key1 = decrypt(update_arr['api_key'])
+                        //   update_arr['api_key'] = key1;
+                        //   var secret1 = decrypt(update_arr['api_secret'])
+                        //   update_arr['api_secret'] = secret1;
+                        // } else {
+                        //   var key1  = CryptoJS.AES.decrypt(update_arr['api_key'], 'digiebot_trading');
+                        //   update_arr['api_key'] = key1.toString(CryptoJS.enc.Utf8);
 
 
 
-                          var secret1  = CryptoJS.AES.decrypt(update_arr['api_secret'], 'digiebot_trading');
-                          update_arr['api_secret'] = secret1.toString(CryptoJS.enc.Utf8);
-                        }
+                        //   var secret1  = CryptoJS.AES.decrypt(update_arr['api_secret'], 'digiebot_trading');
+                        //   update_arr['api_secret'] = secret1.toString(CryptoJS.enc.Utf8);
+                        // }
 
 
 
@@ -12418,7 +12434,11 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
                         // return false;
 
-                        var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'])
+                        var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'])
+
+
+
+                        console.log(data, 'add_user_info')
 
 
                         var apikey = update_arr['api_key'].substring(0, 5);
@@ -12451,39 +12471,6 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
                         }
 
                         return false;
-
-
-                        db.collection("users").updateOne(search_arr, {
-                            $set: update_arr
-                        }, async function (err1, obj) {
-                            if (err1) throw err1;
-                            if (obj.result.nModified > 0) {
-
-                                var reqObj = {
-                                    'type': 'POST',
-                                    'url': 'https://app.digiebot.com/admin/Api_calls/important_user_activity_logs',
-                                    'payload': {
-                                        'user_id': String(user_id),
-                                        'type': 'api_key_updated',
-                                        'log': 'Binance API key is updated',
-                                    },
-                                }
-                                var apiResult = await customApiRequest(reqObj)
-
-                                res.status(200).send({
-                                    "success": "true",
-                                    "status": 200,
-                                    "message": "User info against user_id " + user_id + " has been successfully update"
-                                })
-                            } else {
-                                res.status(207).send({
-                                    "success": "partial",
-                                    "status": 207,
-                                    "message": "User info against user_id " + user_id + " was already updated. Try different values."
-                                })
-                            }
-                            let updateWallet = update_user_balance(user_id)
-                        })
                     } else {
                         res.status(404).send({
                             "success": "false",
@@ -12507,119 +12494,6 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
             })
         }
     }
-})
-
-router.post('/update_user_info_new', auth_token.required, async function (req, res, next) {
-
-
-  var user_exist = await getUserByID(req.payload.id);
-  if(!user_exist){
-      resp.status(401).send({
-          message: 'User Not exist'
-      });
-      return false;
-  }
-
-
-  var post_data = req.body;
-  post_data['interface'] = typeof post_data['interface'] != 'undefined' && post_data['interface'] != '' ? 'ios' : 'other';
-
-
-
-  let post_data_key_array = Object.keys(post_data);
-  if (post_data_key_array.length == 0) {
-      res.status(400).send({
-          "success": "false",
-          "status": 400,
-          "message": "Bad request. No data posted in a post request"
-      })
-  } else {
-      if ('user_id' in post_data) {
-          let user_id = post_data['user_id'];
-          conn.then(db => {
-              let search_arr = {
-                  "_id": ObjectID(user_id)
-              };
-              let search_arr_investment = {
-                "admin_id": user_id
-              };
-              db.collection("users").findOne(search_arr,async function (err, data) {
-                  if (err) throw err;
-                  if (Object.keys(data).length > 0) {
-                      let update_arr = new Object(post_data);
-                      delete update_arr.user_id;
-
-                      update_arr['trading_ip'] = data['trading_ip'];
-
-                      let fieldsArr = ['api_key', 'api_secret', 'pass_phrase', 'trading_ip', 'user_id', 'interface']
-                      for (let [key, value] of Object.entries(update_arr)) {
-                          if (!fieldsArr.includes(key)) {
-                              delete update_arr[key]
-                          }
-                      }
-
-
-
-
-
-
-
-
-                      var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_secret'], '')
-
-
-                      var apisecret = update_arr['api_secret'].substring(0, 5);
-
-
-                      var permision_for = update_arr['pass_phrase']
-
-
-
-
-
-
-
-                      if(data.success){
-                        var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes', 'permission_for': permision_for}});
-                        var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date(), 'permission_for': permision_for, 'interface': update_arr['interface']}});
-                        await update_user_wallet_binance(user_id, update_arr['trading_ip'])
-                          res.status(200).send({
-                              "success": true,
-                              "status": 200,
-                              "message": "Submitted on Digie Platform Successfully"
-                          })
-                      } else {
-                          res.status(201).send({
-                              "success": false,
-                              "status": 201,
-                              "message": "Not Submitted on Digie Platform Please Try Again"
-                          })
-                      }
-
-                      return false;
-                  } else {
-                      res.status(404).send({
-                          "success": "false",
-                          "status": 404,
-                          "message": "user_id " + user_id + " was not found in the database"
-                      })
-                  }
-              })
-          }).catch(err3 => {
-              res.status(500).send({
-                  "success": "false",
-                  "status": 500,
-                  "message": "Database connection problem"
-              })
-          })
-      } else {
-          res.status(400).send({
-              "success": "false",
-              "status": 400,
-              "message": "user_id was required to completed this request..."
-          })
-      }
-  }
 })
 
 
@@ -34020,6 +33894,8 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                     "success": true,
                     "is_api_key_valid": data['is_api_key_valid'],
                     "last_key_updated_date": data['info_modified_date'],
+                    "api_key_1": typeof data['api_key_1'] != 'undefined' && typeof data['api_key_1'] != '' ? data['api_key_1'] : 'no',
+                    "secret_1": typeof data['secret_1'] != 'undefined' && typeof data['secret_1'] != '' ? data['secret_1'] : 'no',
                     "message": "User data against _id " + user_id + " has been fetched successfully"
                 })
               } else {
