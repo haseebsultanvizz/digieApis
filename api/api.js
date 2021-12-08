@@ -33931,7 +33931,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                     "success": true,
                     "is_api_key_valid": data['is_api_key_valid'],
                     "is_api_key_valid_secondary": typeof data['is_api_key_valid_secondary'] != 'undefined' && data['is_api_key_valid_secondary'] != ''? data['is_api_key_valid_secondary'] : 'no',
-                    "is_api_key_valid_third": typeof data['is_api_key_valid_third'] != 'undefined' && data['is_api_key_valid_third'] != ''? data['is_api_key_valid_third'] : 'no',,
+                    "is_api_key_valid_third": typeof data['is_api_key_valid_third'] != 'undefined' && data['is_api_key_valid_third'] != ''? data['is_api_key_valid_third'] : 'no',
                     "last_key_updated_date": data['info_modified_date'],
                     "last_key_updated_date_2": data['info_modified_date_secondary'],
                     "last_key_updated_date_3": data['info_modified_date_third_key'],
