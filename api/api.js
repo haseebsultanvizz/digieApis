@@ -12135,7 +12135,7 @@ async function get_api_secret(user_ip, admin_id){
             if (!error && response.statusCode == 200) {
                 // console.log(body, "get User API");
                 if(body.success){
-                  // console.log(body)
+                  console.log(body)
                   resolve(body);
                 } else {
                   resolve({
@@ -12230,9 +12230,17 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                             if(userInfo.success == false){
                               data['api_key'] = '';
                               data['api_secret'] = ''
+                              data['api_key_2'] = '';
+                              data['api_secret_2'] = ''
+                              data['api_key_3'] = '';
+                              data['api_secret_3'] = ''
                             } else{
                               data['api_key'] = userInfo.api_key_1;
                               data['api_secret'] = userInfo.secret_1;
+                              data['api_key_2'] = userInfo.api_key_2;
+                              data['api_secret_2'] = userInfo.secret_2;
+                              data['api_key_3'] = userInfo.api_key_3;
+                              data['api_secret_3'] = userInfo.secret_3;
                             }
 
 
@@ -33900,6 +33908,8 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                     "success": true,
                     "is_api_key_valid": data['is_api_key_valid'],
                     "last_key_updated_date": data['info_modified_date'],
+                    "last_key_updated_date_2": data['info_modified_date_secondary'],
+                    "last_key_updated_date_3": data['info_modified_date_third_key'],
                     "api_key_1": typeof data['api_key_1'] != 'undefined' && typeof data['api_key_1'] != '' ? data['api_key_1'] : 'no',
                     "api_key_2": typeof data['api_key_2'] != 'undefined' && typeof data['api_key_2'] != '' ? data['api_key_2'] : 'no',
                     "api_key_3": typeof data['api_key_3'] != 'undefined' && typeof data['api_key_3'] != '' ? data['api_key_3'] : 'no',
