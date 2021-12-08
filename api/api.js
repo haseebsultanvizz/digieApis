@@ -12291,7 +12291,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
 
 
 
-async function add_user_info(user_ip, admin_id, api_key, api_secret, interface){
+async function add_user_info(user_ip, admin_id, api_key, api_secret, interface, keyNo){
     return new Promise(async function (resolve, reject) {
 
       let ip = '';
@@ -12314,18 +12314,37 @@ async function add_user_info(user_ip, admin_id, api_key, api_secret, interface){
       }
 
       // let url = 'http://'+ip+
+      let data = {};
 
       let url = 'https://'+ip+'/saveSecretTradingBinance';
-        // console.log(url)
+      if(keyNo == 'primary'){
+        data = {
+            "user_id": admin_id,
+            "api_key": api_key,
+            "secret_1": api_secret,
+            "source":interface,
+            "exchange":'binance'
+        }
+      } else if(keyNo == 'second'){
+        data = {
+            "user_id": admin_id,
+            "api_key_2": api_key,
+            "secret_2": api_secret,
+            "source":interface,
+            "exchange":'binance'
+        }
+      } else {
+        data = {
+            "user_id": admin_id,
+            "api_key_3": api_key,
+            "secret_3": api_secret,
+            "source":interface,
+            "exchange":'binance'
+        }
+      }
         request.post({
             url: url,
-            json: {
-                "user_id": admin_id,
-                "api_key": api_key,
-                "secret_1": api_secret,
-                "source":interface,
-                "exchange":'binance'
-            },
+            json: data,
             headers: {
                 'content-type': 'application/json',
                 'Token': 'vizzwebsolutions12345678910'
@@ -12404,7 +12423,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
                         update_arr['trading_ip'] = data['trading_ip'];
 
-                        let fieldsArr = ['api_key', 'api_secret', 'pass_phrase', 'trading_ip', 'user_id', 'interface']
+                        let fieldsArr = ['api_key', 'api_secret', 'pass_phrase', 'trading_ip', 'user_id', 'interface', 'keyNo']
                         for (let [key, value] of Object.entries(update_arr)) {
                             if (!fieldsArr.includes(key)) {
                                 delete update_arr[key]
@@ -12439,10 +12458,13 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
                         // console.log(update_arr['api_key'], update_arr['api_secret'] )
 
-
-                        // return false;
-
-                        var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'])
+                        if(update_arr['keyNo'] == 'primary'){
+                            var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'], update_arr['keyNo'])
+                        } else if(update_arr['keyNo'] == 'second') {
+                            var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'], update_arr['keyNo'])
+                        } else {
+                            var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'], update_arr['keyNo'])
+                        }
 
 
 
@@ -12451,20 +12473,21 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
                         var apikey = update_arr['api_key'].substring(0, 5);
                         var apisecret = update_arr['api_secret'].substring(0, 5);
-
-
                         var permision_for = update_arr['pass_phrase']
-
-
-                        // console.log(data, 'Huzaifa binance Data ', update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'])
 
 
 
 
                         if(data.success){
-                          var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes', 'permission_for': permision_for}});
-                          var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date(), 'permission_for': permision_for}});
-                          await update_user_wallet_binance(user_id, update_arr['trading_ip'])
+                            if(update_arr['keyNo'] == 'primary'){
+                                var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes', 'permission_for': permision_for}});
+                                var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date(), 'permission_for': permision_for}});
+                                await update_user_wallet_binance(user_id, update_arr['trading_ip'])
+                            } else if(update_arr['keyNo'] == 'second'){
+                                var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key_2':apikey, 'api_secret_2': apisecret, 'is_api_key_valid_secondary': 'yes', 'count_invalid_api_secondary': 0, 'account_block_secondary': 'no', 'api_key_valid_checking_secondary': new Date(), 'info_modified_date_secondary': new Date(), 'permission_for_secondary': permision_for}});
+                            } else {
+                                var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key_3':apikey, 'api_secret_3': apisecret, 'is_api_key_valid_third': 'yes', 'count_invalid_api_third': 0, 'account_block_third': 'no', 'api_key_valid_checking_third': new Date(), 'info_modified_date_third_key': new Date(), 'permission_for_third': permision_for}});
+                            }
                             res.status(200).send({
                                 "success": true,
                                 "status": 200,
