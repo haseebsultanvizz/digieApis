@@ -17816,7 +17816,7 @@ async function update_user_balance(user_id, res='', auth_token='') {
           console.log('if')
           resolve(body)
         } else {
-          console.log('else')
+          console.log('else', body)
           resolve(body['status'])
         }
       }
