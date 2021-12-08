@@ -27995,19 +27995,25 @@ async function remove_api_key(user_ip, user_id, exchange, keyNo){
       // If Binance
       if(exchange == 'binance'){
         if(user_ip == '3.227.143.115'){
-          ip = 'ip1.digiebot.com'
+        ip = 'ip1-kraken.digiebot.com/api/user'
         } else if(user_ip == '3.228.180.22'){
-          ip = 'ip2.digiebot.com'
+        ip = 'ip2-kraken.digiebot.com/api/user'
         } else if(user_ip == '3.226.226.217'){
-          ip = 'ip3.digiebot.com'
+        ip = 'ip3-kraken.digiebot.com/api/user'
         } else if(user_ip == '3.228.245.92'){
-          ip = 'ip4.digiebot.com'
+        ip = 'ip4-kraken.digiebot.com/api/user'
         } else if(user_ip == '35.153.9.225'){
-          ip = 'ip5.digiebot.com'
+        ip = 'ip5-kraken.digiebot.com/api/user'
         } else if(user_ip == '54.157.102.20'){
-          ip = 'ip6.digiebot.com'
+        ip = 'ip6-kraken.digiebot.com/api/user'
         }
-        url = 'https://'+ ip +'/apiKeySecret/disableTrading'
+        if(keyNo== 'secondary'){
+            url = 'https://'+ ip +'/disableKeySecretBalanceTradingBinance2'
+        } else if(keyNo == 'third'){
+            url = 'https://'+ ip +'/disableKeySecretBalanceTradingBinance3'
+        } else {
+            url = 'https://'+ ip +'/disableKeySecretBalanceTradingBinance1'
+        }
       }
       // If Kraken
       else if(exchange == 'kraken') {
