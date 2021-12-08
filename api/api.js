@@ -17817,7 +17817,8 @@ async function update_user_balance(user_id, res='', auth_token='') {
           resolve(body)
         } else {
           console.log('else', body)
-          resolve(body['status'])
+        //   Please Do remember Here is body['status'] in resolver
+          resolve(true)
         }
       }
     });
