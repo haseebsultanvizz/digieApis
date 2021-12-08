@@ -33901,7 +33901,11 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                     "is_api_key_valid": data['is_api_key_valid'],
                     "last_key_updated_date": data['info_modified_date'],
                     "api_key_1": typeof data['api_key_1'] != 'undefined' && typeof data['api_key_1'] != '' ? data['api_key_1'] : 'no',
+                    "api_key_2": typeof data['api_key_2'] != 'undefined' && typeof data['api_key_2'] != '' ? data['api_key_2'] : 'no',
+                    "api_key_3": typeof data['api_key_3'] != 'undefined' && typeof data['api_key_3'] != '' ? data['api_key_3'] : 'no',
                     "secret_1": typeof data['secret_1'] != 'undefined' && typeof data['secret_1'] != '' ? data['secret_1'] : 'no',
+                    "secret_2": typeof data['secret_2'] != 'undefined' && typeof data['secret_2'] != '' ? data['secret_2'] : 'no',
+                    "secret_3": typeof data['secret_3'] != 'undefined' && typeof data['secret_3'] != '' ? data['secret_3'] : 'no',
                     "message": "User data against _id " + user_id + " has been fetched successfully"
                 })
               } else {
