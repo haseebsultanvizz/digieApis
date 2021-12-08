@@ -11838,24 +11838,39 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
       // If Binance
       if(exchange == 'binance'){
         if(user_ip == '3.227.143.115'){
-          ip = 'ip1-kraken.digiebot.com/api/user'
+          ip = 'ip1.digiebot.com'
         } else if(user_ip == '3.228.180.22'){
-          ip = 'ip2-kraken.digiebot.com/api/user'
+          ip = 'ip1.digiebot.com'
         } else if(user_ip == '3.226.226.217'){
-          ip = 'ip3-kraken.digiebot.com/api/user'
+          ip = 'ip1.digiebot.com'
         } else if(user_ip == '3.228.245.92'){
-          ip = 'ip4-kraken.digiebot.com/api/user'
+          ip = 'ip1.digiebot.com'
         } else if(user_ip == '35.153.9.225'){
-          ip = 'ip5-kraken.digiebot.com/api/user'
+          ip = 'ip1.digiebot.com'
         } else if(user_ip == '54.157.102.20'){
-          ip = 'ip6-kraken.digiebot.com/api/user'
+          ip = 'ip1.digiebot.com'
         }
-        url = 'https://'+ ip +'/validateKeyAndSecret'
 
-        data =  {
-            "user_id": admin_id,
-            "exchange": exchange,
-            "secret_1": api_key
+        url = 'https://'+ ip +'/apiKeySecret/validateApiKeySecret'
+
+        if(kraken_id == 'second'){
+            data =  {
+                "user_id": admin_id,
+                "exchange": exchange,
+                "secret_2": api_key
+            }
+        } else if(kraken_id == 'third'){
+            data =  {
+                "user_id": admin_id,
+                "exchange": exchange,
+                "secret_3": api_key
+            }
+        } else {
+            data =  {
+                "user_id": admin_id,
+                "exchange": exchange,
+                "secret_1": api_key
+            }
         }
       }
       // If Kraken
@@ -11890,7 +11905,8 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
             data =  {
                 "user_id": admin_id,
                 "exchange": exchange,
-                "secret_2": api_key
+                "secret": api_key,
+                "secret_type": 'balance'
             }
         } else if(kraken_id == 'third'){
             data =  {
@@ -11902,7 +11918,8 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
             data =  {
                 "user_id": admin_id,
                 "exchange": exchange,
-                "secret_1": api_key
+                "secret": api_key,
+                "secret_type": 'trading'
             }
         }
         url = 'https://'+ ip +'/validateKeyAndSecret'
@@ -11954,6 +11971,7 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
     var user_id = req.body.user_id;
     var exchange = req.body.exchange;
     var api_key = req.body.api_key;
+    var kraken_id = req.body.kraken_id;
 
 
     let search_arr = {
@@ -11990,7 +12008,7 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
 
 
 
-      var data = await verify_user_info(api_key, user_ip, user_id, exchange)
+      var data = await verify_user_info(api_key, user_ip, user_id, exchange, kraken_id)
       console.log(data, '-=-=--=-=-=-=-=-=-=')
       if(data.success){
 
