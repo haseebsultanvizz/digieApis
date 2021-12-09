@@ -11857,7 +11857,8 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
             data =  {
                 "user_id": admin_id,
                 "exchange": exchange,
-                "secret_2": api_key
+                "secret": api_key,
+                "secret_type": 'balance'
             }
         } else if(kraken_id == 'third'){
             data =  {
@@ -11869,7 +11870,8 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
             data =  {
                 "user_id": admin_id,
                 "exchange": exchange,
-                "secret_1": api_key
+                "secret": api_key,
+                "secret_type": 'trading'
             }
         }
       }
@@ -11905,8 +11907,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
             data =  {
                 "user_id": admin_id,
                 "exchange": exchange,
-                "secret": api_key,
-                "secret_type": 'balance'
+                "secret_2": api_key
             }
         } else if(kraken_id == 'third'){
             data =  {
@@ -11918,8 +11919,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
             data =  {
                 "user_id": admin_id,
                 "exchange": exchange,
-                "secret": api_key,
-                "secret_type": 'trading'
+                "secret_1": api_key
             }
         }
         url = 'https://'+ ip +'/validateKeyAndSecret'
@@ -14075,6 +14075,7 @@ router.post('/validate_kraken_credentials', auth_token.required, async (req, res
     // var credentials = await validate_kraken_credentials(APIKEY, APISECRET, user_id);
 
     var credentials = await verify_user_info(APIKEY, trading_ip, user_id, exchange, kraken_id);
+    console.log(credentials, 'credentials')
 
     resp.status(200).send({
         message: credentials
