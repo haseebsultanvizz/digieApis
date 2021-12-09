@@ -28148,8 +28148,14 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
 
         if(data.success == true){
             if(exchange == 'binance'){
-                await db.collection('users').updateOne({ _id: new ObjectID(user_id) }, { '$unset': { 'api_key': '', 'api_secret': ''}, '$set': {'is_api_key_valid': 'no'} } )
-                await db.collection('buy_orders').updateMany({'application_mode':'live', 'admin_id': user_id, 'parent_status':'parent', 'status':{'$ne':'canceled'}}, {'$set':{'pick_parent':'no', 'pick_parent_no':'api_key_removed'}})
+                if (keyNo == 'primary'){
+                    await db.collection('users').updateOne({ _id: new ObjectID(user_id) }, { '$unset': { 'api_key': '', 'api_secret': ''}, '$set': {'is_api_key_valid': 'no'} } )
+                    await db.collection('buy_orders').updateMany({'application_mode':'live', 'admin_id': user_id, 'parent_status':'parent', 'status':{'$ne':'canceled'}}, {'$set':{'pick_parent':'no', 'pick_parent_no':'api_key_removed'}})
+                } else if (keyNo == 'secondary'){
+                    await db.collection('users').updateOne({ _id: new ObjectID(user_id) }, { '$unset': { 'api_key_secondary': '', 'api_secret_secondary': ''}, '$set': {'is_api_key_valid_secondary': 'no'} } )
+                } else if (keyNo == 'third'){
+                    await db.collection('users').updateOne({ _id: new ObjectID(user_id) }, { '$unset': { 'api_key_third': '', 'api_secret_third': ''}, '$set': {'is_api_key_valid_third': 'no'} } )
+                }
 
                 actionSuccess = true
                 res.send({
@@ -28178,6 +28184,10 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
                     await db.collection('kraken_credentials').updateOne({ 'user_id': user_id }, { '$unset': { 'api_key_third_key': '', 'api_secret_third_key': '' }, '$set': {'is_api_key_valid_third': 'no', 'api_key_3': 'no', 'secret_3': 'no'} })
 
                     actionSuccess = true
+                    res.send({
+                        'status': true,
+                        'message': 'Trading disabled successfully',
+                    });
                 } else {
                     await db.collection('kraken_credentials').updateOne({'user_id': user_id}, { '$unset': { 'api_key': '', 'api_secret': ''}, '$set': {'is_api_key_valid': 'no', 'api_key_1': 'no', 'secret_1': 'no'} })
 
