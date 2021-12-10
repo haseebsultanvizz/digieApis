@@ -33934,7 +33934,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
     }
 
 
-    var user_id = req.body.user_id;
+    var user_id = req.payload.id;
     var exchange = req.body.exchange;
 
 
