@@ -386,6 +386,10 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.profile_image = userArr['profile_image'];
                             respObj.role = 'admin'; //userArr['user_role'];
                             respObj.token = token;
+                            respObj.is_digie = userArr['is_digie'];
+                            respObj.is_nsight = typeof userArr['is_nsight'] == 'undefined' || userArr['is_nsight'] == '' ? 0 : 1;
+                            respObj.nsight_start_date = userArr['nsight_start_date'];
+                            respObj.nsight_expiry_date = userArr['nsight_expiry_date'];
                             respObj.email_address = userArr['email_address'];
                             respObj.timezone = userArr['timezone'];
                             respObj.check_api_settings = check_api_settings;
@@ -498,6 +502,10 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.profile_image = userArr['profile_image'];
                                 respObj.role = 'admin'; //userArr['user_role'];
                                 respObj.token = token;
+                                respObj.is_digie = userArr['is_digie'];
+                                respObj.is_nsight = typeof userArr['is_nsight'] == 'undefined' || userArr['is_nsight'] == '' ? 0 : 1;
+                                respObj.nsight_start_date = userArr['nsight_start_date'];
+                                respObj.nsight_expiry_date = userArr['nsight_expiry_date'];
                                 respObj.email_address = userArr['email_address'];
                                 respObj.timezone = userArr['timezone'];
                                 respObj.check_api_settings = check_api_settings;
