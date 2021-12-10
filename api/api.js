@@ -11968,7 +11968,7 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
     }
 
     var user_ip = req.body.trading_ip;
-    var user_id = req.body.user_id;
+    var user_id = req.payload.id;
     var exchange = req.body.exchange;
     var api_key = req.body.api_key;
     var kraken_id = req.body.kraken_id;
@@ -13200,7 +13200,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     }
 
     var auth_token = req.headers.authorization;
-    var user_id = req.body.user_id;
+    var user_id = req.payload.id;
     var api_key = req.body.api_key;
     var api_secret = req.body.api_secret;
     var trading_ip = req.body.trading_ip;
@@ -13311,7 +13311,7 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
     }
 
     var auth_token = req.headers.authorization;
-    var user_id = req.body.user_id;
+    var user_id = req.payload.id;
     var api_key = req.body.api_key_secondary;
     var api_secret = req.body.api_secret_secondary;
     var trading_ip = req.body.trading_ip;
@@ -13419,7 +13419,7 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
 
 
     var auth_token = req.headers.authorization;
-    var user_id = req.body.user_id;
+    var user_id = req.payload.id;
     var api_key = req.body.api_key_third_key;
     var api_secret = req.body.api_secret_third_key;
     var trading_ip = req.body.trading_ip;
@@ -13541,7 +13541,7 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
     }
 
 
-    var user_id = req.body.user_id;
+    var user_id = req.payload.id;
     var trading_ip = req.body.trading_ip;
     var interface = typeof (req.body.interface != 'undefined') ? req.body.interface : 'web';
     // var krakenCredentials1 = await getKrakenCredentials(trading_ip, user_id);
@@ -14067,7 +14067,7 @@ router.post('/validate_kraken_credentials', auth_token.required, async (req, res
         return false;
     }
     let APIKEY = req.body.APIKEY;
-    let user_id = req.body.user_id;
+    let user_id = req.payload.id;
     let trading_ip = req.body.trading_ip
     let exchange = req.body.exchange;
     let kraken_id = req.body.kraken_id;
@@ -28134,6 +28134,8 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
     let user_ip = typeof req.body.trading_ip != 'undefined' && req.body.trading_ip != '' ? req.body.trading_ip : ''
     let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
     let keyNo = typeof req.body.keyNo != 'undefined' && req.body.keyNo != '' ? req.body.keyNo : ''
+    user_id = req.payload.id;
+
 
     if (user_id != '' && exchange != '') {
 
