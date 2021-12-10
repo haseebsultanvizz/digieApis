@@ -12191,8 +12191,8 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
             "message": "Bad request. No data posted in a post request"
         })
     } else {
-        if ('user_id' in post_data) {
-            let user_id = post_data['user_id'];
+        if (req.payload.id) {
+            let user_id = req.payload.id;
             conn.then(db => {
                 let search_arr = {
                     "_id": ObjectID(user_id)
@@ -12424,8 +12424,8 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
             "message": "Bad request. No data posted in a post request"
         })
     } else {
-        if ('user_id' in post_data) {
-            let user_id = post_data['user_id'];
+        if (req.payload.id) {
+            let user_id = req.payload.id;
             conn.then(db => {
                 let search_arr = {
                     "_id": ObjectID(user_id)
