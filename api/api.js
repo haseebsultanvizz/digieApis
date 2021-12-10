@@ -11848,15 +11848,15 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
         if(user_ip == '3.227.143.115'){
           ip = 'ip1.digiebot.com'
         } else if(user_ip == '3.228.180.22'){
-          ip = 'ip1.digiebot.com'
+          ip = 'ip2.digiebot.com'
         } else if(user_ip == '3.226.226.217'){
-          ip = 'ip1.digiebot.com'
+          ip = 'ip3.digiebot.com'
         } else if(user_ip == '3.228.245.92'){
-          ip = 'ip1.digiebot.com'
+          ip = 'ip4.digiebot.com'
         } else if(user_ip == '35.153.9.225'){
-          ip = 'ip1.digiebot.com'
+          ip = 'ip5.digiebot.com'
         } else if(user_ip == '54.157.102.20'){
-          ip = 'ip1.digiebot.com'
+          ip = 'ip6.digiebot.com'
         }
 
         url = 'https://'+ ip +'/apiKeySecret/validateApiKeySecret'
