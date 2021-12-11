@@ -502,6 +502,8 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.profile_image = userArr['profile_image'];
                                 respObj.role = 'admin'; //userArr['user_role'];
                                 respObj.token = token;
+                                // respObj.is_digie = 0;
+                                // respObj.is_nsight = 1;
                                 respObj.is_digie = userArr['is_digie'];
                                 respObj.is_nsight = typeof userArr['is_nsight'] == 'undefined' || userArr['is_nsight'] == '' ? 0 : 1;
                                 respObj.nsight_start_date = userArr['nsight_start_date'];
