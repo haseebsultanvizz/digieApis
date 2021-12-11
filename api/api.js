@@ -387,7 +387,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.role = 'admin'; //userArr['user_role'];
                             respObj.token = token;
                             respObj.is_digie = userArr['is_digie'];
-                            respObj.is_nsight = typeof userArr['is_nsights'] == 'undefined' || userArr['is_nsights'] == '' ? 0 : 1;
+                            respObj.is_nsight = typeof userArr['is_nsights'] == 'undefined' || userArr['is_nsights'] == '' ? 0 : userArr['is_nsights'];
                             respObj.nsight_start_date = userArr['nsight_start_date'];
                             respObj.nsight_expiry_date = userArr['nsight_expiry_date'];
                             respObj.email_address = userArr['email_address'];
