@@ -13195,7 +13195,7 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret, int
               if(body.success){
                 resolve(body);
               } else {
-                resolve(false);f
+                resolve(false);
               }
           } else {
               resolve(false)
