@@ -11837,7 +11837,7 @@ async function get_market_price(coin) {
 
 
 
-async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=''){
+async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id='', auth_token){
     return new Promise(async function (resolve, reject) {
 
 
@@ -11948,7 +11948,8 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
             json: data,
             headers: {
                 'content-type': 'application/json',
-                'Token': 'vizzwebsolutions12345678910'
+                'Token': 'vizzwebsolutions12345678910',
+                'Authorization': auth_token
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
@@ -11977,6 +11978,7 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
         return false;
     }
 
+    var auth_token = req.headers.authorization;
     var user_ip = req.body.trading_ip;
     var user_id = req.payload.id;
     var exchange = req.body.exchange;
@@ -12018,7 +12020,7 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
 
 
 
-      var data = await verify_user_info(api_key, user_ip, user_id, exchange, kraken_id)
+      var data = await verify_user_info(api_key, user_ip, user_id, exchange, kraken_id, auth_token)
       console.log(data, '-=-=--=-=-=-=-=-=-=')
       if(data.success){
 
@@ -12123,7 +12125,7 @@ async function authenticatejwtTokenForUserInfo(token) {
 
 
 
-async function get_api_secret(user_ip, admin_id){
+async function get_api_secret(user_ip, admin_id, auth_token){
     return new Promise(async function (resolve, reject) {
 
       let ip = '';
@@ -12157,7 +12159,8 @@ async function get_api_secret(user_ip, admin_id){
           },
           headers: {
               'content-type': 'application/json',
-              'Token': 'vizzwebsolutions12345678910'
+              'Token': 'vizzwebsolutions12345678910',
+              'Authorization': auth_token
           }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
@@ -12192,6 +12195,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
         });
         return false;
     }
+    var auth_token = req.headers.authorization;
     var post_data = req.body;
     let post_data_key_array = Object.keys(post_data);
     if (post_data_key_array.length == 0) {
@@ -12251,7 +12255,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                             // console.log(data, 'USER')
 
 
-                            var userInfo = await get_api_secret(data['trading_ip'], (data['_id']).toString());
+                            var userInfo = await get_api_secret(data['trading_ip'], (data['_id']).toString(), auth_token);
 
                             console.log(userInfo)
 
@@ -12319,7 +12323,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
 
 
 
-async function add_user_info(user_ip, admin_id, api_key, api_secret, interface, keyNo){
+async function add_user_info(user_ip, admin_id, api_key, api_secret, interface, keyNo, auth_token){
     return new Promise(async function (resolve, reject) {
 
       let ip = '';
@@ -12375,7 +12379,8 @@ async function add_user_info(user_ip, admin_id, api_key, api_secret, interface, 
             json: data,
             headers: {
                 'content-type': 'application/json',
-                'Token': 'vizzwebsolutions12345678910'
+                'Token': 'vizzwebsolutions12345678910',
+                'Authorization' : auth_token
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
@@ -12417,6 +12422,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
     var post_data = req.body;
+    var auth_token = req.headers.authorization;
 
     // console.log(post_data['interface'])
     var interface_data = post_data['interface']
@@ -12487,11 +12493,11 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
                         // console.log(update_arr['api_key'], update_arr['api_secret'] )
 
                         if(update_arr['keyNo'] == 'primary'){
-                            var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'], update_arr['keyNo'])
+                            var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'], update_arr['keyNo'], auth_token)
                         } else if(update_arr['keyNo'] == 'second') {
-                            var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'], update_arr['keyNo'])
+                            var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'], update_arr['keyNo'], auth_token)
                         } else {
-                            var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'], update_arr['keyNo'])
+                            var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'], update_arr['keyNo'], auth_token)
                         }
 
 
@@ -13023,7 +13029,7 @@ router.post('/saveBamCredentials', auth_token.required, async(req, resp) => {
 
 
 
-async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret, interface){
+async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret, interface, auth_token){
   return new Promise(async function (resolve, reject) {
 
 
@@ -13066,7 +13072,8 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret, int
           },
           headers: {
               'content-type': 'application/json',
-              'Token': 'vizzwebsolutions12345678910'
+              'Token': 'vizzwebsolutions12345678910',
+              'Authorization': auth_token
           }
       }, function (error, response, body) {
           // console.log(body)
@@ -13083,7 +13090,7 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret, int
       });
   });
 }
-async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret, interface){
+async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret, interface, auth_token){
   return new Promise(async function (resolve, reject) {
 
 
@@ -13123,7 +13130,8 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret, int
           },
           headers: {
             'content-type': 'application/json',
-            'Token': 'vizzwebsolutions12345678910'
+            'Token': 'vizzwebsolutions12345678910',
+            'Authorization': auth_token
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
@@ -13139,7 +13147,7 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret, int
       });
   });
 }
-async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret, interface){
+async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret, interface, auth_token){
   return new Promise(async function (resolve, reject) {
 
 
@@ -13178,7 +13186,8 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret, int
           },
           headers: {
             'content-type': 'application/json',
-            'Token': 'vizzwebsolutions12345678910'
+            'Token': 'vizzwebsolutions12345678910',
+            'Authorization': auth_token
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
@@ -13246,7 +13255,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     console.log(api_key, api_secret,'Huzaifa Test line')
     // return false;
 
-    var data = await add_user_info_kraken1(trading_ip, user_id, api_key, api_secret, interface);
+    var data = await add_user_info_kraken1(trading_ip, user_id, api_key, api_secret, interface, auth_token);
 
 
     console.log(data, "DATA")
@@ -13363,7 +13372,7 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
 
 
 
-    var data = await add_user_info_kraken2(trading_ip,user_id,api_key,api_secret, interface);
+    var data = await add_user_info_kraken2(trading_ip,user_id,api_key,api_secret, interface, auth_token);
     if(data.success){
 
 
@@ -13455,7 +13464,7 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
     api_key = api_key.trim()
     api_secret = api_secret.trim()
 
-    var data = await add_user_info_kraken3(trading_ip, user_id, api_key, api_secret, interface);
+    var data = await add_user_info_kraken3(trading_ip, user_id, api_key, api_secret, interface, auth_token);
     if(data.success){
 
 
@@ -13550,7 +13559,7 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
         return false;
     }
 
-
+    var auth_token = req.headers.authorization;
     var user_id = req.payload.id;
     var trading_ip = req.body.trading_ip;
     var interface = typeof (req.body.interface != 'undefined') ? req.body.interface : 'web';
@@ -13558,7 +13567,7 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
     // var krakenCredentials2 = await getKrakenCredentials2(trading_ip, user_id);
     // var krakenCredentials3 = await getKrakenCredentials3(trading_ip, user_id);
 
-    var kraken_data = await getKrakenCredentials_new(trading_ip, user_id);
+    var kraken_data = await getKrakenCredentials_new(trading_ip, user_id, auth_token);
 
 
     console.log(kraken_data)
@@ -13693,7 +13702,7 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
 }) //End of getKrakenCredentials
 
 
-function getKrakenCredentials_new(trading_ip, user_id) {
+function getKrakenCredentials_new(trading_ip, user_id, auth_token) {
     return new Promise((resolve, reject) => {
 
 
@@ -13726,7 +13735,8 @@ function getKrakenCredentials_new(trading_ip, user_id) {
             },
             headers: {
                 'content-type': 'application/json',
-                'Token': 'vizzwebsolutions12345678910'
+                'Token': 'vizzwebsolutions12345678910',
+                'Authorization': auth_token
             }
         }, function (error, response, body) {
             // console.log(error,body)
@@ -14076,6 +14086,7 @@ router.post('/validate_kraken_credentials', auth_token.required, async (req, res
         });
         return false;
     }
+    var auth_token = req.headers.authorization;
     let APIKEY = req.body.APIKEY;
     let user_id = req.payload.id;
     let trading_ip = req.body.trading_ip
@@ -14084,7 +14095,7 @@ router.post('/validate_kraken_credentials', auth_token.required, async (req, res
 
     // var credentials = await validate_kraken_credentials(APIKEY, APISECRET, user_id);
 
-    var credentials = await verify_user_info(APIKEY, trading_ip, user_id, exchange, kraken_id);
+    var credentials = await verify_user_info(APIKEY, trading_ip, user_id, exchange, kraken_id, auth_token);
     console.log(credentials, 'credentials')
 
     resp.status(200).send({
@@ -28043,7 +28054,7 @@ async function validate_bam_credentials_app(api_key, api_secret, token){
 }
 
 
-async function remove_api_key(user_ip, user_id, exchange, keyNo){
+async function remove_api_key(user_ip, user_id, exchange, keyNo, auth_token){
     return new Promise(async resolve =>{
 
 
@@ -28109,7 +28120,8 @@ async function remove_api_key(user_ip, user_id, exchange, keyNo){
             url: url,
             headers: {
                 'content-type': 'application/json',
-                'Token': 'vizzwebsolutions12345678910'
+                'Token': 'vizzwebsolutions12345678910',
+                'Authorization': auth_token
             },
             json: {
                 user_id:user_id
@@ -28139,7 +28151,7 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
         return false;
     }
 
-
+    let auth_token = req.headers.authorization;
     let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''
     let user_ip = typeof req.body.trading_ip != 'undefined' && req.body.trading_ip != '' ? req.body.trading_ip : ''
     let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
@@ -28155,7 +28167,7 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
 
 
 
-        var data = await remove_api_key(user_ip, user_id, exchange, keyNo)
+        var data = await remove_api_key(user_ip, user_id, exchange, keyNo, auth_token)
 
         console.log(data)
 
