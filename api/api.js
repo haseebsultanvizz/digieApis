@@ -1276,7 +1276,7 @@ router.post('/listDashboardData', auth_token.required, async (req, resp) => {
         return false;
     }
     //Function to get all user coins
-    let userCoinsArr = await listUserCoins(req.body._id);
+    let userCoinsArr = await listUserCoins(req.payload.id);
     let exchange = req.body.exchange;
     let userCoin = (typeof req.body.userCoin == 'undefined') ? '' : req.body.coin;
 
@@ -2322,6 +2322,7 @@ router.post('/createAutoOrder', auth_token.required, async (req, resp) => {
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
 
     let order = req.body.orderArr;
+    order['admin_id'] = req.payload.id;
     order['interface'] = interfaceType
 
     order['created_date'] = new Date()
@@ -5293,7 +5294,8 @@ router.post('/mergeAndMigrate', auth_token.required, async (req, res)=>{
     }
 
     let mergedOrder = req.body.mergedOrder
-    let user_id = req.body.user_id
+    // let user_id = req.body.user_id
+    let user_id = req.payload.id
     let tab = req.body.tab
     let exchange = req.body.exchange
 
@@ -5740,7 +5742,7 @@ router.post('/get_user_coins', auth_token.required, async (req, resp) => {
     }
 
     let exchange = req.body.exchange
-    let admin_id = req.body.admin_id
+    let admin_id = req.payload.id
 
     var urserCoinsPromise = getUserCoins(admin_id, exchange);
     var userFavouriteCoinsPromise = getUserFavouriteCoins(admin_id, exchange);
