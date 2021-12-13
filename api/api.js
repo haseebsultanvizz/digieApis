@@ -12334,23 +12334,23 @@ async function add_user_info(user_ip, admin_id, api_key, api_secret, interface, 
 
 
       if(user_ip == '3.227.143.115'){
-        ip = 'ip1-kraken.digiebot.com/api/user'
+        ip = 'ip1.digiebot.com'
       } else if(user_ip == '3.228.180.22'){
-        ip = 'ip2-kraken.digiebot.com/api/user'
+        ip = 'ip1.digiebot.com'
       } else if(user_ip == '3.226.226.217'){
-        ip = 'ip3-kraken.digiebot.com/api/user'
+        ip = 'ip1.digiebot.com'
       } else if(user_ip == '3.228.245.92'){
-        ip = 'ip4-kraken.digiebot.com/api/user'
+        ip = 'ip1.digiebot.com'
       } else if(user_ip == '35.153.9.225'){
-        ip = 'ip5-kraken.digiebot.com/api/user'
+        ip = 'ip1.digiebot.com'
       } else if(user_ip == '54.157.102.20'){
-        ip = 'ip6-kraken.digiebot.com/api/user'
+        ip = 'ip1.digiebot.com'
       }
 
       // let url = 'http://'+ip+
       let data = {};
 
-      let url = 'https://'+ip+'/saveSecretTradingBinance';
+      let url = 'https://'+ip+'/apiKeySecret/saveApiSecret';
       if(keyNo == 'primary'){
         data = {
             "user_id": admin_id,
