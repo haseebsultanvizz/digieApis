@@ -301,6 +301,34 @@ router.post('/site_score', async (req,res)=>{
 
 })
 
+
+async function validate_user(postData) {
+    return new Promise((resolve, reject) => {
+        let req = new Object(postData);
+        if (req.password !== null && req.username !== null) {
+
+            var encrypted_pass = CryptoJS.AES.decrypt(req.password, 'digiebot_trading');
+            pass = encrypted_pass.toString(CryptoJS.enc.Utf8);
+            req.password = md5(pass);
+            conn.then(async(db) => {
+                var userData = await db.collection("users").findOne(req);
+                if (userData !== null) {
+                    userData.token = generatejwtToken(userData._id, userData.username)
+                    resolve({ 'success': true, 'user': userData });
+                } else {
+                    resolve({ 'success': false });
+                }
+            });
+        } else {
+            resolve({ 'success': false });
+        }
+    });
+}
+
+router.post('/login', async function(req, res, next) {
+    res.json(await validate_user(req.body));
+});
+
 //when first time user login call this function
 router.post('/authenticate', async function (req, resp, next) {
     conn.then(async (db) => {
