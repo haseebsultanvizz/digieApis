@@ -324,10 +324,111 @@ async function validate_user(postData) {
             conn.then(async(db) => {
                 var userData = await db.collection("users").findOne(where);
                 if (userData !== null) {
-                    userData.token = await generatejwtToken(userData._id, userData.username)
-                    resolve({ 'success': true, 'user_token': userData['token'], message:"Logged-in Successfully" });
+                  let userArr = userData;
+                  let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
+                  let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
+                  if (api_key == '' || api_secret == '' || api_key == null || api_secret == null) {
+                      var check_api_settings = 'no';
+                  } else {
+                      var check_api_settings = 'yes';
+                  }
+                  let application_mode = (typeof userArr['application_mode'] == 'undefined') ? '' : userArr['application_mode'];
+
+                  if (application_mode == "" || application_mode == null || application_mode == 'no') {
+                      var app_mode = 'test';
+                  } else {
+                      var app_mode = (application_mode == 'both') ? 'live' : application_mode;
+                  }
+
+                  let exchangesArr = await getUserExchangesWithAPISet(String(userArr['_id']))
+                  if (exchangesArr.length > 0 && app_mode != 'test' && app_mode != '') {
+                      check_api_settings = 'yes';
+                      app_mode = 'live'
+                  }
+
+
+
+
+                  respObj.id = userArr['_id'];
+                  respObj.username = userArr['username'];
+                  respObj.firstName = userArr['first_name'];
+                  respObj.lastName = userArr['last_name'];
+                  respObj.profile_image = userArr['profile_image'];
+                  respObj.role = 'admin'; //userArr['user_role'];
+                  respObj.is_digie = userArr['is_digie'];
+                  respObj.token = await generatejwtToken(userArr._id, userArr.username)
+                  respObj.is_nsight = typeof userArr['is_nsights'] == 'undefined' || userArr['is_nsights'] == '' ? 0 : userArr['is_nsights'];
+                  respObj.nsight_start_date = userArr['nsight_start_date'];
+                  respObj.nsight_expiry_date = userArr['nsight_expiry_date'];
+                  respObj.email_address = userArr['email_address'];
+                  respObj.timezone = userArr['timezone'];
+                  respObj.check_api_settings = check_api_settings;
+                  respObj.application_mode = app_mode
+                  respObj.leftmenu = userArr['leftmenu'];
+                  respObj.user_role = userArr['user_role'];
+                  respObj.special_role = userArr['special_role'];
+                  respObj.trading_ip = userArr['trading_ip'];
+                  // respObj.google_auth = userArr['google_auth'];
+
+
+                  console.log(userArr['google_auth'], 'in DB')
+                  // if(userArr['google_auth'] != 'yes'){
+                      var google_auth = await getUserGoogleAuth(String(userArr['_id']))
+                      // set google_auth functionality
+                      console.log('No in Local DB & in users DB', google_auth)
+                      if(google_auth == true){
+                          respObj.google_auth = 'yes';
+                      } else {
+                          respObj.google_auth = 'no';
+                      }
+                  // } else {
+                  //     respObj.google_auth = userArr['google_auth'];
+                  // }
+                  respObj.trigger_enable = userArr['trigger_enable'];
+                  respObj.is_global_user = 'no';
+                  respObj.exchangesArr = exchangesArr;
+                  respObj.default_exchange = typeof userArr['default_exchange'] != 'undefined' && userArr['default_exchange'] != '' ? userArr['default_exchange'] : (exchangesArr.length > 0 ? exchangesArr[0] : 'binance');
+
+                  if (typeof userArr['maxBtcCustomPackage'] != 'undefined') {
+                      respObj.maxBtcCustomPackage = userArr['maxBtcCustomPackage']
+                  }
+                  if (typeof userArr['maxUsdtCustomPackage'] != 'undefined') {
+                      respObj.maxUsdtCustomPackage = userArr['maxUsdtCustomPackage']
+                  }
+                  if (typeof userArr['maxDailTradeAbleBalancePercentage'] != 'undefined') {
+                      respObj.maxDailTradeAbleBalancePercentage = userArr['maxDailTradeAbleBalancePercentage']
+                  }
+
+                  respObj.userPackage = await getUserPackage(String(userArr['_id']));
+
+                  if (typeof userArr['package_id'] != 'undefined' && userArr['package_id'] != ''){
+                      let myPackage = await db.collection('dynamic_packages').find({ '_id': userArr['package_id']}).toArray();
+                      if (myPackage.length > 0){
+                          respObj['myPackage'] = myPackage[0]
+                      }
+                  }
+
+                  //Update last login time
+                  db.collection('users').updateOne({
+                      '_id': userArr['_id']
+                  }, {
+                      '$set': {
+                          'last_login_datetime': new Date()
+                      }
+                  });
+
+
+
+
+
+
+
+
+
+
+                  resolve({ 'success': true, 'user': userData, message:"Logged-in Successfully" });
                 } else {
-                    resolve({ 'success': false, 'message': "username or password incorrect" });
+                  resolve({ 'success': false, 'message': "username or password incorrect" });
                 }
             });
         } else {
@@ -415,6 +516,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
         respObj.user_role = userArr['user_role'];
         respObj.special_role = userArr['special_role'];
         respObj.trading_ip = userArr['trading_ip'];
+        respObj.token = userArr['token'];
         // respObj.google_auth = userArr['google_auth'];
 
 
@@ -454,16 +556,6 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                 respObj['myPackage'] = myPackage[0]
             }
         }
-
-        //Update last login time
-        db.collection('users').updateOne({
-            '_id': userArr['_id']
-        }, {
-            '$set': {
-                'last_login_datetime': new Date()
-            }
-        });
-
         // send_notification(respObj.id, 'security_alerts', 'high', 'Your account is just logged In ', '', '', '', 'web')
 
         resp.send(respObj);
