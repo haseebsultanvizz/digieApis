@@ -363,7 +363,7 @@ function findOne(collection, postData) {
         });
     });
 }
-router.get('/getUserByToken', auth.required, async function(req, res, next) {
+router.get('/getUserByToken', auth_token.required, async function(req, res, next) {
     req = {
         query: {
             _id: req.payload.id
