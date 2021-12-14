@@ -324,6 +324,7 @@ async function validate_user(postData) {
             conn.then(async(db) => {
                 var userData = await db.collection("users").findOne(where);
                 if (userData !== null) {
+                  let respObj = {};
                   let userArr = userData;
                   let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
                   let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
@@ -417,16 +418,7 @@ async function validate_user(postData) {
                       }
                   });
 
-
-
-
-
-
-
-
-
-
-                  resolve({ 'success': true, 'user': userData, message:"Logged-in Successfully" });
+                  resolve({ 'success': true, 'user': respObj, message:"Logged-in Successfully" });
                 } else {
                   resolve({ 'success': false, 'message': "username or password incorrect" });
                 }
@@ -473,6 +465,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
     var resp = await findOne('users', req);
     if (typeof resp.user !== 'undefined') {
         resp.user.token = await generatejwtToken(resp.user._id, resp.user.username)
+        let respObj = {};
         let userArr = resp.user;
         let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
         let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
@@ -558,7 +551,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
         }
         // send_notification(respObj.id, 'security_alerts', 'high', 'Your account is just logged In ', '', '', '', 'web')
 
-        resp.send(respObj);
+        res.send({ 'success': true, 'user': respObj, message:"Logged-in Successfully" });
     } else {
         res.json(resp);
     }
