@@ -325,7 +325,7 @@ async function validate_user(postData) {
                 var userData = await db.collection("users").findOne(where);
                 if (userData !== null) {
                     userData.token = await generatejwtToken(userData._id, userData.username)
-                    resolve({ 'success': true, 'user': userData, message:"Logged-in Successfully" });
+                    resolve({ 'success': true, 'user_token': userData['token'], message:"Logged-in Successfully" });
                 } else {
                     resolve({ 'success': false, 'message': "username or password incorrect" });
                 }
