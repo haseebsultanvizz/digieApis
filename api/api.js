@@ -309,7 +309,6 @@ async function validate_user(postData) {
 
             var encrypted_pass = CryptoJS.AES.decrypt(req.password, 'digiebot_trading');
             pass = encrypted_pass.toString(CryptoJS.enc.Utf8);
-
             req.password = md5(pass);
 
 
@@ -322,8 +321,6 @@ async function validate_user(postData) {
             }]
             where['status'] = '0';
             where['user_soft_delete'] = '0';
-
-
             conn.then(async(db) => {
                 var userData = await db.collection("users").findOne(where);
                 if (userData !== null) {
@@ -334,7 +331,7 @@ async function validate_user(postData) {
                 }
             });
         } else {
-            resolve({ 'success': false });
+            resolve({ 'success': false, 'message': "username or password need to insert" });
         }
     });
 }
