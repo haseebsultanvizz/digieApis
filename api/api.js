@@ -311,7 +311,7 @@ async function validate_user(postData) {
             pass = encrypted_pass.toString(CryptoJS.enc.Utf8);
             req.password = md5(pass);
 
-
+            let where = {}
             where.password = req.password;
             where['$or'] = [{
                 // username: username
