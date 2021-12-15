@@ -8035,7 +8035,7 @@ router.post('/test_user_api_key', auth_token.required, async (req, resp)=>{
         return false;
     }
 
-    let result = await verify_migrate_user_api_key('5c09134cfc9aadaac61dd09c')
+    let result = await verify_migrate_user_api_key(req.payload.id)
     resp.send({result:result})
 })
 
@@ -8753,7 +8753,7 @@ router.post('/listOrdersForChart', auth_token.required, async (req, resp) => {
         return false;
     }
 
-    var admin_id = req.body.admin_id;
+    var admin_id = req.payload.id;
     var exchange = req.body.exchange;
     var application_mode = req.body.application_mode;
     var coin = req.body.coin;
