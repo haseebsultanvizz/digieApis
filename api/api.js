@@ -12272,19 +12272,40 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
     investment_collection = 'user_investment_'+exchange
 
 
-
-    var updateArray = {
-      'is_api_key_valid'      :  "yes",
-      'count_invalid_api'     :  0,
-      'account_block'         :  'no',
-      'api_key_valid_checking': new Date()
-    };
-    var updateArrayinValid = {
-        'is_api_key_valid'      :  "no"
-        // 'count_invalid_api'     :  0,
-        // 'account_block'         :  'yes',
-        // 'api_key_valid_checking': new Date()
-    };
+    if(kraken_id == 'second'){
+      var updateArray = {
+        'is_api_key_valid_secondary'      :  "yes",
+        'count_invalid_api_secondary'     :  0,
+        'account_block_secondary'         :  'no',
+        'api_key_valid_checking_secondary': new Date(),
+        'info_modified_date_secondary': new Date()
+      };
+      var updateArrayinValid = {
+          'is_api_key_valid_secondary'      :  "no"
+      };
+    } else if(kraken_id == 'third'){
+      var updateArray = {
+        'is_api_key_valid_third'      :  "yes",
+        'count_invalid_api_third'     :  0,
+        'account_block_third'         :  'no',
+        'api_key_valid_checking_third': new Date(),
+        'info_modified_date_third_key': new Date()
+      };
+      var updateArrayinValid = {
+          'is_api_key_valid_third'      :  "no"
+      };
+    } else {
+      var updateArray = {
+        'is_api_key_valid'      :  "yes",
+        'count_invalid_api'     :  0,
+        'account_block'         :  'no',
+        'api_key_valid_checking': new Date(),
+        'info_modified_date': new Date()
+      };
+      var updateArrayinValid = {
+          'is_api_key_valid'      :  "no"
+      };
+    }
 
 
 
@@ -12783,13 +12804,13 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
                         if(data.success){
                             if(update_arr['keyNo'] == 'primary'){
-                                var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes', 'permission_for': permision_for}});
-                                var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date(), 'permission_for': permision_for}});
+                                // var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes', 'permission_for': permision_for}});
+                                // var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date(), 'permission_for': permision_for}});
                                 await update_user_wallet_binance(user_id, update_arr['trading_ip'])
                             } else if(update_arr['keyNo'] == 'second'){
-                                var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key_secondary':apikey, 'api_secret_secondary': apisecret, 'is_api_key_valid_secondary': 'yes', 'count_invalid_api_secondary': 0, 'account_block_secondary': 'no', 'api_key_valid_checking_secondary': new Date(), 'info_modified_date_secondary': new Date(), 'permission_for_secondary': permision_for}});
+                                // var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key_secondary':apikey, 'api_secret_secondary': apisecret, 'is_api_key_valid_secondary': 'yes', 'count_invalid_api_secondary': 0, 'account_block_secondary': 'no', 'api_key_valid_checking_secondary': new Date(), 'info_modified_date_secondary': new Date(), 'permission_for_secondary': permision_for}});
                             } else {
-                                var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key_third':apikey, 'api_secret_third': apisecret, 'is_api_key_valid_third': 'yes', 'count_invalid_api_third': 0, 'account_block_third': 'no', 'api_key_valid_checking_third': new Date(), 'info_modified_date_third_key': new Date(), 'permission_for_third': permision_for}});
+                                // var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key_third':apikey, 'api_secret_third': apisecret, 'is_api_key_valid_third': 'yes', 'count_invalid_api_third': 0, 'account_block_third': 'no', 'api_key_valid_checking_third': new Date(), 'info_modified_date_third_key': new Date(), 'permission_for_third': permision_for}});
                             }
                             res.status(200).send({
                                 "success": true,
