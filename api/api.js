@@ -12318,7 +12318,7 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
         conn.then(async db => {
             if(exchange == 'binance' ){
             var update_on_user_investment_binance_collection = await db.collection(investment_collection).updateOne(search_arr_investment, {$set: {'exchange_enabled':'yes'}});
-            await update_user_wallet_binance(user_id, user_ip)
+            // await update_user_wallet_binance(user_id, user_ip)
             var update_on_binance_collection = await db.collection(binance_collection).updateOne(search_arr, {$set: updateArray});
           } else {
             var update_on_kraken_collection = await db.collection(kraken_collection).updateOne(search_arr_kraken_credentials, {$set: updateArray});
