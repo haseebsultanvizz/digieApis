@@ -12639,6 +12639,8 @@ async function add_user_info(user_ip, admin_id, api_key, api_secret, interface, 
       let data = {};
 
       let url = 'https://'+ip+'/apiKeySecret/saveApiSecret';
+
+      console.log(url)
       if(keyNo == 'primary'){
         data = {
             "user_id": admin_id,
@@ -13065,7 +13067,7 @@ router.post('/addUserCoin', auth_token.required, async function (req, res, next)
 
         let exchange = req.body.exchange
         let symbols = req.body.symbols
-        let user_id = req.body.user_id
+        let user_id = req.payload.id
         if (typeof symbols == 'undefined' || typeof user_id == 'undefined' || user_id == '' || typeof exchange == 'undefined' || exchange == '') {
             res.send({
                 'status': true,
@@ -13263,7 +13265,7 @@ router.post('/saveBamCredentials', auth_token.required, async(req, resp) => {
 
 
     var auth_token = req.headers.authorization;
-    var user_id = req.body.user_id;
+    var user_id = req.payload.id;
     var api_key = req.body.api_key;
     var api_secret = req.body.api_secret;
 
@@ -13814,7 +13816,7 @@ router.post('/getBamCredentials', auth_token.required, async (req, resp) => {
         });
         return false;
     }
-    var user_id = req.body.user_id;
+    var user_id = req.payload.id;
     var bamCredentials = await getBamCredentials(user_id);
     resp.status(200).send({
         response: bamCredentials
@@ -14221,6 +14223,8 @@ router.post('/calculate_average_profit', auth_token.required, async (req, resp) 
         });
         return false;
     }
+
+    req.body.postData['admin_id'] = req.payload.id;
     var soldOrderArr = await calculateAverageOrdersProfit(req.body.postData);
     var total_profit = 0;
     var total_quantity = 0;
@@ -14449,7 +14453,7 @@ router.post('/update_user_wallet_kraken', auth_token.required, async (req, resp)
         return false;
     }
 
-    let user_id = req.body.user_id
+    let user_id = req.body.id
 
     if (typeof user_id != 'undefined' && user_id != ''){
 
@@ -14998,7 +15002,7 @@ router.post('/validate_user_password', auth_token.required, async (req, resp) =>
     var password = req.body.user_password;
     password = password.trim();
     let md5Pass = md5(password);
-    var user_id = req.body.user_id;
+    var user_id = req.payload.id;
     var is_valid = await validate_user_password(user_id, md5Pass);
     resp.status(200).send({
         message: is_valid
@@ -15252,7 +15256,7 @@ router.post('/is_bnb_balance_enough', auth_token.required, async (req, resp) => 
         });
         return false;
     }
-    var admin_id = req.body.admin_id;
+    var admin_id = req.body.req.payload.id;
     var symbol = req.body.symbol;
     var exchange = req.body.exchange;
     //function for getting user balance
@@ -15310,7 +15314,7 @@ router.post('/is_trading_points_exceeded', auth_token.required, async (req, resp
     var auth_token = req.headers.authorization;
 
     const db = await conn
-    var admin_id = req.body.user_id;
+    var admin_id = req.payload.id;
 
     var user = await db.collection('users').find({ '_id': new ObjectID(String(admin_id)) }).toArray()
 
@@ -15563,7 +15567,7 @@ router.post('/get_user_wallet', auth_token.required, async (req, resp) => {
     }
 
 
-    let admin_id = req.body.admin_id
+    let admin_id = req.payload.id
     let exchange = req.body.exchange
 
     resp.status(200).send({
@@ -27727,6 +27731,7 @@ router.post('/get_user_id', auth_token.required, async (req, res) => {
         }, {
             email_address: username
         }]
+        where['_id'] = new ObjectID(req.payload.id);
         where['status'] = '0';
         where['user_soft_delete'] = '0';
         let user = await db.collection('users').find(where).project({'_id':1}).toArray();
