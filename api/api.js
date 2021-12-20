@@ -26279,7 +26279,10 @@ router.post('/get_dashboard_wallet', auth_token.required, async (req, res) => {
     }
     let exchange = req.body.exchange
     // let admin_id = req.body.user_id
-    let admin_id = req.body.id;
+    let admin_id = req.payload.id;
+
+
+    console.log(exchange, admin_id)
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
 
         let result = await get_dashboard_wallet(admin_id, exchange)
