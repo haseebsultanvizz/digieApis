@@ -14450,7 +14450,8 @@ router.post('/update_user_wallet_kraken', auth_token.required, async (req, resp)
         return false;
     }
 
-    let user_id = req.body.id
+    let user_id = req.body.user_id
+    // let user_id = req.payload.id
 
     if (typeof user_id != 'undefined' && user_id != ''){
 
