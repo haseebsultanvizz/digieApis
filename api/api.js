@@ -12278,7 +12278,6 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
         'count_invalid_api_secondary'     :  0,
         'account_block_secondary'         :  'no',
         'api_key_valid_checking_secondary': new Date(),
-        'info_modified_date_secondary': new Date()
       };
       var updateArrayinValid = {
           'is_api_key_valid_secondary'      :  "no"
@@ -12289,7 +12288,6 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
         'count_invalid_api_third'     :  0,
         'account_block_third'         :  'no',
         'api_key_valid_checking_third': new Date(),
-        'info_modified_date_third_key': new Date()
       };
       var updateArrayinValid = {
           'is_api_key_valid_third'      :  "no"
@@ -12300,7 +12298,6 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
         'count_invalid_api'     :  0,
         'account_block'         :  'no',
         'api_key_valid_checking': new Date(),
-        'info_modified_date': new Date()
       };
       var updateArrayinValid = {
           'is_api_key_valid'      :  "no"
@@ -12807,12 +12804,12 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
                         if(data.success){
                             if(update_arr['keyNo'] == 'primary'){
                                 // var update_on_user_investment_binance_collection = await db.collection("user_investment_binance").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes', 'permission_for': permision_for}});
-                                // var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key':apikey, 'api_secret': apisecret, 'is_api_key_valid': 'yes', 'count_invalid_api': 0, 'account_block': 'no', 'api_key_valid_checking': new Date(), 'info_modified_date': new Date(), 'permission_for': permision_for}});
+                                var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: { 'info_modified_date': new Date(), 'permission_for': permision_for}});
                                 // await update_user_wallet_binance(user_id, update_arr['trading_ip'])
                             } else if(update_arr['keyNo'] == 'second'){
-                                // var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key_secondary':apikey, 'api_secret_secondary': apisecret, 'is_api_key_valid_secondary': 'yes', 'count_invalid_api_secondary': 0, 'account_block_secondary': 'no', 'api_key_valid_checking_secondary': new Date(), 'info_modified_date_secondary': new Date(), 'permission_for_secondary': permision_for}});
+                                var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'info_modified_date_secondary': new Date(), 'permission_for_secondary': permision_for}});
                             } else {
-                                // var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'api_key_third':apikey, 'api_secret_third': apisecret, 'is_api_key_valid_third': 'yes', 'count_invalid_api_third': 0, 'account_block_third': 'no', 'api_key_valid_checking_third': new Date(), 'info_modified_date_third_key': new Date(), 'permission_for_third': permision_for}});
+                                var update_on_users_collection = await db.collection("users").updateOne(search_arr, {$set: {'info_modified_date_third_key': new Date(), 'permission_for_third': permision_for}});
                             }
                             res.status(200).send({
                                 "success": true,
@@ -18879,7 +18876,8 @@ router.post('/getAutoTradeSettings', auth_token.required, async (req, res) => {
         return false;
     }
 
-    let user_id = req.body.user_id
+    // let user_id = req.body.user_id
+    let user_id = req.payload.id
     let application_mode = req.body.application_mode
 
     if (typeof user_id != 'undefined' && user_id != '' && typeof application_mode != 'undefined' && application_mode != '') {
@@ -18976,7 +18974,8 @@ router.post('/getAutoTradeParents', auth_token.required, async (req, res) => {
         });
         return false;
     }
-    let user_id = req.body.user_id
+    // let user_id = req.body.user_id
+    let user_id = req.payload.id
     let application_mode = req.body.application_mode
     let exchange = req.body.exchange
 
@@ -19104,7 +19103,8 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
 
     var auth_token = req.headers.authorization;
 
-    let user_id = req.body.user_id
+    // let user_id = req.body.user_id
+    let user_id = req.payload.id
     let exchange = req.body.exchange
     let dataArr = req.body.data
     let application_mode = req.body.application_mode
@@ -21113,7 +21113,8 @@ router.post('/resetAutoTradeGenerator', auth_token.required, async (req, res) =>
         return false;
     }
 
-    let user_id = req.body.user_id
+    // let user_id = req.body.user_id
+    let user_id = req.payload.id
     let exchange = req.body.exchange
     let application_mode = req.body.application_mode
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != '') {
@@ -21196,7 +21197,7 @@ router.post('/getRemainingTestBalance', auth_token.required, async (req, res) =>
         return false;
     }
 
-    let user_id = req.body.user_id
+    let user_id = req.payload.id
     let exchange = req.body.exchange
     let application_mode = 'test'
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '') {
@@ -22300,7 +22301,8 @@ router.post('/buyCoin', auth_token.required, async (req, res) => {
         let data = req.body.data
         let exchange = data.exchange
         let application_mode = data.application_mode
-        let admin_id = data.admin_id
+        // let admin_id = data.admin_id
+        let admin_id = req.payload.id
         let symbol = data.symbol
         let quantity = data.quantity
         let buy_currency = data.buy_currency
@@ -22775,7 +22777,7 @@ router.post('/getBnbBuyHistory', auth_token.required, async (req, res) => {
         return false;
     }
     if (typeof req.body.exchange != 'undefined' && typeof req.body.exchange != 'undefined') {
-        let history = await getBnbBuyHistory(req.body.user_id, req.body.exchange)
+        let history = await getBnbBuyHistory(req.payload.id, req.body.exchange)
         res.send({
             status: true,
             data: history,
@@ -25686,6 +25688,7 @@ router.post('/is_trade_limit_exceeded', auth_token.required, async (req, res)=>{
         return false;
     }
     let user_id = req.body.user_id
+    let user_id = req.payload.id;
     let exchange = req.body.exchange
     let trade_limit_exceeded = await is_trade_limit_exceeded(user_id, exchange, req)
     if (trade_limit_exceeded){
@@ -25904,8 +25907,9 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
         });
         return false;
     }
-    let exchange = req.body.exchange
-    let admin_id = req.body.user_id
+    let exchange = req.body.exchange;
+    // let admin_id = req.body.user_id;
+    let admin_id = req.payload.id;
     let symbol = req.body.symbol
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
 
@@ -26017,7 +26021,8 @@ router.post('/get_btcusdt_coin_quantity', auth_token.required, async (req, res) 
         return false;
     }
   let exchange = req.body.exchange
-  let admin_id = req.body.user_id
+  // let admin_id = req.body.user_id
+  let admin_id = req.payload.id;
   if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
 
       let result = await get_btcusdt_quantity(admin_id, exchange)
@@ -26273,7 +26278,8 @@ router.post('/get_dashboard_wallet', auth_token.required, async (req, res) => {
         return false;
     }
     let exchange = req.body.exchange
-    let admin_id = req.body.user_id
+    // let admin_id = req.body.user_id
+    let admin_id = req.body.id;
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
 
         let result = await get_dashboard_wallet(admin_id, exchange)
@@ -27685,7 +27691,8 @@ router.post('/getOrderStats', auth_token.required, async (req, res) => {
         });
         return false;
     }
-    let admin_id = req.body.user_id
+    // let admin_id = req.body.user_id
+    let admin_id = req.payload.id
     let exchange = req.body.exchange
     let application_mode = req.body.application_mode
 
@@ -27765,7 +27772,8 @@ router.post('/check_parent_exists', auth_token.required, async (req, res) => {
 
     let orderArr = req.body.orderArr
     let exchange = typeof req.body.exchange != 'undefined' && req.body.exchange != '' ? req.body.exchange : ''
-    let admin_id = typeof orderArr['admin_id'] != 'undefined' && orderArr['admin_id'] != '' ? orderArr['admin_id'] : ''
+    // let admin_id = typeof orderArr['admin_id'] != 'undefined' && orderArr['admin_id'] != '' ? orderArr['admin_id'] : ''
+    let admin_id = req.payload.id;
     let application_mode = typeof orderArr['application_mode'] != 'undefined' && orderArr['application_mode'] != '' ? orderArr['application_mode'] : ''
     let symbol = typeof orderArr['symbol'] != 'undefined' && orderArr['symbol'] != '' ? orderArr['symbol'] : ''
     let order_level = typeof orderArr['order_level'] != 'undefined' && orderArr['order_level'] != '' ? orderArr['order_level'] : ''
@@ -27963,7 +27971,8 @@ router.post('/save_dashboard_settings', auth_token.required, async (req, res) =>
         });
         return false;
     }
-    var user_id = req.body.user_id;
+    // var user_id = req.body.user_id;
+    var user_id = req.payload.id;
     var settings = req.body.settingsArr;
     var exchange = req.body.exchange;
     if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && user_id != '') {
@@ -28012,7 +28021,8 @@ router.post('/get_dashboard_settings', auth_token.required, async (req, res) => 
         });
         return false;
     }
-    var user_id = req.body.user_id;
+    // var user_id = req.body.user_id;
+    var user_id = req.payload.id;
     var exchange = req.body.exchange;
     if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && user_id != '') {
 
@@ -28120,7 +28130,8 @@ router.post('/isKeyUpdated', auth_token.required, async (req,res) =>{
     }
 
     let exchange = req.body.exchange
-    let user_id = req.body.user_id
+    // let user_id = req.body.user_id
+    let user_id = req.payload.id;
 
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != ''){
 
@@ -28164,7 +28175,8 @@ router.post('/validateApiKeys', auth_token.required, async (req, res)=>{
         return false;
     }
     var auth_token = req.headers.authorization;
-    let user_id = req.body.user_id
+    // let user_id = req.body.user_id
+    let user_id = req.payload.id;
     let exchange = req.body.exchange
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != ''){
 
@@ -28557,1102 +28569,6 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
         })
     }
 })
-
-
-router.get('/testKrakenBuyApi', auth_token.required, async (req, res)=>{
-
-    var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'User Not exist'
-        });
-        return false;
-    }
-
-
-    const KrakenClient = require('kraken-api');
-
-    // resp, err := api.queryPrivate("AddOrder", params, & AddOrderResponse{})
-    // response, err := api.AddOrder(coinSymbol, "buy", "market", quantityString, args)
-    // coinSymbol:= strings.Replace(pair, "BTC", "XBT", -1)
-
-
-    // ordertype: [market] pair: [XRPXBT] type: [buy] volume: [40.000345]]
-
-    let user_id = '5c0912b7fc9aadaac61dd072'
-    let key = 'M4ArMfjRuZr7HT77C+NJAU/hHJjcMZcUKJwKaqsIgx05WiGYzF8/XDC6'
-    let secret = 'haGQwnH5tdQS6cQLqm97QTyQwdu/4gjcS/nb+fxlIPIWlu9yZIzHHSnsV6WPq5zIjfpjWZifsRqm5PNL9SRQYw=='
-
-    const kraken = new KrakenClient(key, secret);
-
-    // let allCoins = [ 'ZUSD', 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', 'USDT', 'EOS', 'ADA', 'QTUM', 'LINK', 'TRX' ]
-    // let changeCoinArr = ['XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR']
-
-    let params = {
-        'ordertype': 'market',
-        'pair': 'XRPXBT',
-        'type': 'sell',
-        'volume': 40.000345
-    }
-
-    var krakenReqResult = await kraken.api('AddOrder', params);
-
-    console.log(krakenReqResult)
-
-    res.send({})
-})
-
-router.post('/swap_kraken_api_keys', auth_token.required, async (req, res)=>{
-
-    var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'User Not exist'
-        });
-        return false;
-    }
-
-    const db = await conn
-
-    let secondary_key_user_ids_Arr = [
-        '5c155879fc9aadace2428cb2',
-        '5e82b59f67134e590b4f3392',
-        '5c091351fc9aadaac61dd09e',
-        '5e6c0f0866cc1728a72b3912',
-        '5eb5a2658b65c31ff8233604',
-        '5e575c86ecdd2260111f2882',
-        '5c091455fc9aadaac61dd110',
-        '5c0915befc9aadaac61dd1b8',
-        '5ebaa54ad4d1dd5efa3baef2',
-        '5c0914c3fc9aadaac61dd143',
-        '5ec0093226266525ac2f12e4',
-        '5ebd9906626b2b634c6c1fff',
-        '5cb7e921fc9aad0b765f1ba2',
-        '5ebc527a13e065446c4b4abe',
-        '5dce8eecdba3c771dc7c08f6',
-        '5ecaf447596f2f1fa87e1d09',
-        '5ec9de0051232841cf650ce6',
-        '5ec47137e0d1042af03c0d4f',
-        '5ec7c8b691abf0662741cfda',
-        '5edd16023ca39944df3da844',
-        '5c0915defc9aadaac61dd1c7',
-        '5ed5fae8cc67734410172b12',
-        '5e02a3e42bac2d10a11aa757',
-        '5ef0d80654786256be15bee8',
-        '5d13d50efc9aad306b22e1c2',
-        '5c9ff9c3fc9aadb7002aa242',
-        '5c091517fc9aadaac61dd16a',
-        '5f445b4a19408436893d13c5',
-        '5cece616fc9aad7eb04b3d32',
-        '5f492031cbb93212d26125fd',
-        '5f4a34f698e0d7755b094043',
-        '5f4bbfba47e65b1a3f0c75f6',
-        '5f516ad55397d21bd1256e04',
-        '5f535e94b7566979e12b0087',
-        '5f535e710d8343597741b2a4',
-        '5f61cc515c6ef0497a6eb8e6',
-        '5f5b8e72a266e84bee5aaeda',
-        '5ee01ddc688c20728f4f6262',
-        '5f731ba5f0a55270873ad789',
-        '5f7507341cb1ea013217f865',
-        '5f74b035ed0916135e578292',
-        '5f7ae1d041def579e6601705',
-        '5f79c8db7d53d8176c645282',
-        '5f7ca7fe6113d200a02d0a50',
-        '5de10b4cbe21fb3af17bbe3e',
-        '5f84414b7bc54b2dc74ddfc0',
-        '5ed00af960e236288b755a8b',
-        '5d8de93a6b178200b1077c42',
-        '5c091564fc9aadaac61dd18e',
-        '5cc919affc9aad738a75f3b2',
-        '5c091480fc9aadaac61dd124',
-        '5fb96b006008f969bf7d7c5b',
-        '5c091362fc9aadaac61dd0a4',
-        '5c886282fc9aad98b069ebd2',
-        '5fbf6499084105189550d982',
-        '5c091453fc9aadaac61dd10f',
-        '5c091500fc9aadaac61dd15f',
-        '5c091395fc9aadaac61dd0b9',
-        '5c1ab8e8fc9aad3c0c53fea2',
-        '5e8a7b78c700bb29166b6501',
-        '5c0915c8fc9aadaac61dd1bd',
-        '5c091477fc9aadaac61dd120',
-        '5c09142efc9aadaac61dd0ff',
-        '5c09142afc9aadaac61dd0fd',
-        '5e6f3ca8f9e9e025db184aa2',
-        '5c82d3bafc9aad5b2958c352',
-        '5c0914e6fc9aadaac61dd153',
-        '5c091484fc9aadaac61dd126',
-        '5c09133afc9aadaac61dd096',
-        '5c09137bfc9aadaac61dd0ae',
-        '5c09139bfc9aadaac61dd0bc',
-        '5c0914b4fc9aadaac61dd13c',
-        '5cf18df2fc9aad0f621deb72',
-        '5c83ec7afc9aad5db6248922',
-        '5c0913a0fc9aadaac61dd0be',
-        '5c09156afc9aadaac61dd191',
-        '5c0913e0fc9aadaac61dd0db',
-        '5c0912e8fc9aadaac61dd086',
-        '5c091403fc9aadaac61dd0eb',
-        '5c0915b2fc9aadaac61dd1b2',
-        '5c09153dfc9aadaac61dd17c',
-        '5e63edd816b0646960785112',
-        '5c0914dffc9aadaac61dd150',
-        '5e3c3e9c13805328b20a0da6',
-        '5d9d9482710a9027ff3da7b2',
-        '5c0914b9fc9aadaac61dd13e',
-        '5c09155efc9aadaac61dd18b',
-        '5c09159afc9aadaac61dd1a7',
-        '5c09151dfc9aadaac61dd16d',
-        '5c09147cfc9aadaac61dd122',
-        '5c0915a7fc9aadaac61dd1ad',
-        '5c09159efc9aadaac61dd1a9',
-        '5c091410fc9aadaac61dd0f1',
-        '5c091544fc9aadaac61dd17f',
-        '5c091537fc9aadaac61dd179',
-        '5eac53ff3db2132d636b6af9',
-        '5e0a7f7fd5228d29d163d375',
-        '5c091493fc9aadaac61dd12d',
-        '5c0912e6fc9aadaac61dd085',
-        '5c091405fc9aadaac61dd0ec',
-        '5c867845fc9aad4d6c252bb2',
-        '5c0914abfc9aadaac61dd138',
-        '5c091541fc9aadaac61dd17e',
-        '5c6f2c69fc9aad694e443eb2',
-        '5ca3b72ffc9aad8468118fb2',
-        '5c09151bfc9aadaac61dd16c',
-        '5c09144cfc9aadaac61dd10c',
-        '5c0914a0fc9aadaac61dd133',
-        '5c83d1e3fc9aad95e66599e2',
-        '5c09134cfc9aadaac61dd09c',
-        '5c0913dcfc9aadaac61dd0d9',
-        '5c0913a7fc9aadaac61dd0c1',
-        '5c0913a5fc9aadaac61dd0c0',
-        '5e506386f4c44d53de5d14c3',
-        '5ebce07751ee1e2ead5d8193',
-        '5edc563846cb0c59fa0f620b',
-        '5c0913a9fc9aadaac61dd0c2',
-        '5c091584fc9aadaac61dd19d',
-        '5c0914b2fc9aadaac61dd13b',
-        '5c091470fc9aadaac61dd11d',
-        '5c091439fc9aadaac61dd104',
-        '5c38fd6dfc9aad5b96116982',
-        '5c8aefb9fc9aad4913315d32',
-        '5c0f2c8ffc9aad58f2674532',
-        '5c0914e9fc9aadaac61dd154',
-        '5c0915c0fc9aadaac61dd1b9',
-        '5c09143cfc9aadaac61dd105',
-        '5c091344fc9aadaac61dd099',
-        '5c94bfeafc9aad986b64e652',
-        '5c0913f4fc9aadaac61dd0e4',
-        '5c0914adfc9aadaac61dd139',
-        '5c0913eefc9aadaac61dd0e1',
-        '5c0914ccfc9aadaac61dd147',
-        '5c0913d2fc9aadaac61dd0d4',
-        '5fce1d9f05f8183a215c0bd4',
-        '5fc0e8b3041d4822f46aef84',
-        '5c091495fc9aadaac61dd12e',
-        '5c091562fc9aadaac61dd18d',
-        '5c09144efc9aadaac61dd10d',
-        '5fbb90153f9bb708885990e8',
-        '5cf21de8fc9aad437d783d82',
-        '5c091443fc9aadaac61dd108',
-        '5c899d22fc9aad58553ce172',
-        '5c0914d6fc9aadaac61dd14c',
-        '5c0912cbfc9aadaac61dd079',
-        '5ec08c34987f090f9f7e9677',
-        '5d3bd3b1fc9aad1942677c72',
-        '5c091559fc9aadaac61dd189',
-        '5c091432fc9aadaac61dd101',
-        '5d1aa617fc9aad944e6811d2',
-        '5c091354fc9aadaac61dd09f',
-        '5c09135bfc9aadaac61dd0a2',
-        '5c091566fc9aadaac61dd18f',
-        '5c091598fc9aadaac61dd1a6',
-        '5c091383fc9aadaac61dd0b1',
-        '5c0913d0fc9aadaac61dd0d3',
-        '5c09148afc9aadaac61dd129',
-        '5c0913abfc9aadaac61dd0c3',
-        '5c091390fc9aadaac61dd0b7',
-        '5c0915b8fc9aadaac61dd1b5',
-        '5c0913fffc9aadaac61dd0e9',
-        '5c0912effc9aadaac61dd089',
-        '5dafc44fdcf4fc27371c9f82',
-        '5c0913defc9aadaac61dd0da',
-        '5c09148ffc9aadaac61dd12b',
-        '5c70d923fc9aad047d351bf2',
-        '5c091513fc9aadaac61dd168',
-        '5fdc80ed5fac7e62123f3eee',
-        '5c8ee110fc9aad1bf15e6812',
-        '5d24105dfc9aad1d2463f162',
-        '5c09141efc9aadaac61dd0f8',
-        '5e41ab693bde856ad75877fc',
-        '5c091519fc9aadaac61dd16b',
-        '5fe24869959bf0305756605d',
-        '5c0913b8fc9aadaac61dd0c9',
-        '5c091450fc9aadaac61dd10e',
-        '5c0913ebfc9aadaac61dd0e0',
-        '5e4ec6f98334a705c918e553',
-        '5c091401fc9aadaac61dd0ea',
-        '5f503e44640d66499f5ceabe',
-        '5fe9054c56432b4e873b74a2',
-        '5fe9062756432b4e873b74a3',
-        '5ce1cb27fc9aad6b5036c422',
-        '5fec55770c8e6f5d9a796002',
-        '5fea0d677a410c07a4728e22',
-        '5f5bf17d5a43f8775b0f8a2a',
-        '5fe9053c8ea15f364862a2d2',
-        '5ff03f95c563f408c3146762',
-        '5c09149afc9aadaac61dd130',
-        '5ff237a52812ce43842ac7d7',
-        '5c7ebaedfc9aad8d19525022',
-        '5c0913e2fc9aadaac61dd0dc',
-        '5c091498fc9aadaac61dd12f',
-        '5e984802540fe254314ab8a2',
-        '5e42b1b8447ec75c1d1f5693',
-        '5c0913b4fc9aadaac61dd0c7',
-        '5c0914e4fc9aadaac61dd152',
-        '5fe7611f9dd63524651c53d2',
-        '5ce5c30efc9aadb43a5107b2',
-        '5c09140efc9aadaac61dd0f0',
-        '60006d5a042cee3805670715',
-        '5e91d98558a4f70eee4e40be',
-        '60069ad77b061c5c4976f9a2',
-        '5ff6ef19f64b93782b12a0d8',
-        '5fd8ae12ecb99d435a07786f',
-        '5c0915e2fc9aadaac61dd1c9',
-        '5fff20f91f78c407db25b83e',
-        '60069d7804682c1ee9448472',
-        '5c091407fc9aadaac61dd0ed',
-        '5c84096afc9aad3f13329242',
-        '5dc1da2f179c215806523b00',
-    ]
-
-    let where = {
-        'user_id': { '$in': secondary_key_user_ids_Arr},
-        'api_key': {'$ne':''},
-        'api_secret': {'$ne':''},
-    }
-
-    let usersArr = await db.collection('kraken_credentials').find(where).toArray()
-
-    let totalUsers = usersArr.length
-
-    console.log(totalUsers)
-
-    if (false && totalUsers > 0){
-
-        for(let i=0; i<totalUsers; i++){
-
-            let end_time = new Date()
-
-            //check if API key is invalid
-            let reqObj = {
-                'type': 'POST',
-                'url': 'https://app.digiebot.com/admin/api_calls/verify_api_key_secret',
-                'headers': {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                'payload': {
-                    'exchange': 'kraken',
-                    'user_id': usersArr[i]['user_id']
-                }
-            }
-
-            // console.log(payload)
-            let apiResult = await customApiRequest(reqObj)
-            console.log(usersArr[i]['user_id'], apiResult)
-
-            if(apiResult.status){
-
-                if (apiResult['body']['status']){
-                    //is valid
-                    //Do Nothing
-                    console.log('user_id: ', usersArr[i]['user_id'], ' ----------- ', end_time)
-
-                    // await db.collection('kraken_credentials').updateOne({ 'user_id': usersArr[i]['user_id']}, {'$set':{'old_secondary_key_valid':'yes'}})
-
-                } else {
-
-                    console.log('Invalid key_secret user_id: ', usersArr[i]['user_id'], ' ----------- ', end_time)
-
-                    // swap Secondary api key with primary api key
-                    // let where = {
-                    //     'user_id': usersArr[i]['user_id']
-                    // }
-                    // let set = {
-                    //     '$set': {
-                    //         'key_secret_swaped': 'yes',
-                    //         'api_key': usersArr[i]['api_key_secondary'],
-                    //         'api_secret': usersArr[i]['api_secret_secondary'],
-                    //         'api_key_secondary': usersArr[i]['api_key'],
-                    //         'api_secret_secondary': usersArr[i]['api_secret']
-                    //     }
-                    // }
-                    // await db.collection('kraken_credentials').updateOne(where, set)
-
-                    // await db.collection('kraken_credentials').updateOne({ 'user_id': usersArr[i]['user_id'] }, { '$set': { 'old_secondary_key_valid': 'no' } })
-
-                }
-
-            }
-
-            await new Promise(r => setTimeout(r, 5000));
-
-        }
-    }
-
-    res.send({})
-
-})
-
-
-router.get('/get_CA_shift_user_ids', auth_token.required, async (req,res)=>{
-
-    var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'User Not exist'
-        });
-        return false;
-    }
-
-    const db = await conn
-
-    let emailsArr = [
-        'allucky@fastmail.fm',
-        'neteffectstradersco@gmail.com',
-        'arren123@gmail.com',
-        'barry@feelfreefast.com',
-        'glowackibj@gmail.com',
-        'evansbj@live.com',
-        'jerrybooth55@yahoo.com',
-        'luthercs@gmail.com',
-        'carao@twc.com',
-        'carletteanderson@yahoo.com',
-        'clarkc3@mac.com',
-        'tabaadmn@gmail.com',
-        'carnahancoc@gmail.com',
-        'cyreuter@gmail.com',
-        'reesiebear4eva@gmail.com',
-        'cory@kulabrands.com',
-        'dturner80@gmail.com',
-        'deborahcaz@gmail.com',
-        'deborahcampbell.dream@gmail.com',
-        'dcook.20@hotmail.com',
-        'arkiii@gmail.com',
-        'bishopco@earthlink.net',
-        'Inspire1spirit@gmail.com',
-        'ga5609@gmail.com',
-        'partnerwithgarrett@gmail.com',
-        'darrensteckman@gmail.com',
-        'gayleu78@gmail.com',
-        'Greek480@Yahoo.com',
-        'greggaryholtz@gmail.com',
-        'janellrangel7@gmail.com',
-        'jeffgardner98@gmail.com',
-        'jerrybooth29201@gmail.com',
-        'jillywags@gmail.com',
-        'kulabrandsjoe@gmail.com',
-        'kbgreatnews@gmail.com',
-        'joylynna@gmail.com',
-        'juneshale@yahoo.com',
-        'jhx59@comcast.net',
-        'karen@healingventures.com',
-        'kulakarenw@gmail.com',
-        'k.demlow@yahoo.com',
-        'kentodd@1791.com',
-        'kennethrjujubean@aol.com',
-        'Kimmijean@aol.com',
-        'kmkngu@yahoo.com',
-        'kbcrandall7@gmail.com',
-        'billymoua@hotmail.com',
-        'laurenalexandra9@gmail.com',
-        'partnerwithlinda@gmail.com',
-        'lmckenna0104@yahoo.com',
-        'rafflois73@gmail.com',
-        'mnlfultz@gmail.com',
-        'switz6@gmail.com',
-        'bluecharger@live.com',
-        'lydmoua@gmail.com',
-        'mark@postmavideo.com',
-        'marty.roks@gmail.com',
-        'voo773@yahoo.com',
-        'swtmaydajean@yahoo.com',
-        'mgmnsjm@gmail.com',
-        'nadiabundance@gmail.com',
-        'nathanielstoner@hotmail.com',
-        'neil@winthropinnovations.com',
-        'nduggins@yahoo.com',
-        'pcmacphersonkb@gmail.com',
-        'paulrtraceyl@gmail.com',
-        'ctcsystem@gmail.com',
-        'RemedyAgencies@gmail.com',
-        'ez2cyuwin@gmail.com',
-        'richardr85@icloud.com',
-        'justgobob@gmail.com',
-        'saq102@gmail.com',
-        'sclinard1@gmail.com',
-        'spencersbullard@gmail.com',
-        'seejn316@gmail.com',
-        'zergmaxx@gmail.com',
-        'pat.funding@gmail.com',
-        'theobb63@gmail.com',
-        'consistentprofitsclub@gmail.com',
-        'mvpleggett@gmail.com',
-        'jim.todd@ymail.com',
-        'vickieterry.kulabrands@gmail.com'
-    ]
-
-    let users = await db.collection('users').find({ 'email_address': { '$in': emailsArr } }).project({ '_id': 1, 'email_address':1}).toArray()
-    // let existingEmailsArr = users.map(item => item.email_address)
-    let user_ids = users.map(item => String(item._id))
-
-    // console.log('existingEmailsArr ', existingEmailsArr.length, existingEmailsArr)
-    // let notExistingEmailsArr = emailsArr.filter(x => !existingEmailsArr.includes(x));
-    // console.log('notExistingEmailsArr ', notExistingEmailsArr.length, notExistingEmailsArr)
-    // console.log(emailsArr.length, users.length)
-
-    res.send(user_ids)
-
-})
-
-router.get('/move_CA_ledgers', auth_token.required, async (req,res)=>{
-
-    var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'User Not exist'
-        });
-        return false;
-    }
-
-    const db = await conn
-
-    var buy_collection = 'buy_orders'
-    var sold_collection = 'sold_buy_orders'
-    var sell_orders_collection = 'orders'
-    var buy_collection_kraken = 'buy_orders_kraken'
-    var sold_collection_kraken = 'sold_buy_orders_kraken'
-    var sell_orders_collection_kraken = 'orders_kraken'
-
-    let coinsExclude = ['ZENBTC', 'XEMBTC', 'QTUMUSDT', 'NEOUSDT', 'NEOBTC', 'EOSUSDT']
-    // let user_id = '5c0912b7fc9aadaac61dd072'
-    let user_id = ''
-
-    let costAvgUserIds = [
-        "5c0913dcfc9aadaac61dd0d9",
-        "5c0914dffc9aadaac61dd150",
-        "5c0914f1fc9aadaac61dd158",
-        "5c09156cfc9aadaac61dd192",
-        "5c885834fc9aad5b7709f062",
-        "5c94bfeafc9aad986b64e652",
-        "5c0914ebfc9aadaac61dd155",
-        "5c09137bfc9aadaac61dd0ae",
-        "5c091403fc9aadaac61dd0eb",
-        "5c0914b9fc9aadaac61dd13e",
-        "5c0915e2fc9aadaac61dd1c9",
-        "5c09142cfc9aadaac61dd0fe",
-        "5c09147cfc9aadaac61dd122",
-        "5c0914e6fc9aadaac61dd153",
-        "5c0914f3fc9aadaac61dd159",
-        "5c0914abfc9aadaac61dd138",
-        "5c0914b4fc9aadaac61dd13c",
-        "5c0f2c8ffc9aad58f2674532",
-        "5c0913fdfc9aadaac61dd0e8",
-        "5c09142afc9aadaac61dd0fd",
-        "5c091453fc9aadaac61dd10f",
-        "5c09159afc9aadaac61dd1a7",
-        "5c82d3bafc9aad5b2958c352",
-        "5c0912e8fc9aadaac61dd086",
-        "5c091354fc9aadaac61dd09f",
-        "5c0913a9fc9aadaac61dd0c2",
-        "5c09144cfc9aadaac61dd10c",
-        "5c091395fc9aadaac61dd0b9",
-        "5c0913f0fc9aadaac61dd0e2",
-        "5c091482fc9aadaac61dd125",
-        "5c0914ccfc9aadaac61dd147",
-        "5c86f33bfc9aad989b4ca8d2",
-        "5cf18df2fc9aad0f621deb72",
-        "5c09133afc9aadaac61dd096",
-        "5c09155efc9aadaac61dd18b",
-        "5c09156afc9aadaac61dd191",
-        "5c886871fc9aad24d27efdd2",
-        "5c0913abfc9aadaac61dd0c3",
-        "5c0913d0fc9aadaac61dd0d3",
-        "5c091405fc9aadaac61dd0ec",
-        "5c0914a0fc9aadaac61dd133",
-        "5c09153dfc9aadaac61dd17c",
-        "5c1ab8e8fc9aad3c0c53fea2",
-        "5c83ec7afc9aad5db6248922",
-        "5c899d22fc9aad58553ce172",
-        "5c09142efc9aadaac61dd0ff",
-        "5c09151bfc9aadaac61dd16c",
-        "5c091584fc9aadaac61dd19d",
-        "5c091383fc9aadaac61dd0b1",
-        "5c0913e0fc9aadaac61dd0db",
-        "5c0914adfc9aadaac61dd139",
-        "5c09151dfc9aadaac61dd16d",
-        "5c091555fc9aadaac61dd187",
-        "5c6f2c69fc9aad694e443eb2",
-        "5d1aa617fc9aad944e6811d2",
-        "5c0913a0fc9aadaac61dd0be",
-        "5c0913f4fc9aadaac61dd0e4",
-        "5c091537fc9aadaac61dd179",
-        "5c091344fc9aadaac61dd099",
-        "5c091441fc9aadaac61dd107",
-        "5c091495fc9aadaac61dd12e",
-        "5c0915c0fc9aadaac61dd1b9",
-        "5c09135bfc9aadaac61dd0a2",
-        "5c0913eefc9aadaac61dd0e1",
-        "5c0913fffc9aadaac61dd0e9",
-        "5c091410fc9aadaac61dd0f1",
-        "5c091493fc9aadaac61dd12d",
-        "5c091559fc9aadaac61dd189",
-        "5c155879fc9aadace2428cb2",
-        "5ca3b72ffc9aad8468118fb2",
-        "5c09134cfc9aadaac61dd09c",
-        "5c091397fc9aadaac61dd0ba",
-        "5c091470fc9aadaac61dd11d",
-        "5c091500fc9aadaac61dd15f",
-        "5c0915c8fc9aadaac61dd1bd",
-        "5e3c3e9c13805328b20a0da6",
-        "5e506386f4c44d53de5d14c3",
-        "5e63edd816b0646960785112",
-        "5e7684fb29aadc64b56389f8",
-        "5ec08c34987f090f9f7e9677",
-        "5fdb6591af20f9183d598fa6"
-    ]
-
-    for (let iiii = 0; iiii < costAvgUserIds.length; iiii++){
-
-        continue;
-
-        user_id = costAvgUserIds[iiii]
-
-        let where = {
-            // '_id': { '$nin': [new ObjectID('6010f49af8e503037f37ee9b')] },
-            'admin_id': user_id,
-            'application_mode': 'live',
-            'symbol': { '$nin': coinsExclude },
-            'sell_order_id': { '$exists': true },
-
-            // 'cost_avg': { '$in': ['taking_child', 'yes'] },
-            // 'cavg_parent': 'yes',
-            // 'show_order': 'yes',
-            // 'avg_orders_ids.0': { '$exists': true },
-
-            '$or': [
-                {
-                    'cost_avg': { '$in': ['taking_child', 'yes'] },
-                    'cavg_parent': 'yes',
-                    'show_order': 'yes',
-                    'avg_orders_ids.0': { '$exists': false },
-                    'move_to_cost_avg': 'yes',
-                },
-                {
-                    'cost_avg': { '$in': ['taking_child', 'yes'] },
-                    'cavg_parent': 'yes',
-                    'show_order': 'yes',
-                    'avg_orders_ids.0': { '$exists': true }
-                },
-            ]
-
-        }
-
-        let caParentsArr = await db.collection(buy_collection).find(where).toArray()
-
-        if (caParentsArr.length > 0) {
-            //get current open CA trade
-            console.log(caParentsArr.length)
-
-            for (let i = 0; i < caParentsArr.length; i++) {
-
-                // if (String(caParentsArr[i]['_id']) == '6010f49af8e503037f37ee9b'){
-                //     continue;
-                // }
-
-                //move to Kraken
-
-                //add shifted label
-
-                //add extra field in orders
-                //add log in binance as 'order is shifted'
-
-                //add extra field in orders
-                //add log in kraken as shifted order
-
-                //make binance soft sold
-
-                let new_order = Object.assign(caParentsArr[i])
-
-                let tempAllOrderIds = []
-                let allOrderIds = []
-                let allLedgerQty = parseFloat(caParentsArr[i]['quantity'])
-                tempAllOrderIds.push(caParentsArr[i]['_id'])
-                if (typeof caParentsArr[i]['avg_orders_ids'] != 'undefined' && caParentsArr[i]['avg_orders_ids'].length > 0) {
-                    tempAllOrderIds = tempAllOrderIds.concat(caParentsArr[i]['avg_orders_ids'])
-                    allOrderIds = allOrderIds.concat(caParentsArr[i]['avg_orders_ids'])
-                }
-
-                // console.log(tempAllOrderIds)
-                // process.exit(1)
-
-                let costAvgBuyOrders = await db.collection(buy_collection).find({ '_id': { '$in': tempAllOrderIds }, 'status': 'FILLED', 'is_sell_order': 'yes' }).toArray()
-                if (costAvgBuyOrders.length > 0) {
-                    costAvgBuyOrders.forEach(item => { allLedgerQty += parseFloat(item['quantity']) })
-                }
-
-                /*********  Check minQuantity  ****************/
-                //get curent market prices
-                let coin = new_order['symbol']
-                var whereCoins = { '$in': [coin, 'BTCUSDT'] }
-                var coinData = await listmarketPriceMinNotationCoinArr(whereCoins, 'kraken')
-                var BTCUSDTPRICE = parseFloat(coinData['BTCUSDT']['currentmarketPrice'])
-
-                var currentMarketPrice = parseFloat(coinData[coin]['currentmarketPrice'])
-                var marketMinNotation = coinData[coin]['marketMinNotation']
-                var marketMinNotationStepSize = coinData[coin]['marketMinNotationStepSize']
-                var toFixedNum = 6
-
-                //find min required quantity
-                var extra_qty_percentage = 30;
-                var extra_qty_val = 0;
-                extra_qty_val = (extra_qty_percentage * marketMinNotation) / 100
-                var calculatedMinNotation = parseFloat(marketMinNotation) + extra_qty_val;
-                var minReqQty = 0;
-                minReqQty = (calculatedMinNotation / currentMarketPrice);
-
-                if (true) {
-                    // if (exchange == 'kraken') {
-                    minReqQty = calculatedMinNotation
-                    toFixedNum = 6
-                } else {
-                    // toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
-                }
-
-                minReqQty += marketMinNotationStepSize
-                minReqQty = parseFloat(minReqQty.toFixed(toFixedNum))
-                /*********  End Check minQuantity  ************/
-
-                console.log(allLedgerQty, ' < ', minReqQty)
-
-                if (allLedgerQty < minReqQty) {
-
-                    //return with message
-                    console.log('CA ledger min qty issue, order_id ', caParentsArr[i]['_id'], caParentsArr[i]['symbol'], caParentsArr[i]['admin_id'])
-                    continue;
-
-                } else {
-
-                    let coinName = await getCoinName(caParentsArr[i]['symbol'])
-
-                    //get user wallet
-                    let userWallet = await get_user_wallet(caParentsArr[i]['admin_id'], 'kraken')
-                    let wallet = userWallet.filter(item => { return item.coin_symbol == coinName ? true : false })
-                    let walletBalance = wallet.length > 0 ? parseFloat(wallet[0]['coin_balance']) : 0
-
-                    let committed = await getCommittedBalance(user_id, caParentsArr[i]['symbol'], 'kraken')
-
-                    console.log(caParentsArr[i]['symbol'], ' userWallet: ', walletBalance, ' comitted: ', committed, ' ledgerQty: ', allLedgerQty, ' admin_id ', caParentsArr[i]['admin_id'])
-
-                    if (allLedgerQty > walletBalance) {
-                        //return with message
-                        console.log('user wallet balance issue, ', caParentsArr[i]['symbol'], ',  order_id ', caParentsArr[i]['_id'], ' admin_id ', caParentsArr[i]['admin_id'])
-                        continue;
-                    }
-
-                    if ((walletBalance - committed) <= ((95 / 100) * allLedgerQty)) {
-                        //return with message
-                        console.log('user balance used in comitted issue, ', caParentsArr[i]['symbol'], ',  order_id ', caParentsArr[i]['_id'], ' admin_id ', caParentsArr[i]['admin_id'])
-                        continue;
-                    }
-
-                    console.log('Good to shift ::::: ', caParentsArr[i]['symbol'], ',  order_id ', caParentsArr[i]['_id'], ' admin_id ', caParentsArr[i]['admin_id'])
-
-                    // continue;
-
-
-                    new_order['status'] = 'FILLED'
-                    new_order['modified_date'] = new Date()
-                    new_order['ca_migrated_order'] = 'yes'
-                    new_order['shifted_order'] = 'yes'
-                    new_order['shifted_order_label'] = 'shifted'
-
-                    //insert new order in kraken
-                    let insertBuyNew = await db.collection(buy_collection_kraken).insertOne(new_order)
-
-                    if (typeof insertBuyNew.insertedId != 'undefined') {
-                        //insert sell order
-                        let sellOrder = await db.collection(sell_orders_collection).find({ '_id': new ObjectID(String(new_order['sell_order_id'])) }).toArray()
-                        let insertSellNew = {}
-                        if (sellOrder.length > 0) {
-                            insertSellNew = await db.collection(sell_orders_collection_kraken).insertOne(sellOrder[0])
-                            //insert sell order id in buy order
-                            if (typeof insertSellNew.insertedId != 'undefined') {
-                                await db.collection(buy_collection_kraken).updateOne({ '_id': insertBuyNew.insertedId }, { '$set': { 'sell_order_id': insertSellNew.insertedId } })
-                            }
-                        }
-
-                        //insert log in new order
-                        await move_order_logs(insertBuyNew.insertedId, 'binance', 'live', new_order['created_date'], 'kraken')
-
-                        //save log
-                        var log_msg = 'CA Order migrated '
-                        var type = 'ca_migrated_order'
-                        var show_hide_log = 'yes'
-                        var order_created_date = new_order['created_date']
-                        var order_mode = new_order['application_mode']
-                        await create_orders_history_log(insertBuyNew.insertedId, log_msg, type, show_hide_log, 'kraken', order_mode, order_created_date)
-
-                        //get all ledger orders
-                        let caBuyOrders = await db.collection(buy_collection).find({ '_id': { '$in': allOrderIds } }).toArray()
-                        let caSoldOrders = await db.collection(sold_collection).find({ '_id': { '$in': allOrderIds } }).toArray()
-
-                        console.log(allOrderIds)
-
-                        if (caBuyOrders.length > 0) {
-
-                            await db.collection(buy_collection_kraken).insertMany(caBuyOrders)
-                            for (let bi = 0; bi < caBuyOrders.length; bi++) {
-
-                                //insert sell order
-                                let sellOrder = await db.collection(sell_orders_collection).find({ '_id': new ObjectID(String(caBuyOrders[bi]['sell_order_id'])) }).toArray()
-                                let insertSellNew = {}
-                                if (sellOrder.length > 0) {
-                                    insertSellNew = await db.collection(sell_orders_collection_kraken).insertOne(sellOrder[0])
-                                    //insert sell order id in buy order
-                                    if (typeof insertSellNew.insertedId != 'undefined') {
-                                        await db.collection(buy_collection_kraken).updateOne({ '_id': caBuyOrders[bi]['_id'] }, { '$set': { 'sell_order_id': insertSellNew.insertedId } })
-                                    }
-                                }
-                                await move_order_logs(caBuyOrders[bi]['_id'], 'binance', 'live', caBuyOrders[bi]['created_date'], 'kraken')
-                            }
-                        }
-
-                        if (caSoldOrders.length > 0) {
-                            await db.collection(sold_collection_kraken).insertMany(caSoldOrders)
-                            for (let bi = 0; bi < caSoldOrders.length; bi++) {
-
-                                //insert sell order
-                                let sellOrder = await db.collection(sell_orders_collection).find({ '_id': new ObjectID(String(caSoldOrders[bi]['sell_order_id'])) }).toArray()
-                                let insertSellNew = {}
-                                if (sellOrder.length > 0) {
-                                    insertSellNew = await db.collection(sell_orders_collection_kraken).insertOne(sellOrder[0])
-                                    //insert sell order id in buy order
-                                    if (typeof insertSellNew.insertedId != 'undefined') {
-                                        await db.collection(buy_collection_kraken).updateOne({ '_id': caSoldOrders[bi]['_id'] }, { '$set': { 'sell_order_id': insertSellNew.insertedId } })
-                                    }
-                                }
-                                await move_order_logs(caSoldOrders[bi]['_id'], 'binance', 'live', caSoldOrders[bi]['created_date'], 'kraken')
-                            }
-                        }
-
-
-                        //update fields and insert logs in ledger orders
-                        let all_merge_orders = caBuyOrders
-                        let total_merge_orders = all_merge_orders.length
-                        for (let i = 0; i < total_merge_orders; i++) {
-
-                            //sell order
-                            let symbol11 = all_merge_orders[i]['symbol']
-                            let splitArr11111 = symbol11.split('USDT');
-                            let market_sold_price_usd = (splitArr11111[1] == '' ? parseFloat(all_merge_orders[i]['quantity']) * currentMarketPrice : parseFloat(all_merge_orders[i]['quantity']) * currentMarketPrice * BTCUSDTPRICE)
-
-                            //sold fields
-                            let updateFields = {}
-                            updateFields = {
-                                'modified_date': new Date(),
-                                'trade_migrated': 'yes',
-                                'order_shifted_resume_exchange': 'yes',
-                                'ca_migrated_order': 'yes',
-                            }
-
-                            if (all_merge_orders[i]['status'] == 'FILLED' && all_merge_orders[i]['is_sell_order'] == 'yes') {
-                                updateFields['trading_status'] = 'complete'
-                                updateFields['status'] = 'FILLED'
-                                updateFields['is_sell_order'] = 'sold'
-                                updateFields['market_sold_price'] = currentMarketPrice
-                                updateFields['market_sold_price_usd'] = market_sold_price_usd
-                                updateFields['sell_date'] = new Date()
-                            }
-
-                            let buy_order = await db.collection(buy_collection).find({ '_id': all_merge_orders[i]['_id'] }).toArray()
-                            if (buy_order.length > 0) {
-
-                                let tempInsert = Object.assign(buy_order[0], updateFields)
-
-                                let insertttttt = await db.collection(sold_collection).insertOne(tempInsert)
-                                if (typeof insertttttt.insertedId != 'undefined') {
-                                    //delete from buy_collection
-                                    await db.collection(buy_collection).deleteOne({ '_id': all_merge_orders[i]['_id'] })
-                                }
-                            } else {
-                                let sold_order = await db.collection(sold_collection).find({ '_id': all_merge_orders[i]['_id'] }).toArray()
-                                if (sold_order.length > 0) {
-                                    await db.collection(sold_collection).updateOne({ '_id': all_merge_orders[i]['_id'] }, { '$set': updateFields })
-                                }
-                            }
-
-                            var log_msg = 'Order migrated'
-                            var type = 'ca_migrated_order'
-                            var show_hide_log = 'yes'
-                            var order_created_date = all_merge_orders[i]['created_date']
-                            var order_mode = all_merge_orders[i]['application_mode']
-                            await create_orders_history_log(all_merge_orders[i]['_id'], log_msg, type, show_hide_log, 'binance', order_mode, order_created_date)
-
-                            if (i == (total_merge_orders - 1)) {
-                                buy_order = await db.collection(buy_collection).find({ '_id': new_order['_id'] }).toArray()
-                                if (buy_order.length > 0) {
-                                    updateFields['cost_avg'] = 'completed'
-                                    let tempInsert = Object.assign(buy_order[0], updateFields)
-
-                                    let insertttttt = await db.collection(sold_collection).insertOne(tempInsert)
-                                    if (typeof insertttttt.insertedId != 'undefined') {
-                                        //delete from buy_collection
-                                        await db.collection(buy_collection).deleteOne({ '_id': new_order['_id'] })
-                                    }
-                                } else {
-                                    let sold_order = await db.collection(sold_collection).find({ '_id': new_order['_id'] }).toArray()
-                                    if (sold_order.length > 0) {
-                                        await db.collection(sold_collection).updateOne({ '_id': new_order['_id'] }, { '$set': updateFields })
-                                    }
-                                }
-
-                                var log_msg = 'Order migrated'
-                                var type = 'ca_migrated_order'
-                                var show_hide_log = 'yes'
-                                var order_created_date = new_order['created_date']
-                                var order_mode = new_order['application_mode']
-                                await create_orders_history_log(new_order['_id'], log_msg, type, show_hide_log, 'binance', order_mode, order_created_date)
-
-                            }
-
-                        }
-
-
-                    }
-
-
-                }
-
-                console.log('********************************************************************')
-
-                break;
-
-            }//end for loop
-
-        }
-
-        console.log('|||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ', costAvgUserIds[iiii])
-    }
-
-    res.send()
-
-})
-
-
-router.get('/getComittedBalance', auth_token.required, async (req, res)=>{
-    var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'User Not exist'
-        });
-        return false;
-    }
-    await getCommittedBalance('5eb5a5a628914a45246bacc6', 'XMRBTC', 'binance')
-    res.send()
-})
-
-async function getCommittedBalance(user_id, symbol, exchange){
-
-    return new Promise(async resolve => {
-        const db = await conn
-
-        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
-        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange
-
-        let where = {
-            'admin_id': user_id,
-            'application_mode': 'live',
-            'symbol': symbol,
-            '$or':[
-                {
-                    'status' : {'$in' : ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
-                    'is_sell_order' : 'yes',
-                    'is_lth_order' : {'$ne' : 'yes'},
-                    'cost_avg' : 'yes',
-                    'cavg_parent' : 'yes',
-                    'avg_orders_ids.0' : {'$exists' : false},
-                    'move_to_cost_avg': {'$ne' : 'yes'},
-                },
-                {
-                    'status': {'$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
-                    'is_sell_order': 'yes',
-                    'cost_avg': {'$nin': ['yes', 'taking_child', 'completed']},
-                },
-                {
-                    'status' : {'$in' : ['LTH', 'LTH_ERROR']},
-                    'is_sell_order' : 'yes',
-                    'cost_avg' : {'$nin' : ['taking_child', 'yes', 'completed']}
-                },
-                {
-                    'status' : {'$in' : ['submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'submitted_ERROR']},
-                    'cost_avg' : {'$nin' : ['taking_child', 'yes', 'completed']},
-                },
-            ]
-        }
-
-        let result = await db.collection(buy_collection).aggregate([
-            {
-                '$match': where
-            },
-            {
-                '$group': {
-                    '_id': null,
-                    'totalQty': { '$sum': {'$toDouble': '$quantity'} },
-                }
-            }
-        ]).toArray();
-
-        //costAvg comitted orders
-        let where2 = {
-            'admin_id': user_id,
-            'application_mode': 'live',
-            'symbol': symbol,
-            '$or': [
-                {
-                    'cost_avg': {'$in': ['taking_child', 'yes']},
-                    'cavg_parent': 'yes',
-                    'show_order': 'yes',
-                    'avg_orders_ids.0': {'$exists': false},
-                    'move_to_cost_avg': 'yes',
-                },
-                {
-                    'cost_avg': {'$in': ['taking_child', 'yes']},
-                    'cavg_parent': 'yes',
-                    'show_order': 'yes',
-                    'avg_orders_ids.0': {'$exists': true}
-                },
-            ]
-        }
-
-        let result2 = await db.collection(buy_collection).aggregate([
-            {
-                '$match': where2
-            },
-            {
-                '$project': {
-                    'avg_orders_ids':1
-                }
-            },
-        ]).toArray();
-
-        let result3 = await db.collection(sold_collection).aggregate([
-            {
-                '$match': where2
-            },
-            {
-                '$project': {
-                    'avg_orders_ids':1
-                }
-            },
-        ]).toArray();
-
-        let arrr = []
-        let costAvgIds = []
-        arrr = result2.concat(result3)
-
-        for(let i=0; i< arrr.length; i++){
-            costAvgIds.push(String(arrr[i]['_id']))
-            if (typeof arrr[i]['avg_orders_ids'] != 'undefined' && arrr[i]['avg_orders_ids'].length > 0){
-                for (let j = 0; j < arrr[i]['avg_orders_ids'].length; j++ ){
-                    costAvgIds.push(String(arrr[i]['avg_orders_ids'][j]))
-                }
-            }
-        }
-
-        var orderIds = costAvgIds.filter((v, i, a) => a.indexOf(v) === i);
-
-        let newIds = orderIds.map(item => { return new ObjectID(item) })
-
-        let result4 = await db.collection(buy_collection).aggregate([
-            {
-                '$match': {
-                    '_id': { '$in': newIds }
-                }
-            },
-            {
-                '$group': {
-                    '_id': null,
-                    'totalQty': { '$sum': { '$toDouble': '$quantity' } },
-                }
-            }
-        ]).toArray();
-
-        let totalComittedQty = 0
-
-        if (result.length > 0 && typeof result[0]['totalQty'] != 'undefined'){
-            totalComittedQty += parseFloat(result[0]['totalQty'])
-        }
-        if (result4.length > 0 && typeof result4[0]['totalQty'] != 'undefined'){
-            totalComittedQty += parseFloat(result4[0]['totalQty'])
-        }
-
-        // console.log(totalComittedQty)
-
-        resolve(totalComittedQty)
-
-    })
-}
-
-router.get('/test_move_logs_function', auth_token.required, async (req, res)=>{
-
-    var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'User Not exist'
-        });
-        return false;
-    }
-
-    let result = await move_order_logs('6022a4ed7510bb2486a02eda', 'binance', 'live', new Date('2021-02-09T15:13:40Z'), 'kraken')
-
-    res.send(result)
-})
-
-async function move_order_logs(order_id, fromExchange, order_mode, order_created_date, toExchange){
-
-    //promise for gettiong order log
-    var ordeLog = await listOrderLog(String(order_id), fromExchange, order_mode, order_created_date, false);
-
-    var created_date = new Date(order_created_date);
-    var current_date = new Date('2019-12-27T11:04:21.912Z');
-    if (created_date > current_date) {
-        var collectionName = (toExchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + toExchange;
-        var d = new Date(order_created_date);
-        //create collection name on the base of date and mode
-        var date_mode_string = '_' + order_mode + '_' + d.getFullYear() + '_' + d.getMonth();
-        //create full name of collection
-        var full_collection_name = collectionName + date_mode_string;
-    } else {
-        var full_collection_name = (toExchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + toExchange;
-    }
-
-    console.log('logs full_collection_name === ',full_collection_name)
-
-    const db = await conn
-    let result = await db.collection(full_collection_name).insertMany(ordeLog)
-
-    return result;
-}
 
 async function getCoinName(symbol){
     let arr1 = symbol.split('BTC')
@@ -30052,6 +28968,7 @@ router.post('/checkBinanceDuplicatesForTradeHistory', auth_token.required, async
     // console.log(req.body)
 
     let user_id = req.body.user_id
+    // let user_id = req.payload.id;
     let exchange = req.body.exchange
 
     if(typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != ''){
