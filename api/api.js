@@ -25687,7 +25687,7 @@ router.post('/is_trade_limit_exceeded', auth_token.required, async (req, res)=>{
         });
         return false;
     }
-    let user_id = req.body.user_id
+    // let user_id = req.body.user_id
     let user_id = req.payload.id;
     let exchange = req.body.exchange
     let trade_limit_exceeded = await is_trade_limit_exceeded(user_id, exchange, req)
