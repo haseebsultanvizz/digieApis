@@ -15823,7 +15823,7 @@ router.post('/getUserbalance', auth_token.required, async (req, res) => {
     }
     conn.then(async (db) => {
         let exchange = req.body.exchange
-        let admin_id = req.body.user_id
+        let admin_id = req.payload.id
 
         if (typeof exchange == 'undefined' || exchange == '' || typeof admin_id == 'undefined' || admin_id == '') {
             res.send({
@@ -17801,7 +17801,7 @@ router.post('/latest_user_activity', auth_token.required, async (req, res) => {
         return false;
     }
     conn.then(async (db) => {
-        const user_id = req.body.user_id
+        const user_id = req.payload.id
 
         if (typeof user_id == 'undefined' || user_id == '') {
             res.send({
@@ -17959,7 +17959,7 @@ router.post('/update_user_balance', auth_token.required, async (req, res)=>{
         return false;
     }
 
-    let user_id = req.body.user_id
+    let user_id = req.payload.id
     let auth_token = req.headers.authorization;
     if(typeof user_id != 'undefined' && user_id != ''){
         var updateWallet = await update_user_balance(user_id, 'shahzad_check', auth_token)
@@ -18382,7 +18382,7 @@ router.post('/updateUserPackage', auth_token.required, async (req, res)=>{
         return false;
     }
 
-    let user_id = req.body.user_id
+    let user_id = req.payload.id
     let userPackage = req.body.userPackage
 
     if (typeof user_id != 'undefined' && user_id != '' && typeof userPackage != 'undefined'){
@@ -18418,7 +18418,7 @@ router.post('/getUserPackage', auth_token.required, async (req, res)=>{
         return false;
     }
 
-    let user_id = req.body.user_id
+    let user_id = req.payload.id
 
     if (typeof user_id != 'undefined' && user_id != ''){
         let userPackage = await getUserPackage(user_id)
@@ -18664,7 +18664,7 @@ router.post('/listCurrentUserExchanges', auth_token.required, async (req, res) =
         return false;
     }
 
-    let user_id = req.body.user_id
+    let user_id = req.payload.id
     let application_mode = req.body.application_mode
     let exchangesArr = ['binance', 'kraken']
 
@@ -18848,7 +18848,7 @@ router.post('/get_user_exchanges', auth_token.required, async (req,res) => {
         });
         return false;
     }
-    let user_id = typeof req.body.user_id != 'undefined' && req.body.user_id != '' ? req.body.user_id : ''
+    let user_id = typeof req.payload.id != 'undefined' && req.payload.id != '' ? req.payload.id : ''
     if(user_id != ''){
         let result =  await getUserExchangesWithAPISet(user_id)
         res.send({
@@ -27731,7 +27731,7 @@ router.post('/get_user_id', auth_token.required, async (req, res) => {
         }, {
             email_address: username
         }]
-        where['_id'] = new ObjectID(req.payload.id);
+        // where['_id'] = new ObjectID(req.payload.id);
         where['status'] = '0';
         where['user_soft_delete'] = '0';
         let user = await db.collection('users').find(where).project({'_id':1}).toArray();
