@@ -32692,7 +32692,8 @@ router.post('/addUserFavouriteCoin', auth_token.required, async function (req, r
 
         let exchange = req.body.exchange
         let symbols = req.body.symbols
-        let user_id = req.body.user_id
+        // let user_id = req.body.user_id
+        let user_id = req.payload.id;
         if (typeof symbols == 'undefined' || typeof user_id == 'undefined' || user_id == '' || typeof exchange == 'undefined' || exchange == '') {
             res.send({
                 'status': true,
@@ -32759,7 +32760,8 @@ router.post('/get_user_favourite_coins', auth_token.required, async (req, resp) 
     }
 
     let exchange = req.body.exchange
-    let admin_id = req.body.admin_id
+    // let admin_id = req.body.admin_id
+    let admin_id = req.payload.id
 
     var userFavouriteCoinsPromise = getUserFavouriteCoins(admin_id, exchange);
     // var globalCoinsPromise = getGlobalCoins(exchange);
