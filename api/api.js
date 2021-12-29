@@ -6386,6 +6386,38 @@ router.post('/deleteOrderPermanently', auth_token.required, async (req, resp) =>
 }) //End of deleteOrderPermanently
 
 
+
+function PurchasedPriceOrders(symbol, admin_id){
+    return new Promise((resolve, reject) => {
+        conn.then(db => {
+            let searchCriteria = {
+                admin_id: admin_id,
+            status: {
+                $in: [
+                    "LTH", "FILLED",
+                ],
+            },
+            trigger_type: "barrier_percentile_trigger",
+            parent_status:{
+                $ne: "parent",
+            },
+            symbol: symbol,
+            purchased_price: {
+                $exists: true,
+            },
+            };
+            var collectionName = 'buy_orders';
+            var mysort = {purchased_price: -1};
+            db.collection(collectionName).find(searchCriteria).sort(mysort).toArray((err, result) => {
+                if (err) reject(err);
+                resolve(result);
+            });
+        });
+    }).catch(err => {
+        console.log(err);
+    });
+}
+
 //post call from component for makeCostAvg
 router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
@@ -6416,6 +6448,15 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
 
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
+            if(tab == 'openTab_move_all'){
+                console.log(getBuyOrder,'getBuyOrder');
+                var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id);
+                console.log(mapArray1, 'mapArray1')
+                return false;
+            }
+
+
+
 
 
             if(tab == 'lthTab_admin' || tab == 'openTab_admin'){
@@ -6582,6 +6623,99 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
     }
 
 }) //End of makeCostAvg
+
+
+router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+    let exchange = req.body.exchange;
+    let order_id = req.body.orderId;
+    let admin_id = req.payload.id;
+    let symbol = ''
+
+
+    var getBuyOrder = await listOrderById(order_id, exchange);
+    symbol = getBuyOrder[0]['symbol'];
+    if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
+
+        conn.then(async (db) => {
+            let where1 = {
+                'admin_id': admin_id,
+                'application_mode': 'live',
+                'buy_date':{'$exists':true},
+                'status': {
+                    $in:['FILLED','LTH']
+                }
+             }
+             if(typeof symbol !== 'undefined' && symbol !== ''){
+                where1['symbol'] = symbol
+                where1['trigger_type'] = 'barrier_percentile_trigger'
+             }
+
+
+             let project1 = {
+                 'admin_id':1,
+                 'application_mode':1,
+                 'symbol':1,
+                 'quantity':1,
+                 'purchased_price':1,
+                 'buy_date':1,
+                 'status':1,
+                 'is_sell_order':1,
+                 'market_sold_price': 1,
+                 'sell_profit_percent': 1
+             }
+            let sort1 = { 'buy_date': -1 }
+            let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+            let buyPromise = db.collection(buyCollection).find(where1).sort(sort1).project(project1).limit(10).toArray()
+
+
+
+
+
+
+            let myPromise = await Promise.all([buyPromise])
+            // console.log(myPromise[0].length)
+            // console.log(myPromise[1].length)
+            // console.log(myPromise[0], '====>    buyPromise')
+            // console.log(myPromise[1].length, '====>    soldPromise')
+            let tempOrders = myPromise[0]
+
+            let orders = []
+            tempOrders.map(order=>{
+                order['t_date'] = order['buy_date']
+                orders.push(order)
+            })
+            orders.sort(function (a, b) {
+              return new Date(b.t_date) - new Date(a.t_date);
+            });
+
+
+            // console.log(orders)
+
+            // orders = orders.slice(0, 10);
+
+            res.send({
+                success: true,
+                data: orders,
+                message: 'Data found successfully',
+            })
+
+        })
+    } else {
+        res.send({
+            status: false,
+            message: 'exchange and user_id are required',
+        })
+    }
+})//end getAllLTHOPENOrders
 
 
 function delete_order_history_logs(order_id, exchange) {
