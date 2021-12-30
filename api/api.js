@@ -6386,12 +6386,81 @@ router.post('/deleteOrderPermanently', auth_token.required, async (req, resp) =>
 }) //End of deleteOrderPermanently
 
 
+function UpdateChildOrders(order_id, buy_parent_id) {
+  return new Promise((resolve, reject) => {
+    conn.then(db => {
+        let searchCriteria = {};
+        var collectionName = 'buy_orders';
+        searchCriteria["_id"] = new ObjectId(order_id);
+        let updQuery = {
+            $set: {
+                cost_avg: "yes",
+                show_order: "yes",
+            }
+        };
+        db.collection(collectionName).updateOne(searchCriteria, updQuery, (err, success) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(success.result);
+            }
+        });
+        let searchCriteria1 = {};
+
+        searchCriteria1["_id"] = new ObjectId(buy_parent_id);
+        let updQuery1 = {
+            $set: {
+                pause_status: "pause",
+                pause_by: "cost_avg_merge",
+            }
+        };
+        db.collection(collectionName).updateOne(searchCriteria1, updQuery1, (err, success) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(success.result);
+            }
+        });
+    });
+  }).catch(err => {
+      console.log(err);
+  });
+}
+
+
+function UpdateHighestPriceOrder(order_id, costaverageMap) {
+  return new Promise((resolve, reject) => {
+    conn.then(db => {
+      let searchCriteria = {};
+      searchCriteria["_id"] = new ObjectId(order_id);
+      let updQuery = {
+          $set: {
+              cost_avg_array: costaverageMap,
+              move_to_cost_avg: "yes",
+              cost_avg:         "taking_child",
+              cavg_parent:      "yes",
+          }
+      };
+      var collectionName = 'buy_orders';
+      db.collection(collectionName).updateOne(searchCriteria, updQuery, (err, success) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve(success.result);
+        }
+      });
+    });
+  }).catch(err => {
+      console.log(err);
+  });
+}
+
 
 function PurchasedPriceOrders(symbol, admin_id){
     return new Promise((resolve, reject) => {
         conn.then(db => {
-            let searchCriteria = {
-                admin_id: admin_id,
+          let searchCriteria = {
+            admin_id: admin_id,
             status: {
                 $in: [
                     "LTH", "FILLED",
@@ -6405,13 +6474,13 @@ function PurchasedPriceOrders(symbol, admin_id){
             purchased_price: {
                 $exists: true,
             },
-            };
-            var collectionName = 'buy_orders';
-            var mysort = {purchased_price: -1};
-            db.collection(collectionName).find(searchCriteria).sort(mysort).toArray((err, result) => {
-                if (err) reject(err);
-                resolve(result);
-            });
+          };
+          var collectionName = 'buy_orders';
+          var mysort = {purchased_price: -1};
+          db.collection(collectionName).find(searchCriteria).sort(mysort).toArray((err, result) => {
+              if (err) reject(err);
+              resolve(result);
+          });
         });
     }).catch(err => {
         console.log(err);
@@ -6449,10 +6518,43 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
             if(tab == 'openTab_move_all'){
-                console.log(getBuyOrder,'getBuyOrder');
-                var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id);
-                console.log(mapArray1, 'mapArray1')
-                return false;
+              costAverageArr = [];
+              console.log(getBuyOrder,'getBuyOrder');
+              var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id);
+              console.log(mapArray1, 'mapArray1')
+              if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
+                console.log('Inside IF')
+                for (let key in mapArray1) {
+
+                  console.log("mapArray1 :::::", mapArray1)
+
+                  let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
+                  console.log("fractionOrderArr :::::", fractionOrderArr)
+
+                  var dataToAppend = {};
+                  dataToAppend["order_sold"]       = "no"
+                  dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
+                  dataToAppend["filledQtyBuy"]     = fractionOrderArr["filledQty"]
+                  dataToAppend["commissionBuy"]    = fractionOrderArr["commission"]
+                  dataToAppend["filledPriceBuy"]   = fractionOrderArr["filledPrice"]
+                  dataToAppend["orderFilledIdBuy"] = fractionOrderArr["orderFilledId"]
+                  dataToAppend["buyTimeDate"]      = fractionOrderArr["transactTime"]
+                  // console.log("highestParentOrder :::::", highestParentOrder)
+                  costAverageArr.push(dataToAppend)
+                }// END of (let key in mapArray1)
+              }
+
+
+
+              await UpdateHighestPriceOrder(order_id, costAverageArr)
+              for(let key in mapArray1){
+                await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"])
+              }// END of for(let key in mapArray1)
+              resp.status(200).send({
+                status: true
+              });
+
+              return false;
             }
 
 
