@@ -6386,12 +6386,13 @@ router.post('/deleteOrderPermanently', auth_token.required, async (req, resp) =>
 }) //End of deleteOrderPermanently
 
 
-function UpdateChildOrders(order_id, buy_parent_id) {
+function UpdateChildOrders(order_id, buy_parent_id, exchange) {
   return new Promise((resolve, reject) => {
     conn.then(db => {
         let searchCriteria = {};
-        var collectionName = 'buy_orders';
-        searchCriteria["_id"] = new ObjectId(order_id);
+        // var collectionName = 'buy_orders';
+        var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+        searchCriteria["_id"] = new ObjectID(order_id);
         let updQuery = {
             $set: {
                 cost_avg: "yes",
@@ -6407,7 +6408,7 @@ function UpdateChildOrders(order_id, buy_parent_id) {
         });
         let searchCriteria1 = {};
 
-        searchCriteria1["_id"] = new ObjectId(buy_parent_id);
+        searchCriteria1["_id"] = new ObjectID(buy_parent_id);
         let updQuery1 = {
             $set: {
                 pause_status: "pause",
@@ -6428,11 +6429,11 @@ function UpdateChildOrders(order_id, buy_parent_id) {
 }
 
 
-function UpdateHighestPriceOrder(order_id, costaverageMap) {
+function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
   return new Promise((resolve, reject) => {
     conn.then(db => {
       let searchCriteria = {};
-      searchCriteria["_id"] = new ObjectId(order_id);
+      searchCriteria["_id"] = new ObjectID(order_id);
       let updQuery = {
           $set: {
               cost_avg_array: costaverageMap,
@@ -6441,11 +6442,12 @@ function UpdateHighestPriceOrder(order_id, costaverageMap) {
               cavg_parent:      "yes",
           }
       };
-      var collectionName = 'buy_orders';
+      var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
       db.collection(collectionName).updateOne(searchCriteria, updQuery, (err, success) => {
         if (err) {
             reject(err);
         } else {
+            console.log(searchCriteria,'searchCriteria UpdateHighestPriceOrder', costaverageMap);
             resolve(success.result);
         }
       });
@@ -6534,26 +6536,36 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                   var dataToAppend = {};
                   dataToAppend["order_sold"]       = "no"
                   dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
-                  dataToAppend["filledQtyBuy"]     = fractionOrderArr["filledQty"]
-                  dataToAppend["commissionBuy"]    = fractionOrderArr["commission"]
-                  dataToAppend["filledPriceBuy"]   = fractionOrderArr["filledPrice"]
-                  dataToAppend["orderFilledIdBuy"] = fractionOrderArr["orderFilledId"]
-                  dataToAppend["buyTimeDate"]      = fractionOrderArr["transactTime"]
+                  dataToAppend["filledQtyBuy"]     = fractionOrderArr[0]["filledQty"]
+                  dataToAppend["commissionBuy"]    = fractionOrderArr[0]["commission"]
+                  dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
+                  dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
+                  dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : '';
                   // console.log("highestParentOrder :::::", highestParentOrder)
                   costAverageArr.push(dataToAppend)
                 }// END of (let key in mapArray1)
+                if(costAverageArr.length > 0){
+                    console.log('before Parent')
+                    await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
+                    console.log('before Parent')
+                    for(let key in mapArray1){
+                        await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
+                        console.log('loop')
+                    }// END of for(let key in mapArray1)
+                    await new Promise(r => setTimeout(r, 5000));
+                    resp.status(200).send({
+                        status: true
+                    });
+                } else {
+                    resp.status(200).send({
+                        status: false
+                    });
+                }
+              } else {
+                resp.status(200).send({
+                    status: false
+                });
               }
-
-
-
-              await UpdateHighestPriceOrder(order_id, costAverageArr)
-              for(let key in mapArray1){
-                await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"])
-              }// END of for(let key in mapArray1)
-              resp.status(200).send({
-                status: true
-              });
-
               return false;
             }
 
