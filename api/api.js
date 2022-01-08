@@ -6754,7 +6754,8 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                 'buy_date':{'$exists':true},
                 'status': {
                     $in:['FILLED','LTH']
-                }
+                },
+                "cost_avg": { $nin :["yes","taking_child", "completed"] }
              }
              if(typeof symbol !== 'undefined' && symbol !== ''){
                 where1['symbol'] = symbol
