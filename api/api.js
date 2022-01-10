@@ -6440,6 +6440,7 @@ function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
               move_to_cost_avg: "yes",
               cost_avg:         "taking_child",
               cavg_parent:      "yes",
+              modified_date:     new Date(),
           }
       };
       var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -6458,7 +6459,7 @@ function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
 }
 
 
-function PurchasedPriceOrders(symbol, admin_id){
+function PurchasedPriceOrders(symbol, admin_id, exchange){
     return new Promise((resolve, reject) => {
         conn.then(db => {
           let searchCriteria = {
@@ -6477,7 +6478,7 @@ function PurchasedPriceOrders(symbol, admin_id){
                 $exists: true,
             },
           };
-          var collectionName = 'buy_orders';
+          var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
           var mysort = {purchased_price: -1};
           db.collection(collectionName).find(searchCriteria).sort(mysort).toArray((err, result) => {
               if (err) reject(err);
@@ -6522,7 +6523,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             if(tab == 'openTab_move_all'){
               costAverageArr = [];
               console.log(getBuyOrder,'getBuyOrder');
-              var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id);
+              var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
               console.log(mapArray1, 'mapArray1')
               if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
                 console.log('Inside IF')
