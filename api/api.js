@@ -6528,22 +6528,21 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
               if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
                 console.log('Inside IF')
                 for (let key in mapArray1) {
-
                   console.log("mapArray1 :::::", mapArray1)
-
                   let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
                   console.log("fractionOrderArr :::::", fractionOrderArr)
-
-                  var dataToAppend = {};
-                  dataToAppend["order_sold"]       = "no"
-                  dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
-                  dataToAppend["filledQtyBuy"]     = fractionOrderArr[0]["filledQty"]
-                  dataToAppend["commissionBuy"]    = fractionOrderArr[0]["commission"]
-                  dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
-                  dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
-                  dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : '';
-                  // console.log("highestParentOrder :::::", highestParentOrder)
-                  costAverageArr.push(dataToAppend)
+                  if(typeof fractionOrderArr != 'undefined'){
+                    var dataToAppend = {};
+                    dataToAppend["order_sold"]       = "no"
+                    dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
+                    dataToAppend["filledQtyBuy"]     = fractionOrderArr[0]["filledQty"]
+                    dataToAppend["commissionBuy"]    = fractionOrderArr[0]["commission"]
+                    dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
+                    dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
+                    dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : '';
+                    // console.log("highestParentOrder :::::", highestParentOrder)
+                    costAverageArr.push(dataToAppend);
+                  }
                 }// END of (let key in mapArray1)
                 if(costAverageArr.length > 0){
                     console.log('before Parent')
@@ -6555,16 +6554,16 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     }// END of for(let key in mapArray1)
                     await new Promise(r => setTimeout(r, 5000));
                     resp.status(200).send({
-                        status: true
+                        status: true, message: "Successfully Created"
                     });
                 } else {
                     resp.status(200).send({
-                        status: false
+                        status: false, message : "buy_fraction_filled_order_arr not found or may be something went wrong"
                     });
                 }
               } else {
                 resp.status(200).send({
-                    status: false
+                    status: false, message: "map arr not found"
                 });
               }
               return false;
