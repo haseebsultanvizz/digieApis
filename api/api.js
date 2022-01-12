@@ -6542,7 +6542,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
 
                 console.log("mapArray1 :::::", mapArray1)
-                return false
+                // return false
                 for (let key in mapArray1) {
                   let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
                   console.log("fractionOrderArr :::::", fractionOrderArr)
