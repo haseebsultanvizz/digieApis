@@ -6542,6 +6542,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
 
                 console.log("mapArray1 :::::", mapArray1)
+                await new Promise(r => setTimeout(r, 1000));
                 // return false
                 for (let key in mapArray1) {
                   let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
@@ -6577,7 +6578,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                         await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
                         console.log('loop')
                     }// END of for(let key in mapArray1)
-                    await new Promise(r => setTimeout(r, 5000));
+                    await new Promise(r => setTimeout(r, 4000));
                     resp.status(200).send({
                         status: true, message: "Successfully Created"
                     });
