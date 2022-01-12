@@ -6490,6 +6490,13 @@ function PurchasedPriceOrders(symbol, admin_id, exchange){
     });
 }
 
+function arraymove(arr, fromIndex, toIndex) {
+    var element = arr[fromIndex];
+    arr.splice(fromIndex, 1);
+    arr.splice(toIndex, 0, element);
+    return arr
+}
+
 //post call from component for makeCostAvg
 router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
@@ -6527,6 +6534,11 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
               console.log(mapArray1, 'mapArray1')
               if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
                 console.log('Inside IF')
+                const findParentIndex = (order) => (order["_id"]).toString() == order_id
+                const parentIndex = mapArray1.findIndex(findParentIndex)
+                if(parentIndex != -1){
+                    mapArray1 = arraymove(mapArray1, parentIndex, 0);
+                }
                 for (let key in mapArray1) {
                   console.log("mapArray1 :::::", mapArray1)
                   let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
@@ -6539,7 +6551,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     dataToAppend["commissionBuy"]    = fractionOrderArr[0]["commission"]
                     dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
                     dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
-                    dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : '';
+                    dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
                     // console.log("highestParentOrder :::::", highestParentOrder)
                     costAverageArr.push(dataToAppend);
                   }
