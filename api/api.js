@@ -6531,7 +6531,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
               costAverageArr = [];
               console.log(getBuyOrder,'getBuyOrder');
               var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
-              console.log(mapArray1, 'mapArray1')
+            //   console.log(mapArray1, 'mapArray1')
               if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
                 console.log('Inside IF')
                 const findParentIndex = (order) => (order["_id"]).toString() == order_id
@@ -6539,8 +6539,11 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 if(parentIndex != -1){
                     mapArray1 = arraymove(mapArray1, parentIndex, 0);
                 }
+
+
+                console.log("mapArray1 :::::", mapArray1)
+                return false
                 for (let key in mapArray1) {
-                  console.log("mapArray1 :::::", mapArray1)
                   let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
                   console.log("fractionOrderArr :::::", fractionOrderArr)
                   if(typeof fractionOrderArr != 'undefined'){
@@ -6553,6 +6556,16 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
                     dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
                     // console.log("highestParentOrder :::::", highestParentOrder)
+                    costAverageArr.push(dataToAppend);
+                  } else {
+                    var dataToAppend = {};
+                    dataToAppend["order_sold"]       = "no"
+                    dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
+                    dataToAppend["filledQtyBuy"]     = typeof mapArray1[key]['quantity'] != 'undefined' && mapArray1[key]['quantity'] != '' ? mapArray1[key]['quantity'].toFixed(8) : ''
+                    dataToAppend["commissionBuy"]    = ''
+                    dataToAppend["filledPriceBuy"]   = typeof mapArray1[key]['purchased_price'] != 'undefined' && mapArray1[key]['purchased_price'] != '' ? mapArray1[key]['purchased_price'].toFixed(8) : ''
+                    dataToAppend["orderFilledIdBuy"] = typeof mapArray1[key]['tradeId'] != 'undefined' && mapArray1[key]['tradeId'] != '' ? mapArray1[key]['tradeId'] : ''
+                    dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
                     costAverageArr.push(dataToAppend);
                   }
                 }// END of (let key in mapArray1)
