@@ -6542,7 +6542,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
 
                 console.log("mapArray1 :::::", mapArray1)
-                await new Promise(r => setTimeout(r, 1000));
+                await new Promise(r => setTimeout(r, 500));
                 // return false
                 for (let key in mapArray1) {
                   let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
@@ -6570,6 +6570,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     costAverageArr.push(dataToAppend);
                   }
                 }// END of (let key in mapArray1)
+                await new Promise(r => setTimeout(r, 500));
                 if(costAverageArr.length > 0){
                     console.log('before Parent')
                     await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
