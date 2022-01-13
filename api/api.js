@@ -6441,6 +6441,7 @@ function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
               cost_avg:         "taking_child",
               cavg_parent:      "yes",
               modified_date:     new Date(),
+              status : "FILLED"
           }
       };
       var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -6572,13 +6573,13 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 }// END of (let key in mapArray1)
                 await new Promise(r => setTimeout(r, 500));
                 if(costAverageArr.length > 0){
-                    console.log('before Parent')
-                    await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
-                    console.log('before Parent')
+                    console.log('before Child')
                     for(let key in mapArray1){
                         await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
                         console.log('loop')
                     }// END of for(let key in mapArray1)
+                    console.log('before Parent')
+                    await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
                     await new Promise(r => setTimeout(r, 4000));
                     resp.status(200).send({
                         status: true, message: "Successfully Created"
