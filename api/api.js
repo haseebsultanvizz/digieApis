@@ -6532,13 +6532,28 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
               costAverageArr = [];
               console.log(getBuyOrder,'getBuyOrder');
               var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
-            //   console.log(mapArray1, 'mapArray1')
+
+
+
+              let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
+              let myPromises = await Promise.all([promise1]);
+              let coin_Data = myPromises[0];
+              let currentmarketPrice = coin_Data['currentmarketPrice'][0]['price'];
+
+
+              // console.log(mapArray1, 'mapArray1')
               if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
+                mapArray1.map( x => {
+                  x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
+                });
+
+
+                mapArray1 = [...mapArray1].sort((a, b) => parseFloat(a.profitLoss) - parseFloat(b.profitLoss));
                 console.log('Inside IF')
                 const findParentIndex = (order) => (order["_id"]).toString() == order_id
                 const parentIndex = mapArray1.findIndex(findParentIndex)
                 if(parentIndex != -1){
-                    mapArray1 = arraymove(mapArray1, parentIndex, 0);
+                  mapArray1 = arraymove(mapArray1, parentIndex, 0);
                 }
 
 
