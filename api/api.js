@@ -6547,6 +6547,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                   x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
                 });
 
+                await new Promise(r => setTimeout(r, 100));
 
                 mapArray1 = [...mapArray1].sort((a, b) => parseFloat(a.profitLoss) - parseFloat(b.profitLoss));
                 console.log('Inside IF')
@@ -6556,8 +6557,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                   mapArray1 = arraymove(mapArray1, parentIndex, 0);
                 }
 
-
-                console.log("mapArray1 :::::", mapArray1)
+                console.log("mapArray1 :::::", mapArray1);
                 await new Promise(r => setTimeout(r, 500));
                 // return false
                 for (let key in mapArray1) {
