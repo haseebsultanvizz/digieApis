@@ -109,7 +109,7 @@ async function blockLoginAttempt(username, action) {
                             var set = {
                                 'unsuccessfull_login_attempt_count': (typeof data[0]['unsuccessfull_login_attempt_count'] != 'undefined' && data[0]['unsuccessfull_login_attempt_count'] != '' && !isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) ? data[0]['unsuccessfull_login_attempt_count'] + 1 : 1)
                             }
-                            if (set['unsuccessfull_login_attempt_count'] <= 3) {
+                            if (set['unsuccessfull_login_attempt_count'] >= 3) {
                                 set['login_attempt_block_time'] = new Date()
                                 // set['user_soft_delete'] = 1
                             }
