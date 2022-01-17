@@ -82,7 +82,7 @@ router.post('/verifyOldPassword', async function (req, resp) {
 async function blockLoginAttempt(username, action) {
     return new Promise(async function (resolve, reject) {
         let where = {
-            'username': username,
+            'username_lowercase': username,
         }
         conn.then(async (db) => {
             db.collection('users').find(where).toArray(async (err, data) => {
@@ -837,6 +837,7 @@ router.post('/authenticate', async function (req, resp, next) {
                                 resp.send(respObj);
                             }
                         } else {
+                            console.log('USER NOT FOUND')
                             if (await blockLoginAttempt(username, 'increment')) {
 
                                 let email = sendTempBlockEmail(req)
