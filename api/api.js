@@ -94,7 +94,7 @@ async function blockLoginAttempt(username, action) {
                             if (typeof data[0]['login_attempt_block_time'] != 'undefined' && data[0]['login_attempt_block_time'] != '') {
                                 let login_attempt_block_time = new Date(String(data[0]['login_attempt_block_time']))
                                 //15 minutes block time
-                                let login_block_expiry = new Date(login_attempt_block_time.getTime() + 15 * 60000);
+                                let login_block_expiry = new Date(login_attempt_block_time.getTime() + 10 * 60000);
                                 let current_time = new Date()
                                 // console.log(login_block_expiry, '  =================  ', current_time)
                                 if (login_block_expiry >= current_time && (!isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) && data[0]['unsuccessfull_login_attempt_count'] >= 3) ) {
@@ -723,7 +723,7 @@ router.post('/authenticate', async function (req, resp, next) {
                         if (userArr.length > 0) {
                             if (await blockLoginAttempt(username, 'temp_block_check')) {
 
-                                let email = sendTempBlockEmail(req)
+                                // let email = sendTempBlockEmail(req)
 
                                 resp.status(400).send({
                                     type: 'unsuccessfull_attempts',
