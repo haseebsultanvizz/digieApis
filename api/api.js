@@ -19099,15 +19099,13 @@ async function getUserExchangesWithAPISet(user_id){
                 if (exchange == 'binance') {
                     var where = {
                         '_id': new ObjectID(user_id),
-                        'api_key': { '$ne': null },
-                        'api_secret': { '$ne': null },
+                        'is_api_key_valid': 'yes'
                     }
                     settingsArr[exchange] = db.collection(collectionName).find(where).project().toArray();
                 } else {
                     var where = {
                         'user_id': user_id,
-                        'api_key': {'$ne': null },
-                        'api_secret': {'$ne': null },
+                        'is_api_key_valid': 'yes'
                     }
                     settingsArr[exchange] = db.collection(collectionName).find(where).project().toArray();
                 }
