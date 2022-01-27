@@ -6479,6 +6479,15 @@ function PurchasedPriceOrders(symbol, admin_id, exchange){
             purchased_price: {
                 $exists: true,
             },
+            cost_avg: {
+                $nin :[
+                    "yes","taking_child", "completed"
+                ]
+            },
+            application_mode: 'live',
+            buy_date:{
+                '$exists':true
+            }
           };
           var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
           var mysort = {purchased_price: -1};
@@ -6532,6 +6541,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             if(tab == 'openTab_move_all'){
               costAverageArr = [];
               console.log(getBuyOrder,'getBuyOrder');
+              // console.log(getBuyOrder[0]['symbol'],'getBuyOrder');
               var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
 
 
@@ -6558,12 +6568,13 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                   mapArray1 = arraymove(mapArray1, parentIndex, 0);
                 }
 
-                console.log("mapArray1 :::::", mapArray1);
+                console.log("mapArray1 :::::", mapArray1.length);
                 await new Promise(r => setTimeout(r, 500));
                 // return false
                 for (let key in mapArray1) {
                   let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
-                  console.log("fractionOrderArr :::::", fractionOrderArr)
+                //   console.log("fractionOrderArr :::::", fractionOrderArr)
+                  // console.log("fractionOrderArr :::::", mapArray1[key]['status'], )
                   if(typeof fractionOrderArr != 'undefined'){
                     var dataToAppend = {};
                     dataToAppend["order_sold"]       = "no"
@@ -6577,13 +6588,13 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     costAverageArr.push(dataToAppend);
                   } else {
                     var dataToAppend = {};
-                    dataToAppend["order_sold"]       = "no"
-                    dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
-                    dataToAppend["filledQtyBuy"]     = typeof mapArray1[key]['quantity'] != 'undefined' && mapArray1[key]['quantity'] != '' ? mapArray1[key]['quantity'].toFixed(8) : ''
-                    dataToAppend["commissionBuy"]    = ''
-                    dataToAppend["filledPriceBuy"]   = typeof mapArray1[key]['purchased_price'] != 'undefined' && mapArray1[key]['purchased_price'] != '' ? mapArray1[key]['purchased_price'].toFixed(8) : ''
-                    dataToAppend["orderFilledIdBuy"] = typeof mapArray1[key]['tradeId'] != 'undefined' && mapArray1[key]['tradeId'] != '' ? mapArray1[key]['tradeId'] : ''
-                    dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
+                    dataToAppend["order_sold"]       = "no";
+                    dataToAppend["buy_order_id"]     = mapArray1[key]["_id"];
+                    dataToAppend["filledQtyBuy"]     = typeof mapArray1[key]['quantity'] != 'undefined' && mapArray1[key]['quantity'] != '' ? mapArray1[key]['quantity'].toFixed(8) : '';
+                    dataToAppend["commissionBuy"]    = '';
+                    dataToAppend["filledPriceBuy"]   = typeof mapArray1[key]['purchased_price'] != 'undefined' && mapArray1[key]['purchased_price'] != '' ? mapArray1[key]['purchased_price'].toFixed(8) : '';
+                    dataToAppend["orderFilledIdBuy"] = typeof mapArray1[key]['tradeId'] != 'undefined' && mapArray1[key]['tradeId'] != '' ? mapArray1[key]['tradeId'] : '';
+                    dataToAppend["buyTimeDate"]      = new Date(mapArray1[key]['created_date']);
                     costAverageArr.push(dataToAppend);
                   }
                 }// END of (let key in mapArray1)
@@ -6811,7 +6822,10 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                 'status': {
                     $in:['FILLED','LTH']
                 },
-                "cost_avg": { $nin :["yes","taking_child", "completed"] }
+                "cost_avg": { $nin :["yes","taking_child", "completed"] },
+                "purchased_price": {
+                  $exists: true,
+                },
              }
              if(typeof symbol !== 'undefined' && symbol !== ''){
                 where1['symbol'] = symbol
@@ -6834,7 +6848,11 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
              }
             let sort1 = { 'buy_date': -1 }
             let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-            let buyPromise = db.collection(buyCollection).find(where1).sort(sort1).project(project1).limit(10).toArray()
+            let buyPromise = db.collection(buyCollection).find(where1).sort(sort1).project(project1).toArray()
+
+
+
+
 
 
 
