@@ -15024,7 +15024,6 @@ router.post('/remove_error', auth_token.required, async (req, resp) => {
             //handle new types of error
             update_buy_status = 'FILLED'
             error_type = temp_buy_status_arr.join(' ')
-
             // console.log('error_type', update_buy_status, error_type)
           }else if (buy_status == 'FILLED_ERROR' || buy_status == 'submitted_ERROR' || buy_status == 'LTH_ERROR' || buy_status == 'new_ERROR') {
               let statusArr = buy_status.split('_');
@@ -15035,6 +15034,17 @@ router.post('/remove_error', auth_token.required, async (req, resp) => {
                   custom_unset = 1
               }
 
+          }else if (buy_status =='APIKEY_ERROR') {
+            if(typeof buy_order['buy_fraction_filled_order_arr'] != 'undefined' && buy_order['buy_fraction_filled_order_arr'].length > 0 && buy_order['buy_fraction_filled_order_arr'][0]['orderFilledId'] != ''){
+                //handle new types of error
+                update_buy_status = 'FILLED'
+                error_type = temp_buy_status_arr.join(' ')
+            } else {
+              //remove buy error
+              update_buy_status = 'canceled'
+              error_type = temp_buy_status_arr.join(' ')
+            }
+            // console.log('error_type', update_buy_status, error_type)
           }else{
               update_buy_status = 'skip'
               //check if error exist in sell order status
