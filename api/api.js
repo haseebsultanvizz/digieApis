@@ -15576,7 +15576,7 @@ router.post('/is_bnb_balance_enough', auth_token.required, async (req, resp) => 
         });
         return false;
     }
-    var admin_id = req.body.req.payload.id;
+    var admin_id = req.payload.id;
     var symbol = req.body.symbol;
     var exchange = req.body.exchange;
     //function for getting user balance
