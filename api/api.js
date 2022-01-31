@@ -14219,8 +14219,7 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
 
     if(interface == 'mobile'){
         resp.status(200).send({
-            success:true,
-            message:"ALL Good Bro Just Contact Me"
+            response: arr
         })
     } else {
         resp.status(200).send({
