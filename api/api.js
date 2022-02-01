@@ -6634,7 +6634,9 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     }// END of for(let key in mapArray1)
                     console.log('before Parent')
                     await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
-                    await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], req.payload.id, exchange);
+                    if(req.body.id == '5c0912b7fc9aadaac61dd072'){
+                        await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], req.payload.id, exchange);
+                    }
                     await new Promise(r => setTimeout(r, 4000));
                     resp.status(200).send({
                         status: true, message: "Successfully Created"
