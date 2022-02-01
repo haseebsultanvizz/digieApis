@@ -6501,6 +6501,33 @@ function PurchasedPriceOrders(symbol, admin_id, exchange){
     });
 }
 
+function UpdateAllSymbolOrder(symbol, admin_id, exchange){
+    return new Promise((resolve, reject) => {
+        conn.then(db => {
+            let searchCriteria = {
+                parent_status: 'parent',
+                symbol: symbol,
+                pick_parent: 'yes',
+                status: 'new',
+                application_mode: 'live',
+                admin_id: admin_id,
+                trigger_type: "barrier_percentile_trigger",
+            };
+            let updatedCriteria = {
+                parent_pause: 'child_n_costavg',
+                pick_parent: 'no'
+            };
+            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            db.collection(collectionName).updateOne(searchCriteria, {$set: updatedCriteria}, (err, result) => {
+                if (err) reject(err);
+                resolve(result);
+            });
+          });
+    }).catch(err => {
+        console.log(err);
+    });
+}
+
 function arraymove(arr, fromIndex, toIndex) {
     var element = arr[fromIndex];
     arr.splice(fromIndex, 1);
@@ -6607,6 +6634,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     }// END of for(let key in mapArray1)
                     console.log('before Parent')
                     await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
+                    await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], req.payload.id, exchange);
                     await new Promise(r => setTimeout(r, 4000));
                     resp.status(200).send({
                         status: true, message: "Successfully Created"
