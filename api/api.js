@@ -6508,7 +6508,11 @@ function UpdateAllSymbolOrder(symbol, admin_id, exchange){
                 parent_status: 'parent',
                 symbol: symbol,
                 pick_parent: 'yes',
-                status: 'new',
+                status:  {
+                    $in: [
+                        "new", "takingOrder"
+                    ]
+                },
                 application_mode: 'live',
                 admin_id: admin_id,
                 trigger_type: "barrier_percentile_trigger",
