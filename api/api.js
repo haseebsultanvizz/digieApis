@@ -6522,7 +6522,7 @@ function UpdateAllSymbolOrder(symbol, admin_id, exchange){
                 pick_parent: 'no'
             };
             var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-            db.collection(collectionName).updateOne(searchCriteria, {$set: updatedCriteria}, (err, result) => {
+            db.collection(collectionName).updateMany(searchCriteria, {$set: updatedCriteria}, (err, result) => {
                 if (err) reject(err);
                 resolve(result);
             });
