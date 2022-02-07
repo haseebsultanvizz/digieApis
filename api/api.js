@@ -32299,25 +32299,6 @@ function order_move_sold_to_buy(exchange, order_id) {
                     data['quantity_all'] = ''
 
 
-                    // Suggestion Comming From Shahzad
-
-                    // let updBuyOrder   = {};
-                    // let updSellOrder  = {};
-                    // var percentComm = parseFloat(commission / qty);
-                    // var value_obj = {
-                    //    'filledQty'      : qty,
-                    //    'filledPrice'    : price,
-                    //    'buyOrderId'     : orderId,
-                    //    'orderFilledId'  : tradeId,
-                    //    'commission'     : commission,
-                    //    'commissionAsset': commissionAsset,
-                    //    'commissionPercentRatio': parseFloat(percentComm)
-                    // };
-                    // update_sub_document(buy_order_id, collection_name, value_obj, 'buy_fraction_filled_order_arr');
-
-                    // Suggestion Comming From Shahzad End Here
-
-
 
                     data['cost_avg_array'] = []
                     var cost_avg_array_obj ={}
@@ -32361,6 +32342,7 @@ function order_move_sold_to_buy(exchange, order_id) {
 
 
 
+
                     delete data['_id'];
                     delete data['buy_fraction_filled_order_arr'];
                     delete data['sell_fraction_filled_order_arr'];
@@ -32374,6 +32356,15 @@ function order_move_sold_to_buy(exchange, order_id) {
 
                     // console.log('data', data)
 
+                    // On Shahzad Demand
+                    data['is_sell_order'] = 'yes';
+                    delete data['sell_market_price'];
+                    delete data['market_sold_price'];
+                    delete data['market_sold_price_usd'];
+                    delete data['order_sell_process'];
+                    delete data['market_sold_price'];
+                    delete data['new_child_buy_price'];
+                    // Shahzad Demand End Here
 
 
 
