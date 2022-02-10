@@ -22810,6 +22810,9 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy', trading_ip='') {
                 return false;
             }
 
+
+
+            console.log(url_binance, reqData)
             var options = {
                 method: 'POST',
                 // url: 'http://52.22.53.12:3600/buyBNBPost',
