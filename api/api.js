@@ -22787,7 +22787,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy', trading_ip='') {
         }
 
         if(exchange == 'binance'){
-            // console.log(exchange)
+            console.log('coinBuyNow', buyArr, exchange, buyType, trading_ip);
 
 
             let url_binance = ''
