@@ -22827,7 +22827,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy', trading_ip='') {
                 } else {
                     if (body.success == 'true' || body.success == true) {
 
-                        console.log(body)
+                        console.log('coinBuyNow======================================response',body)
 
                         //Save Buy History
                         // saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
