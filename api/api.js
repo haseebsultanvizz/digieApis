@@ -593,12 +593,12 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             }
             let exchange = typeof req.body.exchange !="undefined"?req.body.exchange : ""
             // by default we will show last 3 months.
-            let type = typeof req.body.type!="undefined"?Number(req.body.type):3 
+            let type = typeof req.body.type!="undefined"?Number(req.body.type):3
             // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
             const currentDate = new Date();
             currentDate.setMonth(currentDate.getMonth() - type + 1);
-        
-        
+
+
             let errors = []
             let hasError = 0
             if(exchange == ""){
@@ -615,10 +615,10 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                             "admin_id":user_id,
                             "sell_date":{$gte:currentDate}
                         }
-                
-                
+
+
                     },
-                    // first we will project 
+                    // first we will project
                     {
                         $project:
                         {
@@ -629,7 +629,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                             accumulations:1,
                             // making last three Characters to calculate STD or BTC accordingly.
                             cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ]}
-                            
+
                         }
                     },
                     // Group Clause
@@ -641,9 +641,9 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         USDTinvest : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.invest", 0 ] } },
                         USDTreturn : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.return", 0 ] } },
                         //USDTprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.profit", 0 ] } },
-                        
+
                     }}
-        
+
                 ];
                 console.log('pipelinepipelinepipeline',JSON.stringify(pipeline))
                 let accumulationData = await fetchUserAccumulations(collection,pipeline);
@@ -676,7 +676,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                 });
                 return false;
             }
-        
+
     } catch (error) {
             resp.status(200).send({
                 message: "Unable To Handle The Request. Please Try in a While",
@@ -686,7 +686,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             });
             return false;
         }
-    
+
     });
     // End of Accumulation Request Handler.
 
@@ -6571,7 +6571,6 @@ function UpdateChildOrders(order_id, buy_parent_id, exchange) {
   });
 }
 
-getAllCostAvgParentSymbols
 function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
   return new Promise((resolve, reject) => {
     conn.then(db => {
