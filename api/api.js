@@ -571,7 +571,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
  router.post('/listAccumulations', auth_token.required , async (req, resp) => {
     try {
             var user_id = req.payload.id
-            
+
             var user_exist = await getUserByID(user_id);
             // console.log(user_exist)
             if(!user_exist){
@@ -615,7 +615,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     {
                         $project:
                         {
-                            
+
                             sell_date:1,
                             admin_id:1,
                             symbol:1,
@@ -641,7 +641,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     {
                         $project:
                         {
-                            
+
                             BTCinvest:1,
                             BTCreturn:1,
                             USDTinvest:1,
@@ -660,7 +660,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         results:[],
                         status:200,
                         success:true,
-                        
+
                     });
                     return false;
                 }
@@ -20389,7 +20389,7 @@ async function createAutoTradeParents(settings){
                         set1['$set']['pick_parent'] = 'no'
                         set1['$set']['shahzad_testing'] = 'yes'
                     }
-
+                    console.log(set1['$set'], 'ARRAY');
 
                     let upsert1 = {
                         'upsert': true
@@ -20513,6 +20513,9 @@ async function createAutoTradeParents(settings){
                     let upsert1 = {
                         'upsert': true
                     }
+
+
+                    console.log(set1['$set'], 'ARRAY');
 
                     db.collection(collectionName).updateOne(where1, set1, upsert1, async function(err, result) {
                         if(err) throw err;
