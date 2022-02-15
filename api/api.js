@@ -589,8 +589,10 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             let type = typeof req.body.type!="undefined"?Number(req.body.type):3
             // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
             let today = new Date();
-            var dateFrom = new Date(today.getFullYear(), today.getMonth()-type+1, today.getDate(),0, 0, 0,0);
-
+            today.setMonth(today.getMonth() - type+1);
+            today.setMinutes(0,0,0,0)
+            var dateFrom = new Date(today);
+            console.log('dateFromdateFromdateFrom',dateFrom)
 
             let errors = []
             let hasError = 0
@@ -601,16 +603,6 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             if(hasError == 0){
                 var collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
                 let pipeline = [
-                    // Match Clause
-                    {
-                        '$match':{
-                            "accumulations":{$exists:true},
-                            "admin_id":user_id,
-                            "sell_date":{$gte:dateFrom}
-                        }
-
-
-                    },
                     // first we will project
                     {
                         $project:
@@ -625,6 +617,17 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
 
                         }
                     },
+                    // Match Clause
+                    {
+                        '$match':{
+                            "accumulations":{$exists:true},
+                            "admin_id":user_id,
+                            "sell_date":{$gte:dateFrom}
+                        }
+
+
+                    },
+                    
                     // Group Clause
                     {$group:{
                         "_id":"$admin_id",
