@@ -588,10 +588,10 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             // by default we will show last 3 months.
             let type = typeof req.body.type!="undefined"?Number(req.body.type):3
             // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
-            let today = new Date();
-            today.setMonth(today.getMonth() - type+1);
-            today.setMinutes(0,0,0,0)
-            var dateFrom = new Date(today);
+            let dateFrom = new Date();
+            dateFrom.setMonth(dateFrom.getMonth() - type+1);
+            dateFrom.setMinutes(0,0,0,0)
+            //var dateFrom = new Date(today);
             console.log('dateFromdateFromdateFrom',dateFrom)
 
             let errors = []
@@ -622,7 +622,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         '$match':{
                             "accumulations":{$exists:true},
                             "admin_id":user_id,
-                            "sell_date":{$gte:dateFrom}
+                            "sell_date":{$gte:new Date(dateFrom)}
                         }
 
 
