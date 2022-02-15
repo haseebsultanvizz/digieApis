@@ -596,7 +596,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             let type = typeof req.body.type!="undefined"?Number(req.body.type):3
             // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
             let today = new Date();
-            var dateFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate(),today.getHours()-type+1, 0, 0,0);
+            var dateFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate()-type+1,0, 0, 0,0);
 
 
             let errors = []
@@ -666,7 +666,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         errors:[],
                         results:[],
                         status:200,
-                        user:user_id,
+                        
                     });
                     return false;
                 }
@@ -691,7 +691,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             }
 
     } catch (error) {
-            resp.status(200).send({
+            resp.status(500).send({
                 message: "Unable To Handle The Request. Please Try in a While",
                 status:500,
                 results:[],
