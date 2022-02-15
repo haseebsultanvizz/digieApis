@@ -588,9 +588,11 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             // by default we will show last 3 months.
             let type = typeof req.body.type!="undefined"?Number(req.body.type):3
             // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
-            let today = new Date();
-            var dateFrom = new Date(today.getFullYear(), today.getMonth()-type+1, today.getDate(),0, 0, 0,0);
-
+            let dateFrom = new Date();
+            dateFrom.setMonth(dateFrom.getMonth() - type+1);
+            dateFrom.setMinutes(0,0,0,0)
+            //var dateFrom = new Date(today);
+            console.log('dateFromdateFromdateFrom',dateFrom)
 
             let errors = []
             let hasError = 0
@@ -601,16 +603,6 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             if(hasError == 0){
                 var collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
                 let pipeline = [
-                    // Match Clause
-                    {
-                        '$match':{
-                            "accumulations":{$exists:true},
-                            "admin_id":user_id,
-                            "sell_date":{$gte:new Date(dateFrom)}
-                        }
-
-
-                    },
                     // first we will project
                     {
                         $project:
@@ -625,6 +617,17 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
 
                         }
                     },
+                    // Match Clause
+                    {
+                        '$match':{
+                            "accumulations":{$exists:true},
+                            "admin_id":user_id,
+                            "sell_date":{$gte:new Date(dateFrom)}
+                        }
+
+
+                    },
+                    
                     // Group Clause
                     {$group:{
                         "_id":"$admin_id",
@@ -641,7 +644,11 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     {
                         $project:
                         {
+<<<<<<< HEAD
 
+=======
+                            _id:0,
+>>>>>>> c2875dc63906428a20c0f765d18689a9a893d80c
                             BTCinvest:1,
                             BTCreturn:1,
                             USDTinvest:1,
@@ -651,8 +658,9 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     },
 
                 ];
-                console.log('pipelinepipelinepipeline',JSON.stringify(pipeline))
+                
                 let accumulationData = await fetchUserAccumulations(collection,pipeline);
+                //console.log('pipelinepipelinepipeline',JSON.stringify(pipeline),accumulationData)
                 if(!accumulationData.length){
                     resp.status(203).send({
                         message: "Please Try Later , Accumulation Data is Not Available at the Moment.",
@@ -668,7 +676,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     resp.status(200).send({
                         message: "Accumulation Data Returned Successfully.",
                         errors:[],
-                        results:accumulationData,
+                        results:accumulationData[0],
                         status:200,
                         success:true,
                     });
@@ -1261,7 +1269,7 @@ function fetchUserAccumulations(collectionName, filter) {
             var data = await db.collection(collectionName).aggregate(filter).toArray();
             // console.log('Data', data)
             if(data.length > 0){
-                resolve(data[0]);
+                resolve(data);
             } else {
               resolve([])
             }
