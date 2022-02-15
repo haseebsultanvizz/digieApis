@@ -595,8 +595,8 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             // by default we will show last 3 months.
             let type = typeof req.body.type!="undefined"?Number(req.body.type):3
             // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
-            const currentDate = new Date();
-            currentDate.setMonth(currentDate.getMonth() - type + 1);
+            let today = new Date();
+            var dateFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate(),today.getHours()-type+1, 0, 0,0);
 
 
             let errors = []
@@ -613,7 +613,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         '$match':{
                             "accumulations":{$exists:true},
                             "admin_id":user_id,
-                            "sell_date":{$gte:currentDate}
+                            "sell_date":{$gte:dateFrom}
                         }
 
 
@@ -622,7 +622,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     {
                         $project:
                         {
-                            item: 1,
+                            
                             sell_date:1,
                             admin_id:1,
                             symbol:1,
@@ -642,7 +642,20 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         USDTreturn : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.return", 0 ] } },
                         //USDTprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.profit", 0 ] } },
 
-                    }}
+                    }},
+
+                    // final Project
+                    {
+                        $project:
+                        {
+                            
+                            BTCinvest:1,
+                            BTCreturn:1,
+                            USDTinvest:1,
+                            USDTreturn:1,
+
+                        }
+                    },
 
                 ];
                 console.log('pipelinepipelinepipeline',JSON.stringify(pipeline))
