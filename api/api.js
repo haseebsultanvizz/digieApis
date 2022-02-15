@@ -654,8 +654,9 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     },
 
                 ];
-                console.log('pipelinepipelinepipeline',JSON.stringify(pipeline))
+                
                 let accumulationData = await fetchUserAccumulations(collection,pipeline);
+                console.log('pipelinepipelinepipeline',JSON.stringify(pipeline),accumulationData)
                 if(!accumulationData.length){
                     resp.status(203).send({
                         message: "Please Try Later , Accumulation Data is Not Available at the Moment.",
@@ -1262,7 +1263,7 @@ function fetchUserAccumulations(collectionName, filter) {
         conn.then(async (db) => {
 
             var data = await db.collection(collectionName).aggregate(filter).toArray();
-            // console.log('Data', data)
+            console.log('Data', data)
             if(data.length > 0){
                 resolve(data[0]);
             } else {
