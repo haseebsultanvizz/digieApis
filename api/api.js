@@ -19551,6 +19551,8 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
                 if(application_mode == 'live'){
                     // Get All Cost Ang Parents Symbols (Merge Cost Avg)
                     autoTradeData['cost_avg_symbols'] = await getAllCostAvgParentSymbols(user_id, exchange, application_mode);
+                    // console.log(autoTradeData['cost_avg_symbols'])
+                    // return false
                     await createAutoTradeParents(autoTradeData)
                 }else{
                     await createAutoTradeParents_test(autoTradeData)
@@ -19617,6 +19619,8 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
                     autoTradeData['make_higher_sort_priority'] = 'yes'
                     // Get All Cost Ang Parents Symbols (Merge Cost Avg)
                     autoTradeData['cost_avg_symbols'] = await getAllCostAvgParentSymbols(user_id, exchange, application_mode);
+                    // console.log(autoTradeData['cost_avg_symbols'])
+                    // return false
                     await createAutoTradeParents(autoTradeData)
                 } else {
                     await createAutoTradeParents_test(autoTradeData)
@@ -20229,7 +20233,7 @@ async function createAutoTradeParents(settings){
                         set1['$set']['pick_parent'] = 'yes';
                     }
                     let levelsToPick = ['level_5','level_6','level_7','level_8','level_11','level_12','level_18'];
-                    if(cost_avg_symbols.length > 0 && cost_avg_symbols.includes(coin) && levelsToPick.includes(level)){
+                    if((cost_avg_symbols.length > 0 && cost_avg_symbols.includes(coin) && levelsToPick.includes(level)) ||digie_admin_ids.includes(user_id) ){
                         set1['$set']['parent_pause'] = 'child_n_costavg';
                         set1['$set']['pick_parent'] = 'no'
                         set1['$set']['shahzad_testing'] = 'yes'
@@ -20347,6 +20351,12 @@ async function createAutoTradeParents(settings){
 
                     if (typeof user_id != 'undefined' && digie_admin_ids.includes(user_id)) {
                         set1['$set']['pick_parent'] = 'yes';
+                    }
+                    let levelsToPick = ['level_5','level_6','level_7','level_8','level_11','level_12','level_18'];
+                    if((cost_avg_symbols.length > 0 && cost_avg_symbols.includes(coin) && levelsToPick.includes(level)) ||digie_admin_ids.includes(user_id) ){
+                        set1['$set']['parent_pause'] = 'child_n_costavg';
+                        set1['$set']['pick_parent'] = 'no'
+                        set1['$set']['shahzad_testing'] = 'yes'
                     }
 
                     let upsert1 = {
