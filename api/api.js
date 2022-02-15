@@ -651,7 +651,8 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         message: "Please Try Later , Accumulation Data is Not Available at the Moment.",
                         errors:[],
                         results:[],
-                        status:203
+                        status:200,
+                        user:user_id,
                     });
                     return false;
                 }
