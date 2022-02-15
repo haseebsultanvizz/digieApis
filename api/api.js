@@ -644,7 +644,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     {
                         $project:
                         {
-                            
+                            _id:0,
                             BTCinvest:1,
                             BTCreturn:1,
                             USDTinvest:1,
