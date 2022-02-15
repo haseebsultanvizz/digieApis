@@ -645,6 +645,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     }}
         
                 ];
+                console.log('pipelinepipelinepipeline',JSON.stringify(pipeline))
                 let accumulationData = await fetchUserAccumulations(collection,pipeline);
                 if(!accumulationData.length){
                     resp.status(203).send({
