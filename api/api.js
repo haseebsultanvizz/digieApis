@@ -627,7 +627,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
 
 
                     },
-                    
+
                     // Group Clause
                     {$group:{
                         "_id":"$admin_id",
@@ -644,11 +644,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     {
                         $project:
                         {
-<<<<<<< HEAD
-
-=======
                             _id:0,
->>>>>>> c2875dc63906428a20c0f765d18689a9a893d80c
                             BTCinvest:1,
                             BTCreturn:1,
                             USDTinvest:1,
@@ -658,7 +654,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     },
 
                 ];
-                
+
                 let accumulationData = await fetchUserAccumulations(collection,pipeline);
                 //console.log('pipelinepipelinepipeline',JSON.stringify(pipeline),accumulationData)
                 if(!accumulationData.length){
