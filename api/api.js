@@ -606,7 +606,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         '$match':{
                             "accumulations":{$exists:true},
                             "admin_id":user_id,
-                            "sell_date":{$gte:new Date(dateFrom)}
+                            "sell_date":{$gte:dateFrom}
                         }
 
 
