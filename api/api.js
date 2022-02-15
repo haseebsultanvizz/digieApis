@@ -6429,7 +6429,7 @@ function UpdateChildOrders(order_id, buy_parent_id, exchange) {
   });
 }
 
-
+getAllCostAvgParentSymbols
 function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
   return new Promise((resolve, reject) => {
     conn.then(db => {
@@ -19441,6 +19441,39 @@ router.post('/get_user_manual_triggers', auth_token.required, async (req,res) =>
     });
 });
 
+
+
+
+async function getAllCostAvgParentSymbols(user_id, exchange, application_mode){
+
+    console.log('getAllCostAvgParentSymbols');
+    return new Promise((resolve, reject) => {
+        conn.then(async db => {
+            let searchCriteria = {};
+            searchCriteria['admin_id'] = user_id;
+            // searchCriteria['admin_id'] = '6166adcbc5dcc678681bb7e4';
+            searchCriteria['application_mode'] = application_mode;
+            searchCriteria['trigger_type'] = "barrier_percentile_trigger",
+            searchCriteria['cavg_parent'] = "yes";
+            searchCriteria['status'] = {$in : ['new', 'takingOrder', 'FILLED']};
+
+            var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+            console.log(collectionName);
+            let data = await db.collection(collectionName).find(searchCriteria).project({ symbol: 1, admin_id: 1, _id: 0 }).toArray();
+            var new_data = data.map(function(item) {
+                return item['symbol'];
+            });
+            console.log(new_data)
+            setTimeout(() => {
+                resolve(new_data);
+            }, 100)
+          });
+    }).catch(err => {
+        console.log(err);
+        resolve([])
+    });
+}
+
 //saveAutoTradeSettings
 router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
 
@@ -19516,6 +19549,8 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
                 await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode, trading_ip)
 
                 if(application_mode == 'live'){
+                    // Get All Cost Ang Parents Symbols (Merge Cost Avg)
+                    autoTradeData['cost_avg_symbols'] = await getAllCostAvgParentSymbols(user_id, exchange, application_mode);
                     await createAutoTradeParents(autoTradeData)
                 }else{
                     await createAutoTradeParents_test(autoTradeData)
@@ -19579,9 +19614,9 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
                 await checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode, trading_ip)
 
                 if (application_mode == 'live') {
-
                     autoTradeData['make_higher_sort_priority'] = 'yes'
-
+                    // Get All Cost Ang Parents Symbols (Merge Cost Avg)
+                    autoTradeData['cost_avg_symbols'] = await getAllCostAvgParentSymbols(user_id, exchange, application_mode);
                     await createAutoTradeParents(autoTradeData)
                 } else {
                     await createAutoTradeParents_test(autoTradeData)
@@ -19983,6 +20018,7 @@ async function createAutoTradeParents(settings){
         let coins = settings.settings.step_2.coins
         let bots = settings.settings.step_3.bots
         let step4 = settings.settings.step_4
+        let cost_avg_symbols = settings.cost_avg_symbols;
 
         // let btcPerTrade = step4.dailyTradeableBTC / step4.noOfDailyBTCTrades
         // let usdtPerTrade = step4.dailyTradeableUSDT / step4.noOfDailyUSDTTrades
@@ -20192,6 +20228,13 @@ async function createAutoTradeParents(settings){
                     if (typeof user_id != 'undefined' && digie_admin_ids.includes(user_id)) {
                         set1['$set']['pick_parent'] = 'yes';
                     }
+                    let levelsToPick = ['level_5','level_6','level_7','level_8','level_11','level_12','level_18'];
+                    if(cost_avg_symbols.length > 0 && cost_avg_symbols.includes(coin) && levelsToPick.includes(level)){
+                        set1['$set']['parent_pause'] = 'child_n_costavg';
+                        set1['$set']['pick_parent'] = 'no'
+                        set1['$set']['shahzad_testing'] = 'yes'
+                    }
+
 
                     let upsert1 = {
                         'upsert': true
