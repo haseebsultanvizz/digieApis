@@ -571,15 +571,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
  router.post('/listAccumulations', auth_token.required , async (req, resp) => {
     try {
             var user_id = req.payload.id
-            if(!user_id){
-                resp.status(401).send({
-                    message: 'User Not Found',
-                    status:400,
-                    results:[],
-                    errors:[],
-                });
-                return false;
-            }
+            
             var user_exist = await getUserByID(user_id);
             // console.log(user_exist)
             if(!user_exist){
@@ -588,6 +580,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     status:400,
                     results:[],
                     errors:[],
+                    success:false,
                 });
                 return false;
             }
@@ -613,7 +606,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         '$match':{
                             "accumulations":{$exists:true},
                             "admin_id":user_id,
-                            "sell_date":{$gte:dateFrom}
+                            "sell_date":{$gte:new Date(dateFrom)}
                         }
 
 
@@ -666,16 +659,18 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         errors:[],
                         results:[],
                         status:200,
+                        success:true,
                         
                     });
                     return false;
                 }
                 else{
                     resp.status(200).send({
-                        message: "Please Try Later , Accumulation Data is Not Available at the Moment.",
+                        message: "Accumulation Data Returned Successfully.",
                         errors:[],
                         results:accumulationData,
-                        status:200
+                        status:200,
+                        success:true,
                     });
                     return false;
                 }
@@ -684,6 +679,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                 resp.status(201).send({
                     message: "Required Params are Missing",
                     errors:errors,
+                    success:false,
                     results:[],
                     status:201
                 });
@@ -694,6 +690,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             resp.status(500).send({
                 message: "Unable To Handle The Request. Please Try in a While",
                 status:500,
+                success:false,
                 results:[],
                 errors:[],
             });
