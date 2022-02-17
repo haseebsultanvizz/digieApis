@@ -6656,6 +6656,85 @@ function PurchasedPriceOrders(symbol, admin_id, exchange){
     });
 }
 
+function PurchasedPriceOrdersAdmin(symbol, admin_id, exchange){
+    return new Promise((resolve, reject) => {
+        conn.then(async db => {
+            let where1 = {
+            admin_id: admin_id,
+            status: {
+                $in: [
+                    "LTH", "FILLED",
+                ],
+            },
+            parent_status:{
+                $ne: "parent",
+            },
+            symbol: symbol,
+            purchased_price: {
+                $exists: true,
+            },
+            application_mode: 'live',
+            buy_date:{
+                '$exists':true
+            }
+            };
+            let where2 = {
+            "cost_avg": { $in :["yes","taking_child", "completed"] },
+            'admin_id': admin_id,
+            'application_mode': 'live',
+            }
+
+
+            if(typeof symbol !== 'undefined' && symbol !== ''){
+            where1['symbol'] = symbol;
+            where1['trigger_type'] = 'barrier_percentile_trigger';
+            where2['symbol'] = symbol;
+            where2['trigger_type'] = 'barrier_percentile_trigger';
+            }
+
+            let query = {};
+            query['$or'] = [
+                where1,
+                where2
+            ]
+
+
+            let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
+            let buyPromise = db.collection(buyCollection).find(query).toArray();
+            let myPromise = await Promise.all([buyPromise]);
+            let tempOrders = myPromise[0];
+
+            let AllChildOrders = [];
+            let query2 = where2
+            let cost_avg_array_orders = [...tempOrders].filter(order => {
+                return typeof order.cost_avg_array != 'undefined' && order.cost_avg_array.length >  1;
+            });
+
+            if(cost_avg_array_orders.length > 0){
+                for(let i=0; i<cost_avg_array_orders.length; i++){
+                    for(let j=0; j<cost_avg_array_orders[i]['cost_avg_array'].length; j++){
+                    if(j== 0 || cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no'){
+                        continue;
+                    }
+                    let collection_name = cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no' ? 'buy_orders' : 'sold_buy_orders'
+                    collection_name = exchange == 'binance' ? collection_name : collection_name+'_'+exchange;
+                    query2['_id'] = new ObjectID((cost_avg_array_orders[i]['cost_avg_array'][j]['buy_order_id']).toString());
+                    query2['direct_parent_child_id'] = new ObjectID((cost_avg_array_orders[i]['_id']).toString());
+                    let childPromise = await db.collection(collection_name).find(query2).project(project2).toArray();
+                    AllChildOrders.push(childPromise[0])
+                    }
+                }
+            }
+            // Wait for 3 Seconds
+            await new Promise(r => setTimeout(r, 1500));
+            tempOrders = tempOrders.concat(AllChildOrders);
+            resolve(tempOrders);
+        });
+    }).catch(err => {
+        console.log(err);
+    });
+}
+
 function UpdateAllSymbolOrder(symbol, admin_id, exchange){
     return new Promise((resolve, reject) => {
         conn.then(db => {
@@ -6728,8 +6807,12 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
               costAverageArr = [];
               console.log(getBuyOrder,'getBuyOrder');
               // console.log(getBuyOrder[0]['symbol'],'getBuyOrder');
-              var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
-
+              if(req.payload.id == '5c0912b7fc9aadaac61dd072'){
+                var mapArray1 = await PurchasedPriceOrdersAdmin(getBuyOrder[0]['symbol'], req.payload.id, exchange);
+              } else {
+                var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
+              }
+            //   var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
 
 
               let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
@@ -6741,7 +6824,13 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
               // console.log(mapArray1, 'mapArray1')
               if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
                 mapArray1.map( x => {
-                  x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
+                    var orderSellPrice = (typeof x.market_sold_price != 'undefined' && x.market_sold_price != '' && !isNaN(parseFloat(x.market_sold_price))) ? parseFloat(x.market_sold_price) : '';
+                    if(orderSellPrice != ''){
+                        x.profitLoss = getPercentageDiff(orderSellPrice, x['purchased_price']);
+                    } else {
+                        x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
+                    }
+                    console.log(x._id, x.profitLoss)
                 });
 
                 await new Promise(r => setTimeout(r, 100));
@@ -7003,7 +7092,142 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
     symbol = getBuyOrder[0]['symbol'];
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
 
-        conn.then(async (db) => {
+
+        if(req.payload.id == '5c0912b7fc9aadaac61dd072'){
+            conn.then(async (db) => {
+              let where1 = {
+                'admin_id': admin_id,
+                'application_mode': 'live',
+                'buy_date':{'$exists':true},
+                'status': {
+                    $in:['FILLED','LTH']
+                },
+                "parent_status":{
+                    $ne: "parent",
+                },
+                // "cost_avg": { $nin :["yes","taking_child", "completed"] },
+
+                "purchased_price": {
+                  $exists: true,
+                },
+              }
+
+              let where2 = {
+                "cost_avg": { $in :["yes","taking_child", "completed"] },
+                'admin_id': admin_id,
+                'application_mode': 'live',
+              }
+              if(typeof symbol !== 'undefined' && symbol !== ''){
+                where1['symbol'] = symbol
+                where1['trigger_type'] = 'barrier_percentile_trigger'
+                where2['symbol'] = symbol
+                where2['trigger_type'] = 'barrier_percentile_trigger'
+              }
+
+              let query = {}
+              query['$or'] = [
+                where1,
+                where2
+              ]
+
+
+              let project1 = {
+                'admin_id':1,
+                'application_mode':1,
+                'symbol':1,
+                'quantity':1,
+                'purchased_price':1,
+                'buy_date':1,
+                'status':1,
+                'is_sell_order':1,
+                'market_sold_price': 1,
+                'sell_profit_percent': 1,
+                'lth_profit': 1,
+                'cost_avg_array': 1
+              }
+              let sort1 = { 'buy_date': -1 };
+              let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
+              let buyPromise = db.collection(buyCollection).find(query).sort(sort1).project(project1).toArray();
+
+
+
+
+
+
+
+
+
+                let myPromise = await Promise.all([buyPromise])
+                let tempOrders = myPromise[0]
+
+
+                let AllChildOrders = [];
+                let query2 = where2
+                let project2 = {
+                  'admin_id':1,
+                  'application_mode':1,
+                  'symbol':1,
+                  'quantity':1,
+                  'purchased_price':1,
+                  'buy_date':1,
+                  'status':1,
+                  'is_sell_order':1,
+                  'market_sold_price': 1,
+                  'sell_profit_percent': 1,
+                  'lth_profit': 1,
+                }
+                let cost_avg_array_orders = [...tempOrders].filter(order => {
+                  return typeof order.cost_avg_array != 'undefined' && order.cost_avg_array.length >  1;
+                })
+
+
+                console.log(cost_avg_array_orders.length);
+                if(cost_avg_array_orders.length > 0){
+                    for(let i=0; i<cost_avg_array_orders.length; i++){
+                        for(let j=0; j<cost_avg_array_orders[i]['cost_avg_array'].length; j++){
+                            if(j == 0 || cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no'){
+                                continue;
+                            }
+                            let collection_name = cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no' ? 'buy_orders' : 'sold_buy_orders'
+                            collection_name = exchange == 'binance' ? collection_name : collection_name+'_'+exchange;
+                            query2['_id'] = new ObjectID((cost_avg_array_orders[i]['cost_avg_array'][j]['buy_order_id']).toString());
+                            query2['direct_parent_child_id'] = new ObjectID((cost_avg_array_orders[i]['_id']).toString());
+                            let childPromise = await db.collection(collection_name).find(query2).project(project2).toArray();
+                            AllChildOrders.push(childPromise[0])
+                        }
+                    }
+                }
+
+                // Wait for 3 Seconds
+                await new Promise(r => setTimeout(r, 3000));
+                console.log(AllChildOrders.length, tempOrders.length);
+                tempOrders = tempOrders.concat(AllChildOrders);
+
+
+                console.log(tempOrders.length);
+                let orders = []
+                tempOrders.map(order=>{
+                    order['t_date'] = order['buy_date']
+                    orders.push(order)
+                })
+                orders.sort(function (a, b) {
+                  return new Date(b.t_date) - new Date(a.t_date);
+                });
+
+
+                // console.log(orders)
+
+                // orders = orders.slice(0, 10);
+
+                res.send({
+                    success: true,
+                    data: orders,
+                    message: 'Data found successfully',
+                })
+
+            });
+        } else {
+          conn.then(async (db) => {
             let where1 = {
                 'admin_id': admin_id,
                 'application_mode': 'live',
@@ -7076,6 +7300,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
             })
 
         })
+        }
     } else {
         res.send({
             status: false,
@@ -17968,7 +18193,7 @@ function getPercentageDiff(currentMarketPrice, purchased_price) {
     if (purchased_price == 0) {
         return 0
     } else {
-        return parseFloat((((currentMarketPrice - purchased_price) / purchased_price) * 100).toFixed(1))
+        return parseFloat((((currentMarketPrice - purchased_price) / purchased_price) * 100).toFixed(2))
     }
 }
 
