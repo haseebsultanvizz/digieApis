@@ -587,12 +587,16 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             let exchange = typeof req.body.exchange !="undefined"?req.body.exchange : ""
             // by default we will show last 3 months.
             let type = typeof req.body.type!="undefined"?Number(req.body.type):3
+            console.log("\nmonths: ", type)
             // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
-            let dateFrom = new Date();
-            dateFrom.setMonth(dateFrom.getMonth() - type+1);
-            dateFrom.setMinutes(0,0,0,0)
-            //var dateFrom = new Date(today);
-            console.log('dateFromdateFromdateFrom',dateFrom)
+            let currentDate = new Date();
+            
+            let dateTo = new Date(currentDate.setMonth(currentDate.getMonth() - 1))
+            dateTo.setMinutes(0,0,0,0)
+            let dateFrom = new Date(currentDate.setMonth(currentDate.getMonth() - (type)))
+            dateTo.setMinutes(0,0,0,0)
+            console.log('\nSTRATING DATE: ', dateFrom)
+            console.log('\nENDING DATE: ', dateTo)
 
             let errors = []
             let hasError = 0
@@ -612,6 +616,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                             admin_id:1,
                             symbol:1,
                             accumulations:1,
+                            buy_time_btc_price:1,
                             // making last three Characters to calculate STD or BTC accordingly.
                             cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ]}
 
@@ -631,12 +636,13 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                     // Group Clause
                     {$group:{
                         "_id":"$admin_id",
+                        buy_time_btc_price: { $first: "$buy_time_btc_price"},
                         BTCinvest : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.invest", 0 ] } },
                         BTCreturn : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.return", 0 ] } },
-                        //BTCprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.profit", 0 ] } },
+                        BTCprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.profit", 0 ] } },
                         USDTinvest : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.invest", 0 ] } },
                         USDTreturn : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.return", 0 ] } },
-                        //USDTprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.profit", 0 ] } },
+                        USDTprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.profit", 0 ] } },
 
                     }},
 
@@ -647,6 +653,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                             _id:0,
                             BTCinvest:1,
                             BTCreturn:1,
+                            BTCprofitInUSD:{$multiply: ["$BTCprofit", "$buy_time_btc_price"]},
                             USDTinvest:1,
                             USDTreturn:1,
 
