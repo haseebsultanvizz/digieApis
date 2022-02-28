@@ -556,162 +556,156 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
         res.json(resp);
     }
 
-
-
-
-
-
-
-
-
-
 });
 
  // This is Accumulation Post Request Handler
  router.post('/listAccumulations', auth_token.required , async (req, resp) => {
     try {
-            var user_id = req.payload.id
+        console.log("Request payload: ", req.payload)    
+        var user_id = req.payload.id
 
-            var user_exist = await getUserByID(user_id);
-            // console.log(user_exist)
-            if(!user_exist){
-                resp.status(401).send({
-                    message: 'User Not exists',
-                    status:400,
-                    results:[],
-                    errors:[],
-                    success:false,
-                });
-                return false;
-            }
-            let exchange = typeof req.body.exchange !="undefined"?req.body.exchange : ""
-            // by default we will show last 3 months.
-            let type = typeof req.body.type!="undefined"?Number(req.body.type):3
-            console.log("\nmonths: ", type)
-            // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
-            let currentDate = new Date();
-            
-            let dateTo = new Date(currentDate.setMonth(currentDate.getMonth() - 1))
-            dateTo.setMinutes(0,0,0,0)
-            let dateFrom = new Date(currentDate.setMonth(currentDate.getMonth() - (type)))
-            dateTo.setMinutes(0,0,0,0)
-            console.log('\nSTRATING DATE: ', dateFrom)
-            console.log('\nENDING DATE: ', dateTo)
-
-            let errors = []
-            let hasError = 0
-            if(exchange == ""){
-                hasError = 1
-                errors.push('Exchange Is required');
-            }
-            if(hasError == 0){
-                var collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
-                let pipeline = [
-                    // first we will project
-                    {
-                        $project:
-                        {
-
-                            sell_date:1,
-                            admin_id:1,
-                            symbol:1,
-                            accumulations:1,
-                            buy_time_btc_price:1,
-                            // making last three Characters to calculate STD or BTC accordingly.
-                            cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ]}
-
-                        }
-                    },
-                    // Match Clause
-                    {
-                        '$match':{
-                            "accumulations":{$exists:true},
-                            "admin_id":user_id,
-                            "sell_date":{$gte:new Date(dateFrom)}
-                        }
-
-
-                    },
-
-                    // Group Clause
-                    {$group:{
-                        "_id":"$admin_id",
-                        buy_time_btc_price: { $first: "$buy_time_btc_price"},
-                        BTCinvest : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.invest", 0 ] } },
-                        BTCreturn : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.return", 0 ] } },
-                        BTCprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.profit", 0 ] } },
-                        USDTinvest : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.invest", 0 ] } },
-                        USDTreturn : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.return", 0 ] } },
-                        USDTprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.profit", 0 ] } },
-
-                    }},
-
-                    // final Project
-                    {
-                        $project:
-                        {
-                            _id:0,
-                            BTCinvest:1,
-                            BTCreturn:1,
-                            BTCprofitInUSD:{$multiply: ["$BTCprofit", "$buy_time_btc_price"]},
-                            USDTinvest:1,
-                            USDTreturn:1,
-
-                        }
-                    },
-
-                ];
-
-                let accumulationData = await fetchUserAccumulations(collection,pipeline);
-                //console.log('pipelinepipelinepipeline',JSON.stringify(pipeline),accumulationData)
-                if(!accumulationData.length){
-                    resp.status(203).send({
-                        message: "Please Try Later , Accumulation Data is Not Available at the Moment.",
-                        errors:[],
-                        results:[],
-                        status:200,
-                        success:true,
-
-                    });
-                    return false;
-                }
-                else{
-                    resp.status(200).send({
-                        message: "Accumulation Data Returned Successfully.",
-                        errors:[],
-                        results:accumulationData[0],
-                        status:200,
-                        success:true,
-                    });
-                    return false;
-                }
-            }
-            else{
-                resp.status(201).send({
-                    message: "Required Params are Missing",
-                    errors:errors,
-                    success:false,
-                    results:[],
-                    status:201
-                });
-                return false;
-            }
-
-    } catch (error) {
-            resp.status(500).send({
-                message: "Unable To Handle The Request. Please Try in a While",
-                status:500,
-                success:false,
+        var user_exist = await getUserByID(user_id);
+        // console.log(user_exist)
+        if(!user_exist){
+            resp.status(401).send({
+                message: 'User Not exists',
+                status:400,
                 results:[],
                 errors:[],
+                success:false,
             });
             return false;
         }
+        let exchange = typeof req.body.exchange !="undefined"?req.body.exchange : ""
+        // by default we will show last 3 months.
+        let type = typeof req.body.type!="undefined"?Number(req.body.type):3
+        console.log("\nmonths: ", type)
+        // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
+        let currentDate = new Date();
+        
+        let dateTo = new Date(currentDate.setMonth(currentDate.getMonth() - 1))
+        dateTo.setMinutes(0,0,0,0)
+        let dateFrom = new Date(currentDate.setMonth(currentDate.getMonth() - (type)))
+        dateTo.setMinutes(0,0,0,0)
+        console.log('\nSTRATING DATE: ', dateFrom)
+        console.log('\nENDING DATE: ', dateTo)
 
-    });
-    // End of Accumulation Request Handler.
+        let errors = []
+        let hasError = 0
+        if(exchange == ""){
+            hasError = 1
+            errors.push('Exchange Is required');
+        }
+        if(hasError == 0){
+            var collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+            let pipeline = [
+                // first we will project
+                {
+                    $project:
+                    {
+
+                        sell_date:1,
+                        admin_id:1,
+                        symbol:1,
+                        accumulations:1,
+                        buy_time_btc_price:1,
+                        // making last three Characters to calculate STD or BTC accordingly.
+                        cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ]}
+
+                    }
+                },
+                // Match Clause
+                {
+                    '$match':{
+                        "accumulations":{$exists:true},
+                        "admin_id":user_id,
+                        "sell_date":{$gte:new Date(dateFrom)}
+                    }
 
 
+                },
+
+                // Group Clause
+                {$group:{
+                    "_id":"$admin_id",
+                    buy_time_btc_price: { $first: "$buy_time_btc_price"},
+                    BTCinvest : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.invest", 0 ] } },
+                    BTCreturn : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.return", 0 ] } },
+                    BTCprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.profit", 0 ] } },
+                    USDTinvest : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.invest", 0 ] } },
+                    USDTreturn : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.return", 0 ] } },
+                    USDTprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.profit", 0 ] } },
+
+                }},
+
+                // final Project
+                {
+                    $project:
+                    {
+                        _id:0,
+                        BTCinvest:1,
+                        BTCreturn:1,
+                        BTCprofitInUSD:{$multiply: ["$BTCprofit", "$buy_time_btc_price"]},
+                        USDTinvest:1,
+                        USDTreturn:1,
+
+                    }
+                },
+
+            ];
+
+            let accumulationData = await fetchUserAccumulations(collection,pipeline);
+            //console.log('pipelinepipelinepipeline',JSON.stringify(pipeline),accumulationData)
+            if(!accumulationData.length){
+                resp.status(203).send({
+                    message: "Please Try Later , Accumulation Data is Not Available at the Moment.",
+                    errors:[],
+                    results:[],
+                    status:200,
+                    success:true,
+
+                });
+                return false;
+            }
+            else{
+                resp.status(200).send({
+                    message: "Accumulation Data Returned Successfully.",
+                    errors:[],
+                    results:accumulationData[0],
+                    status:200,
+                    success:true,
+                });
+                return false;
+            }
+        }
+        else{
+            resp.status(201).send({
+                message: "Required Params are Missing",
+                errors:errors,
+                success:false,
+                results:[],
+                status:201
+            });
+            return false;
+        }
+    } catch (error) {
+        resp.status(500).send({
+            message: "Unable To Handle The Request. Please Try in a While",
+            status:500,
+            success:false,
+            results:[],
+            errors:[],
+        });
+        return false;
+    }
+
+});
+// End of Accumulation Request Handler.
+
+// list trades
+// router.post('/listTrades', auth_token.required, async (req, resp) => {
+
+// })
 
 //when first time user login call this function
 router.post('/authenticate', async function (req, resp, next) {
@@ -6806,9 +6800,6 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
         var getBuyOrder = await listOrderById(order_id, exchange);
 
         if (getBuyOrder.length > 0){
-
-
-
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
             if(tab == 'openTab_move_all'){
               costAverageArr = [];
@@ -6820,8 +6811,6 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
               }
             //   var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
-
-
               let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
               let myPromises = await Promise.all([promise1]);
               let coin_Data = myPromises[0];
@@ -6909,10 +6898,6 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
               return false;
             }
 
-
-
-
-
             if(tab == 'lthTab_admin' || tab == 'openTab_admin'){
                 var pricesObj = await get_current_market_prices(exchange, getBuyOrder[0]['symbol'])
                 var currentMarketPrice = pricesObj[getBuyOrder[0]['symbol']]
@@ -6922,8 +6907,6 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 var percentageDown   = (orderPurchasePrice * percentage) / 100
                 var perctDownPrice     = orderPurchasePrice - percentageDown;
             }
-
-
 
             if (tab == 'lthTab' || tab == 'openTab'|| tab == 'lthTab_admin' || tab == 'openTab_admin'){
                 var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
@@ -6959,7 +6942,6 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 update['$set']['all_buy_ids'] = ''
                 update['$set']['quantity_all'] = ''
 
-
                 //Unset Fields
                 update['$unset'] = {};
                 update['$unset']['direct_child_order_id'] = '';
@@ -6970,9 +6952,6 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             }
 
             if (tab == 'lthTab' || tab == 'openTab' || tab == 'lthTab_admin' || tab == 'openTab_admin') {
-
-
-
 
                 if (!isNaN(parseFloat(sell_price))){
                     update['$set']['sell_price'] = parseFloat(sell_price)
@@ -7080,7 +7059,6 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
 
 router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
-
     var user_exist = await getUserByID(req.payload.id);
     // console.log(user_exist)
     if(!user_exist){
@@ -7093,81 +7071,65 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
     let order_id = req.body.orderId;
     let admin_id = req.payload.id;
     let symbol = ''
-
-
     var getBuyOrder = await listOrderById(order_id, exchange);
     symbol = getBuyOrder[0]['symbol'];
+
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
-
-
         if(req.payload.id == '5c0912b7fc9aadaac61dd072'){
             conn.then(async (db) => {
-              let where1 = {
-                'admin_id': admin_id,
-                'application_mode': 'live',
-                'buy_date':{'$exists':true},
-                'status': {
-                    $in:['FILLED','LTH']
-                },
-                "parent_status":{
-                    $ne: "parent",
-                },
-                // "cost_avg": { $nin :["yes","taking_child", "completed"] },
-
-                "purchased_price": {
-                  $exists: true,
-                },
-              }
-
-              let where2 = {
-                "cost_avg": { $in :["yes","taking_child", "completed"] },
-                'admin_id': admin_id,
-                'application_mode': 'live',
-              }
-              if(typeof symbol !== 'undefined' && symbol !== ''){
-                where1['symbol'] = symbol
-                where1['trigger_type'] = 'barrier_percentile_trigger'
-                where2['symbol'] = symbol
-                where2['trigger_type'] = 'barrier_percentile_trigger'
-              }
-
-              let query = {}
-              query['$or'] = [
-                where1,
-                where2
-              ]
-
-
-              let project1 = {
-                'admin_id':1,
-                'application_mode':1,
-                'symbol':1,
-                'quantity':1,
-                'purchased_price':1,
-                'buy_date':1,
-                'status':1,
-                'is_sell_order':1,
-                'market_sold_price': 1,
-                'sell_profit_percent': 1,
-                'lth_profit': 1,
-                'cost_avg_array': 1
-              }
-              let sort1 = { 'buy_date': -1 };
-              let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
-              let buyPromise = db.collection(buyCollection).find(query).sort(sort1).project(project1).toArray();
-
-
-
-
-
-
-
-
-
+                let where1 = {
+                    'admin_id': admin_id,
+                    'application_mode': 'live',
+                    'buy_date':{'$exists':true},
+                    'status': {
+                        $in:['FILLED','LTH']
+                    },
+                    "parent_status":{
+                        $ne: "parent",
+                    },
+                    // "cost_avg": { $nin :["yes","taking_child", "completed"] },
+                    "purchased_price": {
+                    $exists: true,
+                    },
+                }
+                let where2 = {
+                    "cost_avg": { $in :["yes","taking_child", "completed"] },
+                    'status': {
+                        $in:['FILLED','LTH', 'CA_TAKING_CHILD']
+                    },
+                    'admin_id': admin_id,
+                    'application_mode': 'live',
+                }
+                if(typeof symbol !== 'undefined' && symbol !== ''){
+                    where1['symbol'] = symbol
+                    where1['trigger_type'] = 'barrier_percentile_trigger'
+                    where2['symbol'] = symbol
+                    where2['trigger_type'] = 'barrier_percentile_trigger'
+                }
+                let query = where2
+                // query['$or'] = [
+                //     where1,
+                //     where2
+                // ]
+                let project1 = {
+                    'admin_id':1,
+                    'application_mode':1,
+                    'symbol':1,
+                    'quantity':1,
+                    'purchased_price':1,
+                    'buy_date':1,
+                    'status':1,
+                    'is_sell_order':1,
+                    'market_sold_price': 1,
+                    'sell_profit_percent': 1,
+                    'lth_profit': 1,
+                    'cost_avg_array': 1
+                }
+                let sort1 = { 'buy_date': -1 };
+                let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
+                let buyPromise = db.collection(buyCollection).find(query).sort(sort1).project(project1).toArray();
                 let myPromise = await Promise.all([buyPromise])
                 let tempOrders = myPromise[0]
-
-
                 let AllChildOrders = [];
                 let query2 = where2
                 let project2 = {
@@ -7186,8 +7148,6 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                 let cost_avg_array_orders = [...tempOrders].filter(order => {
                   return typeof order.cost_avg_array != 'undefined' && order.cost_avg_array.length >  1;
                 })
-
-
                 console.log(cost_avg_array_orders.length);
                 if(cost_avg_array_orders.length > 0){
                     for(let i=0; i<cost_avg_array_orders.length; i++){
@@ -7204,13 +7164,10 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                         }
                     }
                 }
-
                 // Wait for 3 Seconds
                 await new Promise(r => setTimeout(r, 3000));
                 console.log(AllChildOrders.length, tempOrders.length);
                 tempOrders = tempOrders.concat(AllChildOrders);
-
-
                 console.log(tempOrders.length);
                 let orders = []
                 tempOrders.map(order=>{
@@ -7220,93 +7177,73 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                 orders.sort(function (a, b) {
                   return new Date(b.t_date) - new Date(a.t_date);
                 });
-
-
                 // console.log(orders)
-
                 // orders = orders.slice(0, 10);
-
                 res.send({
                     success: true,
                     data: orders,
                     message: 'Data found successfully',
                 })
-
             });
         } else {
-          conn.then(async (db) => {
-            let where1 = {
-                'admin_id': admin_id,
-                'application_mode': 'live',
-                'buy_date':{'$exists':true},
-                'status': {
-                    $in:['FILLED','LTH']
-                },
-                "cost_avg": { $nin :["yes","taking_child", "completed"] },
-                "purchased_price": {
-                  $exists: true,
-                },
-             }
-             if(typeof symbol !== 'undefined' && symbol !== ''){
+            conn.then(async (db) => {  
+                let where1 = {
+                    'admin_id': admin_id,
+                    'application_mode': 'live',
+                    'buy_date':{'$exists':true},
+                    'status': {
+                        $in:['FILLED','LTH']
+                    },
+                    "cost_avg": { $nin :["yes","taking_child", "completed"] },
+                    "purchased_price": {
+                    $exists: true,
+                    },
+                }
+                if(typeof symbol !== 'undefined' && symbol !== ''){
                 where1['symbol'] = symbol
                 where1['trigger_type'] = 'barrier_percentile_trigger'
-             }
+                }
 
+                let project1 = {
+                    'admin_id':1,
+                    'application_mode':1,
+                    'symbol':1,
+                    'quantity':1,
+                    'purchased_price':1,
+                    'buy_date':1,
+                    'status':1,
+                    'is_sell_order':1,
+                    'market_sold_price': 1,
+                    'sell_profit_percent': 1,
+                    'lth_profit': 1
+                }
+                let sort1 = { 'buy_date': -1 }
+                let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+                let buyPromise = db.collection(buyCollection).find(where1).sort(sort1).project(project1).toArray()
 
-             let project1 = {
-                 'admin_id':1,
-                 'application_mode':1,
-                 'symbol':1,
-                 'quantity':1,
-                 'purchased_price':1,
-                 'buy_date':1,
-                 'status':1,
-                 'is_sell_order':1,
-                 'market_sold_price': 1,
-                 'sell_profit_percent': 1,
-                 'lth_profit': 1
-             }
-            let sort1 = { 'buy_date': -1 }
-            let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-            let buyPromise = db.collection(buyCollection).find(where1).sort(sort1).project(project1).toArray()
+                let myPromise = await Promise.all([buyPromise])
+                // console.log(myPromise[0].length)
+                // console.log(myPromise[1].length)
+                // console.log(myPromise[0], '====>    buyPromise')
+                // console.log(myPromise[1].length, '====>    soldPromise')
+                let tempOrders = myPromise[0]
 
-
-
-
-
-
-
-
-
-
-            let myPromise = await Promise.all([buyPromise])
-            // console.log(myPromise[0].length)
-            // console.log(myPromise[1].length)
-            // console.log(myPromise[0], '====>    buyPromise')
-            // console.log(myPromise[1].length, '====>    soldPromise')
-            let tempOrders = myPromise[0]
-
-            let orders = []
-            tempOrders.map(order=>{
-                order['t_date'] = order['buy_date']
-                orders.push(order)
+                let orders = []
+                tempOrders.map(order=>{
+                    order['t_date'] = order['buy_date']
+                    orders.push(order)
+                })
+                orders.sort(function (a, b) {
+                return new Date(b.t_date) - new Date(a.t_date);
+                });
+                // console.log(orders)
+                // orders = orders.slice(0, 10);
+                res.send({
+                    success: true,
+                    data: orders,
+                    message: 'Data found successfully',
+                })
             })
-            orders.sort(function (a, b) {
-              return new Date(b.t_date) - new Date(a.t_date);
-            });
-
-
-            // console.log(orders)
-
-            // orders = orders.slice(0, 10);
-
-            res.send({
-                success: true,
-                data: orders,
-                message: 'Data found successfully',
-            })
-
-        })
         }
     } else {
         res.send({
@@ -7314,7 +7251,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
             message: 'exchange and user_id are required',
         })
     }
-})//end getAllLTHOPENOrders
+}) //end getAllLTHOPENOrders
 
 
 function delete_order_history_logs(order_id, exchange) {
