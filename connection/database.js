@@ -16,6 +16,8 @@ function connectionDatabase() {
                     reject(err);
                 }else{
                 const db = client.db('binance');
+                console.log("Database connected successfully...")
+                console.log(`HTTPS is running on the port 3010`)
                 resolve(db)
                 }//End of  connection success
             });//End of Db Connection
