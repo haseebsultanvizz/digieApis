@@ -6624,7 +6624,7 @@ function PurchasedPriceOrders(symbol, admin_id, exchange){
             admin_id: admin_id,
             status: {
                 $in: [
-                    "LTH", "FILLED",
+                    "LTH", "FILLED", "CA_TAKING_CHILD"
                 ],
             },
             trigger_type: "barrier_percentile_trigger",
@@ -6680,7 +6680,16 @@ function PurchasedPriceOrdersAdmin(symbol, admin_id, exchange){
             }
             };
             let where2 = {
-            "cost_avg": { $in :["yes","taking_child", "completed"] },
+            $or: [
+                {"cost_avg": { $in :["yes","taking_child", "completed"] }},
+                {"cost_avg": { $exists: false} },
+                {cost_avg: null}
+            ],
+            status: {
+                $in: [
+                    "LTH", "FILLED", "CA_TAKING_CHILD"
+                ],
+            },
             'admin_id': admin_id,
             'application_mode': 'live',
             }
@@ -6693,11 +6702,11 @@ function PurchasedPriceOrdersAdmin(symbol, admin_id, exchange){
             where2['trigger_type'] = 'barrier_percentile_trigger';
             }
 
-            let query = {};
-            query['$or'] = [
-                where1,
-                where2
-            ]
+            let query = where2;
+            // query['$or'] = [
+            //     where1,
+            //     where2
+            // ]
 
 
             let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -7093,7 +7102,11 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                     },
                 }
                 let where2 = {
-                    "cost_avg": { $in :["yes","taking_child", "completed"] },
+                    $or: [
+                        {cost_avg: {$in: ["yes", "taking_child", "completed"]}}, 
+                        {cost_avg: {$exists: false}},
+                        {cost_avg: null}
+                    ],
                     'status': {
                         $in:['FILLED','LTH', 'CA_TAKING_CHILD']
                     },
