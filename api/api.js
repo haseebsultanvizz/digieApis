@@ -756,7 +756,6 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
                         application_mode: 1,
                         parent_status: 1,
                         status: 1,
-                        symbol: 1,
                         // making last three Characters to calculate STD or BTC accordingly.
                         cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ] }
                     }
@@ -765,6 +764,7 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
                 {
                     '$match':{
                         "accumulations":{$exists:true },
+                        "buy_time_btc_price":{$exists:true },
                         "admin_id":user_id,
                         "sell_date":{$gte: new Date(dateFrom), $lte: new Date(dateTo) },
                         "application_mode":"live", 
