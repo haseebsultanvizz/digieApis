@@ -702,6 +702,7 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
     try {
             
         var user_id = req.payload.id
+        console.log("User id: ", user_id)
 
         var user_exist = await getUserByID(user_id);
         
@@ -744,22 +745,7 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
         if(hasError == 0){
             var collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
             let pipeline = [
-                // first we will project
-                {
-                    $project:
-                    {
-                        sell_date: 1,
-                        admin_id: 1,
-                        symbol: 1,
-                        accumulations: 1 ,
-                        buy_time_btc_price: 1,
-                        application_mode: 1,
-                        parent_status: 1,
-                        status: 1,
-                        // making last three Characters to calculate STD or BTC accordingly.
-                        cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ] }
-                    }
-                },
+                
                 // Match Clause
                 {
                     '$match':{
@@ -771,6 +757,22 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
                         "parent_status":{$ne: "parent"}, 
                         "status":{$nin: ['canceled', 'archive', 'APIKEY_ERROR',"COIN_BAN_ERROR"]},
                         "symbol": {$nin:["POEBTC","NCASHBTC"]},
+                    }
+                },
+                // first we will project
+                {
+                    $project:
+                    {
+                        // sell_date: 1,
+                        // admin_id: 1,
+                        // symbol: 1,
+                        accumulations: 1 ,
+                        buy_time_btc_price: 1,
+                        // application_mode: 1,
+                        // parent_status: 1,
+                        // status: 1,
+                        // making last three Characters to calculate STD or BTC accordingly.
+                        cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ] }
                     }
                 },
             ];
