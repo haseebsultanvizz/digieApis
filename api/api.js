@@ -6736,48 +6736,7 @@ function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
   });
 }
 
-
 function PurchasedPriceOrders(symbol, admin_id, exchange){
-    return new Promise((resolve, reject) => {
-        conn.then(db => {
-          let searchCriteria = {
-            admin_id: admin_id,
-            status: {
-                $in: [
-                    "LTH", "FILLED", "CA_TAKING_CHILD"
-                ],
-            },
-            trigger_type: "barrier_percentile_trigger",
-            parent_status:{
-                $ne: "parent",
-            },
-            symbol: symbol,
-            purchased_price: {
-                $exists: true,
-            },
-            cost_avg: {
-                $nin :[
-                    "yes","taking_child", "completed"
-                ]
-            },
-            application_mode: 'live',
-            buy_date:{
-                '$exists':true
-            }
-          };
-          var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-          var mysort = {purchased_price: -1};
-          db.collection(collectionName).find(searchCriteria).sort(mysort).toArray((err, result) => {
-              if (err) reject(err);
-              resolve(result);
-          });
-        });
-    }).catch(err => {
-        console.log(err);
-    });
-}
-
-function PurchasedPriceOrdersAdmin(symbol, admin_id, exchange){
     return new Promise((resolve, reject) => {
         conn.then(async db => {
             let where1 = {
@@ -6934,11 +6893,14 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
               costAverageArr = [];
               console.log(getBuyOrder,'getBuyOrder');
               // console.log(getBuyOrder[0]['symbol'],'getBuyOrder');
-              if(req.payload.id == '5c0912b7fc9aadaac61dd072'){
-                var mapArray1 = await PurchasedPriceOrdersAdmin(getBuyOrder[0]['symbol'], req.payload.id, exchange);
-              } else {
+              // for admins
+              if(req.payload.id){
                 var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
-              }
+              } 
+              // for non-admins
+            //   else {
+            //     var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
+            //   }
             //   var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
               let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
               let myPromises = await Promise.all([promise1]);
@@ -7204,7 +7166,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
     symbol = getBuyOrder[0]['symbol'];
 
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
-        if(req.payload.id == '5c0912b7fc9aadaac61dd072'){
+        if(req.payload.id){
             conn.then(async (db) => {
                 let where1 = {
                     'admin_id': admin_id,
@@ -7318,65 +7280,6 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                     message: 'Data found successfully',
                 })
             });
-        } else {
-            conn.then(async (db) => {  
-                let where1 = {
-                    'admin_id': admin_id,
-                    'application_mode': 'live',
-                    'buy_date':{'$exists':true},
-                    'status': {
-                        $in:['FILLED','LTH']
-                    },
-                    "cost_avg": { $nin :["yes","taking_child", "completed"] },
-                    "purchased_price": {
-                    $exists: true,
-                    },
-                }
-                if(typeof symbol !== 'undefined' && symbol !== ''){
-                where1['symbol'] = symbol
-                where1['trigger_type'] = 'barrier_percentile_trigger'
-                }
-
-                let project1 = {
-                    'admin_id':1,
-                    'application_mode':1,
-                    'symbol':1,
-                    'quantity':1,
-                    'purchased_price':1,
-                    'buy_date':1,
-                    'status':1,
-                    'is_sell_order':1,
-                    'market_sold_price': 1,
-                    'sell_profit_percent': 1,
-                    'lth_profit': 1
-                }
-                let sort1 = { 'buy_date': -1 }
-                let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-                let buyPromise = db.collection(buyCollection).find(where1).sort(sort1).project(project1).toArray()
-
-                let myPromise = await Promise.all([buyPromise])
-                // console.log(myPromise[0].length)
-                // console.log(myPromise[1].length)
-                // console.log(myPromise[0], '====>    buyPromise')
-                // console.log(myPromise[1].length, '====>    soldPromise')
-                let tempOrders = myPromise[0]
-
-                let orders = []
-                tempOrders.map(order=>{
-                    order['t_date'] = order['buy_date']
-                    orders.push(order)
-                })
-                orders.sort(function (a, b) {
-                return new Date(b.t_date) - new Date(a.t_date);
-                });
-                // console.log(orders)
-                // orders = orders.slice(0, 10);
-                res.send({
-                    success: true,
-                    data: orders,
-                    message: 'Data found successfully',
-                })
-            })
         }
     } else {
         res.send({
