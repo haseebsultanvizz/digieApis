@@ -586,7 +586,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
         let dateTo = new Date(currentDate.setMonth(currentDate.getMonth() - 1))
         dateTo.setMinutes(0,0,0,0)
         let dateFrom = new Date(currentDate.setMonth(currentDate.getMonth() - (type)))
-        dateTo.setMinutes(0,0,0,0)
+        dateFrom.setMinutes(0,0,0,0)
         console.log('\nSTRATING DATE: ', dateFrom)
         console.log('\nENDING DATE: ', dateTo)
 
@@ -603,7 +603,6 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                 {
                     $project:
                     {
-
                         sell_date:1,
                         admin_id:1,
                         symbol:1,
@@ -611,31 +610,27 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         buy_time_btc_price:1,
                         // making last three Characters to calculate STD or BTC accordingly.
                         cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ]}
-
                     }
                 },
                 // Match Clause
                 {
                     '$match':{
-                        "accumulations":{$exists:true},
-                        "admin_id":user_id,
-                        "sell_date":{$gte:new Date(dateFrom)}
+                        "accumulations": {$exists:true},
+                        "admin_id": user_id,
+                        "sell_date": {$gte: new Date(dateFrom), $lte: new Date(dateTo)}
                     }
-
-
                 },
 
                 // Group Clause
                 {$group:{
                     "_id":"$admin_id",
-                    buy_time_btc_price: { $first: "$buy_time_btc_price"},
+                    // buy_time_btc_price: { $first: "$buy_time_btc_price"},
                     BTCinvest : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.invest", 0 ] } },
                     BTCreturn : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.return", 0 ] } },
                     BTCprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "BTC" ]} , "$accumulations.profit", 0 ] } },
                     USDTinvest : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.invest", 0 ] } },
                     USDTreturn : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.return", 0 ] } },
                     USDTprofit : { $sum : { $cond : [ {$eq : [ "$cointype", "SDT" ]} , "$accumulations.profit", 0 ] } },
-
                 }},
 
                 // final Project
@@ -645,7 +640,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         _id:0,
                         BTCinvest:1,
                         BTCreturn:1,
-                        BTCprofitInUSD:{$multiply: ["$BTCprofit", "$buy_time_btc_price"]},
+                        // BTCprofitInUSD:{$multiply: ["$BTCprofit", "$buy_time_btc_price"]},
                         USDTinvest:1,
                         USDTreturn:1,
 
@@ -703,9 +698,128 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
 // End of Accumulation Request Handler.
 
 // list trades
-// router.post('/listTrades', auth_token.required, async (req, resp) => {
+router.post('/listTrades', auth_token.required , async (req, resp) => {
+    try {
+            
+        var user_id = req.payload.id
 
-// })
+        var user_exist = await getUserByID(user_id);
+        
+        if(!user_exist){
+            resp.status(401).send({
+                message: 'User Not exists',
+                status:400,
+                results:[],
+                errors:[],
+                success:false,
+            });
+            return false;
+        }
+        let exchange = typeof req.body.exchange !="undefined"?req.body.exchange : ""
+        // by default we will show last 3 months.
+        let type = typeof req.body.type!="undefined"?Number(req.body.type):3
+        
+        // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
+        let currentDate = new Date();
+        
+        let dateTo = new Date(currentDate.setMonth(currentDate.getMonth() - 1))
+        dateTo.setMinutes(0,0,0,0)
+        let dateFrom = new Date(currentDate.setMonth(currentDate.getMonth() - (type)))
+        dateFrom.setMinutes(0,0,0,0)
+
+        console.log('\n')
+        console.log('MONTHS: ', type)
+        console.log('DATE FROM: ', dateFrom)
+        console.log('DATE TO: ', dateTo)
+        console.log('\n')
+
+        let errors = []
+        let hasError = 0
+
+        if(exchange == ""){
+            hasError = 1
+            errors.push('Exchange Is required');
+        }
+
+        if(hasError == 0){
+            var collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+            let pipeline = [
+                // first we will project
+                {
+                    $project:
+                    {
+                        sell_date: 1,
+                        admin_id: 1,
+                        symbol: 1,
+                        accumulations: 1 ,
+                        buy_time_btc_price: 1,
+                        application_mode: 1,
+                        parent_status: 1,
+                        status: 1,
+                        symbol: 1,
+                        // making last three Characters to calculate STD or BTC accordingly.
+                        cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ] }
+                    }
+                },
+                // Match Clause
+                {
+                    '$match':{
+                        "accumulations":{$exists:true },
+                        "admin_id":user_id,
+                        "sell_date":{$gte: new Date(dateFrom), $lte: new Date(dateTo) },
+                        "application_mode":"live", 
+                        "parent_status":{$ne: "parent"}, 
+                        "status":{$nin: ['canceled', 'archive', 'APIKEY_ERROR',"COIN_BAN_ERROR"]},
+                        "symbol": {$nin:["POEBTC","NCASHBTC"]},
+                    }
+                },
+            ];
+
+            let accumulationData = await fetchUserAccumulations(collection,pipeline);
+            
+            if(!accumulationData.length){
+                resp.status(203).send({
+                    message: "Please Try Later , Accumulation Data is Not Available at the Moment.",
+                    errors:[],
+                    results:[],
+                    status:200,
+                    success:true,
+                });
+                return false;
+            }
+            else{
+                resp.status(200).send({
+                    message: "Accumulation Data Returned Successfully.",
+                    errors: [],
+                    results: accumulationData,
+                    status: 200,
+                    success: true,
+                });
+                return false;
+            }
+        }
+        else{
+            resp.status(201).send({
+                message: "Required Params are Missing",
+                errors:errors,
+                success:false,
+                results:[],
+                status:201
+            });
+            return false;
+        }
+    } catch (error) {
+        resp.status(500).send({
+            message: "Unable To Handle The Request. Please Try in a While",
+            status:500,
+            success:false,
+            results:[],
+            errors:[],
+        });
+        return false;
+    }
+});
+// End of List Trades Handler
 
 //when first time user login call this function
 router.post('/authenticate', async function (req, resp, next) {
@@ -1264,7 +1378,7 @@ function fetchUserAccumulations(collectionName, filter) {
         conn.then(async (db) => {
 
             var data = await db.collection(collectionName).aggregate(filter).toArray();
-            // console.log('Data', data)
+            
             if(data.length > 0){
                 resolve(data);
             } else {
