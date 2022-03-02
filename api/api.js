@@ -749,8 +749,8 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
                 // Match Clause
                 {
                     '$match':{
-                        "accumulations":{$exists:true },
-                        "buy_time_btc_price":{$exists:true },
+                        // "accumulations":{$exists:true },
+                        // "buy_time_btc_price":{$exists:true },
                         "admin_id":user_id,
                         "sell_date":{$gte: new Date(dateFrom), $lte: new Date(dateTo) },
                         "application_mode":"live", 
@@ -759,6 +759,9 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
                         "symbol": {$nin:["POEBTC","NCASHBTC"]},
                     }
                 },
+                // {
+                //     $limit: 5
+                // },
                 // first we will project
                 {
                     $project:
@@ -766,13 +769,16 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
                         // sell_date: 1,
                         // admin_id: 1,
                         // symbol: 1,
-                        accumulations: 1 ,
-                        buy_time_btc_price: 1,
+                        // accumulations: 1 ,
+                        // buy_time_btc_price: 1,
                         // application_mode: 1,
                         // parent_status: 1,
                         // status: 1,
                         // making last three Characters to calculate STD or BTC accordingly.
-                        cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ] }
+                        cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ] },
+                        purchased_price: 1,
+                        market_sold_price: 1,
+                        quantity: 1
                     }
                 },
             ];
@@ -2288,8 +2294,6 @@ router.post('/listAutoOrderDetail', auth_token.required, async (req, resp) => {
 
 
 router.post('/listmarketPriceMinNotation', auth_token.required, async (req, resp) => {
-
-
 
     var user_exist = await getUserByID(req.payload.id);
     // console.log(user_exist, 'USER EXIST')
