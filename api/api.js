@@ -6742,25 +6742,25 @@ function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
 function PurchasedPriceOrders(symbol, admin_id, exchange){
     return new Promise((resolve, reject) => {
         conn.then(async db => {
-            let where1 = {
-            admin_id: admin_id,
-            status: {
-                $in: [
-                    "LTH", "FILLED",
-                ],
-            },
-            parent_status:{
-                $ne: "parent",
-            },
-            symbol: symbol,
-            purchased_price: {
-                $exists: true,
-            },
-            application_mode: 'live',
-            buy_date:{
-                '$exists':true
-            }
-            };
+            // let where1 = {
+            // admin_id: admin_id,
+            // status: {
+            //     $in: [
+            //         "LTH", "FILLED",
+            //     ],
+            // },
+            // parent_status:{
+            //     $ne: "parent",
+            // },
+            // symbol: symbol,
+            // purchased_price: {
+            //     $exists: true,
+            // },
+            // application_mode: 'live',
+            // buy_date:{
+            //     '$exists':true
+            // }
+            // };
             let where2 = {
             $or: [
                 {"cost_avg": { $in :["yes","taking_child", "completed"] }},
@@ -6772,14 +6772,15 @@ function PurchasedPriceOrders(symbol, admin_id, exchange){
                     "LTH", "FILLED", "CA_TAKING_CHILD"
                 ],
             },
-            'admin_id': admin_id,
-            'application_mode': 'live',
+            admin_id: admin_id,
+            application_mode: 'live',
+            buy_date: {$gte: new Date('2021-01-01')}
             }
 
 
             if(typeof symbol !== 'undefined' && symbol !== ''){
-            where1['symbol'] = symbol;
-            where1['trigger_type'] = 'barrier_percentile_trigger';
+            // where1['symbol'] = symbol;
+            // where1['trigger_type'] = 'barrier_percentile_trigger';
             where2['symbol'] = symbol;
             where2['trigger_type'] = 'barrier_percentile_trigger';
             }
@@ -7192,11 +7193,12 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                         {cost_avg: {$exists: false}},
                         {cost_avg: null}
                     ],
-                    'status': {
+                    status: {
                         $in:['FILLED','LTH', 'CA_TAKING_CHILD']
                     },
-                    'admin_id': admin_id,
-                    'application_mode': 'live',
+                    admin_id: admin_id,
+                    application_mode: 'live',
+                    buy_date: {$gte: new Date('2021-01-01')}
                 }
                 if(typeof symbol !== 'undefined' && symbol !== ''){
                     // where1['symbol'] = symbol
