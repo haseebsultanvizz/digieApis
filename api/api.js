@@ -607,6 +607,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                         admin_id:1,
                         symbol:1,
                         accumulations:1,
+                        application_mode: 1,
                         buy_time_btc_price:1,
                         // making last three Characters to calculate STD or BTC accordingly.
                         cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ]}
@@ -616,6 +617,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
                 {
                     '$match':{
                         "accumulations": {$exists:true},
+                        "application_mode": "live",
                         "admin_id": user_id,
                         "sell_date": {$gte: new Date(dateFrom), $lte: new Date(dateTo)}
                     }
@@ -4432,6 +4434,7 @@ async function getUserByID(admin_id, user_detail='no'){
                       resolve(false);
                     }
                 } else {
+                    // console.log("User data: ", result)
                     if (result.length > 0) {
                       if(user_detail == 'yes'){
                         resolve({
@@ -6886,7 +6889,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
         //insert log
         var getBuyOrder = await listOrderById(order_id, exchange);
-
+        
         if (getBuyOrder.length > 0){
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
             if(tab == 'openTab_move_all'){
@@ -7168,21 +7171,21 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
         if(req.payload.id){
             conn.then(async (db) => {
-                let where1 = {
-                    'admin_id': admin_id,
-                    'application_mode': 'live',
-                    'buy_date':{'$exists':true},
-                    'status': {
-                        $in:['FILLED','LTH']
-                    },
-                    "parent_status":{
-                        $ne: "parent",
-                    },
-                    // "cost_avg": { $nin :["yes","taking_child", "completed"] },
-                    "purchased_price": {
-                    $exists: true,
-                    },
-                }
+                // let where1 = {
+                //     'admin_id': admin_id,
+                //     'application_mode': 'live',
+                //     'buy_date':{'$exists':true},
+                //     'status': {
+                //         $in:['FILLED','LTH']
+                //     },
+                //     "parent_status":{
+                //         $ne: "parent",
+                //     },
+                //     // "cost_avg": { $nin :["yes","taking_child", "completed"] },
+                //     "purchased_price": {
+                //     $exists: true,
+                //     },
+                // }
                 let where2 = {
                     $or: [
                         {cost_avg: {$in: ["yes", "taking_child", "completed"]}}, 
@@ -7196,8 +7199,8 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                     'application_mode': 'live',
                 }
                 if(typeof symbol !== 'undefined' && symbol !== ''){
-                    where1['symbol'] = symbol
-                    where1['trigger_type'] = 'barrier_percentile_trigger'
+                    // where1['symbol'] = symbol
+                    // where1['trigger_type'] = 'barrier_percentile_trigger'
                     where2['symbol'] = symbol
                     where2['trigger_type'] = 'barrier_percentile_trigger'
                 }
@@ -7260,6 +7263,11 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                     }
                 }
                 // Wait for 3 Seconds
+                // Hey! thanks for the email, it looks better now! A couple of things which I wan't to be fixed in it are:
+                // - Too much congested: Why not extending it to antoher page? 
+                // - please add some icons for the links like linkedin, email, and github so one knows where these links redirect to
+                // - other than that, the tools and technologies section is alson very much cluttered. Shouldn't it be bulleted in rows and columns?
+                // - also, i pointed that out in my previeous email too, that my university fyp information is missing from CV. why did yo
                 await new Promise(r => setTimeout(r, 3000));
                 console.log(AllChildOrders.length, tempOrders.length);
                 tempOrders = tempOrders.concat(AllChildOrders);
@@ -33956,14 +33964,16 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
         let array = {}
         var collectionName = exchange == 'binance' ? 'users' : 'kraken_credentials';
 
-        console.log(collectionName, exchange)
+        // console.log(collectionName, exchange)
         db.collection(collectionName).findOne(search_arr, async function (err, data) {
+            // console.log("HURRAH DATA: ", data)
 
             if (err) throw err;
             if (data != undefined || data != null) {
               if(exchange == 'binance'){
                 resp.status(200).send({
                     "success": true,
+                    "balance_modified_time": data['balance_modified_time'] ? data['balance_modified_time'] : '',
                     "is_api_key_valid": data['is_api_key_valid'],
                     "is_api_key_valid_secondary": typeof data['is_api_key_valid_secondary'] != 'undefined' && data['is_api_key_valid_secondary'] != ''? data['is_api_key_valid_secondary'] : 'no',
                     "is_api_key_valid_third": typeof data['is_api_key_valid_third'] != 'undefined' && data['is_api_key_valid_third'] != ''? data['is_api_key_valid_third'] : 'no',
@@ -33981,6 +33991,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
               } else {
                 resp.status(200).send({
                   "success": true,
+                  "balance_modified_time_kraken": data['balance_modified_time_kraken'] ? data['balance_modified_time_kraken'] : '',
                   "is_api_key_valid": data['is_api_key_valid'],
                   "is_api_key_valid_secondary": data['is_api_key_valid_secondary'],
                   "is_api_key_valid_third": data['is_api_key_valid_third'],
