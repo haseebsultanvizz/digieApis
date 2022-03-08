@@ -7017,7 +7017,13 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     'cost_avg': 'yes',
                     'show_order': 'yes',
                     'cavg_parent': 'yes',
-                    'modified_date': new Date()
+                    'modified_date': new Date(),
+                    // New props added:
+                    'avg_price_three_upd': '',
+                    'avg_price_all_upd': '',
+                    'new_child_price_upd': 'yes',
+                    'mannual_merge': 'yes',
+                    'mannual_merge_time': new Date(),
                 }
             }
 
