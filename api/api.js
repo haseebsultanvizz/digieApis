@@ -26,9 +26,10 @@ var secret = 'digiebot_trading'
 
 const Bowser = require("bowser");
 const { ObjectId } = require('bson');
-
+// const superAdmin = process.env.super_admin_id
+const superAdmin = '5c0912b7fc9aadaac61dd072'
 var digie_admin_ids = [
-    '5c0912b7fc9aadaac61dd072', //admin
+    superAdmin, //admin
     // '5c3a4986fc9aad6bbd55b4f2',
     // '5e566497ab24936219344562',
     // '5eb5a5a628914a45246bacc6', //jamesparker
@@ -5436,7 +5437,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         // //     filter['$or'][0]['show_order'] = 'yes'
         // // }
 
-        // if (postDAta.admin_id != '5c0912b7fc9aadaac61dd072') {
+        // if (postDAta.admin_id != superAdmin) {
         //     filter['cavg_parent'] = 'yes'
         //     // filter['avg_orders_ids'] = { '$exists': true }
         // }
@@ -5459,7 +5460,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         ]
         filter['status'] = { '$ne': 'canceled' }
 
-        // if (filter['admin_id'] == '5c0912b7fc9aadaac61dd072') {
+        // if (filter['admin_id'] == superAdmin) {
         //     filter['$or'][1] = {
         //         'cost_avg': { '$exists': true },
         //         'show_order': 'yes'
@@ -5541,7 +5542,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         // }
 
         // //CostAvg tab extra dynamic check
-        // if (postDAta.admin_id == '5c0912b7fc9aadaac61dd072') {
+        // if (postDAta.admin_id == superAdmin) {
         //     filter_all_2['$or'][8]['show_order'] = {
         //         'cost_avg': { '$exists': true },
         //         'show_order': 'yes'
@@ -5564,7 +5565,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         }
 
         //CostAvg tab extra dynamic check
-        if (filter['admin_id'] == '5c0912b7fc9aadaac61dd072') {
+        if (filter['admin_id'] == superAdmin) {
             filter_all_2['$or'][8]['show_order'] = {
                 'cost_avg': { '$exists': true },
                 'show_order': 'yes'
@@ -6868,9 +6869,7 @@ function arraymove(arr, fromIndex, toIndex) {
 
 //post call from component for makeCostAvg
 router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
-
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -6885,34 +6884,41 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
     if (typeof order_id != 'undefined' && order_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof tab != 'undefined' && tab != ''){
 
         let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
-
         let db = await conn
-
-        //insert log
-        var getBuyOrder = await listOrderById(order_id, exchange);
         
+        var getBuyOrder = await listOrderById(order_id, exchange);
+
         if (getBuyOrder.length > 0){
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
+            let where = {
+                '_id': new ObjectID(String(order_id))
+            }
+            let update = {
+                '$set': {
+                    'cost_avg': 'yes',
+                    'show_order': 'yes',
+                    'cavg_parent': 'yes',
+                    'modified_date': new Date(),
+                    // New props added:
+                    'avg_price_three_upd': '',
+                    'avg_price_all_upd': '',
+                    'new_child_price_upd': 'yes',
+                    'mannual_merge': 'yes',
+                    'mannual_merge_time': new Date(),
+                }
+            }
+            
             if(tab == 'openTab_move_all'){
               costAverageArr = [];
-              console.log(getBuyOrder,'getBuyOrder');
-              // console.log(getBuyOrder[0]['symbol'],'getBuyOrder');
-              // for admins
               if(req.payload.id){
                 var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
               } 
-              // for non-admins
-            //   else {
-            //     var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
-            //   }
-            //   var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
+
               let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
               let myPromises = await Promise.all([promise1]);
               let coin_Data = myPromises[0];
               let currentmarketPrice = coin_Data['currentmarketPrice'][0]['price'];
 
-
-              // console.log(mapArray1, 'mapArray1')
               if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
                 mapArray1.map( x => {
                     var orderSellPrice = (typeof x.market_sold_price != 'undefined' && x.market_sold_price != '' && !isNaN(parseFloat(x.market_sold_price))) ? parseFloat(x.market_sold_price) : '';
@@ -6927,20 +6933,16 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 await new Promise(r => setTimeout(r, 100));
 
                 mapArray1 = [...mapArray1].sort((a, b) => parseFloat(a.profitLoss) - parseFloat(b.profitLoss));
-                console.log('Inside IF')
                 const findParentIndex = (order) => (order["_id"]).toString() == order_id
                 const parentIndex = mapArray1.findIndex(findParentIndex)
                 if(parentIndex != -1){
                   mapArray1 = arraymove(mapArray1, parentIndex, 0);
                 }
 
-                console.log("mapArray1 :::::", mapArray1.length);
                 await new Promise(r => setTimeout(r, 500));
                 // return false
                 for (let key in mapArray1) {
                   let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
-                //   console.log("fractionOrderArr :::::", fractionOrderArr)
-                  // console.log("fractionOrderArr :::::", mapArray1[key]['status'], )
                   if(typeof fractionOrderArr != 'undefined'){
                     var dataToAppend = {};
                     dataToAppend["order_sold"]       = "no"
@@ -6950,7 +6952,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
                     dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
                     dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
-                    // console.log("highestParentOrder :::::", highestParentOrder)
+                    // console.log("highestParentOrder:", highestParentOrder)
                     costAverageArr.push(dataToAppend);
                   } else {
                     var dataToAppend = {};
@@ -6963,17 +6965,15 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     dataToAppend["buyTimeDate"]      = new Date(mapArray1[key]['created_date']);
                     costAverageArr.push(dataToAppend);
                   }
-                }// END of (let key in mapArray1)
+                }
                 await new Promise(r => setTimeout(r, 500));
                 if(costAverageArr.length > 0){
-                    console.log('before Child')
                     for(let key in mapArray1){
                         await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
-                        console.log('loop')
-                    }// END of for(let key in mapArray1)
-                    console.log('before Parent')
+                    }
                     await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
-                    if(req.payload.id == '5c0912b7fc9aadaac61dd072'){
+                    // store admin id in a variable and use that
+                    if(req.payload.id == superAdmin){
                         await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], req.payload.id, exchange);
                     }
                     await new Promise(r => setTimeout(r, 4000));
@@ -6992,45 +6992,10 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
               }
               return false;
             }
-
-            if(tab == 'lthTab_admin' || tab == 'openTab_admin'){
-                var pricesObj = await get_current_market_prices(exchange, getBuyOrder[0]['symbol'])
-                var currentMarketPrice = pricesObj[getBuyOrder[0]['symbol']]
-                var orderPurchasePrice = getBuyOrder[0]['purchased_price'];
-
-                var percentage =  7
-                var percentageDown   = (orderPurchasePrice * percentage) / 100
-                var perctDownPrice     = orderPurchasePrice - percentageDown;
-            }
-
-            if (tab == 'lthTab' || tab == 'openTab'|| tab == 'lthTab_admin' || tab == 'openTab_admin'){
-                var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
-            }else if(tab == 'soldTab'){
+            
+            if(tab == 'soldTab'){
                 var collectionName = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_'+exchange
-            }
 
-            let where = {
-                '_id': new ObjectID(String(order_id))
-            }
-            let update = {
-                '$set': {
-                    'cost_avg': 'yes',
-                    'show_order': 'yes',
-                    'cavg_parent': 'yes',
-                    'modified_date': new Date(),
-                    // New props added:
-                    'avg_price_three_upd': '',
-                    'avg_price_all_upd': '',
-                    'new_child_price_upd': 'yes',
-                    'mannual_merge': 'yes',
-                    'mannual_merge_time': new Date(),
-                }
-            }
-
-            // let temp = {'cost_avg': 'yes', 'show_order': 'yes', 'cavg_parent': 'yes', 'modified_date': ISODate(), 'cost_avg_buy': 'yes', 'move_to_cost_avg' : 'yes'}
-            // let temp1 = { 'direct_child_order_id': '', 'direct_parent_child_id': '', 'ist_parent_child_buy_id': '', 'cost_avg_percentage': '', 'avg_sell_price': ''}
-
-            if (tab == 'soldTab') {
                 update['$set']['cost_avg_buy'] = 'yes'
                 update['$set']['move_to_cost_avg'] = 'yes'
 
@@ -7052,30 +7017,19 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 update['$unset']['avg_sell_price'] = '';
             }
 
-            if (tab == 'lthTab' || tab == 'openTab' || tab == 'lthTab_admin' || tab == 'openTab_admin') {
-
-                if (!isNaN(parseFloat(sell_price))){
-                    update['$set']['sell_price'] = parseFloat(sell_price)
-                    update['$set']['status'] = 'FILLED'
-                    update['$set']['lth_functionality'] = 'no'
-                    update['$set']['lth_profit'] = ''
-                    update['$set']['is_lth_order'] = ''
-                }
-                if(tab == 'lthTab' || tab == 'openTab' || tab == 'lthTab_admin' || tab == 'openTab_admin'){
-                  update['$set']['move_to_cost_avg'] = 'yes'
-                }
-                if(tab == 'openTab_admin'){
-                    update['$set']['iniatial_trail_stop'] = currentMarketPrice + (currentMarketPrice + 0.05);
-                    update['$set']['is_sell_order'] = 'yes';
-                    update['$set']['order_to_ca_activated'] = 'yes';
-                }
-            }
-
             if (tab == 'lthTab'){
                 update['$set']['avg_sell_price'] = parseFloat(sell_price);
             }
 
             if(tab == 'lthTab_admin' || tab == 'openTab_admin'){
+                var pricesObj = await get_current_market_prices(exchange, getBuyOrder[0]['symbol'])
+                var currentMarketPrice = pricesObj[getBuyOrder[0]['symbol']]
+                var orderPurchasePrice = getBuyOrder[0]['purchased_price'];
+
+                var percentage =  7
+                var percentageDown   = (orderPurchasePrice * percentage) / 100
+                var perctDownPrice     = orderPurchasePrice - percentageDown;
+            
                 update['$set']['avg_sell_price'] = '';
                 update['$set']['new_child_buy_price'] = isNaN(parseFloat(perctDownPrice)) ?  '': parseFloat(perctDownPrice);
 
@@ -7111,6 +7065,23 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     cost_avg_array_obj['buyTimeDate'] = getBuyOrder[0]['created_date'];
 
                     update['$set']['cost_avg_array'].push(cost_avg_array_obj)
+            }
+            
+            if (tab == 'lthTab' || tab == 'openTab' || tab == 'lthTab_admin' || tab == 'openTab_admin') {
+                var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+                if (!isNaN(parseFloat(sell_price))){
+                    update['$set']['sell_price'] = parseFloat(sell_price)
+                    update['$set']['status'] = 'FILLED'
+                    update['$set']['lth_functionality'] = 'no'
+                    update['$set']['lth_profit'] = ''
+                    update['$set']['is_lth_order'] = ''
+                    update['$set']['move_to_cost_avg'] = 'yes'
+                }
+                if(tab == 'openTab_admin'){
+                    update['$set']['iniatial_trail_stop'] = currentMarketPrice + (currentMarketPrice + 0.05);
+                    update['$set']['is_sell_order'] = 'yes';
+                    update['$set']['order_to_ca_activated'] = 'yes';
+                }
             }
 
             let result = await db.collection(collectionName).updateOne(where, update)
@@ -18644,7 +18615,7 @@ async function send_notification(admin_id, type, priority, message, order_id = '
     ]
     */
 
-    // if (admin_id == '5c0912b7fc9aadaac61dd072') {
+    // if (admin_id == superAdmin) {
         if(application_mode == 'live'){
             var options = {
                 method: 'POST',
@@ -20242,7 +20213,7 @@ async function runDailyLimitUpdateCron(user_id, exchange){
 
 
                         //user_id not equal to admin and vizzdeveloper
-                        if (user_id != '5c0912b7fc9aadaac61dd072' && user_id != '5c0915befc9aadaac61dd1b8'){
+                        if (user_id != superAdmin && user_id != '5c0915befc9aadaac61dd1b8'){
                             //update limit collection value
                             await db.collection(limit_collection).updateOne(where, {
                                 '$set':{
@@ -25392,7 +25363,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
 
                 // console.log('wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
 
-                // if (user_id == '5c0912b7fc9aadaac61dd072' && application_mode == 'test') {
+                // if (user_id == superAdmin && application_mode == 'test') {
                 //     // availableBTC = 0.5
                 //     // availableUSDT = 2000
                 // }
@@ -25595,7 +25566,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                 // console.log('wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
 
-                // if (user_id == '5c0912b7fc9aadaac61dd072' && application_mode == 'test') {
+                // if (user_id == superAdmin && application_mode == 'test') {
                 //     // availableBTC = 0.5
                 //     // availableUSDT = 2000
                 // }
@@ -28232,7 +28203,7 @@ async function getOrderStats(postData2){
         // //     filter_12['$or'][0]['show_order'] = 'yes'
         // // }
 
-        // if (admin_id != '5c0912b7fc9aadaac61dd072') {
+        // if (admin_id != superAdmin) {
         //     filter_12['cavg_parent'] = 'yes'
         //     // filter_12['avg_orders_ids'] = { '$exists': true }
         // }
@@ -28255,7 +28226,7 @@ async function getOrderStats(postData2){
         ]
         filter_12['status'] = {'$ne': 'canceled'}
 
-        // if (admin_id == '5c0912b7fc9aadaac61dd072') {
+        // if (admin_id == superAdmin) {
         //     filter_12['$or'][1] = {
         //         'cost_avg': { '$exists': true },
         //         'show_order': 'yes'
@@ -28384,7 +28355,7 @@ async function getOrderStats(postData2){
         }
 
         //CostAvg tab extra dynamic check
-        if (admin_id == '5c0912b7fc9aadaac61dd072') {
+        if (admin_id == superAdmin) {
             filter_all_2['$or'][8]['show_order'] = {
                 'cost_avg': { '$exists': true },
                 'show_order': 'yes'
@@ -32083,7 +32054,7 @@ router.post('/mapTrade', auth_token.required, async (req, res) => {
     let symbol = req.body.data.symbol
     let time = req.body.data.time
 
-    // user_id = '5c0912b7fc9aadaac61dd072'
+    // user_id = superAdmin
 
     let payload = {
         'userid':user_id,
@@ -32154,7 +32125,7 @@ router.post('/mapSoldTrade', auth_token.required, async (req, res) => {
     let symbol = req.body.data.symbol
     let time = req.body.data.time
 
-    // user_id = '5c0912b7fc9aadaac61dd072'
+    // user_id = superAdmin
 
 
     //find buy entry of this exact quantity
