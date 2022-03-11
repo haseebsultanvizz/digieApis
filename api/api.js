@@ -6689,23 +6689,23 @@ function UpdateChildOrders(order_id, buy_parent_id, exchange) {
             if (err) {
                 reject(err);
             } else {
-                resolve(success.result);
-            }
-        });
-        let searchCriteria1 = {};
-
-        searchCriteria1["_id"] = new ObjectID(buy_parent_id);
-        let updQuery1 = {
-            $set: {
-                pause_status: "pause",
-                pause_by: "cost_avg_merge",
-            }
-        };
-        db.collection(collectionName).updateOne(searchCriteria1, updQuery1, (err, success) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(success.result);
+                // resolve(success.result);
+                // update pause play status of parent order
+                let searchCriteria1 = {};
+                searchCriteria1["_id"] = new ObjectID(buy_parent_id);
+                let updQuery1 = {
+                    $set: {
+                        pause_status: "play",
+                        pause_by: "cost_avg_merge",
+                    }
+                };
+                db.collection(collectionName).updateOne(searchCriteria1, updQuery1, (err, success) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(success.result);
+                    }
+                });
             }
         });
     });
@@ -6980,6 +6980,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 await new Promise(r => setTimeout(r, 500));
                 if(costAverageArr.length > 0){
                     for(let key in mapArray1){
+                        console.log()
                         await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
                     }
                     await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
@@ -6991,7 +6992,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     // query to unparent all the orders of that symbol except the current one
                     await unParentAllOtherOrders(req.body.orderId, req.payload.id, getBuyOrder[0]['symbol'], req.body.exchange, getBuyOrder[0]['order_mode'])
                     // query to play the parent order 
-                    await pausePlayParentOrder(getBuyOrder[0].buy_parent_id, 'play', req.body.exchange);
+                    // await pausePlayParentOrder(getBuyOrder[0].buy_parent_id, 'play', req.body.exchange);
                     resp.status(200).send({
                         status: true, message: "Successfully Created"
                     });
@@ -7182,12 +7183,10 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
         console.log(buy_collection, '\n', where, '\n', set)
         console.log("order mode: ", order_mode)
         if(order_mode == 'live'){
-            console.log('before db')
             let db = await conn;
-            console.log("DB: ", db)
             // tempParentOrders = []
-            let check = await db.collection(buy_collection).findOne(where)
-            console.log("CHECK: ", check)
+            // let check = await db.collection(buy_collection).findOne(where)
+            // console.log("CHECK: ", check)
             await db.collection(buy_collection).updateMany(where, set, (err, result) => {
                 if(err){
                     console.log("ERROR: ", err)
