@@ -36,7 +36,7 @@ var digie_admin_ids = [
     '5c0915befc9aadaac61dd1b8', //vizzdeveloper
 ];
 
-//********************************************************* */
+
 //TODO: verify old password
 //verifyOldPassword //Umer Abbas [6-1-2020]
 router.post('/verifyOldPassword', async function (req, resp) {
@@ -6386,6 +6386,10 @@ router.post('/playOrder', auth_token.required, async (req, resp) => {
 
 //pause play parent order form orders listings
 function pausePlayParentOrder(orderId, status, exchange) {
+    console.log("=== Inside Pause Play Parent Order Function ===")
+    console.log("OrderId: ", orderId)
+    console.log("status: ", status)
+    console.log("exchange: ", exchange)
     return new Promise((resolve) => {
         conn.then((db) => {
             let filter = {};
@@ -6867,8 +6871,15 @@ function arraymove(arr, fromIndex, toIndex) {
     return arr
 }
 
+// router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
+//     console.log("REQ BODY: ", req.body)
+//     console.log("REQ PAYLOAD: ", req.payload)
+// })
+
 //post call from component for makeCostAvg
 router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
+    console.log("REQ BODY: ", req.body)
+    console.log("REQ PAYLOAD: ", req.payload)
     var user_exist = await getUserByID(req.payload.id);
     if(!user_exist){
         resp.status(401).send({
@@ -6887,7 +6898,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
         let db = await conn
         
         var getBuyOrder = await listOrderById(order_id, exchange);
-
+        
         if (getBuyOrder.length > 0){
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
             let where = {
@@ -6977,6 +6988,10 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                         await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], req.payload.id, exchange);
                     }
                     await new Promise(r => setTimeout(r, 4000));
+                    // query to unparent all the orders of that symbol except the current one
+                    await unParentAllOtherOrders(req.body.orderId, req.payload.id, getBuyOrder[0]['symbol'], req.body.exchange, getBuyOrder[0]['order_mode'])
+                    // query to play the parent order 
+                    await pausePlayParentOrder(getBuyOrder[0].buy_parent_id, 'play', req.body.exchange);
                     resp.status(200).send({
                         status: true, message: "Successfully Created"
                     });
@@ -7129,6 +7144,70 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
 }) //End of makeCostAvg
 
+// UnParentAllOtherOrders starts here
+ function unParentAllOtherOrders(orderId, userId, symbol, exchange, order_mode){
+    console.log("\n=== Inside Uparent Function ===\n")
+    return new Promise(async (resolve, reject) => {
+        const buy_collection = exchange == 'binance' ? 'buy_orders' : `buy_orders_${exchange}`
+        const where = {
+            _id: {$ne: new ObjectID(orderId)},
+            admin_id: userId,
+            symbol: symbol,
+            cavg_parent: "yes",
+            application_mode: "live"
+        }
+        const set = {
+            $unset: {
+                cavg_parent: 1,
+                cost_avg_array: 1,
+                show_order: 1, 
+                move_to_cost_avg: 1,
+                avg_sell_price: 1,
+                avg_sell_price_three: 1,
+                need_price_update: 1,
+                new_child_buy_price: 1,
+                new_child_price_upd: 1,
+                quantity_all: 1,
+                count_avg_order: 1,
+                direct_child_order_id: 1,
+                all_buy_ids: 1,
+                avg_price_all_upd: 1,
+                avg_price_three_upd: 1,
+                last_three_ids: 1,
+                quantity_three: 1,
+                avg_sell_price_all_date: 1,
+                child_for_sell_less_than_3: 1
+            },
+        }
+        console.log(buy_collection, '\n', where, '\n', set)
+        console.log("order mode: ", order_mode)
+        if(order_mode == 'live'){
+            console.log('before db')
+            let db = await conn;
+            console.log("DB: ", db)
+            // tempParentOrders = []
+            let check = await db.collection(buy_collection).findOne(where)
+            console.log("CHECK: ", check)
+            await db.collection(buy_collection).updateMany(where, set, (err, result) => {
+                if(err){
+                    console.log("ERROR: ", err)
+                    reject(err)
+                } else {
+                    console.log(result.result)
+                    if (result.result.ok == 1) { 
+                        console.log("\nTempParentOrders Update Count: ", result.modifiedCount)
+                        console.log('\nUpdated Successfully!')
+                    } else {
+                        console.log("Could not be updated!")
+                    }
+                    resolve(true)
+                }
+            })
+        }
+    }).catch(err => {
+        console.log("ERROR: ", err);
+    });
+}// UnParentAllOtherOrders ends here
 
 router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
     var user_exist = await getUserByID(req.payload.id);
