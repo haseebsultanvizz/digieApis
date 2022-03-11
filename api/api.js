@@ -6696,7 +6696,8 @@ function UpdateChildOrders(order_id, buy_parent_id, exchange) {
                 let updQuery1 = {
                     $set: {
                         pause_status: "play",
-                        pause_by: "cost_avg_merge",
+                        // parent_pause: 'child_n_costavg',
+                        pause_by: 'cost_avg_merge',
                     }
                 };
                 db.collection(collectionName).updateOne(searchCriteria1, updQuery1, (err, success) => {
@@ -6851,6 +6852,7 @@ function UpdateAllSymbolOrder(symbol, admin_id, exchange){
             };
             let updatedCriteria = {
                 parent_pause: 'child_n_costavg',
+                pause_by: 'cost_avg_merge',
                 pick_parent: 'no'
             };
             var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
