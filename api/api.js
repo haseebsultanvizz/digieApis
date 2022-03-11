@@ -6986,10 +6986,9 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                         await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
                     }
                     await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
-                    // store admin id in a variable and use that
-                    if(req.payload.id == superAdmin){
-                        await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], req.payload.id, exchange);
-                    }
+                    
+                    await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], req.payload.id, exchange);
+                    
                     await new Promise(r => setTimeout(r, 4000));
                     // query to unparent all the orders of that symbol except the current one
                     await unParentAllOtherOrders(req.body.orderId, req.payload.id, getBuyOrder[0]['symbol'], req.body.exchange, getBuyOrder[0]['order_mode'])
