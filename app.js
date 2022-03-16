@@ -2,6 +2,7 @@ var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
+const cors = require("cors");
 var logger = require('morgan');
 
 var apiRouter  = require('./api/api');
@@ -34,7 +35,7 @@ app.use(function(req, res, next) {
   next();
 });
 
-
+app.use(cors());
 
 //app.use('/', indexRouter);
 //app.use('/users', usersRouter);
