@@ -7254,7 +7254,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                     },
                     admin_id: admin_id,
                     application_mode: 'live',
-                    buy_date: {$gte: new Date('2021-01-01')}
+                    buy_date: {$gte: new Date('2021-01-01')} // date constraint added because invisible orders are being shown in the pop-up / asim's task pending 
                 }
                 if(typeof symbol !== 'undefined' && symbol !== ''){
                     // where1['symbol'] = symbol
