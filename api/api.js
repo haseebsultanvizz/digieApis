@@ -6745,58 +6745,27 @@ function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
   });
 }
 
-function PurchasedPriceOrders(symbol, admin_id, exchange){
+function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
     return new Promise((resolve, reject) => {
         conn.then(async db => {
-            // let where1 = {
-            // admin_id: admin_id,
-            // status: {
-            //     $in: [
-            //         "LTH", "FILLED",
-            //     ],
-            // },
-            // parent_status:{
-            //     $ne: "parent",
-            // },
-            // symbol: symbol,
-            // purchased_price: {
-            //     $exists: true,
-            // },
-            // application_mode: 'live',
-            // buy_date:{
-            //     '$exists':true
-            // }
-            // };
             let where2 = {
-            $or: [
-                {"cost_avg": { $in :["yes","taking_child", "completed"] }},
-                {"cost_avg": { $exists: false} },
-                {cost_avg: null}
-            ],
-            status: {
-                $in: [
-                    "LTH", "FILLED", "CA_TAKING_CHILD"
+                admin_id: admin_id,
+                application_mode: 'live',
+                $or: [
+                    {"cost_avg": { $in :["yes","taking_child", "completed"] }},
+                    {"cost_avg": { $exists: false} },
+                    {cost_avg: null}
                 ],
-            },
-            admin_id: admin_id,
-            application_mode: 'live',
-            buy_date: {$gte: new Date('2021-01-01')}
+                status: { $in: [ "LTH", "FILLED", "CA_TAKING_CHILD"]},
+                trigger_type: tab == 'openTab_move_all' ? 'barrier_percentile_trigger' : 'no',
+                buy_date: {$gte: new Date('2021-01-01')}, // date constraint added because invisible orders are being shown in the pop-up / asim's task pending 
             }
 
-
             if(typeof symbol !== 'undefined' && symbol !== ''){
-            // where1['symbol'] = symbol;
-            // where1['trigger_type'] = 'barrier_percentile_trigger';
-            where2['symbol'] = symbol;
-            where2['trigger_type'] = 'barrier_percentile_trigger';
+                where2['symbol'] = symbol
             }
 
             let query = where2;
-            // query['$or'] = [
-            //     where1,
-            //     where2
-            // ]
-
 
             let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
             let buyPromise = db.collection(buyCollection).find(query).toArray();
@@ -6804,7 +6773,9 @@ function PurchasedPriceOrders(symbol, admin_id, exchange){
             let tempOrders = myPromise[0];
 
             let AllChildOrders = [];
+
             let query2 = where2
+
             let cost_avg_array_orders = [...tempOrders].filter(order => {
                 return typeof order.cost_avg_array != 'undefined' && order.cost_avg_array.length >  1;
             });
@@ -6900,6 +6871,8 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
         let db = await conn
         
         var getBuyOrder = await listOrderById(order_id, exchange);
+        // if getBuyOrder object don't have 'order_mode' value then get 'application_mode' otherwise set 'live
+        // const order_mode = (getBuyOrder[0]['order_mode'] && getBuyOrder[0]['order_mode'] !== null && getBuyOrder[0]['order_mode'] !== undefined && getBuyOrder[0]['order_mode'] !== "" ) ? getBuyOrder[0]['order_mode'] : ((getBuyOrder[0]['application_mode'] && getBuyOrder[0]['application_mode'] !== null && getBuyOrder[0]['application_mode'] !== undefined && getBuyOrder[0]['application_mode'] !== "" ) ? getBuyOrder[0]['application_mode'] : 'live')
         
         if (getBuyOrder.length > 0){
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
@@ -6921,12 +6894,13 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 }
             }
             
-            if(tab == 'openTab_move_all'){
+            if(tab == 'openTab_move_all' || tab == 'openTab_move_all_manual'){
+                console.log('check 1')
               costAverageArr = [];
               if(req.payload.id){
-                var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange);
+                var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange, tab)
               } 
-
+              console.log("Map Array 1: ", mapArray1)
               let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
               let myPromises = await Promise.all([promise1]);
               let coin_Data = myPromises[0];
@@ -6940,7 +6914,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     } else {
                         x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
                     }
-                    console.log(x._id, x.profitLoss)
+                    console.log(x._id, "x.profitLoss: ", x.profitLoss)
                 });
 
                 await new Promise(r => setTimeout(r, 100));
@@ -7182,6 +7156,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             },
         }
         console.log(buy_collection, '\n', where, '\n', set)
+        order_mode = order_mode && order_mode!==undefined && order_mode!==null && order_mode!=='' ? order_mode : 'live'
         console.log("order mode: ", order_mode)
         if(order_mode == 'live'){
             let db = await conn;
@@ -7321,11 +7296,6 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                     }
                 }
                 // Wait for 3 Seconds
-                // Hey! thanks for the email, it looks better now! A couple of things which I wan't to be fixed in it are:
-                // - Too much congested: Why not extending it to antoher page? 
-                // - please add some icons for the links like linkedin, email, and github so one knows where these links redirect to
-                // - other than that, the tools and technologies section is alson very much cluttered. Shouldn't it be bulleted in rows and columns?
-                // - also, i pointed that out in my previeous email too, that my university fyp information is missing from CV. why did yo
                 await new Promise(r => setTimeout(r, 3000));
                 console.log(AllChildOrders.length, tempOrders.length);
                 tempOrders = tempOrders.concat(AllChildOrders);
@@ -7355,6 +7325,129 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
     }
 }) //end getAllLTHOPENOrders
 
+router.post('/getAllLTHOPENOrdersManual', auth_token.required, async (req, res) => {
+    var user_exist = await getUserByID(req.payload.id);
+    // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+    let exchange = req.body.exchange;
+    let order_id = req.body.orderId;
+    let admin_id = req.payload.id;
+    let symbol = ''
+    var getBuyOrder = await listOrderById(order_id, exchange);
+    symbol = getBuyOrder[0]['symbol'];
+
+    if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
+        if(req.payload.id){
+            conn.then(async (db) => {
+                let where2 = {
+                    $or: [ 
+                        {cost_avg: {$exists: false}},
+                        {cost_avg: null}
+                    ],
+                    status: {
+                        $in:['FILLED','LTH']
+                    },
+                    $or: [ 
+                        {parent_status: {$ne: 'parent'}},
+                        {parent_status: {$exists: false}}
+                    ],
+                    admin_id: admin_id,
+                    application_mode: 'live',
+                    buy_date: {$gte: new Date('2021-01-01')} // date constraint added because invisible orders are being shown in the pop-up / asim's task pending 
+                }
+                if(typeof symbol !== 'undefined' && symbol !== ''){
+                    where2['symbol'] = symbol
+                    where2['trigger_type'] = 'no'
+                }
+                let query = where2
+                console.log("Query: ", query)
+                let project1 = {
+                    'admin_id':1,
+                    'application_mode':1,
+                    'symbol':1,
+                    'quantity':1,
+                    'purchased_price':1,
+                    'buy_date':1,
+                    'status':1,
+                    'is_sell_order':1,
+                    'market_sold_price': 1,
+                    'sell_profit_percent': 1,
+                    'lth_profit': 1,
+                    'cost_avg_array': 1
+                }
+                let sort1 = { 'buy_date': -1 };
+                let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
+                let buyPromise = db.collection(buyCollection).find(query).sort(sort1).project(project1).toArray();
+                let myPromise = await Promise.all([buyPromise])
+                let tempOrders = myPromise[0]
+                let AllChildOrders = [];
+                let query2 = where2
+                let project2 = {
+                  'admin_id':1,
+                  'application_mode':1,
+                  'symbol':1,
+                  'quantity':1,
+                  'purchased_price':1,
+                  'buy_date':1,
+                  'status':1,
+                  'is_sell_order':1,
+                  'market_sold_price': 1,
+                  'sell_profit_percent': 1,
+                  'lth_profit': 1,
+                }
+                let cost_avg_array_orders = [...tempOrders].filter(order => {
+                  return typeof order.cost_avg_array != 'undefined' && order.cost_avg_array.length >  1;
+                })
+                console.log(cost_avg_array_orders.length);
+                if(cost_avg_array_orders.length > 0){
+                    for(let i=0; i<cost_avg_array_orders.length; i++){
+                        for(let j=0; j<cost_avg_array_orders[i]['cost_avg_array'].length; j++){
+                            if(j == 0 || cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no'){
+                                continue;
+                            }
+                            let collection_name = cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no' ? 'buy_orders' : 'sold_buy_orders'
+                            collection_name = exchange == 'binance' ? collection_name : collection_name+'_'+exchange;
+                            query2['_id'] = new ObjectID((cost_avg_array_orders[i]['cost_avg_array'][j]['buy_order_id']).toString());
+                            query2['direct_parent_child_id'] = new ObjectID((cost_avg_array_orders[i]['_id']).toString());
+                            let childPromise = await db.collection(collection_name).find(query2).project(project2).toArray();
+                            AllChildOrders.push(childPromise[0])
+                        }
+                    }
+                }
+                // Wait for 3 Seconds
+                await new Promise(r => setTimeout(r, 3000));
+                console.log(AllChildOrders.length, tempOrders.length);
+                tempOrders = tempOrders.concat(AllChildOrders);
+                console.log(tempOrders.length);
+                let orders = []
+                tempOrders.map(order=>{
+                    order['t_date'] = order['buy_date']
+                    orders.push(order)
+                })
+                orders.sort(function (a, b) {
+                  return new Date(b.t_date) - new Date(a.t_date);
+                });
+                // console.log(orders)
+                // orders = orders.slice(0, 10);
+                res.send({
+                    success: true,
+                    data: orders,
+                    message: 'Data found successfully',
+                })
+            });
+        }
+    } else {
+        res.send({
+            status: false,
+            message: 'exchange and user_id are required',
+        })
+    }
+}) //end getAllLTHOPENOrders
 
 function delete_order_history_logs(order_id, exchange) {
     return new Promise(async (resolve, reject) => {
