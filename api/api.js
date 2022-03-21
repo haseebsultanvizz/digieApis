@@ -6805,7 +6805,7 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
     });
 }
 
-function UpdateAllSymbolOrder(symbol, admin_id, exchange){
+function UpdateAllSymbolOrder(symbol, admin_id, exchange, tab){
     return new Promise((resolve, reject) => {
         conn.then(db => {
             let searchCriteria = {
@@ -6819,7 +6819,7 @@ function UpdateAllSymbolOrder(symbol, admin_id, exchange){
                 },
                 application_mode: 'live',
                 admin_id: admin_id,
-                trigger_type: "barrier_percentile_trigger",
+                trigger_type: tab == 'openTab_move_all_manual' ? 'no' : "barrier_percentile_trigger"
             };
             let updatedCriteria = {
                 parent_pause: 'child_n_costavg',
@@ -6961,11 +6961,11 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     }
                     await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
                     
-                    await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], req.payload.id, exchange);
+                    await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], req.payload.id, exchange, tab);
                     
                     await new Promise(r => setTimeout(r, 4000));
                     // query to unparent all the orders of that symbol except the current one
-                    await unParentAllOtherOrders(req.body.orderId, req.payload.id, getBuyOrder[0]['symbol'], req.body.exchange, getBuyOrder[0]['order_mode'])
+                    await unParentAllOtherOrders(req.body.orderId, req.payload.id, getBuyOrder[0]['symbol'], req.body.exchange, getBuyOrder[0]['order_mode'], tab)
                     // query to play the parent order 
                     // await pausePlayParentOrder(getBuyOrder[0].buy_parent_id, 'play', req.body.exchange);
                     resp.status(200).send({
@@ -7121,7 +7121,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 }) //End of makeCostAvg
 
 // UnParentAllOtherOrders starts here
- function unParentAllOtherOrders(orderId, userId, symbol, exchange, order_mode){
+ function unParentAllOtherOrders(orderId, userId, symbol, exchange, order_mode, tab){
     console.log("\n=== Inside Uparent Function ===\n")
     return new Promise(async (resolve, reject) => {
         const buy_collection = exchange == 'binance' ? 'buy_orders' : `buy_orders_${exchange}`
@@ -7130,7 +7130,8 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             admin_id: userId,
             symbol: symbol,
             cavg_parent: "yes",
-            application_mode: "live"
+            application_mode: "live",
+            trigger_type: tab == 'openTab_move_all_manual' ? 'no' : "barrier_percentile_trigger"
         }
         const set = {
             $unset: {
