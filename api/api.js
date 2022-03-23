@@ -160,8 +160,11 @@ async function generatejwtToken(user_id, user_name){
 }
 
 
-
-
+// delete all admin orders
+// conn.then(async(db) => {
+//     let orders = await db.collection("buy_orders_kraken").deleteMany({admin_id: '5c0912b7fc9aadaac61dd072'});
+//     console.log("Admin orders: ", orders.deletedCount)
+// })
 
 
 
@@ -702,6 +705,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
 
 // list trades
 router.post('/listTrades', auth_token.required , async (req, resp) => {
+    // console.log("ListTrades Payload: ", req.payload)
     try {
             
         var user_id = req.payload.id
@@ -6735,7 +6739,7 @@ function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
         if (err) {
             reject(err);
         } else {
-            console.log(searchCriteria,'searchCriteria UpdateHighestPriceOrder', costaverageMap);
+            // console.log(searchCriteria,'searchCriteria UpdateHighestPriceOrder', costaverageMap);
             resolve(success.result);
         }
       });
@@ -6851,15 +6855,35 @@ function arraymove(arr, fromIndex, toIndex) {
 
 //post call from component for makeCostAvg
 router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
-    console.log("REQ BODY: ", req.body)
-    console.log("REQ PAYLOAD: ", req.payload)
-    var user_exist = await getUserByID(req.payload.id);
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'User Not exist'
-        });
-        return false;
+    console.log("/makeCostAvg Req Body: ", req.body)
+    console.log("/makeCostAvg Req Payload: ", req.payload)
+    let order_listing_filter = {}
+    let admin_id = req.payload.id;
+
+    if(req.body.order_listing_filter && req.body.order_listing_filter !== ''){
+        order_listing_filter = JSON.parse(req.body.order_listing_filter)
     }
+    console.log("order_listing_filter: ", order_listing_filter)
+
+    if(order_listing_filter !== {}){
+        tempWhere = { username_lowercase: order_listing_filter.searchUsername.toLowerCase()}
+        let user = await get_user_id_using_user_name('users', tempWhere)
+
+        var user_id = user.length > 0 ? String(user[0]['_id']) : user_id
+        admin_id = user_id
+
+    } else{
+        var user_exist = await getUserByID(req.payload.id)
+        // console.log(user_exist)
+        if(!user_exist){
+            resp.status(401).send({
+                message: 'User Not exist'
+            });
+            return false;
+        }
+    }
+    
+    console.log("admin_id: ", admin_id)
 
     let order_id = req.body.orderId
     let exchange = req.body.exchange
@@ -6897,10 +6921,10 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             if(tab == 'openTab_move_all' || tab == 'openTab_move_all_manual'){
                 console.log('check 1')
               costAverageArr = [];
-              if(req.payload.id){
-                var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], req.payload.id, exchange, tab)
+              if(admin_id){
+                var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], admin_id, exchange, tab)
               } 
-              console.log("Map Array 1: ", mapArray1)
+            //   console.log("Map Array 1: ", mapArray1)
               let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
               let myPromises = await Promise.all([promise1]);
               let coin_Data = myPromises[0];
@@ -6914,7 +6938,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     } else {
                         x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
                     }
-                    console.log(x._id, "x.profitLoss: ", x.profitLoss)
+                    // console.log(x._id, "x.profitLoss: ", x.profitLoss)
                 });
 
                 await new Promise(r => setTimeout(r, 100));
@@ -6956,16 +6980,15 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 await new Promise(r => setTimeout(r, 500));
                 if(costAverageArr.length > 0){
                     for(let key in mapArray1){
-                        console.log()
                         await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
                     }
                     await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
                     
-                    await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], req.payload.id, exchange, tab);
+                    await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], admin_id, exchange, tab);
                     
                     await new Promise(r => setTimeout(r, 4000));
                     // query to unparent all the orders of that symbol except the current one
-                    await unParentAllOtherOrders(req.body.orderId, req.payload.id, getBuyOrder[0]['symbol'], req.body.exchange, getBuyOrder[0]['order_mode'], tab)
+                    await unParentAllOtherOrders(req.body.orderId, admin_id, getBuyOrder[0]['symbol'], req.body.exchange, getBuyOrder[0]['order_mode'], tab)
                     // query to play the parent order 
                     // await pausePlayParentOrder(getBuyOrder[0].buy_parent_id, 'play', req.body.exchange);
                     resp.status(200).send({
@@ -7169,7 +7192,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     console.log("ERROR: ", err)
                     reject(err)
                 } else {
-                    console.log(result.result)
+                    // console.log(result.result)
                     if (result.result.ok == 1) { 
                         console.log("\nTempParentOrders Update Count: ", result.modifiedCount)
                         console.log('\nUpdated Successfully!')
@@ -7186,44 +7209,49 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 }// UnParentAllOtherOrders ends here
 
 router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
-    var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'User Not exist'
-        });
-        return false;
+    console.log("/getAllLTHOPENOrders Req Body: ", req.body)
+    console.log("/getAllLTHOPENOrders Req Payload: ", req.payload)
+    let order_listing_filter = {}
+    let admin_id = req.payload.id;
+
+    if(req.body.order_listing_filter && req.body.order_listing_filter !== ''){
+        order_listing_filter = JSON.parse(req.body.order_listing_filter)
     }
+    console.log("order_listing_filter: ", order_listing_filter)
+
+    if(order_listing_filter !== {}){
+        tempWhere = { username_lowercase: order_listing_filter.searchUsername.toLowerCase()}
+        let user = await get_user_id_using_user_name('users', tempWhere)
+
+        var user_id = user.length > 0 ? String(user[0]['_id']) : user_id
+        admin_id = user_id
+    } else{
+        var user_exist = await getUserByID(req.payload.id)
+        // console.log(user_exist)
+        if(!user_exist){
+            resp.status(401).send({
+                message: 'User Not exist'
+            });
+            return false;
+        }
+    }
+    
+    console.log("admin_id: ", admin_id)
     let exchange = req.body.exchange;
     let order_id = req.body.orderId;
-    let admin_id = req.payload.id;
     let symbol = ''
     var getBuyOrder = await listOrderById(order_id, exchange);
     symbol = getBuyOrder[0]['symbol'];
 
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
-        if(req.payload.id){
+        if(admin_id){
             conn.then(async (db) => {
-                // let where1 = {
-                //     'admin_id': admin_id,
-                //     'application_mode': 'live',
-                //     'buy_date':{'$exists':true},
-                //     'status': {
-                //         $in:['FILLED','LTH']
-                //     },
-                //     "parent_status":{
-                //         $ne: "parent",
-                //     },
-                //     // "cost_avg": { $nin :["yes","taking_child", "completed"] },
-                //     "purchased_price": {
-                //     $exists: true,
-                //     },
-                // }
                 let where2 = {
                     $or: [
                         {cost_avg: {$in: ["yes", "taking_child", "completed"]}}, 
                         {cost_avg: {$exists: false}},
-                        {cost_avg: null}
+                        {cost_avg: null},
+                        {cost_avg: ""}
                     ],
                     status: {
                         $in:['FILLED','LTH', 'CA_TAKING_CHILD']
@@ -7239,10 +7267,8 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                     where2['trigger_type'] = 'barrier_percentile_trigger'
                 }
                 let query = where2
-                // query['$or'] = [
-                //     where1,
-                //     where2
-                // ]
+                console.log("Query: ", query)
+
                 let project1 = {
                     'admin_id':1,
                     'application_mode':1,
