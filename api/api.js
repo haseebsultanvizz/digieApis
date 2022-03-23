@@ -6865,7 +6865,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
     }
     console.log("order_listing_filter: ", order_listing_filter)
 
-    if(order_listing_filter !== {}){
+    if(order_listing_filter !== {} && order_listing_filter.searchUsername !== ''){
         tempWhere = { username_lowercase: order_listing_filter.searchUsername.toLowerCase()}
         let user = await get_user_id_using_user_name('users', tempWhere)
 
@@ -7219,7 +7219,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
     }
     console.log("order_listing_filter: ", order_listing_filter)
 
-    if(order_listing_filter !== {}){
+    if(order_listing_filter !== {} && order_listing_filter.searchUsername !== ''){
         tempWhere = { username_lowercase: order_listing_filter.searchUsername.toLowerCase()}
         let user = await get_user_id_using_user_name('users', tempWhere)
 
