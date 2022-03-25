@@ -4468,14 +4468,7 @@ async function getUserByID(admin_id, user_detail='no'){
 
 //function for getting order list from order-list angular  component
 router.post('/listOrderListing', auth_token.required , async (req, resp) => {
-
-
-
-    // var admin_id = req.body.postData.admin_id;
-    // console.log(req.payload.id)
-
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -4483,36 +4476,21 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
         return false;
     }
 
-
     var admin_id = req.payload.id
-
-
     var application_mode = req.body.postData.application_mode;
     var postDAta = req.body.postData;
     var exchange = postDAta.exchange;
-
     var countArr = getOrderStats(postDAta)
     var userBalanceArr = get_user_wallet(admin_id, exchange)
     var avg_profit = 0; //total_profit / total_quantity;
-
-
-
-    // console.log(req.body.postData,'-=-=-=-=--=-=-=-=-=-=-=-=-=-=')
-    //function for listing orders
-
+    
     let pricesObj = await get_current_market_prices(exchange, [])
-
     var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
-
     var orderListing = await listOrderListing(postDAta);
-
     var customOrderListing = [];
-
     var currentMarketPrice = 0;
 
     for (let index in orderListing) {
-
-        // if(index >= 1){break}
 
         let currSymbol = orderListing[index].symbol
         currentMarketPrice = pricesObj[currSymbol]
@@ -4553,9 +4531,6 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
 
         order['actualSoldPrice'] = parseFloat(isNaN(market_sold_price) ? '---' : market_sold_price).toFixed(8);
 
-
-
-
         var htmlStatus = '';
         var htmlStatusArr = [];
 
@@ -4568,9 +4543,6 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
 
         var parent_status = (typeof orderListing[index].parent_status == 'undefined') ? '' : orderListing[index].parent_status;
 
-
-
-
         var sell_profit_percent = (typeof orderListing[index].sell_profit_percent == 'undefined') ? '' : orderListing[index].sell_profit_percent;
         var lth_profit = (typeof orderListing[index].lth_profit == 'undefined') ? '' : orderListing[index].lth_profit;
 
@@ -4578,28 +4550,8 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
 
         var sell_order_id = (typeof orderListing[index].sell_order_id == 'undefined') ? '' : orderListing[index].sell_order_id;
 
-        // var targetPrice = sell_profit_percent;
-
-        // if (trigger_type == 'no' && sell_order_id != '') {
-        //     //get sell order on the base of buy orders
-        //     var sellOrder = await listSellOrderById(sell_order_id, exchange);
-        //     if (sellOrder.length > 0) {
-        //         let sellArr = sellOrder[0];
-        //         let sell_profit_percent = (typeof sellArr.sell_profit_percent == 'undefined') ? '--' : sellArr.sell_profit_percent;
-        //         targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
-        //     } else {
-        //         targetPrice = '';
-        //     }
-        // } else {
-        //     targetPrice = (status == 'LTH') ? lth_profit : sell_profit_percent;
-        // }
-
-        // console.log(targetPrice + '---------' + sell_profit_percent)
         var targetPrice = (status == 'LTH') ? parseFloat(parseFloat(lth_profit).toFixed(2)) : parseFloat(parseFloat(sell_profit_percent).toFixed(2));
         order['targetPrice'] = (isNaN(targetPrice)) ? '---' : targetPrice
-
-        // var orderSellPrice = (typeof orderListing[index].market_sold_price == 'undefined' || orderListing[index].market_sold_price == '') ? '' : orderListing[index].market_sold_price;
-        // var orderPurchasePrice = (typeof orderListing[index].purchased_price == 'undefined' || orderListing[index].purchased_price == '') ? 0 : orderListing[index].purchased_price;
 
         var orderSellPrice = (typeof orderListing[index].market_sold_price != 'undefined' && orderListing[index].market_sold_price != '' && !isNaN(parseFloat(orderListing[index].market_sold_price))) ? parseFloat(orderListing[index].market_sold_price) : '';
 
@@ -4729,8 +4681,6 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
                 //if order is sold and no child is buy
                 if (postDAta.status == 'costAvgTab' && typeof orderListing[index].cavg_parent != 'undefined' && orderListing[index].cavg_parent == 'yes' && typeof orderListing[index].move_to_cost_avg != 'undefined' && orderListing[index].move_to_cost_avg == 'yes' && (typeof orderListing[index].avg_orders_ids == 'undefined' || orderListing[index].avg_orders_ids.length == 0)){
 
-
-
                   var totalBuyOrders = typeof orderListing[index]['cost_avg_array'] != 'undefined' && orderListing[index]['cost_avg_array'].length > 0 ? orderListing[index]['cost_avg_array'].filter(order => order.order_sold == 'no').map(order => order.order_sold) : []
 
                   if(totalBuyOrders.length > 0){
@@ -4789,8 +4739,6 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
                 htmlStatus += '<span class="badge huzaifaa badge-' + statusClass + '">' + status + '</span>';
                 htmlStatusArr.push(status);
               }
-
-
             }
         }
 
@@ -4858,9 +4806,6 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
 
             }
             resumePL = resumePL.toFixed(2)
-            // if(is_sold){
-            //     order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"><b>' + resumePL + '%</b></span>';
-            // }
             htmlStatus += ' <span class="text-' + resumePlClass + '" style="margin-left:4px;" ><b>' + resumePL + '%</b></span>'
             htmlStatusArr.push(resumePL)
         }
@@ -4911,30 +4856,15 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
             order['profitLossPercentageHtml'] = '<span class="text-' + resumePlClass + '"> <b>' + resumePL.toFixed(2) + '%</b></span>'
         }
 
-
         if (exchange == 'kraken' && typeof orderListing[index]['shifted_order_label'] != 'undefined' && typeof orderListing[index]['shifted_order_label'] != ''){
             htmlStatus += '<span class="badge badge-info">' + orderListing[index]['shifted_order_label'] + '</span>';
             htmlStatusArr.push(orderListing[index]['shifted_order_label'])
         }
 
-        // if(postDAta.status == 'new'){
-        //     if (typeof orderListing[index].deep_price_on_off != 'undefined' && orderListing[index].deep_price_on_off == 'yes'){
-        //         htmlStatus += '<span class="badge badge-info">Deep buy price</span>';
-        //         htmlStatusArr.push('Deep buy price')
-        //     }
-        // }
-
-
-        /* *******      Cost average code     ******  */
-        // if (typeof orderListing[index]['avg_orders_ids'] != 'undefined') {
-        //     htmlStatus += ' <span class="badge badge-primary">Cost Avg Parent</span> ';
-        //     htmlStatusArr.push('Cost Avg Parent')
-        // }
-
         if (postDAta.status == 'filled' && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no' && typeof orderListing[index].cost_avg != 'undefined' && (orderListing[index].cost_avg == 'yes' || orderListing[index].cost_avg == 'taking_child')) {
             htmlStatus += ' <span class="badge badge-primary">Cost Avg</span> ';
             htmlStatusArr.push('Cost Avg')
-        }else if ((postDAta.status == 'LTH' || postDAta.status == 'open') && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
+        } else if ((postDAta.status == 'LTH' || postDAta.status == 'open') && typeof orderListing[index].trigger_type != 'undefined' && orderListing[index].trigger_type != 'no') {
             if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'yes'){
                 htmlStatus += ' <span class="badge badge-primary">Cost Avg</span> ';
                 htmlStatusArr.push('Cost Avg')
@@ -4948,12 +4878,6 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
                 htmlStatus += ' <span class="badge badge-primary">Cost Avg</span> ';
                 htmlStatusArr.push('Cost Avg')
             }
-
-            // if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'completed' && typeof orderListing[index]['avg_orders_ids'] != 'undefined' && orderListing[index]['avg_orders_ids'].length > 0) {
-            //     htmlStatus += ' <span class="badge badge-success">Cost Avg Completed</span> ';
-            //     htmlStatusArr.push('Cost Avg Completed')
-            // }
-
 
             if (typeof orderListing[index].cost_avg != 'undefined' && orderListing[index].cost_avg == 'completed') {
                 htmlStatus += ' <span class="badge badge-success">Cost Avg Completed</span> ';
@@ -4970,10 +4894,6 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
 
                     let costAvgData = await getCostAvgPLandUsdWorth(cost_avg_order_ids, exchange)
 
-
-
-
-
                     if (Object.keys(costAvgData).length >0){
                         order['profitLossPercentageHtml'] = '<span class="text-' + costAvgData['curr_avg_profit_color'] + '"><b>' + costAvgData['curr_avg_profit'] + '%</b> (' + cost_avg_order_ids.length + ')</span>';
                         order['coinPriceInBtc'] = costAvgData['total_usd_worth']
@@ -4981,11 +4901,6 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
                         order['quantity'] = costAvgData['totalQuantity']
                         // order['targetPrice'] = orderListing[index]['defined_sell_percentage']
                     }
-                    // if(orderListing[index]['cost_avg_array'] != 'undefined'){
-                    //     console.log('Working')
-                    //     let totalCostAvgChildOrders = typeof orderListing[index]['cost_avg_array'] != 'undefined' ? orderListing[index]['cost_avg_array'].length : -1
-                    //     order['profitLossPercentageHtml'] = '<span class="text-' + costAvgData['curr_avg_profit_color'] + '"><b>' + costAvgData['curr_avg_profit'] + '%</b> (' + totalCostAvgChildOrders > -1 ? totalCostAvgChildOrders : cost_avg_order_ids.length + ')</span>';
-                    // }
                 }
 
                 if (typeof orderListing[index]['is_sell_order'] != 'undefined' && orderListing[index]['is_sell_order'] == 'sold'){
@@ -4999,9 +4914,7 @@ router.post('/listOrderListing', auth_token.required , async (req, resp) => {
         }
         /* *******   End Cost average code    ******  */
 
-
         order['childProfitLossPercentageHtml'] = childProfitLossPercentageHtml
-
 
         if (postDAta.status == 'parent' && status != 'canceled' && typeof orderListing[index].parent_status != 'undefined' && orderListing[index].parent_status == 'parent') {
 
