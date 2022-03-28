@@ -2411,7 +2411,6 @@ async function listmarketPriceMinNotation(coin, exchange){
 //post call for creating manual order
 router.post('/createManualOrder', auth_token.required, async (req, resp) => {
 
-
     var user_exist = await getUserByID(req.payload.id);
     // console.log(user_exist, 'USER EXIST')
     if(!user_exist){
@@ -2694,10 +2693,45 @@ router.post('/createManualOrder', auth_token.required, async (req, resp) => {
     })
 }) //End of createManualOrder
 
+router.post('/createManualChild', auth_token.required, async (req, resp) => {
+    console.log("\ncreateManualChild REQ PAYLOAD: ", req.payload)
+    console.log("\ncreateManualChild REQ BODY: ", req.body)
+    var user_exist = await getUserByID(req.payload.id);
+    
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
 
+    conn.then(async (db) => {
+        let childOrder = req.body.orderObj;
+        let orderId = req.body.orderId;
+        let exchange = childOrder['exchange'];
 
+        let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+        console.log(collectionName)
 
+        delete childOrder.symbol
+        delete childOrder.exchange
 
+        db.collection(collectionName).updateOne({_id: ObjectID(orderId)}, { $push: { cost_avg_array: childOrder } }, (err, result) => {
+            if(err){
+                resp.status(403).send({
+                    message: err
+                });
+            }
+            else if(result){
+                result.result.ok == 1 ? console.log("Updated Successfully!") : console.log("Couldn't Update")
+                resp.status(200).send({
+                    message: 'Child order successfully added!',
+                    data: buyOrderId
+                });
+            }
+        })
+    })
+})
 
 //post call from chart for creating manual order
 router.post('/createManualOrderByChart', auth_token.required, async (req, resp) => {
