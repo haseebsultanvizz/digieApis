@@ -162,7 +162,7 @@ async function generatejwtToken(user_id, user_name){
 
 // delete all admin orders
 // conn.then(async(db) => {
-//     let orders = await db.collection("buy_orders_kraken").deleteMany({admin_id: '5c0912b7fc9aadaac61dd072'});
+//     let orders = await db.collection("sold_buy_orders_kraken").deleteMany({admin_id: '5c0912b7fc9aadaac61dd072'});
 //     console.log("Admin orders: ", orders.deletedCount)
 // })
 
@@ -2706,30 +2706,51 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
     }
 
     conn.then(async (db) => {
+        let newOrder = req.body.newOrder
         let childOrder = req.body.orderObj;
         let orderId = req.body.orderId;
-        let exchange = childOrder['exchange'];
+
+        let exchange = newOrder['exchange'];
 
         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
         console.log(collectionName)
 
-        delete childOrder.symbol
-        delete childOrder.exchange
+        newOrder.buy_date = new Date()
+        newOrder.buy_parent_id = ObjectID(newOrder.buy_parent_id)
 
-        db.collection(collectionName).updateOne({_id: ObjectID(orderId)}, { $push: { cost_avg_array: childOrder } }, (err, result) => {
+        db.collection(collectionName).insertOne(newOrder, (err, result) => {
             if(err){
                 resp.status(403).send({
                     message: err
                 });
-            }
-            else if(result){
-                result.result.ok == 1 ? console.log("Updated Successfully!") : console.log("Couldn't Update")
-                resp.status(200).send({
-                    message: 'Child order successfully added!',
-                    data: buyOrderId
-                });
+            } else if(result){
+                let insertedOrder = result.ops[0]
+                console.log("Insert Query Result: ", insertedOrder)
+                if(result.result.ok == 1){
+                    childOrder['buy_order_id'] = insertedOrder._id
+                    db.collection(collectionName).updateOne({_id: ObjectID(orderId)}, { $push: { cost_avg_array: childOrder } }, (err, output) => {
+                        if(err){
+                            resp.status(403).send({
+                                message: err
+                            });
+                        }
+                        else if(output){
+                            output.result.ok == 1 ? console.log("Updated Successfully!") : console.log("Couldn't Update")
+                            resp.status(200).send({
+                                message: 'Child order successfully added!',
+                                data: req.payload.id
+                            });
+                        }
+                    })
+                } else {
+                    resp.status(403).send({
+                        message: 'Something went wrong!'
+                    });
+                }
+                
             }
         })
+
     })
 })
 
@@ -6812,7 +6833,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
     }
     console.log("order_listing_filter: ", order_listing_filter)
 
-    if(order_listing_filter !== {} && order_listing_filter.searchUsername !== ''){
+    if(order_listing_filter.length > 0 && order_listing_filter.searchUsername !== ''){
         tempWhere = { username_lowercase: order_listing_filter.searchUsername.toLowerCase()}
         let user = await get_user_id_using_user_name('users', tempWhere)
 
