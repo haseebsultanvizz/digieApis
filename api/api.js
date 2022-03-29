@@ -6833,7 +6833,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
     }
     console.log("order_listing_filter: ", order_listing_filter)
 
-    if(order_listing_filter.length > 0 && order_listing_filter.searchUsername !== ''){
+    if(Object.keys(order_listing_filter).length > 0 && order_listing_filter.searchUsername !== ''){
         tempWhere = { username_lowercase: order_listing_filter.searchUsername.toLowerCase()}
         let user = await get_user_id_using_user_name('users', tempWhere)
 
@@ -6888,91 +6888,91 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             
             if(tab == 'openTab_move_all' || tab == 'openTab_move_all_manual'){
                 console.log('check 1')
-              costAverageArr = [];
-              if(admin_id){
-                var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], admin_id, exchange, tab)
-              } 
-            //   console.log("Map Array 1: ", mapArray1)
-              let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
-              let myPromises = await Promise.all([promise1]);
-              let coin_Data = myPromises[0];
-              let currentmarketPrice = coin_Data['currentmarketPrice'][0]['price'];
+                costAverageArr = [];
+                if(admin_id){
+                    var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], admin_id, exchange, tab)
+                } 
+                  console.log("\nMap Array 1: ", mapArray1)
+                let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
+                let myPromises = await Promise.all([promise1]);
+                let coin_Data = myPromises[0];
+                let currentmarketPrice = coin_Data['currentmarketPrice'][0]['price'];
 
-              if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
-                mapArray1.map( x => {
-                    var orderSellPrice = (typeof x.market_sold_price != 'undefined' && x.market_sold_price != '' && !isNaN(parseFloat(x.market_sold_price))) ? parseFloat(x.market_sold_price) : '';
-                    if(orderSellPrice != ''){
-                        x.profitLoss = getPercentageDiff(orderSellPrice, x['purchased_price']);
-                    } else {
-                        x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
-                    }
-                    // console.log(x._id, "x.profitLoss: ", x.profitLoss)
-                });
-
-                await new Promise(r => setTimeout(r, 100));
-
-                mapArray1 = [...mapArray1].sort((a, b) => parseFloat(a.profitLoss) - parseFloat(b.profitLoss));
-                const findParentIndex = (order) => (order["_id"]).toString() == order_id
-                const parentIndex = mapArray1.findIndex(findParentIndex)
-                if(parentIndex != -1){
-                  mapArray1 = arraymove(mapArray1, parentIndex, 0);
-                }
-
-                await new Promise(r => setTimeout(r, 500));
-                // return false
-                for (let key in mapArray1) {
-                  let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
-                  if(typeof fractionOrderArr != 'undefined'){
-                    var dataToAppend = {};
-                    dataToAppend["order_sold"]       = "no"
-                    dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
-                    dataToAppend["filledQtyBuy"]     = fractionOrderArr[0]["filledQty"]
-                    dataToAppend["commissionBuy"]    = fractionOrderArr[0]["commission"]
-                    dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
-                    dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
-                    dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
-                    // console.log("highestParentOrder:", highestParentOrder)
-                    costAverageArr.push(dataToAppend);
-                  } else {
-                    var dataToAppend = {};
-                    dataToAppend["order_sold"]       = "no";
-                    dataToAppend["buy_order_id"]     = mapArray1[key]["_id"];
-                    dataToAppend["filledQtyBuy"]     = typeof mapArray1[key]['quantity'] != 'undefined' && mapArray1[key]['quantity'] != '' ? mapArray1[key]['quantity'].toFixed(8) : '';
-                    dataToAppend["commissionBuy"]    = '';
-                    dataToAppend["filledPriceBuy"]   = typeof mapArray1[key]['purchased_price'] != 'undefined' && mapArray1[key]['purchased_price'] != '' ? mapArray1[key]['purchased_price'].toFixed(8) : '';
-                    dataToAppend["orderFilledIdBuy"] = typeof mapArray1[key]['tradeId'] != 'undefined' && mapArray1[key]['tradeId'] != '' ? mapArray1[key]['tradeId'] : '';
-                    dataToAppend["buyTimeDate"]      = new Date(mapArray1[key]['created_date']);
-                    costAverageArr.push(dataToAppend);
-                  }
-                }
-                await new Promise(r => setTimeout(r, 500));
-                if(costAverageArr.length > 0){
-                    for(let key in mapArray1){
-                        await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
-                    }
-                    await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
-                    
-                    await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], admin_id, exchange, tab);
-                    
-                    await new Promise(r => setTimeout(r, 4000));
-                    // query to unparent all the orders of that symbol except the current one
-                    await unParentAllOtherOrders(req.body.orderId, admin_id, getBuyOrder[0]['symbol'], req.body.exchange, getBuyOrder[0]['order_mode'], tab)
-                    // query to play the parent order 
-                    // await pausePlayParentOrder(getBuyOrder[0].buy_parent_id, 'play', req.body.exchange);
-                    resp.status(200).send({
-                        status: true, message: "Successfully Created"
+                if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
+                    mapArray1.map( x => {
+                        var orderSellPrice = (typeof x.market_sold_price != 'undefined' && x.market_sold_price != '' && !isNaN(parseFloat(x.market_sold_price))) ? parseFloat(x.market_sold_price) : '';
+                        if(orderSellPrice != ''){
+                            x.profitLoss = getPercentageDiff(orderSellPrice, x['purchased_price']);
+                        } else {
+                            x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
+                        }
+                        // console.log(x._id, "x.profitLoss: ", x.profitLoss)
                     });
+
+                    await new Promise(r => setTimeout(r, 100));
+
+                    mapArray1 = [...mapArray1].sort((a, b) => parseFloat(a.profitLoss) - parseFloat(b.profitLoss));
+                    const findParentIndex = (order) => (order["_id"]).toString() == order_id
+                    const parentIndex = mapArray1.findIndex(findParentIndex)
+                    if(parentIndex != -1){
+                    mapArray1 = arraymove(mapArray1, parentIndex, 0);
+                    }
+
+                    await new Promise(r => setTimeout(r, 500));
+                    // return false
+                    for (let key in mapArray1) {
+                    let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
+                    if(typeof fractionOrderArr != 'undefined'){
+                        var dataToAppend = {};
+                        dataToAppend["order_sold"]       = "no"
+                        dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
+                        dataToAppend["filledQtyBuy"]     = fractionOrderArr[0]["filledQty"]
+                        dataToAppend["commissionBuy"]    = fractionOrderArr[0]["commission"]
+                        dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
+                        dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
+                        dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
+                        // console.log("highestParentOrder:", highestParentOrder)
+                        costAverageArr.push(dataToAppend);
+                    } else {
+                        var dataToAppend = {};
+                        dataToAppend["order_sold"]       = "no";
+                        dataToAppend["buy_order_id"]     = mapArray1[key]["_id"];
+                        dataToAppend["filledQtyBuy"]     = typeof mapArray1[key]['quantity'] != 'undefined' && mapArray1[key]['quantity'] != '' ? mapArray1[key]['quantity'].toFixed(8) : '';
+                        dataToAppend["commissionBuy"]    = '';
+                        dataToAppend["filledPriceBuy"]   = typeof mapArray1[key]['purchased_price'] != 'undefined' && mapArray1[key]['purchased_price'] != '' ? mapArray1[key]['purchased_price'].toFixed(8) : '';
+                        dataToAppend["orderFilledIdBuy"] = typeof mapArray1[key]['tradeId'] != 'undefined' && mapArray1[key]['tradeId'] != '' ? mapArray1[key]['tradeId'] : '';
+                        dataToAppend["buyTimeDate"]      = new Date(mapArray1[key]['created_date']);
+                        costAverageArr.push(dataToAppend);
+                    }
+                    }
+                    await new Promise(r => setTimeout(r, 500));
+                    if(costAverageArr.length > 0){
+                        for(let key in mapArray1){
+                            await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
+                        }
+                        await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
+                        
+                        await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], admin_id, exchange, tab);
+                        
+                        await new Promise(r => setTimeout(r, 4000));
+                        // query to unparent all the orders of that symbol except the current one
+                        await unParentAllOtherOrders(req.body.orderId, admin_id, getBuyOrder[0]['symbol'], req.body.exchange, getBuyOrder[0]['order_mode'], tab)
+                        // query to play the parent order 
+                        // await pausePlayParentOrder(getBuyOrder[0].buy_parent_id, 'play', req.body.exchange);
+                        resp.status(200).send({
+                            status: true, message: "Successfully Created"
+                        });
+                    } else {
+                        resp.status(200).send({
+                            status: false, message : "buy_fraction_filled_order_arr not found or may be something went wrong"
+                        });
+                    }
                 } else {
                     resp.status(200).send({
-                        status: false, message : "buy_fraction_filled_order_arr not found or may be something went wrong"
+                        status: false, message: "map arr not found"
                     });
                 }
-              } else {
-                resp.status(200).send({
-                    status: false, message: "map arr not found"
-                });
-              }
-              return false;
+                return false;
             }
             
             if(tab == 'soldTab'){
