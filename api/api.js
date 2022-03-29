@@ -6762,7 +6762,7 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
                     collection_name = exchange == 'binance' ? collection_name : collection_name+'_'+exchange;
                     query2['_id'] = new ObjectID((cost_avg_array_orders[i]['cost_avg_array'][j]['buy_order_id']).toString());
                     query2['direct_parent_child_id'] = new ObjectID((cost_avg_array_orders[i]['_id']).toString());
-                    let childPromise = await db.collection(collection_name).find(query2).project(project2).toArray();
+                    let childPromise = await db.collection(collection_name).find(query2).toArray();
                     AllChildOrders.push(childPromise[0])
                     }
                 }
