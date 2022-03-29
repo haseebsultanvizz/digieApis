@@ -34165,6 +34165,37 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
 
 }) //End of updateUserTradeHistory
 
+router.post('/getIsBalanceUpdatedKraken', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+    var user_id = req.payload.id;
+
+    conn.then(db => {
+        db.collection('users').findOne({_id: ObjectID(user_id)}, async function (err, data) {
+            if (err) throw err;
+            if (data != undefined || data != null) {
+                resp.status(200).send({
+                    "success": true,
+                    "is_balance_updated_kraken": data['is_balance_updated_kraken'] ? data['is_balance_updated_kraken'] : '',
+                })
+            } else {
+                resp.status(201).send({
+                    "success": false,
+                    "message": "Something Went Wrong"
+                })
+            }
+        })
+    })
+
+}) //End of getIsBalanceUpdatedKraken
 
 // Huzaifa Ends Here
 
