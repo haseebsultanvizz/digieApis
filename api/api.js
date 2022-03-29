@@ -34116,16 +34116,34 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
 
             if (err) throw err;
             if (data != undefined || data != null) {
-              if(exchange == 'binance'){
-                resp.status(200).send({
+                if(exchange == 'binance'){
+                    resp.status(200).send({
+                        "success": true,
+                        "balance_modified_time": data['balance_modified_time'] ? data['balance_modified_time'] : '',
+                        "is_api_key_valid": data['is_api_key_valid'],
+                        "is_api_key_valid_secondary": typeof data['is_api_key_valid_secondary'] != 'undefined' && data['is_api_key_valid_secondary'] != ''? data['is_api_key_valid_secondary'] : 'no',
+                        "is_api_key_valid_third": typeof data['is_api_key_valid_third'] != 'undefined' && data['is_api_key_valid_third'] != ''? data['is_api_key_valid_third'] : 'no',
+                        "last_key_updated_date": data['info_modified_date'],
+                        "last_key_updated_date_2": data['info_modified_date_secondary'],
+                        "last_key_updated_date_3": data['info_modified_date_third_key'],
+                        "api_key_1": typeof data['api_key_1'] != 'undefined' && data['api_key_1'] != '' ? data['api_key_1'] : 'no',
+                        "api_key_2": typeof data['api_key_2'] != 'undefined' && data['api_key_2'] != '' ? data['api_key_2'] : 'no',
+                        "api_key_3": typeof data['api_key_3'] != 'undefined' && data['api_key_3'] != '' ? data['api_key_3'] : 'no',
+                        "secret_1": typeof data['secret_1'] != 'undefined' && data['secret_1'] != '' ? data['secret_1'] : 'no',
+                        "secret_2": typeof data['secret_2'] != 'undefined' && data['secret_2'] != '' ? data['secret_2'] : 'no',
+                        "secret_3": typeof data['secret_3'] != 'undefined' && data['secret_3'] != '' ? data['secret_3'] : 'no',
+                        "message": "User data against _id " + user_id + " has been fetched successfully"
+                    })
+                } else {
+                    resp.status(200).send({
                     "success": true,
-                    "balance_modified_time": data['balance_modified_time'] ? data['balance_modified_time'] : '',
+                    "is_balance_updated_kraken": data['is_balance_updated_kraken'] ? data['is_balance_updated_kraken'] : '',
                     "is_api_key_valid": data['is_api_key_valid'],
-                    "is_api_key_valid_secondary": typeof data['is_api_key_valid_secondary'] != 'undefined' && data['is_api_key_valid_secondary'] != ''? data['is_api_key_valid_secondary'] : 'no',
-                    "is_api_key_valid_third": typeof data['is_api_key_valid_third'] != 'undefined' && data['is_api_key_valid_third'] != ''? data['is_api_key_valid_third'] : 'no',
-                    "last_key_updated_date": data['info_modified_date'],
-                    "last_key_updated_date_2": data['info_modified_date_secondary'],
-                    "last_key_updated_date_3": data['info_modified_date_third_key'],
+                    "is_api_key_valid_secondary": data['is_api_key_valid_secondary'],
+                    "is_api_key_valid_third": data['is_api_key_valid_third'],
+                    "last_key_updated_date_kraken1": data['modified_date'],
+                    "last_key_updated_date_kraken2": data['modified_date_secondary'],
+                    "last_key_updated_date_kraken3": data['modified_date_third_key'],
                     "api_key_1": typeof data['api_key_1'] != 'undefined' && data['api_key_1'] != '' ? data['api_key_1'] : 'no',
                     "api_key_2": typeof data['api_key_2'] != 'undefined' && data['api_key_2'] != '' ? data['api_key_2'] : 'no',
                     "api_key_3": typeof data['api_key_3'] != 'undefined' && data['api_key_3'] != '' ? data['api_key_3'] : 'no',
@@ -34133,26 +34151,8 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                     "secret_2": typeof data['secret_2'] != 'undefined' && data['secret_2'] != '' ? data['secret_2'] : 'no',
                     "secret_3": typeof data['secret_3'] != 'undefined' && data['secret_3'] != '' ? data['secret_3'] : 'no',
                     "message": "User data against _id " + user_id + " has been fetched successfully"
-                })
-              } else {
-                resp.status(200).send({
-                  "success": true,
-                  "balance_modified_time_kraken": data['balance_modified_time_kraken'] ? data['balance_modified_time_kraken'] : '',
-                  "is_api_key_valid": data['is_api_key_valid'],
-                  "is_api_key_valid_secondary": data['is_api_key_valid_secondary'],
-                  "is_api_key_valid_third": data['is_api_key_valid_third'],
-                  "last_key_updated_date_kraken1": data['modified_date'],
-                  "last_key_updated_date_kraken2": data['modified_date_secondary'],
-                  "last_key_updated_date_kraken3": data['modified_date_third_key'],
-                  "api_key_1": typeof data['api_key_1'] != 'undefined' && data['api_key_1'] != '' ? data['api_key_1'] : 'no',
-                  "api_key_2": typeof data['api_key_2'] != 'undefined' && data['api_key_2'] != '' ? data['api_key_2'] : 'no',
-                  "api_key_3": typeof data['api_key_3'] != 'undefined' && data['api_key_3'] != '' ? data['api_key_3'] : 'no',
-                  "secret_1": typeof data['secret_1'] != 'undefined' && data['secret_1'] != '' ? data['secret_1'] : 'no',
-                  "secret_2": typeof data['secret_2'] != 'undefined' && data['secret_2'] != '' ? data['secret_2'] : 'no',
-                  "secret_3": typeof data['secret_3'] != 'undefined' && data['secret_3'] != '' ? data['secret_3'] : 'no',
-                  "message": "User data against _id " + user_id + " has been fetched successfully"
-                })
-              }
+                    })
+                }
             } else {
                 resp.status(201).send({
                     "success": false,
