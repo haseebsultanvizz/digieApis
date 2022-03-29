@@ -81,6 +81,7 @@ router.post('/verifyOldPassword', async function (req, resp) {
 
 //TODO: Block temporarily if more than 3 unsuccessful login attempts
 async function blockLoginAttempt(username, action) {
+    let unsuccefull_attempts_limit = 5;
     return new Promise(async function (resolve, reject) {
         let where = {
             'username_lowercase': username,
@@ -98,8 +99,9 @@ async function blockLoginAttempt(username, action) {
                                 let login_block_expiry = new Date(login_attempt_block_time.getTime() + 10 * 60000);
                                 let current_time = new Date()
                                 // console.log(login_block_expiry, '  =================  ', current_time)
-                                if (login_block_expiry >= current_time && (!isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) && data[0]['unsuccessfull_login_attempt_count'] >= 3) ) {
+                                if (login_block_expiry >= current_time && (!isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) && data[0]['unsuccessfull_login_attempt_count'] >= unsuccefull_attempts_limit) ) {
                                     resolve(true)
+                                    blockLoginAttempt(username, 'reset')
                                 } else {
                                     blockLoginAttempt(username, 'reset')
                                     resolve(false)
@@ -110,7 +112,7 @@ async function blockLoginAttempt(username, action) {
                             var set = {
                                 'unsuccessfull_login_attempt_count': (typeof data[0]['unsuccessfull_login_attempt_count'] != 'undefined' && data[0]['unsuccessfull_login_attempt_count'] != '' && !isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) ? data[0]['unsuccessfull_login_attempt_count'] + 1 : 1)
                             }
-                            if (set['unsuccessfull_login_attempt_count'] >= 3) {
+                            if (set['unsuccessfull_login_attempt_count'] >= unsuccefull_attempts_limit) {
                                 set['login_attempt_block_time'] = new Date()
                                 // set['user_soft_delete'] = 1
                             }
@@ -118,7 +120,7 @@ async function blockLoginAttempt(username, action) {
                                 '$set': set
                             })
 
-                            if (set['unsuccessfull_login_attempt_count'] >= 3) {
+                            if (set['unsuccessfull_login_attempt_count'] >= unsuccefull_attempts_limit) {
                                 resolve(true)
                             }
                             resolve(false)
