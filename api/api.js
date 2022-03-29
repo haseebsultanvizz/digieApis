@@ -81,6 +81,7 @@ router.post('/verifyOldPassword', async function (req, resp) {
 
 //TODO: Block temporarily if more than 3 unsuccessful login attempts
 async function blockLoginAttempt(username, action) {
+    let unsuccefull_attempts_limit = 5;
     return new Promise(async function (resolve, reject) {
         let where = {
             'username_lowercase': username,
@@ -98,7 +99,6 @@ async function blockLoginAttempt(username, action) {
                                 let login_block_expiry = new Date(login_attempt_block_time.getTime() + 10 * 60000);
                                 let current_time = new Date()
                                 // console.log(login_block_expiry, '  =================  ', current_time)
-                                let unsuccefull_attempts_limit = 5;
                                 if (login_block_expiry >= current_time && (!isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) && data[0]['unsuccessfull_login_attempt_count'] >= unsuccefull_attempts_limit) ) {
                                     resolve(true)
                                 } else {
