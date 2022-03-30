@@ -82,6 +82,7 @@ router.post('/verifyOldPassword', async function (req, resp) {
 //TODO: Block temporarily if more than 3 unsuccessful login attempts
 async function blockLoginAttempt(username, action) {
     let unsuccefull_attempts_limit = 5;
+    let is_user_blocked = false
     return new Promise(async function (resolve, reject) {
         let where = {
             'username_lowercase': username,
@@ -92,53 +93,69 @@ async function blockLoginAttempt(username, action) {
                     resolve(false)
                 } else {
                     if (data.length > 0) {
+
                         if (action == 'temp_block_check') {
+
                             if (typeof data[0]['login_attempt_block_time'] != 'undefined' && data[0]['login_attempt_block_time'] != '') {
+                                let login_attempt_block_time = new Date(String(data[0]['login_attempt_block_time']))
+                                // 10 minutes block time
+                                let login_block_expiry = new Date(login_attempt_block_time.getTime() + 10 * 60000);
+                                let current_time = new Date()
+                                // if expiry time is remaining then set 'is_user_blocked' to true
+                                if (login_block_expiry >= current_time && (!isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) && data[0]['unsuccessfull_login_attempt_count'] >= unsuccefull_attempts_limit) ) {
+                                    is_user_blocked = true
+                                    resolve(is_user_blocked)
+                                } else {
+                                    blockLoginAttempt(username, 'reset')
+                                    resolve(is_user_blocked)
+                                }
+                            }
+                            resolve(is_user_blocked)
+
+                        } else if (action == 'increment') {
+
+                            if(data[0]['unsuccessfull_login_attempt_count'] >= unsuccefull_attempts_limit){
                                 let login_attempt_block_time = new Date(String(data[0]['login_attempt_block_time']))
                                 //15 minutes block time
                                 let login_block_expiry = new Date(login_attempt_block_time.getTime() + 10 * 60000);
                                 let current_time = new Date()
-                                // console.log(login_block_expiry, '  =================  ', current_time)
-                                if (login_block_expiry >= current_time && (!isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) && data[0]['unsuccessfull_login_attempt_count'] >= unsuccefull_attempts_limit) ) {
-                                    resolve(true)
+                                if(login_block_expiry < current_time){
                                     blockLoginAttempt(username, 'reset')
                                 } else {
-                                    blockLoginAttempt(username, 'reset')
-                                    resolve(false)
+                                    is_user_blocked = true
+                                    resolve(is_user_blocked)
                                 }
+                            } else {
+                                const attemptsLimit = (typeof data[0]['unsuccessfull_login_attempt_count'] != 'undefined' && data[0]['unsuccessfull_login_attempt_count'] != '' && !isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) ? data[0]['unsuccessfull_login_attempt_count'] + 1 : 1)
+                                var set = {
+                                    'unsuccessfull_login_attempt_count': attemptsLimit
+                                }
+                                // if failed login attempts limit is reached then save the login block time in the DB
+                                if (attemptsLimit >= unsuccefull_attempts_limit) {
+                                    set['login_attempt_block_time'] = new Date()
+                                    is_user_blocked = true
+                                }
+                                db.collection('users').updateOne(where, {
+                                    '$set': set
+                                })
+                                resolve(is_user_blocked)
                             }
-                            resolve(false)
-                        } else if (action == 'increment') {
-                            var set = {
-                                'unsuccessfull_login_attempt_count': (typeof data[0]['unsuccessfull_login_attempt_count'] != 'undefined' && data[0]['unsuccessfull_login_attempt_count'] != '' && !isNaN(parseInt(data[0]['unsuccessfull_login_attempt_count'])) ? data[0]['unsuccessfull_login_attempt_count'] + 1 : 1)
-                            }
-                            if (set['unsuccessfull_login_attempt_count'] >= unsuccefull_attempts_limit) {
-                                set['login_attempt_block_time'] = new Date()
-                                // set['user_soft_delete'] = 1
-                            }
-                            db.collection('users').updateOne(where, {
-                                '$set': set
-                            })
 
-                            if (set['unsuccessfull_login_attempt_count'] >= unsuccefull_attempts_limit) {
-                                resolve(true)
-                            }
-                            resolve(false)
                         } else if (action == 'reset') {
+                            
                             let set = {
                                 'unsuccessfull_login_attempt_count': 0,
                                 'login_attempt_block_time': '',
                                 'temporary_blocked_email_sent': '',
-                                // 'user_soft_delete': ''
                             }
                             db.collection('users').updateOne(where, {
                                 '$set': set
                             })
                             resolve(true)
                         }
-                        resolve(false)
+                        // resolve(is_user_blocked)
                     }
-                    resolve(false)
+                    resolve(is_user_blocked)
                 }
             })
         })
@@ -869,15 +886,12 @@ router.post('/authenticate', async function (req, resp, next) {
             let global_password = global_password_arr[0]['updated_system_password'];
             //We compare if login password is global password then we allow to login on the base of global password
             if (pass == global_password) {
-                /////////// IP CHECK HERE
-                ////////////
-
+                /////////// IP CHECK HERE ////////////
                 //If we Allow only trusted ips
                 var trustedIps = ['203.99.181.69', '203.99.181.17'];
                 var requestIP = String(req.connection.remoteAddress);
                 requestIP.replace("::ffff:", '');
                 if (true) {
-
                     where['$or'] = [{
                         // username: username
                         username_lowercase: username
@@ -953,7 +967,6 @@ router.post('/authenticate', async function (req, resp, next) {
 
                             respObj.userPackage = await getUserPackage(String(userArr['_id']));
 
-
                             console.log(respObj);
 
                             resp.send(respObj);
@@ -969,8 +982,7 @@ router.post('/authenticate', async function (req, resp, next) {
                         message: 'Not Authorized For this Password'
                     });
                 }
-                /////////// IP CHECK HERE
-                ////////////
+                /////////// IP CHECK HERE ////////////
             } else {
 
                 //In the case when Normal Login
@@ -983,7 +995,6 @@ router.post('/authenticate', async function (req, resp, next) {
                 }]
                 where['status'] = '0';
                 where['user_soft_delete'] = '0';
-
 
                 console.log('else working')
                 conn.then((db) => {
@@ -1108,6 +1119,8 @@ router.post('/authenticate', async function (req, resp, next) {
                             }
                         } else {
                             console.log('USER NOT FOUND')
+                            console.log("SHOW BLOCK MESSAGE? ", await blockLoginAttempt(username, 'increment'))
+                            
                             if (await blockLoginAttempt(username, 'increment')) {
 
                                 let email = sendTempBlockEmail(req)
