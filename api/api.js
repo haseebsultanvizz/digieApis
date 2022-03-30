@@ -1008,7 +1008,7 @@ router.post('/authenticate', async function (req, resp, next) {
 
                                 resp.status(400).send({
                                     type: 'unsuccessfull_attempts',
-                                    message: 'User temporary blocked for 15 minutes due to 3 unsuccessful login attempts.'
+                                    message: 'User temporary blocked for 10 minutes due to 5 unsuccessful login attempts.'
                                 });
                             } else {
                                 //Reset temporary block
@@ -1127,7 +1127,7 @@ router.post('/authenticate', async function (req, resp, next) {
 
                                 resp.status(400).send({
                                     type: 'unsuccessfull_attempts',
-                                    message: 'User temporary blocked for 15 minutes due to 3 unsuccessful login attempts.'
+                                    message: 'User temporary blocked for 10 minutes due to 5 unsuccessful login attempts.'
                                 });
                             } else {
                                 resp.status(400).send({
