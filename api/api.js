@@ -736,16 +736,14 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
             return false;
         }
         let exchange = typeof req.body.exchange !="undefined"?req.body.exchange : ""
-        // by default we will show last 3 months.
+        // by default we will show previous 3 months from the last closing month.
         let type = typeof req.body.type!="undefined"?Number(req.body.type):3
         
-        // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
-        let currentDate = new Date();
-        
-        let dateTo = new Date(currentDate.setMonth(currentDate.getMonth() - 1))
-        dateTo.setMinutes(0,0,0,0)
-        let dateFrom = new Date(currentDate.setMonth(currentDate.getMonth() - (type)))
-        dateFrom.setMinutes(0,0,0,0)
+        // e.g., suppose its April 15 today then we will start from December 31st to March 31st.
+        currentDate = new Date();
+        // console.log(currentDate)
+        const dateTo = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1); 
+        const dateFrom = new Date(currentDate.getFullYear(), currentDate.getMonth() - type, 1); 
 
         console.log('\n')
         console.log('MONTHS: ', type)
