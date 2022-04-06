@@ -6723,15 +6723,17 @@ function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
 }
 
 function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
+    console.log('=== Inside PurchasedPriceOrders() ====')
     return new Promise((resolve, reject) => {
         conn.then(async db => {
             let where2 = {
                 admin_id: admin_id,
                 application_mode: 'live',
                 $or: [
-                    {"cost_avg": { $in :["yes","taking_child", "completed"] }},
-                    {"cost_avg": { $exists: false} },
-                    {cost_avg: null}
+                    {cost_avg: { $in :["yes","taking_child", "completed"] }},
+                    {cost_avg: { $exists: false} },
+                    {cost_avg: null},
+                    {cost_avg: ''}
                 ],
                 status: { $in: [ "LTH", "FILLED", "CA_TAKING_CHILD"]},
                 trigger_type: tab == 'openTab_move_all' ? 'barrier_percentile_trigger' : 'no',
@@ -6743,6 +6745,7 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
             }
 
             let query = where2;
+            console.log("Query: ", query)
 
             let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
             let buyPromise = db.collection(buyCollection).find(query).toArray();
@@ -6897,7 +6900,11 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 if(admin_id){
                     var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], admin_id, exchange, tab)
                 } 
-                  console.log("\nMap Array 1: ", mapArray1)
+                console.log("Map Array IDs: ")
+                mapArray1.forEach(o => {
+                    console.log(o._id)
+                })
+                
                 let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
                 let myPromises = await Promise.all([promise1]);
                 let coin_Data = myPromises[0];
