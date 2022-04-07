@@ -774,6 +774,7 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
                         "parent_status":{$ne: "parent"}, 
                         "status":{$nin: ['canceled', 'archive', 'APIKEY_ERROR',"COIN_BAN_ERROR"]},
                         "symbol": {$nin:["POEBTC","NCASHBTC"]},
+                        // "is_accumulated": 1
                     }
                 },
                 // {
@@ -786,7 +787,8 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
                         // sell_date: 1,
                         // admin_id: 1,
                         // symbol: 1,
-                        // accumulations: 1 ,
+                        accumulations: 1,
+                        is_accumulated: 1,
                         // buy_time_btc_price: 1,
                         // application_mode: 1,
                         // parent_status: 1,
@@ -13416,7 +13418,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
 
                             var userInfo = await get_api_secret(data['trading_ip'], (data['_id']).toString(), auth_token);
 
-                            console.log(userInfo)
+                            console.log("User Info: ", userInfo)
 
                             if(userInfo.success == false){
                               data['api_key'] = '';
