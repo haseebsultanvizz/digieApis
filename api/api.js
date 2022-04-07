@@ -7266,7 +7266,8 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                     'market_sold_price': 1,
                     'sell_profit_percent': 1,
                     'lth_profit': 1,
-                    'cost_avg_array': 1
+                    'cost_avg_array': 1,
+                    'cost_avg': 1
                 }
                 let sort1 = { 'buy_date': -1 };
                 let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
