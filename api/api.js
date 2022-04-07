@@ -175,7 +175,7 @@ async function generatejwtToken(user_id, user_name){
 // delete all admin orders
 // conn.then(async(db) => {
 //     let orders = await db.collection("sold_buy_orders_kraken").deleteMany({admin_id: '5c0912b7fc9aadaac61dd072'});
-//     console.log("Admin orders: ", orders.deletedCount)
+//     // console.log("Admin orders: ", orders.deletedCount)
 // })
 
 
@@ -187,12 +187,12 @@ function authenticateToken(req, res, next) {
     if (token == null) return res.sendStatus(401)
 
     jwt.verify(token,secret, (err, user) => {
-      console.log(err)
+      // // console.log(err)
 
       if (err) return res.sendStatus(403)
 
 
-      console.log(user)
+      // // console.log(user)
       req.user = user
       next()
     })
@@ -275,7 +275,7 @@ function getUserSiteScore(url){
 
 
 
-      console.log(url_google)
+      // // console.log(url_google)
       request.post({
           url: url_google,
           headers: {
@@ -284,7 +284,7 @@ function getUserSiteScore(url){
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
-              // console.log(JSON.parse(body));
+              // // console.log(JSON.parse(body));
               if(JSON.parse(body).success == true){
                 resolve(JSON.parse(body));
               } else {
@@ -302,14 +302,14 @@ function getUserSiteScore(url){
 router.post('/site_score', async (req,res)=>{
 
   var user_score = await getUserSiteScore(req.body.site_score);
-  console.log(user_score, 'Score Object in Route')
+  // console.log(user_score, 'Score Object in Route')
 
 
   if(user_score.success){
-    console.log('if')
+    // console.log('if')
     res.status(200).send( user_score )
   } else {
-    console.log('else')
+    // console.log('else')
     res.status(201).send( user_score )
   }
 
@@ -388,11 +388,11 @@ async function validate_user(postData) {
                   // respObj.google_auth = userArr['google_auth'];
 
 
-                  console.log(userArr['google_auth'], 'in DB')
+                  // console.log(userArr['google_auth'], 'in DB')
                   // if(userArr['google_auth'] != 'yes'){
                       var google_auth = await getUserGoogleAuth(String(userArr['_id']))
                       // set google_auth functionality
-                      console.log('No in Local DB & in users DB', google_auth)
+                      // console.log('No in Local DB & in users DB', google_auth)
                       if(google_auth == true){
                           respObj.google_auth = 'yes';
                       } else {
@@ -529,11 +529,11 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
         // respObj.google_auth = userArr['google_auth'];
 
 
-        console.log(userArr['google_auth'], 'in DB')
+        // console.log(userArr['google_auth'], 'in DB')
         // if(userArr['google_auth'] != 'yes'){
             var google_auth = await getUserGoogleAuth(String(userArr['_id']))
             // set google_auth functionality
-            console.log('No in Local DB & in users DB', google_auth)
+            // console.log('No in Local DB & in users DB', google_auth)
             if(google_auth == true){
                 respObj.google_auth = 'yes';
             } else {
@@ -577,11 +577,11 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
  // This is Accumulation Post Request Handler
  router.post('/listAccumulations', auth_token.required , async (req, resp) => {
     try {
-        console.log("Request payload: ", req.payload)    
+        // console.log("Request payload: ", req.payload)    
         var user_id = req.payload.id
 
         var user_exist = await getUserByID(user_id);
-        // console.log(user_exist)
+        // // console.log(user_exist)
         if(!user_exist){
             resp.status(401).send({
                 message: 'User Not exists',
@@ -595,7 +595,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
         let exchange = typeof req.body.exchange !="undefined"?req.body.exchange : ""
         // by default we will show last 3 months.
         let type = typeof req.body.type!="undefined"?Number(req.body.type):3
-        console.log("\nmonths: ", type)
+        // console.log("\nmonths: ", type)
         // e.g., if we have jan 15, we will start from nov 15 to jan 15. last 3 months
         let currentDate = new Date();
         
@@ -603,8 +603,8 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
         dateTo.setMinutes(0,0,0,0)
         let dateFrom = new Date(currentDate.setMonth(currentDate.getMonth() - (type)))
         dateFrom.setMinutes(0,0,0,0)
-        console.log('\nSTRATING DATE: ', dateFrom)
-        console.log('\nENDING DATE: ', dateTo)
+        // console.log('\nSTRATING DATE: ', dateFrom)
+        // console.log('\nENDING DATE: ', dateTo)
 
         let errors = []
         let hasError = 0
@@ -668,7 +668,7 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
             ];
 
             let accumulationData = await fetchUserAccumulations(collection,pipeline);
-            //console.log('pipelinepipelinepipeline',JSON.stringify(pipeline),accumulationData)
+            //// console.log('pipelinepipelinepipeline',JSON.stringify(pipeline),accumulationData)
             if(!accumulationData.length){
                 resp.status(203).send({
                     message: "Please Try Later , Accumulation Data is Not Available at the Moment.",
@@ -717,11 +717,11 @@ router.get('/getUserByToken', auth_token.required, async function(req, res, next
 
 // list trades
 router.post('/listTrades', auth_token.required , async (req, resp) => {
-    // console.log("ListTrades Payload: ", req.payload)
+    // // console.log("ListTrades Payload: ", req.payload)
     try {
             
         var user_id = req.payload.id
-        console.log("User id: ", user_id)
+        // console.log("User id: ", user_id)
 
         var user_exist = await getUserByID(user_id);
         
@@ -741,15 +741,15 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
         
         // e.g., suppose its April 15 today then we will start from December 31st to March 31st.
         currentDate = new Date();
-        // console.log(currentDate)
+        // // console.log(currentDate)
         const dateTo = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1); 
         const dateFrom = new Date(currentDate.getFullYear(), currentDate.getMonth() - type, 1); 
 
-        console.log('\n')
-        console.log('MONTHS: ', type)
-        console.log('DATE FROM: ', dateFrom)
-        console.log('DATE TO: ', dateTo)
-        console.log('\n')
+        // console.log('\n')
+        // console.log('MONTHS: ', type)
+        // console.log('DATE FROM: ', dateFrom)
+        // console.log('DATE TO: ', dateTo)
+        // console.log('\n')
 
         let errors = []
         let hasError = 0
@@ -960,7 +960,7 @@ router.post('/authenticate', async function (req, resp, next) {
 
                             respObj.userPackage = await getUserPackage(String(userArr['_id']));
 
-                            console.log(respObj);
+                            // console.log(respObj);
 
                             resp.send(respObj);
 
@@ -1059,11 +1059,11 @@ router.post('/authenticate', async function (req, resp, next) {
                                 // respObj.google_auth = userArr['google_auth'];
 
 
-                                console.log(userArr['google_auth'], 'in DB')
+                                // console.log(userArr['google_auth'], 'in DB')
                                 // if(userArr['google_auth'] != 'yes'){
                                     var google_auth = await getUserGoogleAuth(String(userArr['_id']))
                                     // set google_auth functionality
-                                    console.log('No in Local DB & in users DB', google_auth)
+                                    // console.log('No in Local DB & in users DB', google_auth)
                                     if(google_auth == true){
                                         respObj.google_auth = 'yes';
                                     } else {
@@ -1110,8 +1110,8 @@ router.post('/authenticate', async function (req, resp, next) {
                                 resp.send(respObj);
                             }
                         } else {
-                            console.log('USER NOT FOUND')
-                            console.log("SHOW BLOCK MESSAGE? ", await blockLoginAttempt(username, 'increment'))
+                            // console.log('USER NOT FOUND')
+                            // console.log("SHOW BLOCK MESSAGE? ", await blockLoginAttempt(username, 'increment'))
                             
                             if (await blockLoginAttempt(username, 'increment')) {
 
@@ -1205,7 +1205,7 @@ router.post('/resetPassword', async function (req, resp) {
 
 
 router.get('/myTest2', async (req,res)=>{
-    // console.log(await getClientInfo(req))
+    // // console.log(await getClientInfo(req))
 
     const db = await conn
 
@@ -1221,7 +1221,7 @@ router.get('/myTest2', async (req,res)=>{
     //     // { '$count': 'total' }
     // ]).toArray()
 
-    // console.log(result)
+    // // console.log(result)
 
     // await db.collection('buy_orders').updateMany({ '_id': { '$in': result[0]['parent_ids']}}, {'$set':{'status':'canceled', 'cancel_reason':'duplicate_parents_for_same_coin_and_level'}})
 
@@ -1230,7 +1230,7 @@ router.get('/myTest2', async (req,res)=>{
     // let count = parentOrders.length
     // for(let i=0; i<count; i++){
 
-    //     // console.log(parentOrders[i]['_id'])
+    //     // // console.log(parentOrders[i]['_id'])
     //     if(i > 2){
     //         // await create_orders_history_log(parentOrders[i]['_id'], 'Duplicate parent exists', 'cancel_parent_reason', 'yes', 'binance', parentOrders[i]['application_mode'], parentOrders[i]['created_date'])
     //     }
@@ -1253,14 +1253,14 @@ router.get('/myTest2', async (req,res)=>{
 
     // res.send({ 'count': result[0]['log_ids'].length, 'data': result[0]['log_ids'] })
 
-    console.log(result[0]['log_ids'].length)
+    // console.log(result[0]['log_ids'].length)
 
     res.send({ 'count': result[0]['log_ids'].length })
 
 })
 
 router.get('/deleteLogsTest', async (req,res)=>{
-    // console.log(await getClientInfo(req))
+    // // console.log(await getClientInfo(req))
 
     //testing pull/push
 
@@ -1282,10 +1282,10 @@ router.get('/deleteLogsTest', async (req,res)=>{
 
     // res.send({ 'count': result[0]['log_ids'].length, 'data': result[0]['log_ids'] })
 
-    console.log(result[0]['log_ids'].length)
+    // console.log(result[0]['log_ids'].length)
 
     // let result111 = await db.collection('orders_history_log_kraken_live_2020_10').deleteMany({ '_id': { '$in': result[0]['log_ids']}})
-    // console.log(result111)
+    // // console.log(result111)
 
     res.send({ 'count': result[0]['log_ids'].length })
 
@@ -1375,9 +1375,9 @@ router.get('/test_test', async (req,res)=>{
     ], { allowDiskUse: true }).toArray()
 
 
-    // console.log(result)
+    // // console.log(result)
 
-    console.log(result[0]['parent_ids'].length)
+    // console.log(result[0]['parent_ids'].length)
 
     // var result = await db.collection('buy_orders_kraken').updateMany({ '_id': { '$in': result[0]['parent_ids']}}, {'$set':{'revert_canceled_parent_shahzad': new Date(), 'status':'new'}})
 
@@ -1452,7 +1452,7 @@ async function get_all_users_current_trading_points(){
                         arr.push(obj)
                     } else {
                         if (body.status) {
-                            console.log(user_id ,' ------------ ', body.current_trading_points)
+                            // console.log(user_id ,' ------------ ', body.current_trading_points)
                             obj['current_trading_points'] = body.current_trading_points
                             arr.push(obj)
                         }else{
@@ -1500,7 +1500,7 @@ router.get('/test_internal_function', async (req,res)=>{
 
     let coinsWorthArr = await findCoinsTradeWorth(20000, 0.091508, 456.14, coins, 'binance')
 
-    console.log(coinsWorthArr)
+    // console.log(coinsWorthArr)
 
 })
 
@@ -1783,7 +1783,7 @@ async function getGoogleAuthSecret(admin_id) {
         conn.then((db) => {
             db.collection("users").find(where).toArray((err, result) => {
                 if (err) {
-                    console.log(err)
+                    // console.log(err)
                 } else {
                     if (result.length > 0) {
                         let code = (typeof result[0]['google_auth_code'] != 'undefined' ? result[0]['google_auth_code'] : '');
@@ -1812,7 +1812,7 @@ async function setGoogleAuthSecret(admin_id, secret, enable = false) {
         conn.then((db) => {
             db.collection("users").updateOne(where, set, async (err, result) => {
                 if (err) {
-                    console.log(err)
+                    // console.log(err)
                     resolve(false);
                 } else {
                     resolve(true);
@@ -1829,7 +1829,7 @@ router.post('/listDashboardData', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist, 'USER EXIST')
+    // // console.log(user_exist, 'USER EXIST')
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -1915,7 +1915,7 @@ router.post('/listManualOrderComponent', auth_token.required, async (req, resp) 
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist, 'USER EXIST')
+    // // console.log(user_exist, 'USER EXIST')
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -2028,7 +2028,7 @@ router.post('/listCurrentmarketPrice', auth_token.required, async (req, resp) =>
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist, 'USER EXIST')
+    // // console.log(user_exist, 'USER EXIST')
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -2037,7 +2037,7 @@ router.post('/listCurrentmarketPrice', auth_token.required, async (req, resp) =>
     }
 
     // let myIp = req.headers['x-forwarded-for']
-    // console.log('============================================================== Request Ip ::: ', myIp)
+    // // console.log('============================================================== Request Ip ::: ', myIp)
 
     let exchange = req.body.exchange;
     var urserCoinsArr = await listCurrentMarketPrice(req.body.coin, exchange)
@@ -2231,7 +2231,7 @@ router.post('/listManualOrderDetail', auth_token.required, async (req, resp) => 
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist, 'USER EXIST')
+    // // console.log(user_exist, 'USER EXIST')
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -2272,7 +2272,7 @@ router.post('/listAutoOrderDetail', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist, 'USER EXIST')
+    // // console.log(user_exist, 'USER EXIST')
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -2310,7 +2310,7 @@ router.post('/listAutoOrderDetail', auth_token.required, async (req, resp) => {
 router.post('/listmarketPriceMinNotation', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist, 'USER EXIST')
+    // // console.log(user_exist, 'USER EXIST')
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -2340,7 +2340,7 @@ router.post('/getPricesArr', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist, 'USER EXIST')
+    // // console.log(user_exist, 'USER EXIST')
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -2389,7 +2389,7 @@ async function getPricesArr(exchange, coinArr=[]){
         }
 
 
-        console.log('coinArr', coinArr)
+        // console.log('coinArr', coinArr)
 
         let result = await listmarketPriceMinNotationCoinArr({ '$in': coinArr }, exchange)
 
@@ -2419,7 +2419,7 @@ async function listmarketPriceMinNotation(coin, exchange){
 router.post('/createManualOrder', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist, 'USER EXIST')
+    // // console.log(user_exist, 'USER EXIST')
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -2701,8 +2701,8 @@ router.post('/createManualOrder', auth_token.required, async (req, resp) => {
 }) //End of createManualOrder
 
 router.post('/createManualChild', auth_token.required, async (req, resp) => {
-    console.log("\ncreateManualChild REQ PAYLOAD: ", req.payload)
-    console.log("\ncreateManualChild REQ BODY: ", req.body)
+    // console.log("\ncreateManualChild REQ PAYLOAD: ", req.payload)
+    // console.log("\ncreateManualChild REQ BODY: ", req.body)
     var user_exist = await getUserByID(req.payload.id);
     
     if(!user_exist){
@@ -2720,7 +2720,7 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
         let exchange = newOrder['exchange'];
 
         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
-        console.log(collectionName)
+        // console.log(collectionName)
 
         newOrder.buy_date = new Date()
         newOrder.buy_parent_id = ObjectID(newOrder.buy_parent_id)
@@ -2732,7 +2732,7 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
                 });
             } else if(result){
                 let insertedOrder = result.ops[0]
-                console.log("Insert Query Result: ", insertedOrder)
+                // console.log("Insert Query Result: ", insertedOrder)
                 if(result.result.ok == 1){
                     childOrder['buy_order_id'] = insertedOrder._id
                     db.collection(collectionName).updateOne({_id: ObjectID(orderId)}, { $push: { cost_avg_array: childOrder } }, (err, output) => {
@@ -2742,7 +2742,7 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
                             });
                         }
                         else if(output){
-                            output.result.ok == 1 ? console.log("Updated Successfully!") : console.log("Couldn't Update")
+                            output.result.ok == 1 ? console.log("Updated Successfully!") : // console.log("Couldn't Update")
                             resp.status(200).send({
                                 message: 'Child order successfully added!',
                                 data: req.payload.id
@@ -2766,7 +2766,7 @@ router.post('/createManualOrderByChart', auth_token.required, async (req, resp) 
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -2778,8 +2778,8 @@ router.post('/createManualOrderByChart', auth_token.required, async (req, resp) 
     conn.then((db) => {
         let orders = req.body.orderArr;
 
-        console.log(orders);
-        console.log('orders');
+        // console.log(orders);
+        // console.log('orders');
         let orderId = req.body.orderId;
         var price = orders['price'];
         let exchange = orders['exchange'];
@@ -2826,8 +2826,8 @@ router.post('/createManualOrderByChart', auth_token.required, async (req, resp) 
 
                     var tempCollection = (exchange == 'binance') ? 'temp_sell_orders' : 'temp_sell_orders_' + exchange;
 
-                    console.log('tempOrder');
-                    console.log(tempOrder);
+                    // console.log('tempOrder');
+                    // console.log(tempOrder);
 
 
                     //create sell order
@@ -2859,7 +2859,7 @@ router.post('/createManualOrderByChart', auth_token.required, async (req, resp) 
 router.post('/makeManualOrderSetForSell', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -2925,7 +2925,7 @@ router.post('/makeManualOrderSetForSell', auth_token.required, async (req, resp)
 router.post('/createAutoOrder', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -2958,13 +2958,13 @@ router.post('/createAutoOrder', auth_token.required, async (req, resp) => {
         order['pick_parent'] = (user_remaining_limit > 0 ? 'yes' : 'no')
     }
     let  getUsersHighLowRangevalues = await getUsersHighLowRangevaluesMethod(order['admin_id'],order['symbol'],order['exchange'])
-    // console.log(getUsersHighLowRangevalues)
+    // // console.log(getUsersHighLowRangevalues)
     if(getUsersHighLowRangevalues.length > 0)
     {
-        // console.log('first Check Works')
+        // // console.log('first Check Works')
         if(typeof getUsersHighLowRangevalues[0]['highPrice_range']!="undefined" && typeof getUsersHighLowRangevalues[0]['lowPrice_range']!="undefined")
         {
-            // console.log('Working, weell',getUsersHighLowRangevalues[0]['highPrice_range'])
+            // // console.log('Working, weell',getUsersHighLowRangevalues[0]['highPrice_range'])
             order['highPrice_range'] = getUsersHighLowRangevalues[0]['highPrice_range']
             order['lowPrice_range'] = getUsersHighLowRangevalues[0]['lowPrice_range']
         }
@@ -2979,7 +2979,7 @@ router.post('/createAutoOrder', auth_token.required, async (req, resp) => {
 router.post('/editAutoOrder', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
       resp.status(401).send({
           message: 'User Not exist'
@@ -2990,7 +2990,7 @@ router.post('/editAutoOrder', auth_token.required, async (req, resp) => {
     let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
     let order = req.body.orderArr;
 
-    // console.log(order)
+    // // console.log(order)
     order['modified_date'] = new Date()
     let orderId = order['orderId'];
     var exchange = order['exchange'];
@@ -3028,7 +3028,7 @@ router.post('/editAutoOrder', auth_token.required, async (req, resp) => {
       let tempCol1 = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+ exchange
 
 
-      console.log(typeof buyOrderArr[0]['_id'])
+      // console.log(typeof buyOrderArr[0]['_id'])
       await db1.collection(tempCol1).updateOne({ '_id': buyOrderArr[0]['_id'] }, { '$set': { 'last_three_ids': '', 'quantity_three': '', 'avg_price_three_upd':'', 'avg_sell_price_three':'', 'avg_sell_price':'', 'avg_price_all_upd':'', 'all_buy_ids':'', 'quantity_all':'' }})
     }//End here
 
@@ -3226,7 +3226,7 @@ router.post('/editCostAvgOrder', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
       resp.status(401).send({
           message: 'User Not exist'
@@ -3248,7 +3248,7 @@ router.post('/editCostAvgOrder', auth_token.required, async (req, resp) => {
 
     if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && typeof buyOrderArr[0]['avg_orders_ids'] != 'undefined'){
 
-        // console.log('11111111111111111111111')
+        // // console.log('11111111111111111111111')
 
         // await update_cost_avg_fields(orderId, order, exchange)
 
@@ -3256,7 +3256,7 @@ router.post('/editCostAvgOrder', auth_token.required, async (req, resp) => {
 
     } else if (buyOrderArr.length > 0 && typeof buyOrderArr[0]['cost_avg'] != 'undefined' && typeof buyOrderArr[0]['cavg_parent'] != 'undefined' && buyOrderArr[0]['cavg_parent'] == 'yes'){
 
-        // console.log('2222222222222222222')
+        // // console.log('2222222222222222222')
 
         let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
@@ -3463,8 +3463,8 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
             ids = await getCostAvgChildOrderNotSoldIds(ids, exchange)
         }
 
-        // console.log(ids)
-        // console.log('+++++++++++++++++++++++++++++++++++++++++')
+        // // console.log(ids)
+        // // console.log('+++++++++++++++++++++++++++++++++++++++++')
 
         const db = await conn
         let sold_orders_purchased_price_arr = []
@@ -3472,7 +3472,7 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
         let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
         let market_sold_prices_arr = await db.collection(sold_collection).find({ '_id': { $in: allIds } }).project({ market_sold_price: 1, purchased_price: 1 }).toArray()
 
-        // console.log('sold arr', market_sold_prices_arr)
+        // // console.log('sold arr', market_sold_prices_arr)
 
         let market_sold_price_sum = 0;
         let sell_price_sum = 0;
@@ -3484,7 +3484,7 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
             }
         }
 
-        // console.log('sold_orders_purchased_price_arr ',sold_orders_purchased_price_arr)
+        // // console.log('sold_orders_purchased_price_arr ',sold_orders_purchased_price_arr)
 
         //parent purchased price array
         let avg_purchase_price = []
@@ -3612,9 +3612,9 @@ async function updateCostAvgChildOrders(order_id, order, exchange) {
         var collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         let avg_sell_price = (market_sold_price_sum + sell_price_sum) / (totalChilds + 1)
 
-        // console.log(market_sold_price_sum, ' + ', sell_price_sum, ' / ', totalChilds, ' + ', 1)
-        // console.log('avg_sell_price ', avg_sell_price)
-        // console.log('avg_purchase_price ', avg_purchase_price)
+        // // console.log(market_sold_price_sum, ' + ', sell_price_sum, ' / ', totalChilds, ' + ', 1)
+        // // console.log('avg_sell_price ', avg_sell_price)
+        // // console.log('avg_purchase_price ', avg_purchase_price)
 
         let buy_collection11 = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         let sold_collection11 = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
@@ -3691,10 +3691,10 @@ async function update_cost_avg_fields(order_id, order, exchange){
         if (buy_orders.length > 0){
 
             remaining_additional_pl = -((sold_target_pl_sum - sold_pl_sum ) / buy_orders.length)
-            console.log('remaininf sdsadsadsad', remaining_additional_pl)
+            // console.log('remaininf sdsadsadsad', remaining_additional_pl)
             actualDsiredGet = (defined_sell_percentage - remaining_additional_pl);
 
-            console.log('actual TP', actualDsiredGet)
+            // console.log('actual TP', actualDsiredGet)
 
 
             // remaining_additional_pl = (sold_target_pl_sum - sold_pl_sum) / buy_orders.length
@@ -3710,7 +3710,7 @@ async function update_cost_avg_fields(order_id, order, exchange){
         }
         let avgSellPrice = ((purchase_price_avg * actualDsiredGet) / 100) + purchase_price_avg
 
-        console.log('asim ', avgSellPrice)
+        // console.log('asim ', avgSellPrice)
 
         // if (buy_orders.length > 0){
 
@@ -3736,10 +3736,10 @@ async function update_cost_avg_fields(order_id, order, exchange){
 
         }
 
-        console.log('update ', { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price_arr, 'cost_avg_updated': 'admin', 'modified_date': new Date() })
+        // console.log('update ', { 'avg_sell_price': avg_sell_price, 'avg_purchase_price': avg_purchase_price_arr, 'cost_avg_updated': 'admin', 'modified_date': new Date() })
 
     }
-    console.log('__________________________________________________________________________________________________')
+    // console.log('__________________________________________________________________________________________________')
 
     return true
 
@@ -3783,11 +3783,11 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
         var definedSellPercentage = (differenceBetwnSold * 100) / purchasePrice;
         overAllSoldPercentage += definedSellPercentage;
 
-        // console.log('definedSellPercentageSold ', definedSellPercentageSold)
-        // console.log('definedSellPercentage ', definedSellPercentage)
+        // // console.log('definedSellPercentageSold ', definedSellPercentageSold)
+        // // console.log('definedSellPercentage ', definedSellPercentage)
         overAllSoldPercentage += (-1)*definedSellPercentageSold;
-        // console.log('overAllSoldPercentage ', overAllSoldPercentage)
-        // console.log('parent sold P/L ', definedSellPercentage)
+        // // console.log('overAllSoldPercentage ', overAllSoldPercentage)
+        // // console.log('parent sold P/L ', definedSellPercentage)
 
     } else {
          countOrderBuy = 1;
@@ -3805,7 +3805,7 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
         // For parent Order we have
         overAllBuyPercentage += definedSellPercentage;
 
-        // console.log('parent buy P/L ', definedSellPercentage)
+        // // console.log('parent buy P/L ', definedSellPercentage)
 
     }
 
@@ -3829,14 +3829,14 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
                 var profitPercentage = parseFloat(childOrderArr[0]['sell_profit_percent']);
                 // *purchasedPrice* used for to get the purchased price from buy order collection
                 var purchasedPrice = parseFloat(childOrderArr[0]['purchased_price']);
-                // console.log('purchasedPrice ', purchasedPrice)
+                // // console.log('purchasedPrice ', purchasedPrice)
                 // *overAllBuyPercentage* used to sum overall buy percentage from buy order collection
                 overAllBuyPercentage += profitPercentage;
-                // console.log('overAllBuyPercentage ', overAllBuyPercentage)
+                // // console.log('overAllBuyPercentage ', overAllBuyPercentage)
                 // *overAllpurchasedPrice* used to sum overall buy purchased price from buy order collection
                 overAllpurchasedPrice += purchasedPrice;
 
-                // console.log('overAllpurchasedPrice ', overAllpurchasedPrice)
+                // // console.log('overAllpurchasedPrice ', overAllpurchasedPrice)
 
                 objPurchArr.push({ 'purchased_price': parseFloat(childOrderArr[0]['purchased_price']) })
 
@@ -3859,12 +3859,12 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
                     // *profitPercentage* Get single order percentage from sold_buy_orders collection
                     let profitPercentage = (differenceBetwn * 100) / purchasedPrice;
 
-                    // console.log('profitPercentage ', profitPercentage)
+                    // // console.log('profitPercentage ', profitPercentage)
 
                     // *overAllSoldPercentage* Sum overall the percentages from sold_buy_orders collection
                     overAllSoldPercentage += profitPercentage;
 
-                    // console.log('overAllSoldPercentage ', overAllSoldPercentage)
+                    // // console.log('overAllSoldPercentage ', overAllSoldPercentage)
 
                     objPurchArr.push({ 'purchased_price': parseFloat(childOrderArr[0]['purchased_price']) })
                 }
@@ -3883,14 +3883,14 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
         // So it become -1.2 +1 = -0.2 so it is negative so it goes in if condition
 
 
-        // console.log('finalSoldPercentage ', finalSoldPercentage, ' --------- ', 'buyAvgpercentage ', buyAvgpercentage)
+        // // console.log('finalSoldPercentage ', finalSoldPercentage, ' --------- ', 'buyAvgpercentage ', buyAvgpercentage)
 
 
         if (finalSoldPercentage < 0) {
             // *soldProfitAndLoss* Its mean that we can distribute the sold order profit and loss on current open orders
             var soldProfitAndLoss = finalSoldPercentage / countOrderBuy;
 
-            // console.log('finalSoldPercentage < 0 :::::: soldProfitAndLoss ', soldProfitAndLoss)
+            // // console.log('finalSoldPercentage < 0 :::::: soldProfitAndLoss ', soldProfitAndLoss)
 
             // *eachOrderNeedPerc* Its mean that now the current open orders profit and loss need to be sold of each order
             var eachOrderNeedPerc = (-1 * soldProfitAndLoss) + buyAvgpercentage;
@@ -3904,7 +3904,7 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
             // *soldProfitAndLoss* Its mean that we can distribute the sold order profit and loss on current open orders
             var soldProfitAndLoss = finalSoldPercentage / countOrderBuy;
 
-            // console.log('finalSoldPercentage > 0 :::::: soldProfitAndLoss', soldProfitAndLoss)
+            // // console.log('finalSoldPercentage > 0 :::::: soldProfitAndLoss', soldProfitAndLoss)
 
             // *eachOrderNeedPerc* Its mean that now the current open orders profit and loss need to be sold of each order
             var eachOrderNeedPerc = buyAvgpercentage - soldProfitAndLoss;
@@ -3925,24 +3925,24 @@ async function update_cost_avg_fields_shahzad(order_id, order, exchange) {
             OverAllSellPrice = TargetSellPriceOrder;
         }
 
-        // console.log('OverAllSellPrice ', OverAllSellPrice)
+        // // console.log('OverAllSellPrice ', OverAllSellPrice)
 
         // END Here we need new code to be update avg_sell_price in parent order
         if (parentActiveOrderArr.length > 0 && parent_sold) {
-            // console.log("Else condition update line number 1346", OverAllSellPrice)
+            // // console.log("Else condition update line number 1346", OverAllSellPrice)
 
             await db.collection(sold_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'avg_sell_price': OverAllSellPrice, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
 
         } else {
-            // console.log("if condition update line number 1336", OverAllSellPrice)
+            // // console.log("if condition update line number 1336", OverAllSellPrice)
 
             await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_purchase_price': objPurchArr, 'avg_sell_price': OverAllSellPrice, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
 
         }
 
-        // console.log('objPurchArr ', objPurchArr)
+        // // console.log('objPurchArr ', objPurchArr)
 
-        // console.log('OverAllSellPrice ', OverAllSellPrice)
+        // // console.log('OverAllSellPrice ', OverAllSellPrice)
         // await db.collection(buy_collection).updateOne({ '_id': new ObjectID(String(order_id)) }, { '$set': { 'avg_sell_price': OverAllSellPrice, 'cost_avg_updated': 'admin_shahzad_function', 'modified_date': new Date() } })
 
     }
@@ -3960,7 +3960,7 @@ async function updateAvgSellFullTransactionPrice(order_id, exchange, coinSymbol)
         //List all order for which deep price meet
         var parentActiveOrderArr = await getCostAverageParentOrdes(order_id, exchange, coinSymbol, order_mode, type);
 
-        console.log("parentActiveOrderArr ::::::::  updateAvgSellFullTransactionPrice ", parentActiveOrderArr)
+        // console.log("parentActiveOrderArr ::::::::  updateAvgSellFullTransactionPrice ", parentActiveOrderArr)
         if (typeof parentActiveOrderArr !== 'undefined' && parentActiveOrderArr != '') {
             for (let orderIndex in parentActiveOrderArr) {
                 var countOrderBuy = 1;
@@ -3984,14 +3984,14 @@ async function updateAvgSellFullTransactionPrice(order_id, exchange, coinSymbol)
 
                     if(i == 1){
                         response = await sumChildOrders(exchange, avg_orders_ids, XPrice, countOrderBuy, definedSellPercentage, finalValOverAll, costParentOrderId, quantity);
-                        console.log ('loop iteration ', i)
+                        // console.log ('loop iteration ', i)
                     }else{
-                        console.log ('loop iteration ', i)
+                        // console.log ('loop iteration ', i)
                     }
 
                     if (response == false) {
                         i = 1;
-                        console.log(" ~~~~~~~~ ALL TRANSACTION OVERALL Response Is Good and Order cost average updated costParentOrderId ~~~~~~~~ ", costParentOrderId)
+                        // console.log(" ~~~~~~~~ ALL TRANSACTION OVERALL Response Is Good and Order cost average updated costParentOrderId ~~~~~~~~ ", costParentOrderId)
                         break;
                     } // END of if(response==false)
                     countOrderBuy = 1
@@ -4024,7 +4024,7 @@ async function updateAvgSellThreeTransactionPrice(order_id, exchange, coinSymbol
 
                 // We will run Loop to multiple 0.5 on each iteration
                 if (typeof avg_orders_ids !== "undefined" && avg_orders_ids !== "") {
-                    console.log("costParentOrderId IST ::: ", costParentOrderId)
+                    // console.log("costParentOrderId IST ::: ", costParentOrderId)
                     for (let i = 1; i < 500; i++) {
                         // Formula Goes Here
                         var XPrice = 0;
@@ -4037,14 +4037,14 @@ async function updateAvgSellThreeTransactionPrice(order_id, exchange, coinSymbol
                         var response = ''
                         if (i == 1) {
                             response = await sumLastThreeChildOrders(order_id, exchange, costParentOrderId, avg_orders_ids, XPrice, countOrderBuy, definedSellPercentage, finalValOverAll, quantity);
-                            console.log('loop iteration ', i)
+                            // console.log('loop iteration ', i)
                         } else {
-                            console.log('loop iteration ', i)
+                            // console.log('loop iteration ', i)
                         }
 
                         if (response == false) {
                             i = 1;
-                            console.log(" ~~~~~~~~ LAST THREE Response Is Good and Order cost average updated costParentOrderId ~~~~~~~~ ", costParentOrderId)
+                            // console.log(" ~~~~~~~~ LAST THREE Response Is Good and Order cost average updated costParentOrderId ~~~~~~~~ ", costParentOrderId)
                             break;
                         }// END of if(response==false)
                         countOrderBuy = 1
@@ -4060,7 +4060,7 @@ async function sumChildOrders(exchange, avg_orders_ids, XPrice, countOrderBuy, d
     return new Promise((resolve) => {
         conn.then(async (db) => {
 
-            //console.log("::::::::::::   finalValOverAll ::::::::::", finalValOverAll)
+            //// console.log("::::::::::::   finalValOverAll ::::::::::", finalValOverAll)
             var type = "all";
             var buyOrderArrsIds = []
             for (let avgIndex in avg_orders_ids) {
@@ -4095,11 +4095,11 @@ async function sumChildOrders(exchange, avg_orders_ids, XPrice, countOrderBuy, d
                 }// END of else
             } // END of for(let avgIndex in avg_orders_ids)
             var profitPercAndNoOrder = definedSellPercentage * countOrderBuy;
-            //console.log("finalValOverAll ::::", finalValOverAll)
-            //console.log("profitPercAndNoOrder ::::", profitPercAndNoOrder)
+            //// console.log("finalValOverAll ::::", finalValOverAll)
+            //// console.log("profitPercAndNoOrder ::::", profitPercAndNoOrder)
             if (finalValOverAll > profitPercAndNoOrder) {
                 await updateaverageSellprice(exchange, costParentOrderId, XPrice, type, buyOrderArrsIds, quantityAll); //Status submitted_for_sell
-                console.log("XPRICE ::::", XPrice)
+                // console.log("XPRICE ::::", XPrice)
                 var response = false;
                 resolve(response);
             }// END of if(finalValOverAll > profitPercAndNoOrder)
@@ -4116,7 +4116,7 @@ async function updateaverageSellprice(exchange, buy_order_id, avg_sell_price, ty
             var set = {};
             var where = {};
             var upd_data = {};
-            console.log("buy_order_id ", buy_order_id)
+            // console.log("buy_order_id ", buy_order_id)
             if (type == "three") {
                 upd_data['avg_sell_price_three'] = avg_sell_price;
                 upd_data['avg_price_three_upd'] = "yes";
@@ -4194,7 +4194,7 @@ async function sumLastThreeChildOrders(exchange, costParentOrderId, avg_orders_i
                 if (typeof childOrderArr !== 'undefined' && childOrderArr["_id"] !== "" && childOrderArr["_id"] !== 'undefined') {
                     if (childOrderArr["status"] !== "canceled") {
                         // *countOrderBuy* used for to count the buy orders
-                        console.log("childOrderArr ::::", childOrderArr["_id"])
+                        // console.log("childOrderArr ::::", childOrderArr["_id"])
                         countOrderBuy++;
                         onlyCountBuyOrder++;
                         byyOrderArrsIds.push(childOrderArr["_id"])
@@ -4204,14 +4204,17 @@ async function sumLastThreeChildOrders(exchange, costParentOrderId, avg_orders_i
                         var bottomVariation = purchasedPrice;
                         quantityAll += quantityChild
                         var singleOrderPercentage = (topVariation / bottomVariation) * 100;
-                        console.log("singleOrderPercentage BUY ORDER ::::", singleOrderPercentage)
+                        // console.log("singleOrderPercentage BUY ORDER ::::", singleOrderPercentage)
                         finalValOverAll += singleOrderPercentage;
                     }// END of childOrderArr["status"]!=="canceled"
                 }// END of typeof childOrderArr!=='undefined' && childOrderArr["_id"]!== "" && childOrderArr["_id"]!== 'undefined')
-                if (onlyCountBuyOrder == 3) { console.log("onlyCountBuyOrder inside break::::", onlyCountBuyOrder); break; }
+                if (onlyCountBuyOrder == 3) { 
+                    // console.log("onlyCountBuyOrder inside break::::", onlyCountBuyOrder); 
+                    break; 
+                }
             } // END of for(let avgIndex in avg_orders_ids)
             if (onlyCountBuyOrder < 3) {
-                console.log(" Why I am here in onlyCountBuyOrder");
+                // console.log(" Why I am here in onlyCountBuyOrder");
                 finalValOverAll += finalValOverAllParent;
                 quantityAll += quantity;
                 byyOrderArrsIds.push(costParentOrderId);
@@ -4223,13 +4226,13 @@ async function sumLastThreeChildOrders(exchange, costParentOrderId, avg_orders_i
 
             if (finalValOverAll > profitPercAndNoOrder) {
 
-                console.log("definedSellPercentage ::::", definedSellPercentage)
-                console.log("onlyCountBuyOrder ::::", onlyCountBuyOrder)
-                console.log("profitPercAndNoOrder ::::", profitPercAndNoOrder)
-                console.log("finalValOverAll ::::", finalValOverAll)
+                // console.log("definedSellPercentage ::::", definedSellPercentage)
+                // console.log("onlyCountBuyOrder ::::", onlyCountBuyOrder)
+                // console.log("profitPercAndNoOrder ::::", profitPercAndNoOrder)
+                // console.log("finalValOverAll ::::", finalValOverAll)
 
                 await module.exports.updateaverageSellprice(exchange, costParentOrderId, XPrice, type, byyOrderArrsIds, quantityAll); //
-                console.log("Response is going GOOD here :::: XPrice", XPrice)
+                // console.log("Response is going GOOD here :::: XPrice", XPrice)
                 var response = false;
                 resolve(response);
             }// END of if(finalValOverAll > profitPercAndNoOrder)
@@ -4261,7 +4264,7 @@ async function getCostAverageParentOrdes(order_id, exchange, coinSymbol, order_m
             search_criteria['trigger_type'] = "barrier_percentile_trigger"; // Trigger Type
             search_criteria["cavg_parent"] = "yes";
             search_criteria["avg_orders_ids"] = { $exists: true };
-            //console.log("search_criteria :::::", search_criteria)
+            //// console.log("search_criteria :::::", search_criteria)
             db.collection(collectionName).find(search_criteria).limit(1).toArray((error, success) => {
                 if (error) {
                     resolve(error)
@@ -4447,7 +4450,7 @@ router.post('/find_user', auth_token.required, async(req, res) => {
 
 
   var user_exist = await getUserByID(req.payload.id);
-  // console.log(user_exist)
+  // // console.log(user_exist)
   if(!user_exist){
     resp.status(401).send({
           message: 'User Not exist'
@@ -4482,7 +4485,7 @@ router.post('/find_user', auth_token.required, async(req, res) => {
 async function getUserByID(admin_id, user_detail='no'){
 
 
-  console.log(admin_id)
+  // console.log(admin_id)
     return new Promise((resolve) => {
         conn.then((db) => {
 
@@ -4491,7 +4494,7 @@ async function getUserByID(admin_id, user_detail='no'){
             where._id = ObjectID(admin_id);
             db.collection(collectionName).find(where).toArray((err, result) => {
                 if (err) {
-                    console.log(err)
+                    // console.log(err)
                     if(user_detail == 'yes'){
                       resolve({
                         'success': false,
@@ -4501,7 +4504,7 @@ async function getUserByID(admin_id, user_detail='no'){
                       resolve(false);
                     }
                 } else {
-                    // console.log("User data: ", result)
+                    // // console.log("User data: ", result)
                     if (result.length > 0) {
                       if(user_detail == 'yes'){
                         resolve({
@@ -5109,7 +5112,7 @@ function countCollection(collectionName, filter) {
         conn.then((db) => {
             db.collection(collectionName).find(filter).count((err, result) => {
                 if (err) {
-                    console.log(err)
+                    // console.log(err)
                 } else {
                     resolve(result)
                 }
@@ -5124,7 +5127,7 @@ function countATGExpectedOrders(collectionName, filter) {
         conn.then(async (db) => {
 
             var data = await db.collection(collectionName).aggregate(filter).toArray();
-            // console.log('Data', data)
+            // // console.log('Data', data)
             if(data.length > 0){
                 resolve(data[0]['total']);
             } else {
@@ -5207,7 +5210,7 @@ async function calculateAverageOrdersProfit(postDAta) {
     let soldOrders = await listOrderListing(tempPostData)
 
     // soldOrders = soldOrders.filter(item => String(item._id) != '5e5f008cfd4c0b001b8f74b5')
-    // console.log(soldOrders.length)
+    // // console.log(soldOrders.length)
 
     let totalSold = soldOrders.length
     let avg_order_ids = []
@@ -5221,7 +5224,7 @@ async function calculateAverageOrdersProfit(postDAta) {
     let cost_avg_sold_childs = await db.collection(sold_collection).find({ '_id': { '$in': avg_order_ids}}).toArray()
     soldOrders = soldOrders.concat(cost_avg_sold_childs)
 
-    // console.log(soldOrders.length)
+    // // console.log(soldOrders.length)
 
     return soldOrders
 
@@ -5234,10 +5237,10 @@ async function calculateAverageOrdersProfit(postDAta) {
     //         // db.collection(collectionName).find(filter).sort({ modified_date: -1 }).toArray((err, result) => {
     //         db.collection(collectionName).find(filter).toArray((err, result) => {
     //             if (err) {
-    //                 console.log(err)
+    //                 // console.log(err)
     //             } else {
 
-    //                 console.log(result.length)
+    //                 // console.log(result.length)
     //                 resolve(result)
     //             }
     //         })
@@ -5570,7 +5573,7 @@ async function listOrderListing(postDAta3, dbConnection) {
 
 
 
-        // console.log(filter_all_2, pagination, limit, skip, '=================')
+        // // console.log(filter_all_2, pagination, limit, skip, '=================')
 
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter_all_2, pagination, limit, skip);
         var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter_all_2, pagination, limit, skip);
@@ -5585,7 +5588,7 @@ async function listOrderListing(postDAta3, dbConnection) {
         var SoldOrderArr = await list_orders_by_filter(soldOrdercollection, filter, pagination, limit, skip);
         var buyOrderArr = await list_orders_by_filter(buyOrdercollection, filter, pagination, limit, skip);
 
-        // console.log(SoldOrderArr.length, buyOrderArr.length)
+        // // console.log(SoldOrderArr.length, buyOrderArr.length)
         var returnArr = SoldOrderArr.concat(buyOrderArr);
         var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
 
@@ -5602,7 +5605,7 @@ function get_user_id_using_user_name(collectionName, filter) {
       conn.then((db) => {
           db.collection(collectionName).find(filter).project({ '_id': 1 }).toArray((err, result) => {
               if (err) {
-                  console.log(err)
+                  // console.log(err)
               } else {
                   resolve(result)
               }
@@ -5647,7 +5650,7 @@ function list_orders_by_filter(collectionName, filter, pagination, limit, skip) 
                 modified_date: -1
             }).toArray((err, result) => {
                 if (err) {
-                    console.log(err)
+                    // console.log(err)
                 } else {
                     resolve(result)
                 }
@@ -5661,7 +5664,7 @@ router.post('/getMergeOrders', auth_token.required, async (req, res)=>{
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -5777,15 +5780,15 @@ router.post('/getMergeOrders', auth_token.required, async (req, res)=>{
             var SoldOrderArr = await db.collection(soldOrdercollection).find(where).toArray();
             var buyOrderArr = await db.collection(buyOrdercollection).find(where).toArray();
 
-        console.log('Sold orders ', SoldOrderArr.length, '   -----   Buy orders ', buyOrderArr.length)
+        // console.log('Sold orders ', SoldOrderArr.length, '   -----   Buy orders ', buyOrderArr.length)
             var returnArr = SoldOrderArr.concat(buyOrderArr);
             var orderArr = returnArr.slice().sort((a, b) => b.modified_date - a.modified_date)
         // } else {
         //     var orderArr = await db.collection(collectionName).find(where).toArray();
         // }
 
-        // console.log(where)
-        // console.log('tab: ', tab, '  -----  total orders: ', orderArr.length)
+        // // console.log(where)
+        // // console.log('tab: ', tab, '  -----  total orders: ', orderArr.length)
 
         if (orderArr.length > 0){
             res.send({
@@ -5813,7 +5816,7 @@ router.post('/mergeAndMigrate', auth_token.required, async (req, res)=>{
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -5837,7 +5840,7 @@ router.post('/mergeAndMigrate', auth_token.required, async (req, res)=>{
         var buy_collection_kraken = 'buy_orders_kraken'
         var sell_collection_kraken = 'orders_kraken'
 
-        // console.log(req.body)
+        // // console.log(req.body)
         await db.collection('tempMergeTrades_testing').insertOne(req.body)
         // process.exit(1)
 
@@ -5901,11 +5904,11 @@ router.post('/mergeAndMigrate', auth_token.required, async (req, res)=>{
         totalQty += parseFloat(new_order['quantity'], new_order['quantity'])
         temp_all_merge_orders.forEach(item => { totalQty += parseFloat(item['quantity']) })
 
-        // console.log(new_order['quantity'], totalQty, minReqQty)
+        // // console.log(new_order['quantity'], totalQty, minReqQty)
 
-        // console.log(new_order)
-        // console.log('***********************************************************')
-        // console.log(temp_all_merge_orders)
+        // // console.log(new_order)
+        // // console.log('***********************************************************')
+        // // console.log(temp_all_merge_orders)
         // process.exit(1)
 
         if (totalQty < minReqQty) {
@@ -6137,7 +6140,7 @@ router.post('/mergeAndMigrate', auth_token.required, async (req, res)=>{
                     updateFields['avg_orders_ids'] = new_order['avg_orders_ids']
                     if (tempbuyorder.length > 0) {
 
-                        // console.log(' ledger order parent')
+                        // // console.log(' ledger order parent')
                         let tempInsert = Object.assign(tempbuyorder[0], updateFields)
 
                         let insertttttt = await db.collection('sold_buy_orders').insertOne(tempInsert)
@@ -6184,7 +6187,7 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
                 purchase_prices_sum += parseFloat(item.purchased_price)
                 // totalPL += parseFloat(calculate_percentage(parseFloat(item.purchased_price), currentMarketPrice))
 
-                // console.log('Purchased price: ', item.purchased_price, '  ----  target_profit: ', parseFloat(merge_migrate_orders[0]['defined_sell_percentage']), ' ----- : quantity ', parseFloat(item.quantity))
+                // // console.log('Purchased price: ', item.purchased_price, '  ----  target_profit: ', parseFloat(merge_migrate_orders[0]['defined_sell_percentage']), ' ----- : quantity ', parseFloat(item.quantity))
 
             })
 
@@ -6223,7 +6226,7 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
                 // 'purchased_price_by_pl': purchased_price_by_pl
             }
 
-            // console.log(result11)
+            // // console.log(result11)
 
             if (!isNaN(avg_purchase_price) && !isNaN(sell_price) && !isNaN(initial_trail_stop)){
                 resolve(result11)
@@ -6240,7 +6243,7 @@ async function calculate_merge_migrate_trade_values(merge_migrate_orders=[], cur
 router.post('/manageCoins', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -6261,7 +6264,7 @@ router.post('/manageCoins', auth_token.required, async (req, resp) => {
 router.post('/get_user_coins', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -6339,7 +6342,7 @@ function getGlobalCoins(exchange) {
 //play parent orders from order listing page
 router.post('/playOrder', auth_token.required, async (req, resp) => {
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -6365,10 +6368,10 @@ router.post('/playOrder', auth_token.required, async (req, resp) => {
 
 //pause play parent order form orders listings
 function pausePlayParentOrder(orderId, status, exchange) {
-    console.log("=== Inside Pause Play Parent Order Function ===")
-    console.log("OrderId: ", orderId)
-    console.log("status: ", status)
-    console.log("exchange: ", exchange)
+    // console.log("=== Inside Pause Play Parent Order Function ===")
+    // console.log("OrderId: ", orderId)
+    // console.log("status: ", status)
+    // console.log("exchange: ", exchange)
     return new Promise((resolve) => {
         conn.then((db) => {
             let filter = {};
@@ -6393,7 +6396,7 @@ function pausePlayParentOrder(orderId, status, exchange) {
 //post order for play and pause parent orders
 router.post('/togglePausePlayOrder', auth_token.required, async (req, resp) => {
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -6478,7 +6481,7 @@ router.post('/listOrderDetail', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -6556,7 +6559,7 @@ function listOrderById(orderId, exchange) {
 router.post('/deleteOrder', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -6622,7 +6625,7 @@ router.post('/deleteOrderPermanently', auth_token.required, async (req, resp) =>
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -6690,7 +6693,7 @@ function UpdateChildOrders(order_id, buy_parent_id, exchange) {
         });
     });
   }).catch(err => {
-      console.log(err);
+      // console.log(err);
   });
 }
 
@@ -6714,18 +6717,18 @@ function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
         if (err) {
             reject(err);
         } else {
-            // console.log(searchCriteria,'searchCriteria UpdateHighestPriceOrder', costaverageMap);
+            // // console.log(searchCriteria,'searchCriteria UpdateHighestPriceOrder', costaverageMap);
             resolve(success.result);
         }
       });
     });
   }).catch(err => {
-      console.log(err);
+      // console.log(err);
   });
 }
 
 function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
-    console.log('=== Inside PurchasedPriceOrders() ====')
+    // console.log('=== Inside PurchasedPriceOrders() ====')
     return new Promise((resolve, reject) => {
         conn.then(async db => {
             let where2 = {
@@ -6747,7 +6750,7 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
             }
 
             let query = where2;
-            console.log("Query: ", query)
+            // console.log("Query: ", query)
 
             let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
             let buyPromise = db.collection(buyCollection).find(query).toArray();
@@ -6783,7 +6786,7 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
             resolve(tempOrders);
         });
     }).catch(err => {
-        console.log(err);
+        // console.log(err);
     });
 }
 
@@ -6815,7 +6818,7 @@ function UpdateAllSymbolOrder(symbol, admin_id, exchange, tab){
             });
           });
     }).catch(err => {
-        console.log(err);
+        // console.log(err);
     });
 }
 
@@ -6827,21 +6830,21 @@ function arraymove(arr, fromIndex, toIndex) {
 }
 
 // router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
-//     console.log("REQ BODY: ", req.body)
-//     console.log("REQ PAYLOAD: ", req.payload)
+//     // console.log("REQ BODY: ", req.body)
+//     // console.log("REQ PAYLOAD: ", req.payload)
 // })
 
 //post call from component for makeCostAvg
 router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
-    console.log("/makeCostAvg Req Body: ", req.body)
-    console.log("/makeCostAvg Req Payload: ", req.payload)
+    // console.log("/makeCostAvg Req Body: ", req.body)
+    // console.log("/makeCostAvg Req Payload: ", req.payload)
     let order_listing_filter = {}
     let admin_id = req.payload.id;
 
     if(req.body.order_listing_filter && req.body.order_listing_filter !== ''){
         order_listing_filter = JSON.parse(req.body.order_listing_filter)
     }
-    console.log("order_listing_filter: ", order_listing_filter)
+    // console.log("order_listing_filter: ", order_listing_filter)
 
     if(Object.keys(order_listing_filter).length > 0 && order_listing_filter.searchUsername !== ''){
         tempWhere = { username_lowercase: order_listing_filter.searchUsername.toLowerCase()}
@@ -6852,7 +6855,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
     } else{
         var user_exist = await getUserByID(req.payload.id)
-        // console.log(user_exist)
+        // // console.log(user_exist)
         if(!user_exist){
             resp.status(401).send({
                 message: 'User Not exist'
@@ -6861,7 +6864,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
         }
     }
     
-    console.log("admin_id: ", admin_id)
+    // console.log("admin_id: ", admin_id)
 
     let order_id = req.body.orderId
     let exchange = req.body.exchange
@@ -6897,14 +6900,14 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             }
             
             if(tab == 'openTab_move_all' || tab == 'openTab_move_all_manual'){
-                console.log('check 1')
+                // console.log('check 1')
                 costAverageArr = [];
                 if(admin_id){
                     var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], admin_id, exchange, tab)
                 } 
-                console.log("Map Array IDs: ")
+                // console.log("Map Array IDs: ")
                 mapArray1.forEach(o => {
-                    console.log(o._id)
+                    // console.log(o._id)
                 })
                 
                 let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
@@ -6920,7 +6923,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                         } else {
                             x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
                         }
-                        // console.log(x._id, "x.profitLoss: ", x.profitLoss)
+                        // // console.log(x._id, "x.profitLoss: ", x.profitLoss)
                     });
 
                     await new Promise(r => setTimeout(r, 100));
@@ -6945,7 +6948,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                         dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
                         dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
                         dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
-                        // console.log("highestParentOrder:", highestParentOrder)
+                        // // console.log("highestParentOrder:", highestParentOrder)
                         costAverageArr.push(dataToAppend);
                     } else {
                         var dataToAppend = {};
@@ -7127,7 +7130,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
 // UnParentAllOtherOrders starts here
  function unParentAllOtherOrders(orderId, userId, symbol, exchange, order_mode, tab){
-    console.log("\n=== Inside Uparent Function ===\n")
+    // console.log("\n=== Inside Uparent Function ===\n")
     return new Promise(async (resolve, reject) => {
         const buy_collection = exchange == 'binance' ? 'buy_orders' : `buy_orders_${exchange}`
         const where = {
@@ -7161,45 +7164,45 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 child_for_sell_less_than_3: 1
             },
         }
-        console.log(buy_collection, '\n', where, '\n', set)
+        // console.log(buy_collection, '\n', where, '\n', set)
         order_mode = order_mode && order_mode!==undefined && order_mode!==null && order_mode!=='' ? order_mode : 'live'
-        console.log("order mode: ", order_mode)
+        // console.log("order mode: ", order_mode)
         if(order_mode == 'live'){
             let db = await conn;
             // tempParentOrders = []
             // let check = await db.collection(buy_collection).findOne(where)
-            // console.log("CHECK: ", check)
+            // // console.log("CHECK: ", check)
             await db.collection(buy_collection).updateMany(where, set, (err, result) => {
                 if(err){
-                    console.log("ERROR: ", err)
+                    // console.log("ERROR: ", err)
                     reject(err)
                 } else {
-                    // console.log(result.result)
+                    // // console.log(result.result)
                     if (result.result.ok == 1) { 
-                        console.log("\nTempParentOrders Update Count: ", result.modifiedCount)
-                        console.log('\nUpdated Successfully!')
+                        // console.log("\nTempParentOrders Update Count: ", result.modifiedCount)
+                        // console.log('\nUpdated Successfully!')
                     } else {
-                        console.log("Could not be updated!")
+                        // console.log("Could not be updated!")
                     }
                     resolve(true)
                 }
             })
         }
     }).catch(err => {
-        console.log("ERROR: ", err);
+        // console.log("ERROR: ", err);
     });
 }// UnParentAllOtherOrders ends here
 
 router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
-    console.log("/getAllLTHOPENOrders Req Body: ", req.body)
-    console.log("/getAllLTHOPENOrders Req Payload: ", req.payload)
+    // console.log("/getAllLTHOPENOrders Req Body: ", req.body)
+    // console.log("/getAllLTHOPENOrders Req Payload: ", req.payload)
     let order_listing_filter = {}
     let admin_id = req.payload.id;
 
     if(req.body.order_listing_filter && req.body.order_listing_filter !== ''){
         order_listing_filter = JSON.parse(req.body.order_listing_filter)
     }
-    console.log("order_listing_filter: ", order_listing_filter)
+    // console.log("order_listing_filter: ", order_listing_filter)
 
     if(order_listing_filter !== {} && order_listing_filter.searchUsername !== ''){
         tempWhere = { username_lowercase: order_listing_filter.searchUsername.toLowerCase()}
@@ -7209,7 +7212,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
         admin_id = user_id
     } else{
         var user_exist = await getUserByID(req.payload.id)
-        // console.log(user_exist)
+        // // console.log(user_exist)
         if(!user_exist){
             resp.status(401).send({
                 message: 'User Not exist'
@@ -7218,7 +7221,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
         }
     }
     
-    console.log("admin_id: ", admin_id)
+    // console.log("admin_id: ", admin_id)
     let exchange = req.body.exchange;
     let order_id = req.body.orderId;
     let symbol = ''
@@ -7249,7 +7252,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                     where2['trigger_type'] = 'barrier_percentile_trigger'
                 }
                 let query = where2
-                console.log("Query: ", query)
+                // console.log("Query: ", query)
 
                 let project1 = {
                     'admin_id':1,
@@ -7288,7 +7291,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                 let cost_avg_array_orders = [...tempOrders].filter(order => {
                   return typeof order.cost_avg_array != 'undefined' && order.cost_avg_array.length >  1;
                 })
-                console.log(cost_avg_array_orders.length);
+                // console.log(cost_avg_array_orders.length);
                 if(cost_avg_array_orders.length > 0){
                     for(let i=0; i<cost_avg_array_orders.length; i++){
                         for(let j=0; j<cost_avg_array_orders[i]['cost_avg_array'].length; j++){
@@ -7306,9 +7309,9 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                 }
                 // Wait for 3 Seconds
                 await new Promise(r => setTimeout(r, 3000));
-                console.log(AllChildOrders.length, tempOrders.length);
+                // console.log(AllChildOrders.length, tempOrders.length);
                 tempOrders = tempOrders.concat(AllChildOrders);
-                console.log(tempOrders.length);
+                // console.log(tempOrders.length);
                 let orders = []
                 tempOrders.map(order=>{
                     order['t_date'] = order['buy_date']
@@ -7317,7 +7320,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                 orders.sort(function (a, b) {
                   return new Date(b.t_date) - new Date(a.t_date);
                 });
-                // console.log(orders)
+                // // console.log(orders)
                 // orders = orders.slice(0, 10);
                 res.send({
                     success: true,
@@ -7336,7 +7339,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
 
 router.post('/getAllLTHOPENOrdersManual', auth_token.required, async (req, res) => {
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -7374,7 +7377,7 @@ router.post('/getAllLTHOPENOrdersManual', auth_token.required, async (req, res) 
                     where2['trigger_type'] = 'no'
                 }
                 let query = where2
-                console.log("Query: ", query)
+                // console.log("Query: ", query)
                 let project1 = {
                     'admin_id':1,
                     'application_mode':1,
@@ -7412,7 +7415,7 @@ router.post('/getAllLTHOPENOrdersManual', auth_token.required, async (req, res) 
                 let cost_avg_array_orders = [...tempOrders].filter(order => {
                   return typeof order.cost_avg_array != 'undefined' && order.cost_avg_array.length >  1;
                 })
-                console.log(cost_avg_array_orders.length);
+                // console.log(cost_avg_array_orders.length);
                 if(cost_avg_array_orders.length > 0){
                     for(let i=0; i<cost_avg_array_orders.length; i++){
                         for(let j=0; j<cost_avg_array_orders[i]['cost_avg_array'].length; j++){
@@ -7430,9 +7433,9 @@ router.post('/getAllLTHOPENOrdersManual', auth_token.required, async (req, res) 
                 }
                 // Wait for 3 Seconds
                 await new Promise(r => setTimeout(r, 3000));
-                console.log(AllChildOrders.length, tempOrders.length);
+                // console.log(AllChildOrders.length, tempOrders.length);
                 tempOrders = tempOrders.concat(AllChildOrders);
-                console.log(tempOrders.length);
+                // console.log(tempOrders.length);
                 let orders = []
                 tempOrders.map(order=>{
                     order['t_date'] = order['buy_date']
@@ -7441,7 +7444,7 @@ router.post('/getAllLTHOPENOrdersManual', auth_token.required, async (req, res) 
                 orders.sort(function (a, b) {
                   return new Date(b.t_date) - new Date(a.t_date);
                 });
-                // console.log(orders)
+                // // console.log(orders)
                 // orders = orders.slice(0, 10);
                 res.send({
                     success: true,
@@ -7490,21 +7493,21 @@ function delete_order_history_logs(order_id, exchange) {
                 var full_collection_name = (exchange == 'binance') ? 'orders_history_log' : 'orders_history_log_' + exchange;
             }
 
-            // (async () => { console.log('full_collection_name ::::::', full_collection_name) })();
+            // (async () => { // console.log('full_collection_name ::::::', full_collection_name) })();
 
             // //Count Logs
             // let logs_count = await db.collection(full_collection_name).find({ 'order_id': { '$in': [order_id, new ObjectID(order_id)] } }).count()
-            // console.log('logs_count ::::', logs_count)
+            // // console.log('logs_count ::::', logs_count)
 
             //Delete Logs
             db.collection(full_collection_name).deleteMany({ 'order_id': { '$in': [order_id, new ObjectID(order_id)] } })
             // let res = await db.collection(full_collection_name).deleteMany({ 'order_id': { '$in': [order_id, new ObjectID(order_id)] } })
-            // console.log(res)
+            // // console.log(res)
 
             //Delete order
             db.collection(buy_collection).deleteOne({ '_id': new ObjectID(order_id) })
             // let res2 = await db.collection(buy_collection).deleteOne({ '_id': new ObjectID(order_id) })
-            // console.log(res2)
+            // // console.log(res2)
 
         }
 
@@ -7544,7 +7547,7 @@ router.post('/orderMoveToLth', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -7645,7 +7648,7 @@ router.post('/listOrderById', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -7653,7 +7656,7 @@ router.post('/listOrderById', auth_token.required, async (req, resp) => {
         return false;
     }
 
-    // console.log(req.body)
+    // // console.log(req.body)
 
     let orderId = req.body.orderId;
     let exchange = req.body.exchange;
@@ -7687,7 +7690,7 @@ router.post('/listOrderById', auth_token.required, async (req, resp) => {
                 });
                 timeZoneTime = new Date(timeZoneTime);
             } catch (e) {
-                console.log(e);
+                // console.log(e);
             }
 
 
@@ -7725,7 +7728,7 @@ router.post('/listOrderById', auth_token.required, async (req, resp) => {
 router.post('/listOrderLogById', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -7757,7 +7760,7 @@ router.post('/listOrderLogById', auth_token.required, async (req, resp) => {
             });
             timeZoneTime = new Date(timeZoneTime);
         } catch (e) {
-            console.log(e);
+            // console.log(e);
         }
 
         var date = timeZoneTime.toLocaleString() + ' ' + timezone;
@@ -7846,7 +7849,7 @@ router.post('/costAvgChildLogs', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -7979,7 +7982,7 @@ async function costAvgChildLogs(orderId, exchange, order_mode, order_created_dat
 router.post('/sellOrderManually', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -8056,18 +8059,18 @@ router.post('/sellOrderManually', auth_token.required, async (req, resp) => {
             let buyOrderStatus = (typeof buyOrderArr['status'] == undefined) ? '' : buyOrderArr['status'];
             var buyParentOrderId = (typeof buyOrderArr['buy_parent_id'] == undefined) ? '' : buyOrderArr['buy_parent_id'];
 
-            console.log("sell_order_id ", sell_order_id)
+            // console.log("sell_order_id ", sell_order_id)
             if (typeof sell_order_id != 'undefined' && sell_order_id != '') {
                 let application_mode = (typeof buyOrderArr['application_mode'] == undefined) ? '' : buyOrderArr['application_mode'];
                 let buy_order_id = buyOrderArr['_id'];
                 let quantity = (typeof buyOrderArr['quantity'] == undefined) ? '' : buyOrderArr['quantity'];
 
 
-                // console.log('1111 ', quantity)
+                // // console.log('1111 ', quantity)
                 if (costAvgParent && costAvgParentAddedQty !== false){
                     quantity = costAvgParentAddedQty
                 }
-                // console.log('2222 ', quantity)
+                // // console.log('2222 ', quantity)
 
                 let coin_symbol = (typeof buyOrderArr['symbol'] == undefined) ? '' : buyOrderArr['symbol'];
                 let admin_id = (typeof buyOrderArr['admin_id'] == undefined) ? '' : buyOrderArr['admin_id'];
@@ -8075,7 +8078,7 @@ router.post('/sellOrderManually', auth_token.required, async (req, resp) => {
                 //getting user ip for trading
                 var trading_ip = await listUsrIp(admin_id);
 
-                console.log("trading_ip ", trading_ip)
+                // console.log("trading_ip ", trading_ip)
 
 
                 var log_msg = ' Order Has been sent for  <span style="color:yellow;font-size: 14px;"><b>Sold Manually</b></span> by Sell Now ' + interfaceType;
@@ -8125,7 +8128,7 @@ router.post('/sellOrderManually', auth_token.required, async (req, resp) => {
                     logPromise_1.then((resp) => {})
                     //send order for sell on specific ip
                     var SellOrderResolve = readySellOrderbyIp(sell_order_id, quantity, currentMarketPrice, coin_symbol, admin_id, buy_order_id, trading_ip, trigger_type, 'sell_market_order', exchange);
-                    // console.log("SellOrderResolve ", SellOrderResolve)
+                    // // console.log("SellOrderResolve ", SellOrderResolve)
 
                     SellOrderResolve.then((resp) => {})
                 } else {
@@ -8167,7 +8170,7 @@ async function checkQuanity(order_id, tab=''){
             collection_name = 'sold_buy_orders'
         }
 
-        // console.log('tab    === ', tab)
+        // // console.log('tab    === ', tab)
 
         const db = await conn
 
@@ -8220,7 +8223,7 @@ async function checkQuanity(order_id, tab=''){
             //add new field to hide button
             await db.collection(collection_name).updateOne(where, {'$set':{'order_shifted_resume_exchange':'yes'}})
 
-            // console.log(minReqQty, ' <= ', quantity)
+            // // console.log(minReqQty, ' <= ', quantity)
 
             if (minReqQty <= quantity) {
 
@@ -8531,7 +8534,7 @@ async function make_migrated_parent(order_id, action=''){
             //insert extra fields in parent
             if (parentOrder.length > 0){
 
-                // console.log('parent order exists')
+                // // console.log('parent order exists')
 
                 parentOrder[0]['last_trade_buy_price'] = last_trade_buy_price
                 parentOrder[0]['last_trade_sell_price'] = last_trade_sell_price
@@ -8539,7 +8542,7 @@ async function make_migrated_parent(order_id, action=''){
                 parentOrder[0]['last_trade_pl_status'] = last_trade_pl_status
 
                 if (minReqQty <= quantity) {
-                    // console.log('creating new parent')
+                    // // console.log('creating new parent')
 
 
 
@@ -8590,7 +8593,7 @@ async function make_migrated_parent(order_id, action=''){
 
                         await db.collection('buy_orders_kraken').insertOne(parentOrder[0], async (err, result) => {
                             if (err) {
-                                console.log(err)
+                                // console.log(err)
                             } else {
                                 //TODO: insert parent error log
                                 var show_hide_log = 'yes'
@@ -8622,7 +8625,7 @@ async function make_migrated_parent(order_id, action=''){
 
                     await db.collection('buy_orders_kraken').insertOne(newObj, async (err, result) => {
                         if (err) {
-                            console.log(err)
+                            // console.log(err)
                         } else {
                             //TODO: insert parent error log
                             var show_hide_log = 'yes'
@@ -8644,7 +8647,7 @@ async function make_migrated_parent(order_id, action=''){
                     minQtyMigrationIssue = false
                 }else{
 
-                    // console.log(' parent qty issue')
+                    // // console.log(' parent qty issue')
 
                     //TODO: insert parent error log
                     var show_hide_log = 'yes'
@@ -8658,11 +8661,11 @@ async function make_migrated_parent(order_id, action=''){
             }else{
                 //create new parent
 
-                // console.log(' creating newww parent ')
+                // // console.log(' creating newww parent ')
 
                 if (minReqQty <= buy_order[0]['quantity']) {
 
-                    // console.log(' newww parent qty ok ')
+                    // // console.log(' newww parent qty ok ')
 
                     let where1 = {
                         'admin_id': buy_order[0]['admin_id'],
@@ -8720,7 +8723,7 @@ async function make_migrated_parent(order_id, action=''){
                                 'created_date': set1['$set']['modified_date'],
                             }
                             //get Id and update remaining fields
-                            // console.log('Inserted_id ', result.upsertedId._id)
+                            // // console.log('Inserted_id ', result.upsertedId._id)
                             db.collection('buy_orders_kraken').updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields })
 
                             //TODO: insert parent creation log
@@ -8742,7 +8745,7 @@ async function make_migrated_parent(order_id, action=''){
                             db.collection('buy_orders_kraken').find(where1).limit(1).toArray(async function (err, result2) {
                                 if (err) throw err;
                                 if (result2.length > 0) {
-                                    // console.log('modified_id ', String(result2[0]['_id']))
+                                    // // console.log('modified_id ', String(result2[0]['_id']))
 
                                     //TODO: insert parent creation log
                                     var show_hide_log = 'yes'
@@ -8775,7 +8778,7 @@ async function make_migrated_parent(order_id, action=''){
 
                     await db.collection('buy_orders_kraken').insertOne(newObj, async (err, result) => {
                         if (err) {
-                            console.log(err)
+                            // console.log(err)
                         } else {
                             //TODO: insert parent error log
                             var show_hide_log = 'yes'
@@ -8797,7 +8800,7 @@ async function make_migrated_parent(order_id, action=''){
                     minQtyMigrationIssue = false
                 }else{
 
-                    // console.log(' newww parent qty issue ')
+                    // // console.log(' newww parent qty issue ')
 
                     //TODO: insert parent error log
                     var show_hide_log = 'yes'
@@ -8901,7 +8904,7 @@ async function is_sell_migrate_order_normally(order_id){
 router.post('/test_user_api_key', auth_token.required, async (req, resp)=>{
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -8974,15 +8977,15 @@ function readySellOrderbyIp(order_id, quantity, market_price, coin_symbol, admin
             insert_arr['modified_date'] = new Date();
             let collection = (exchange == 'binance') ? 'ready_orders_for_sell_ip_based' : 'ready_orders_for_sell_ip_based_' + exchange;
 
-            // console.log('insert_arr', insert_arr);
+            // // console.log('insert_arr', insert_arr);
             let where = {
                 'order_id': { '$in': [new ObjectID(String(order_id)), String(order_id)]},
                 'buy_orders_id': { '$in': [new ObjectID(String(buy_orders_id)), String(buy_orders_id)]},
             }
             db.collection(collection).updateOne(where, {'$set':insert_arr}, {'upsert':true}, (err, result) => {
 
-                // console.log('error', err);
-                // console.log('result', result);
+                // // console.log('error', err);
+                // // console.log('result', result);
 
                 if (err) {
                     resolve(err)
@@ -9126,7 +9129,7 @@ function find(collectionName, search) {
 router.post('/buyOrderManually', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -9177,7 +9180,7 @@ router.post('/buyOrderManually', auth_token.required, async (req, resp) => {
             var order_mode = ((getBuyOrder.length > 0) ? getBuyOrder[0]['application_mode'] : 'test')
             var logPromise = create_orders_history_log(orderId, log_msg, 'sell_filled', 'yes', exchange, order_mode, order_created_date)
             logPromise.then((callback) => {
-                // console.log(callback)
+                // // console.log(callback)
             })
 
             //Send Notification
@@ -9619,7 +9622,7 @@ router.post('/listOrdersForChart', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -9910,7 +9913,7 @@ router.post('/updateBuyPriceFromDragging', auth_token.required, async (req, resp
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -10034,12 +10037,12 @@ router.post('/updateBuyPriceFromDragging', auth_token.required, async (req, resp
     var update = {};
     update['price'] = updated_buy_price;
 
-    console.log(getBuyOrder[0])
+    // console.log(getBuyOrder[0])
     if(getBuyOrder[0]['deep_price_on_off'] !== 'undefined' && getBuyOrder[0]['deep_price_on_off'] == 'yes' && getBuyOrder[0]['status'] == 'new'){
-      console.log('Update Deep Price now')
+      // console.log('Update Deep Price now')
       update['expecteddeepPrice'] = updated_buy_price;
     } else {
-      console.log('Not Update Deep Price now')
+      // console.log('Not Update Deep Price now')
     }
     update['modified_date'] = new Date();
     var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
@@ -10054,7 +10057,7 @@ router.post('/updateBuyPriceFromDragging', auth_token.required, async (req, resp
 router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -10067,8 +10070,8 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
     var side = req.body.side;
     var updated_price = req.body.updated_price;
 
-    console.log('1 == request')
-    console.log(req.body.exchange)
+    // console.log('1 == request')
+    // console.log(req.body.exchange)
 
     var side = req.body.side;
     var nss = side.indexOf("profit_inBall");
@@ -10085,7 +10088,7 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
     if (orderArr.length > 0) {
         for (let index in orderArr) {
 
-            console.log('2 == listOrderById')
+            // console.log('2 == listOrderById')
 
             var orderid = orderArr[index]['_id'];
             var trigger_type = orderArr[index]['trigger_type'];
@@ -10110,7 +10113,7 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
             //check order is auto order
             if (trigger_type != 'no') {
 
-                console.log('3 == auto order')
+                // console.log('3 == auto order')
 
                 //In case of auto order if loss percentage is updated the change the value of initial order
                 let iniatial_trail_stop = (typeof orderArr[index]['iniatial_trail_stop'] == 'undefined') ? 0 : orderArr[index]['iniatial_trail_stop'];
@@ -10128,7 +10131,7 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
                 //check of  profit percentage is updated
                 if (side == 'profit_inBall') {
 
-                    console.log('4 == profit_inball')
+                    // console.log('4 == profit_inball')
 
                     message = ' Auto Order Sell Price Changed';
                     var filter = {};
@@ -10159,7 +10162,7 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
 
                 } else { //End of side
 
-                    console.log('5 == else profit_inBall')
+                    // console.log('5 == else profit_inBall')
 
                     message = "Auto Order stop Loss Changed";
                     var filter = {};
@@ -10188,12 +10191,12 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
             } else { //End of trigger type
                 //:::::::::::::::::Manual Trading :::::::::::::::::
 
-                console.log('6 == Manual order')
+                // console.log('6 == Manual order')
 
                 //check of  sell order id
                 if (sell_order_id != '') {
 
-                    console.log('7 == if sell_order_id')
+                    // console.log('7 == if sell_order_id')
 
                     //get sell order by id
                     var sellOrderResp = await listSellOrderById(sell_order_id, exchange);
@@ -10219,7 +10222,7 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
 
                     if (side == 'profit_inBall') {
 
-                        console.log('8 == if profit_inBall')
+                        // console.log('8 == if profit_inBall')
 
                         message = "Manual Order  Profit price Changed"
                         var filter = {};
@@ -10268,7 +10271,7 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
                         logPromise_1.then((callback) => {})
                     } else { //End of profitable side
 
-                        console.log('9 == else profit_inBall')
+                        // console.log('9 == else profit_inBall')
 
                         message = "Manual Order  stop loss price Changed";
                         var current_data2222 = purchased_price - updated_price;
@@ -10335,12 +10338,12 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
 
 
                 } else if (sell_order_id == '' && statsus == 'FILLED' && side == 'profit_inBall') {
-                    console.log('9 == else if sell_order_id')
-                    console.log('10 == set for sell')
+                    // console.log('9 == else if sell_order_id')
+                    // console.log('10 == set for sell')
                     ///:::::::::set for sell ::::::::::::::::::::::::
                     let tempArrResp = await listselTempOrders(orderId, exchange);
                     if (tempArrResp.length > 0) {
-                        console.log('11 == temp sell exist')
+                        // console.log('11 == temp sell exist')
                         //::::::::::: if temp arr Exist ::::::::::::::::::
                         var tempObj = tempArrResp[0];
                         var stop_loss = (typeof tempObj['stop_loss'] == 'undefined') ? '' : tempObj['stop_loss'];
@@ -10406,10 +10409,10 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
                 } else { //End of if sell order Exist
                     let tempArrResp = await listselTempOrders(orderId, exchange);
 
-                    console.log('12 == else sell_order_id')
+                    // console.log('12 == else sell_order_id')
                     //:::::::::::::::::::
                     if (tempArrResp.length == 0) {
-                        console.log('13 == tempArrResp')
+                        // console.log('13 == tempArrResp')
 
                         var filter = {};
                         filter['_id'] = new ObjectID(orderId);
@@ -10430,7 +10433,7 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
 
                         if (side == 'profit_inBall') {
 
-                            console.log('14 == profit in ball')
+                            // console.log('14 == profit in ball')
 
                             message = "Manual Order profit price changed and order Set to Auto Sell";
                             temp_arr['profit_percent'] = sell_profit_percent;
@@ -10468,7 +10471,7 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
 
                         } else {
 
-                            console.log('15 == else profit_inBall')
+                            // console.log('15 == else profit_inBall')
 
                             message = "Manual Order stoploss price changed and order Set to Auto Sell"
                             var current_data2222 = buy_price - updated_price;
@@ -10542,7 +10545,7 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
                         conn.then((db) => {
                             db.collection(collection).insertOne(temp_arr, (error, result) => {
                                 if (error) {
-                                    console.log(error)
+                                    // console.log(error)
                                 } else {
 
                                 }
@@ -10569,7 +10572,7 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
                         var upd_temp = {};
                         if (side == 'profit_inBall') {
 
-                            console.log('16 == profit in ball temp sell order')
+                            // console.log('16 == profit in ball temp sell order')
 
                             upd_temp['profit_percent'] = sell_profit_percent;
                             upd_temp['profit_price'] = updated_price;
@@ -10615,7 +10618,7 @@ router.post('/updateOrderfromdraging', auth_token.required, async (req, resp) =>
 
                         } else {
 
-                            console.log('17 == profit in ball temp sell order')
+                            // console.log('17 == profit in ball temp sell order')
 
                             message = "Manual Order stoploss price changed and order Set to Auto Sell"
                             var current_data2222 = buy_price - updated_price;
@@ -10684,7 +10687,7 @@ router.post('/updateBuyPriceFromDraggingChart', auth_token.required, async (req,
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -10778,10 +10781,10 @@ router.post('/updateBuyPriceFromDraggingChart', auth_token.required, async (req,
 
                     update['price'] = updated_buy_price;
                     if(order['deep_price_on_off'] !== 'undefined' && order['deep_price_on_off'] == 'yes' && order['status'] == 'new'){
-                      console.log('Update Deep Price now')
+                      // console.log('Update Deep Price now')
                       update['expecteddeepPrice'] = updated_buy_price;
                     } else {
-                      console.log('Not Update Deep Price now')
+                      // console.log('Not Update Deep Price now')
                     }
                     if (!isNaN(sell_price)) {
                         update['sell_price'] = sell_price;
@@ -10801,10 +10804,10 @@ router.post('/updateBuyPriceFromDraggingChart', auth_token.required, async (req,
 
                 update['price'] = updated_buy_price;
                 if(order['deep_price_on_off'] !== 'undefined' && order['deep_price_on_off'] == 'yes' && order['status'] == 'new'){
-                  console.log('Update Deep Price now')
+                  // console.log('Update Deep Price now')
                   update['expecteddeepPrice'] = updated_buy_price;
                 } else {
-                  console.log('Not Update Deep Price now')
+                  // console.log('Not Update Deep Price now')
                 }
                 if (!isNaN(sell_price)) {
                     update['sell_price'] = sell_price;
@@ -10847,7 +10850,7 @@ router.post('/updateBuyPriceFromDraggingChart', auth_token.required, async (req,
 //post call for updating digieSignal from chart
 router.post('/updateDigieSignalChart', auth_token.required, async (req, resp) => {
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -10860,13 +10863,13 @@ router.post('/updateDigieSignalChart', auth_token.required, async (req, resp) =>
     var sell_signal = req.body.sell_signal;
 
 
-    console.log(buy_signal, sell_signal, orderId, exchange)
+    // console.log(buy_signal, sell_signal, orderId, exchange)
 
     if(buy_signal){
-        console.log('buy_signal')
+        // console.log('buy_signal')
     }
     if(sell_signal){
-        console.log('sell_signal')
+        // console.log('sell_signal')
     }
     //get buy order detail on the base of order id
     var orderArr = await listOrderById(orderId, exchange);
@@ -10902,7 +10905,7 @@ router.post('/updateDigieSignalChart', auth_token.required, async (req, resp) =>
             update['modified_date'] = new Date();
 
 
-            console.log(update, 'BUy Hit')
+            // console.log(update, 'BUy Hit')
 
             var updatePromise = updateOne(filter, update, buy_collection);
             updatePromise.then((resolve) => {});
@@ -10953,7 +10956,7 @@ router.post('/updateDigieSignalChart', auth_token.required, async (req, resp) =>
 router.post('/updateBuyTrailChart', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -11007,7 +11010,7 @@ router.post('/updateBuyTrailChart', auth_token.required, async (req, resp) => {
 
 
 
-            console.log(update)
+            // console.log(update)
 
 
 
@@ -11048,7 +11051,7 @@ router.post('/updateSellTrailChart', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -11139,7 +11142,7 @@ router.post('/updateSellTrailChart', auth_token.required, async (req, resp) => {
             update['modified_date'] = new Date();
 
 
-            console.log(update)
+            // console.log(update)
 
             var updatePromise = updateOne(filter, update, buy_collection);
             updatePromise.then((resolve) => {});
@@ -11171,7 +11174,7 @@ router.post('/updateSellTrailChart', auth_token.required, async (req, resp) => {
 router.post('/updateLthProfitChart', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -11285,7 +11288,7 @@ router.post('/updateLthProfitChart', auth_token.required, async (req, resp) => {
 router.post('/updateOrderfromdragingChart', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -11689,10 +11692,10 @@ router.post('/updateOrderfromdragingChart', auth_token.required, async (req, res
             // var oldSellArr = SellArr
             // var SellArr = await get_sell_order(orderId, exchange);
 
-            // console.log('---------- old buyArr');
-            // console.log(oldArr);
-            // console.log('---------- new buyArr');
-            // console.log(orderArr);
+            // // console.log('---------- old buyArr');
+            // // console.log(oldArr);
+            // // console.log('---------- new buyArr');
+            // // console.log(orderArr);
 
 
         } //End of foreach
@@ -11737,7 +11740,7 @@ function listSellOrderByBuyOrderId(ID, exchange) {
 router.post('/lisEditManualOrderById', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -11748,7 +11751,7 @@ router.post('/lisEditManualOrderById', auth_token.required, async (req, resp) =>
     let exchange = req.body.exchange;
     var buyOrderResp = await listOrderById(orderId, exchange);
     var buyOrderArr = buyOrderResp[0];
-    // console.log(buyOrderArr, 'buyOrderArr')
+    // // console.log(buyOrderArr, 'buyOrderArr')
     var post_data = req.body
     var timezone = (typeof post_data.timezone == 'undefined' || post_data.timezone == '') ? 'America/Danmarkshavn' : post_data.timezone;
 
@@ -11801,7 +11804,7 @@ router.post('/lisEditManualOrderById', auth_token.required, async (req, resp) =>
             });
             timeZoneTime = new Date(timeZoneTime);
         } catch (e) {
-            console.log(e);
+            // console.log(e);
         }
         var date = timeZoneTime.toLocaleString() + ' ' + timezone;
         //Remove indicator log message
@@ -11848,7 +11851,7 @@ router.post('/lisEditManualOrderById', auth_token.required, async (req, resp) =>
 router.post('/updateManualOrder', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -11992,7 +11995,7 @@ router.post('/updateManualOrder', auth_token.required, async (req, resp) => {
 
 
       // check Added By Huzaifa to Convert Value Into Float
-      console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=IF=-=-=-=-=')
+      // console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=IF=-=-=-=-=')
       buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
       buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
       buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
@@ -12014,7 +12017,7 @@ router.post('/updateManualOrder', auth_token.required, async (req, resp) => {
       buyorderArr['sell_price'] = parseFloat(sell_price)
       }
 
-      console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=After IF=-=-=-=-=')
+      // console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'], '=-=-=-=-=After IF=-=-=-=-=')
 
 
   } else {
@@ -12071,7 +12074,7 @@ router.post('/updateManualOrder', auth_token.required, async (req, resp) => {
 
 
       // check Added By Huzaifa to Convert Value Into Float
-      console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'])
+      // console.log(buyorderArr['buy_trail_price'], typeof buyorderArr['buy_trail_price'])
       buyorderArr['buy_trail_interval'] =(typeof buyorderArr['buy_trail_interval'] != 'undefined' && buyorderArr['buy_trail_interval'] != '') ? parseFloat(buyorderArr['buy_trail_interval']) : ''
       buyorderArr['sell_trail_interval'] = (typeof buyorderArr['sell_trail_interval'] != 'undefined' && buyorderArr['sell_trail_interval'] != '') ? parseFloat(buyorderArr['sell_trail_interval']) : ''
       buyorderArr['sell_trail_price'] = (typeof buyorderArr['sell_trail_price'] != 'undefined' && buyorderArr['sell_trail_price'] != '') ? parseFloat(buyorderArr['sell_trail_price']) : ''
@@ -12548,7 +12551,7 @@ router.post('/setForSell', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -12713,7 +12716,7 @@ function setForSell(sellOrderArr, exchange, buy_order_id) {
             };
             db.collection(collection).updateOne(where, set, upsert, (error, result) => {
                 if (error) {
-                    console.log(error)
+                    // console.log(error)
                 } else {
                     if (result.upsertedId == null) {
                         db.collection(collection).find(where).toArray((err, result) => {
@@ -12758,7 +12761,7 @@ function setForSell(sellOrderArr, exchange, buy_order_id) {
 router.post('/get_orders_post', auth_token.required, async function (req, res, next) {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -12904,7 +12907,7 @@ router.post('/get_orders_post', auth_token.required, async function (req, res, n
 
 
                         array_response.push(final_orders_element);
-                        //console.log(array_response, "===> array_response inside scope")
+                        //// console.log(array_response, "===> array_response inside scope")
                     })
 
 
@@ -13080,7 +13083,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
 
 
 
-      console.log(url)
+      // console.log(url)
         request.post({
             url: url,
             // json: {
@@ -13096,7 +13099,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-              console.log(body,api_key, exchange, 'BODY in user info')
+              // console.log(body,api_key, exchange, 'BODY in user info')
                 resolve(body);
             } else {
               if(body){
@@ -13113,7 +13116,7 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -13182,7 +13185,7 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
 
 
       var data = await verify_user_info(api_key, user_ip, user_id, exchange, kraken_id, auth_token)
-      console.log(data, '-=-=--=-=-=-=-=-=-=')
+      // console.log(data, '-=-=--=-=-=-=-=-=-=')
       if(data.success){
 
 
@@ -13273,7 +13276,7 @@ async function authenticatejwtTokenForUserInfo(token) {
     return new Promise(async function (resolve, reject) {
         jwt.verify(token,secret, (err, data) => {
             if(err){
-                console.log(err)
+                // console.log(err)
                 resolve(false);
             } else {
                 resolve(data)
@@ -13311,7 +13314,7 @@ async function get_api_secret(user_ip, admin_id, auth_token){
 
       let url = 'https://'+ ip +'/getApiSecretBalanceTradingBinance'
 
-        console.log(url)
+        // console.log(url)
         request.post({
           url: url,
           json: {
@@ -13325,9 +13328,9 @@ async function get_api_secret(user_ip, admin_id, auth_token){
           }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                // console.log(body, "get User API");
+                // // console.log(body, "get User API");
                 if(body.success){
-                  console.log(body)
+                  // console.log(body)
                   resolve(body);
                 } else {
                   resolve({
@@ -13349,7 +13352,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -13405,7 +13408,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
 
                             // if(typeof data['hash'] != 'undefined' && data['hash'] != ''){
                             //     var allData = await authenticatejwtTokenForUserInfo(data['hash'])
-                            //     console.log(allData)
+                            //     // console.log(allData)
 
 
                             //     data['api_key'] = allData['api_key']
@@ -13413,7 +13416,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                             // }
 
 
-                            // console.log(data, 'USER')
+                            // // console.log(data, 'USER')
 
 
                             var userInfo = await get_api_secret(data['trading_ip'], (data['_id']).toString(), auth_token);
@@ -13437,7 +13440,7 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                             }
 
 
-                            // console.log(userInfo)
+                            // // console.log(userInfo)
                             // return false
 
 
@@ -13511,7 +13514,7 @@ async function add_user_info(user_ip, admin_id, api_key, api_secret, interface, 
 
       let url = 'https://'+ip+'/apiKeySecret/saveApiSecret';
 
-      console.log(url)
+      // console.log(url)
       if(keyNo == 'primary'){
         data = {
             "user_id": admin_id,
@@ -13547,7 +13550,7 @@ async function add_user_info(user_ip, admin_id, api_key, api_secret, interface, 
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                // console.log(body, "get User API");
+                // // console.log(body, "get User API");
                 if(body.success){
                   resolve(body);
                 } else {
@@ -13575,7 +13578,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -13587,14 +13590,14 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
     var post_data = req.body;
     var auth_token = req.headers.authorization;
 
-    // console.log(post_data['interface'])
+    // // console.log(post_data['interface'])
     var interface_data = post_data['interface']
     post_data['interface'] = typeof post_data['interface'] != 'undefined' && post_data['interface'] != '' ? 'ios' : 'other';
     if(interface_data == 'web'){
       post_data['interface'] = 'web'
     }
 
-    // console.log(post_data)
+    // // console.log(post_data)
     let post_data_key_array = Object.keys(post_data);
     if (post_data_key_array.length == 0) {
         res.status(400).send({
@@ -13629,7 +13632,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
 
-                        console.log(update_arr, 'update_arr' )
+                        // console.log(update_arr, 'update_arr' )
 
 
 
@@ -13653,7 +13656,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
 
-                        // console.log(update_arr['api_key'], update_arr['api_secret'] )
+                        // // console.log(update_arr['api_key'], update_arr['api_secret'] )
 
                         if(update_arr['keyNo'] == 'primary'){
                             var data = await add_user_info(update_arr['trading_ip'], user_id, update_arr['api_key'], update_arr['api_secret'], update_arr['interface'], update_arr['keyNo'], auth_token)
@@ -13665,7 +13668,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 
 
 
-                        console.log(data, 'add_user_info')
+                        // console.log(data, 'add_user_info')
 
 
                         var apikey = update_arr['api_key'].substring(0, 5);
@@ -13734,7 +13737,7 @@ router.post('/update_user_info', auth_token.required, async function (req, res, 
 router.post('/createManualOrderGlobally', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -13869,7 +13872,7 @@ router.post('/addUserCoins', auth_token.required, async function (req, res, next
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -13895,7 +13898,7 @@ router.post('/addUserCoins', auth_token.required, async function (req, res, next
 
                 Promise.all(promise_arr).then(promise_res => {
                     promise_res.forEach(coin_arr => {
-                        console.log(coin_arr);
+                        // console.log(coin_arr);
                     })
                 })
 
@@ -13926,7 +13929,7 @@ router.post('/addUserCoin', auth_token.required, async function (req, res, next)
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -14023,7 +14026,7 @@ async function getLastPrice(coin) {
                 }
             })
         }).catch(err => {
-            console.log(err);
+            // console.log(err);
         })
     })
 } // End of getLastPrice
@@ -14126,7 +14129,7 @@ router.post('/saveBamCredentials', auth_token.required, async(req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -14159,7 +14162,7 @@ router.post('/saveBamCredentials', auth_token.required, async(req, resp) => {
         };
         db.collection('bam_credentials').updateOne(where, set, upsert, async (err, result) => {
             if (err) {
-                console.log(err);
+                // console.log(err);
             } else {
 
                 var reqObj = {
@@ -14221,7 +14224,7 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret, int
 
     let url = 'https://'+ip+'/saveSecretTrading';
 
-      console.log(url)
+      // console.log(url)
       request.post({
           url: url,
           json: {
@@ -14239,9 +14242,9 @@ async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret, int
               'Authorization': auth_token
           }
       }, function (error, response, body) {
-          // console.log(body)
+          // // console.log(body)
           if (!error && response.statusCode == 200) {
-              console.log(body, "get User API");
+              // console.log(body, "get User API");
               if(body.success){
                 resolve(body);
               } else {
@@ -14279,7 +14282,7 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret, int
 
 
 
-      console.log(url)
+      // console.log(url)
       request.post({
           url: url,
           json: {
@@ -14298,7 +14301,7 @@ async function add_user_info_kraken2(user_ip, admin_id, api_key, api_secret, int
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
-              console.log(body, "get User API");
+              // console.log(body, "get User API");
               if(body.success){
                 resolve(body);
               } else {
@@ -14335,7 +14338,7 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret, int
 
     let url = 'https://'+ip+'/saveSecretTrading';
 
-      console.log(url)
+      // console.log(url)
       request.post({
           url: url,
           json: {
@@ -14354,7 +14357,7 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret, int
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
-              console.log(body, "get User API");
+              // console.log(body, "get User API");
               if(body.success){
                 resolve(body);
               } else {
@@ -14373,7 +14376,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -14393,7 +14396,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     }
 
 
-    // console.log('-=-=-=-=-=-=-=-=-=-', interface, api_key)
+    // // console.log('-=-=-=-=-=-=-=-=-=-', interface, api_key)
 
     // if(interface== 'ios'){
     //     var key1 = decrypt(api_key)
@@ -14415,13 +14418,13 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
     api_key = api_key.trim()
     api_secret = api_secret.trim()
 
-    console.log(api_key, api_secret,'Huzaifa Test line')
+    // console.log(api_key, api_secret,'Huzaifa Test line')
     // return false;
 
     var data = await add_user_info_kraken1(trading_ip, user_id, api_key, api_secret, interface, auth_token);
 
 
-    console.log(data, "DATA")
+    // console.log(data, "DATA")
     if(data.success){
 
 
@@ -14447,7 +14450,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
         };
 
 
-        // console.log(where, set, upsert)
+        // // console.log(where, set, upsert)
         let search_arr_investment = {
           "admin_id": user_id
         };
@@ -14455,7 +14458,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
         var update_on_user_investment_binance_collection = await db.collection("user_investment_kraken").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes'}});
         db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
           if(err){
-            console.log(err);
+            // console.log(err);
             resp.status(200).send({
               "success": false,
               "message": "Credentials Not Saved on Kraken Credentials"
@@ -14484,7 +14487,7 @@ router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
 router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -14509,7 +14512,7 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
     api_secret = api_secret.trim()
 
 
-    // console.log(interface, api_key, api_secret, '-=-=-=-=-=-=-=-=-=-=-')
+    // // console.log(interface, api_key, api_secret, '-=-=-=-=-=-=-=-=-=-=-')
 
     // if(interface== 'ios'){
     //     var key2 = decrypt(api_key)
@@ -14530,7 +14533,7 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
 
 
 
-    // console.log(api_key, api_secret)
+    // // console.log(api_key, api_secret)
     // return false;
 
 
@@ -14555,10 +14558,10 @@ router.post('/saveKrakenCredentialsSecondary', auth_token.required, async(req, r
         };
 
 
-        // console.log(where, set, upsert)
+        // // console.log(where, set, upsert)
         db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
           if(err){
-            console.log(err);
+            // console.log(err);
             resp.status(200).send({
               "success": false,
               "message": "Credentials Not Saved on Kraken Credentials"
@@ -14591,7 +14594,7 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -14621,7 +14624,7 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
     // var secret3  = CryptoJS.AES.decrypt(api_secret, 'digiebot_trading');
     // api_secret = secret3.toString(CryptoJS.enc.Utf8);
 
-    // console.log(api_key, api_secret)
+    // // console.log(api_key, api_secret)
     // return false;
 
     api_key = api_key.trim()
@@ -14646,10 +14649,10 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
             };
 
 
-            // console.log(where, set, upsert)
+            // // console.log(where, set, upsert)
             db.collection('kraken_credentials').updateOne(where, set, upsert, async (err, result) => {
               if(err){
-                console.log(err);
+                // console.log(err);
                 resp.status(200).send({
                   "success": false,
                   "message": "Credentials Not Saved on Kraken Credentials"
@@ -14680,7 +14683,7 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
 
 router.post('/getBamCredentials', auth_token.required, async (req, resp) => {
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -14714,7 +14717,7 @@ function getBamCredentials(user_id) {
 router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -14733,7 +14736,7 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
     var kraken_data = await getKrakenCredentials_new(trading_ip, user_id, auth_token);
 
 
-    console.log(kraken_data)
+    // console.log(kraken_data)
 
     var obj = {}
     obj['api_secret'] = '';
@@ -14788,7 +14791,7 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
             response: arr
         })
     }
-    // console.log(krakenCredentials1, krakenCredentials2, krakenCredentials3)
+    // // console.log(krakenCredentials1, krakenCredentials2, krakenCredentials3)
     return false;
 
 
@@ -14889,7 +14892,7 @@ function getKrakenCredentials_new(trading_ip, user_id, auth_token) {
         }
 
         let url1 = 'https://'+ip+'/getApiSecretBalanceTrading';
-        console.log(url1)
+        // console.log(url1)
         request.post({
             url: url1,
             json: {
@@ -14901,9 +14904,9 @@ function getKrakenCredentials_new(trading_ip, user_id, auth_token) {
                 'Authorization': auth_token
             }
         }, function (error, response, body) {
-            // console.log(error,body)
+            // // console.log(error,body)
             if (!error && response.statusCode == 200) {
-                console.log(body, "get User API1");
+                // console.log(body, "get User API1");
                 if(body.success){
                   resolve(body);
                 } else {
@@ -14954,7 +14957,7 @@ function getKrakenCredentials(trading_ip, user_id) {
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-                console.log(body, "get User API1");
+                // console.log(body, "get User API1");
                 if(body.success){
                   resolve(body.api_key);
                 } else {
@@ -15017,7 +15020,7 @@ function getKrakenCredentials2(trading_ip, user_id) {
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
-              console.log(body, "get User API2");
+              // console.log(body, "get User API2");
               if(body.success){
                 resolve(body.api_key);
               } else {
@@ -15067,7 +15070,7 @@ function getKrakenCredentials3(trading_ip, user_id) {
           }
       }, function (error, response, body) {
           if (!error && response.statusCode == 200) {
-              console.log(body, "get User API3");
+              // console.log(body, "get User API3");
               if(body.success){
                 resolve(body.api_key);
               } else {
@@ -15086,7 +15089,7 @@ router.post('/calculate_average_profit', auth_token.required, async (req, resp) 
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -15133,11 +15136,11 @@ router.post('/calculate_average_profit', auth_token.required, async (req, resp) 
 
         // totalBuyQty += quantity * current_order_price
         // totalSoldQty += quantity * market_sold_price
-        // console.log('pl: ', calculate_percentage(quantity * current_order_price, quantity * market_sold_price), ' --- buyQty ', quantity * current_order_price, ' --- soldQty: ', quantity * market_sold_price)
+        // // console.log('pl: ', calculate_percentage(quantity * current_order_price, quantity * market_sold_price), ' --- buyQty ', quantity * current_order_price, ' --- soldQty: ', quantity * market_sold_price)
 
     }
 
-    // console.log(totalBuyQty, totalSoldQty)
+    // // console.log(totalBuyQty, totalSoldQty)
 
     let avg_per_trade = profit_percentage_sum / total_trades
 
@@ -15154,7 +15157,7 @@ router.post('/calculate_average_profit', auth_token.required, async (req, resp) 
 router.post('/validate_bam_credentials', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -15208,7 +15211,7 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
                 resolve(message);
             } else {
 
-                // console.log(' balances +++++++++++++++++++++++++++++++++++++++++++ ', balances)
+                // // console.log(' balances +++++++++++++++++++++++++++++++++++++++++++ ', balances)
 
                 //valid Credentials
                 let where = {
@@ -15243,7 +15246,7 @@ router.post('/validate_kraken_credentials', auth_token.required, async (req, res
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -15260,7 +15263,7 @@ router.post('/validate_kraken_credentials', auth_token.required, async (req, res
     // var credentials = await validate_kraken_credentials(APIKEY, APISECRET, user_id);
 
     var credentials = await verify_user_info(APIKEY, trading_ip, user_id, exchange, kraken_id, auth_token);
-    console.log(credentials, 'credentials')
+    // console.log(credentials, 'credentials')
 
     resp.status(200).send({
         message: credentials
@@ -15294,7 +15297,7 @@ function validate_kraken_credentials(APIKEY, APISECRET, user_id = '') {
             }
         };
         request(options, function (error, response, body) {
-            // console.log(body)
+            // // console.log(body)
             if (error) {
                 let message = {};
                 message['status'] = 'error';
@@ -15315,7 +15318,7 @@ router.post('/update_user_wallet_kraken', auth_token.required, async (req, resp)
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -15367,7 +15370,7 @@ async function update_user_wallet_kraken(user_id){
             let key = api_secret_arr[0]['api_key']
             let secret = api_secret_arr[0]['api_secret']
 
-            console.log(key, secret)
+            // console.log(key, secret)
 
             if(typeof key == 'undefined' || typeof secret == 'undefined'){
                 resolve(false)
@@ -15380,8 +15383,8 @@ async function update_user_wallet_kraken(user_id){
                 var balanceArr = await kraken.api('Balance');
 
                 if (balanceArr['error'].length > 0){
-                    console.log('Erorrrrrrrrrrrrrrrr::   user_id :: ', user_id)
-                    console.log(balanceArr)
+                    // console.log('Erorrrrrrrrrrrrrrrr::   user_id :: ', user_id)
+                    // console.log(balanceArr)
                     resolve(false)
                 }else{
 
@@ -15392,14 +15395,14 @@ async function update_user_wallet_kraken(user_id){
                         resolve(false)
                     }else{
 
-                        console.log('success ===  user_id :: ', user_id , ' ---- ', balanceArr)
+                        // console.log('success ===  user_id :: ', user_id , ' ---- ', balanceArr)
 
                         for (const [key, value] of Object.entries(balanceArr['result'])) {
                             let symbol = key
                             // let currBalance = parseFloat(value)
                             let currBalance = value
 
-                            // console.log(symbol, currBalance, typeof currBalance)
+                            // // console.log(symbol, currBalance, typeof currBalance)
 
                             // let allCoins = [ 'ZUSD', 'XXBT', 'XXRP', 'XLTC', 'XXLM', 'XETH', 'XETC', 'XXMR', 'USDT', 'EOS', 'ADA', 'QTUM', 'LINK', 'TRX' ]
 
@@ -15426,7 +15429,7 @@ async function update_user_wallet_kraken(user_id){
                                 'upsert': true
                             }
 
-                            // console.log(symbol, currBalance, typeof currBalance)
+                            // // console.log(symbol, currBalance, typeof currBalance)
 
                             await db.collection(wallet_collection).updateOne(where, update, upsert)
 
@@ -15448,7 +15451,7 @@ router.post('/get_error_in_sell', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -15475,7 +15478,7 @@ router.post('/get_error_in_sell', auth_token.required, async (req, resp) => {
         set['$set'] = update;
         db.collection(collection).updateOne(where, set, async (err, result) => {
             if (err) {
-                console.log(err)
+                // console.log(err)
                 resp.status(200).send({
                     status: false,
                     message: 'Something went wrong'
@@ -15518,7 +15521,7 @@ router.post('/get_error_in_sell', auth_token.required, async (req, resp) => {
 router.post('/remove_error', auth_token.required, async (req, resp) => {
 
   var user_exist = await getUserByID(req.payload.id);
-  // console.log(user_exist)
+  // // console.log(user_exist)
   if(!user_exist){
       resp.status(401).send({
           message: 'User Not exist'
@@ -15585,7 +15588,7 @@ router.post('/remove_error', auth_token.required, async (req, resp) => {
             //handle new types of error
             update_buy_status = 'FILLED'
             error_type = temp_buy_status_arr.join(' ')
-            // console.log('error_type', update_buy_status, error_type)
+            // // console.log('error_type', update_buy_status, error_type)
           }else if (buy_status == 'FILLED_ERROR' || buy_status == 'submitted_ERROR' || buy_status == 'LTH_ERROR' || buy_status == 'new_ERROR') {
               let statusArr = buy_status.split('_');
               update_buy_status = statusArr[0];
@@ -15605,7 +15608,7 @@ router.post('/remove_error', auth_token.required, async (req, resp) => {
               update_buy_status = 'canceled'
               error_type = temp_buy_status_arr.join(' ')
             }
-            // console.log('error_type', update_buy_status, error_type)
+            // // console.log('error_type', update_buy_status, error_type)
           }else{
               update_buy_status = 'skip'
               //check if error exist in sell order status
@@ -15616,7 +15619,7 @@ router.post('/remove_error', auth_token.required, async (req, resp) => {
               //skip buy status update if error only exist in sell order
               if (update_buy_status != 'skip'){
 
-                // console.log('Working')
+                // // console.log('Working')
                   let update = {}
                   let set1 = {}
 
@@ -15750,7 +15753,7 @@ router.post('/remove_error', auth_token.required, async (req, resp) => {
       // set['$set'] = update;
       // db.collection(collection).updateOne(where, set, async (err, result) => {
       //     if (err) {
-      //         console.log(err)
+      //         // console.log(err)
       //         resp.status(200).send({
       //             status: false,
       //             message: 'Something went wrong'
@@ -15809,7 +15812,7 @@ function get_error_in_sell(order_id, exchange) {
 router.post('/removeOrderManually', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -15873,7 +15876,7 @@ router.post('/removeOrderManually', auth_token.required, async (req, resp) => {
 //validate user password for updting exchange credentials
 router.post('/validate_user_password', auth_token.required, async (req, resp) => {
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -15923,7 +15926,7 @@ router.get('/delete_log', async (req, resp) => {
     // 		var is_order_exist = await is_buy_order_exist(order_id);
     // 		if(!is_order_exist){
     // 			var del_arr = await delete_log(order_id);
-    // 			console.log(del_arr)
+    // 			// console.log(del_arr)
     // 			//resp_obj[order_id] = del_arr;
     // 		}
     // 	}
@@ -15963,7 +15966,7 @@ function list_logs(limit, skip) {
         conn.then((db) => {
             db.collection('orders_history_log').find({}).limit(limit).skip(skip).toArray((err, result) => {
                 if (err) {
-                    console.log(err)
+                    // console.log(err)
                 } else {
                     resolve(result)
                 }
@@ -16130,7 +16133,7 @@ function listUserBalancebyCoin(admin_id, symbol, exchange) {
 router.post('/is_bnb_balance_enough', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -16181,7 +16184,7 @@ router.post('/is_trading_points_exceeded', auth_token.required, async (req, resp
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -16413,7 +16416,7 @@ router.post('/get_order_levels', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -16426,7 +16429,7 @@ router.post('/get_order_levels', auth_token.required, async (req, resp) => {
     {
      filters.enable_status = 'global';
     }
-    //console.log('hassan',req.payload.id,req.body);
+    //// console.log('hassan',req.payload.id,req.body);
     conn.then(async (db) => {
         levels = await db.collection('order_levels').find(filters).toArray();
         resp.status(200).send({
@@ -16439,7 +16442,7 @@ router.post('/get_user_wallet', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -16475,18 +16478,18 @@ function get_user_wallet(admin_id, exchange) {
                     let temp_symbol = '';
                     if ((arr1[0] == '' && arr1[1] == '') || (arr2[0] == '' && arr2[1] == '')) {
                         // symbols.push(item['coin_symbol'])
-                        // console.log(' 1 ', item['coin_symbol'])
+                        // // console.log(' 1 ', item['coin_symbol'])
                         temp_symbol = item['coin_symbol']
                     } else if (arr1[1] == '') {
                         // symbols.push(arr1[0])
-                        // console.log(' 2 ', arr1[0])
+                        // // console.log(' 2 ', arr1[0])
                         temp_symbol = arr1[0]
                     } else if (arr2[1] == '') {
                         // symbols.push(arr2[0])
-                        // console.log(' 3 ', arr2[0])
+                        // // console.log(' 3 ', arr2[0])
                         temp_symbol = arr2[0]
                     }else{
-                        // console.log(' 4 ', item['coin_symbol'])
+                        // // console.log(' 4 ', item['coin_symbol'])
                         temp_symbol = item['coin_symbol']
                     }
 
@@ -16510,7 +16513,7 @@ router.post('/pause_sold_order', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -16616,7 +16619,7 @@ router.post('/pause_lth_order', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -16695,7 +16698,7 @@ router.post('/getUserbalance', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -16737,7 +16740,7 @@ router.post('/resume_order', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -16817,7 +16820,7 @@ router.post('/resume_order_minQty', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -16866,7 +16869,7 @@ router.post('/resume_order_minQty', auth_token.required, async (req, res) => {
 
                     let insert = db.collection(resumeCollectionName).insertOne(resumeObj, async (err, result) => {
                         if (err) {
-                            console.log(err)
+                            // console.log(err)
                         } else {
                             let insert_id = result.insertedId
 
@@ -16931,7 +16934,7 @@ router.post('/resume_order_minQty', auth_token.required, async (req, res) => {
 
                         let insert = db.collection(resumeCollectionName).insertOne(resumeObj, async (err, result) => {
                             if (err) {
-                                console.log(err)
+                                // console.log(err)
                             } else {
                                 let insert_id = result.insertedId
 
@@ -17051,7 +17054,7 @@ router.post('/resume_order_test', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -17162,7 +17165,7 @@ router.post('/resume_order_test', auth_token.required, async (req, res) => {
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).insertOne(tempOrder, async (err, result) => {
                     if (err) {
-                        console.log(err)
+                        // console.log(err)
                     } else {
 
                         //don't update following fields in sold collection from resume
@@ -17236,7 +17239,7 @@ router.post('/resume_order_test', auth_token.required, async (req, res) => {
 router.post('/resume_already_paused_test', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -17344,7 +17347,7 @@ router.post('/resume_already_paused_test', auth_token.required, async (req, res)
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).updateOne({'_id':obj['resume_order_id']}, {'$set':tempOrder}, async (err, result) => {
                     if (err) {
-                        console.log(err)
+                        // console.log(err)
                     } else {
 
                         //don't update following fields in sold collection from resume
@@ -17416,7 +17419,7 @@ router.post('/resume_already_paused_test', auth_token.required, async (req, res)
 
 router.post('/pause_lth_order_test', auth_token.required, async (req, res) => {
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -17520,7 +17523,7 @@ router.post('/pause_lth_order_test', auth_token.required, async (req, res) => {
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).insertOne(tempOrder, async (err, result) => {
                     if (err) {
-                        console.log(err)
+                        // console.log(err)
                     } else {
                         //insert resume id in sold collection order
                         let insert_id = result.insertedId
@@ -17577,7 +17580,7 @@ router.post('/pause_sold_order_test', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -17686,7 +17689,7 @@ router.post('/pause_sold_order_test', auth_token.required, async (req, res) => {
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let insert = db.collection(resumeCollectionName).insertOne(tempOrder, async (err, result) => {
                     if (err) {
-                        console.log(err)
+                        // console.log(err)
                     } else {
                         //insert resume id in sold collection order
                         let insert_id = result.insertedId
@@ -17748,7 +17751,7 @@ router.post('/genral_order_update', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -17777,7 +17780,7 @@ router.post('/genral_order_update', auth_token.required, async (req, res) => {
 
                 let obj = data1[0];
 
-                // console.log(obj['resume_order_id'])
+                // // console.log(obj['resume_order_id'])
                 if (typeof obj['resume_order_id'] != 'undefined' && obj['resume_order_id'] != ''){
                     let where = {
                         '_id': obj['resume_order_id']
@@ -17843,7 +17846,7 @@ router.post('/genral_order_update', auth_token.required, async (req, res) => {
 router.post('/pauseAlreadyResumedOrder', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -17881,7 +17884,7 @@ router.post('/pauseAlreadyResumedOrder', auth_token.required, async (req, res) =
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let update = db.collection(resumeCollectionName).updateOne({'_id': obj.resume_order_id}, updateArr, async (err, result) => {
                     if (err) {
-                        console.log(err)
+                        // console.log(err)
                     } else {
                         let set = {
                             '$set': {
@@ -17921,7 +17924,7 @@ router.post('/resumeAlreadyPausedOrder', auth_token.required, async (req, res) =
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -17958,7 +17961,7 @@ router.post('/resumeAlreadyPausedOrder', auth_token.required, async (req, res) =
                 let resumeCollectionName = exchange == 'binance' ? 'resume_buy_orders' : 'resume_buy_orders_' + exchange
                 let update = db.collection(resumeCollectionName).updateOne({'_id': obj.resume_order_id}, updateArr, async (err, result) => {
                     if (err) {
-                        console.log(err)
+                        // console.log(err)
                     } else {
                         let set = {
                             '$set': {
@@ -18004,7 +18007,7 @@ router.post('/getCostAvgOrders', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -18146,7 +18149,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
             let currPrice = coinData[symbol]['currentmarketPrice']
             let BTCUSDTPrice = coinData['BTCUSDT']['currentmarketPrice']
 
-            // console.log('totalCount: ',orders.length , currPrice, BTCUSDTPrice)
+            // // console.log('totalCount: ',orders.length , currPrice, BTCUSDTPrice)
 
             let totalQuantity = 0
             let temp_totalQuantity = 0
@@ -18206,7 +18209,7 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 if (typeof obj['market_sold_price'] == 'undefined'){
                     obj['market_sold_price'] = 0;
                 }
-                // console.log(obj['_id'], obj['symbol'], obj['sell_price'], obj['market_sold_price'], obj['purchased_price'], typeof obj['purchased_price'])
+                // // console.log(obj['_id'], obj['symbol'], obj['sell_price'], obj['market_sold_price'], obj['purchased_price'], typeof obj['purchased_price'])
 
                 costAvgObj['buy_price'] = obj['purchased_price'].toFixed(8)
                 costAvgObj['sell_price'] = obj['is_sell_order'] == 'sold' ? parseFloat(obj['market_sold_price']).toFixed(8) : parseFloat(obj['sell_price']).toFixed(8)
@@ -18291,8 +18294,8 @@ async function getCostAvgPLandUsdWorth(order_ids, exchange) {
                 totalUsdWorth = parseFloat(parseFloat(totalUsdWorth).toFixed(2))
             }
 
-            // console.log('sold_avg_order_count ', this.sold_avg_order_count)
-            // console.log('remaining_avg_order_count ', this.remaining_avg_order_count)
+            // // console.log('sold_avg_order_count ', this.sold_avg_order_count)
+            // // console.log('remaining_avg_order_count ', this.remaining_avg_order_count)
 
             // this.costAvgLedgerExists = true;
             // this.costAvgLedger = costAvgArr;
@@ -18351,7 +18354,7 @@ function getPercentageDiff(currentMarketPrice, purchased_price) {
 router.post('/soldAll', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -18390,7 +18393,7 @@ router.post('/soldAll', auth_token.required, async (req, resp) => {
                 cavIdsToConsider = cavIdsToConsider.concat(order['avg_orders_ids'])
             }
 
-            // console.log(cavIdsToConsider, 'cavIdsToConsider');
+            // // console.log(cavIdsToConsider, 'cavIdsToConsider');
             let cavgPipeline = [
                 {
                     '$match': {
@@ -18407,12 +18410,12 @@ router.post('/soldAll', auth_token.required, async (req, resp) => {
             ]
 
 
-            // console.log(cavgPipeline, 'cavgPipeline')
+            // // console.log(cavgPipeline, 'cavgPipeline')
             let cvgTotalBuyQty = await db.collection(collection).aggregate(cavgPipeline).toArray()
             if (cvgTotalBuyQty.length > 0){
                 order['quantity_all'] = cvgTotalBuyQty[0]['quantitySum']
             }
-            // console.log(order['quantity_all'], 'quantity_all')
+            // // console.log(order['quantity_all'], 'quantity_all')
 
             if (orderType == 'costAvgParent') {
 
@@ -18445,7 +18448,7 @@ router.post('/soldAll', auth_token.required, async (req, resp) => {
 
              let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(order['admin_id'])) }, { projection: { _id: 0, trading_ip: 1 } })
 
-            //  console.log(userObj, orderObj)
+            //  // console.log(userObj, orderObj)
 
              orderObj['trading_ip'] = userObj['trading_ip'];
 
@@ -18481,7 +18484,7 @@ router.post('/soldAll', auth_token.required, async (req, resp) => {
 router.post('/sellCostAvgOrder', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -18581,7 +18584,7 @@ router.post('/sellCostAvgOrder', auth_token.required, async (req, resp) => {
                 if (allChildTrades.length > 0) {
                     allChildTrades.forEach(item => totalCostAvgQty += parseFloat(item.quantity))
                 }
-                // console.log('totalCostAvgQty ', totalCostAvgQty)
+                // // console.log('totalCostAvgQty ', totalCostAvgQty)
                 // process.exit(0)
 
                 for (let i = 0; i < allChildTrades.length; i++) {
@@ -18674,7 +18677,7 @@ router.post('/sellCostAvgOrder', auth_token.required, async (req, resp) => {
 router.post('/latest_user_activity', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -18760,8 +18763,8 @@ async function latest_user_activity(user_id, exchange){
 
             let myPrmises = await Promise.all([buy_order, buy_order_count_promise, buy_parent_order_count_promise, btc_balance_arr, usdt_balance_arr]);
 
-            // console.log(buy_order)
-            // console.log(myPrmises[0].length > 0)
+            // // console.log(buy_order)
+            // // console.log(myPrmises[0].length > 0)
 
             let obj = {}
             obj[exchange] = myPrmises[0].length > 0 ? myPrmises[0][0] : {}
@@ -18832,7 +18835,7 @@ router.post('/update_user_balance', auth_token.required, async (req, res)=>{
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -18845,7 +18848,7 @@ router.post('/update_user_balance', auth_token.required, async (req, res)=>{
     if(typeof user_id != 'undefined' && user_id != ''){
         var updateWallet = await update_user_balance(user_id, 'shahzad_check', auth_token)
         if(updateWallet || updateWallet == true){
-          console.log(updateWallet)
+          // console.log(updateWallet)
           res.send({
             'status': true,
             'message': updateWallet
@@ -18904,7 +18907,7 @@ async function update_user_balance(user_id, res='', auth_token='') {
 
 
 
-    // console.log(url_binance)
+    // // console.log(url_binance)
 
 
     //Update Binance Balance
@@ -18947,7 +18950,7 @@ async function update_user_balance(user_id, res='', auth_token='') {
     };
     request(options, function (error, response, body) {
 
-      console.log(body, 'body for binance')
+      // console.log(body, 'body for binance')
     });
 
     // //Update kraken Balance
@@ -18994,7 +18997,7 @@ async function update_user_balance(user_id, res='', auth_token='') {
 
 
     let url = 'https://' + ip +'/updateUserBalance'
-    // console.log(url)
+    // // console.log(url)
 
 
     //Update Kraken Balance
@@ -19020,18 +19023,18 @@ async function update_user_balance(user_id, res='', auth_token='') {
       if(error){
 
           if(res == 'shahzad_check'){
-            console.log('error_if', error)
+            // console.log('error_if', error)
             resolve(false)
           } else {
-            console.log('error_else', error)
+            // console.log('error_else', error)
             resolve(false)
           }
       }else{
         if(res == 'shahzad_check'){
-          console.log('if')
+          // console.log('if')
           resolve(body)
         } else {
-          console.log('else', body)
+          // console.log('else', body)
         //   Please Do remember Here is body['status'] in resolver
           resolve(true)
         }
@@ -19046,7 +19049,7 @@ async function update_user_balance(user_id, res='', auth_token='') {
 router.post('/getNotifications', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -19114,7 +19117,7 @@ router.post('/getNotifications', auth_token.required, async (req, res) => {
 router.post('/readNotifications', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -19135,7 +19138,7 @@ router.post('/readNotifications', auth_token.required, async (req, res) => {
 
                 let ids = [];
                 await Promise.all(notification_ids.map(id=>{ids.push(new ObjectID(id))}));
-                // console.log(ids);
+                // // console.log(ids);
 
                 let set = {};
                 set['$set'] = {
@@ -19160,7 +19163,7 @@ router.post('/getSubscription', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -19255,7 +19258,7 @@ router.post('/updateUserPackage', auth_token.required, async (req, res)=>{
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -19272,7 +19275,7 @@ router.post('/updateUserPackage', auth_token.required, async (req, res)=>{
 
         let updatedItems = await  updateUserPackage(user_id, userPackage)
 
-        // console.log(updatedItems == userPackage.length ? 'added' : 'error')
+        // // console.log(updatedItems == userPackage.length ? 'added' : 'error')
 
         res.send({
             'status': true,
@@ -19291,7 +19294,7 @@ router.post('/getUserPackage', auth_token.required, async (req, res)=>{
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -19448,7 +19451,7 @@ async function get_item_by_id(collection, _id) {
         conn.then((db) => {
             db.collection("users").find(where).toArray((err, result) => {
                 if (err) {
-                    console.log(err)
+                    // console.log(err)
                 } else {
                     resolve(result[0]);
                 }
@@ -19464,7 +19467,7 @@ router.post('/getPrice', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -19537,7 +19540,7 @@ router.post('/listCurrentUserExchanges', auth_token.required, async (req, res) =
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -19720,7 +19723,7 @@ async function getUserExchangesWithAPISet(user_id){
 router.post('/get_user_exchanges', auth_token.required, async (req,res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -19750,7 +19753,7 @@ router.post('/getAutoTradeSettings', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -19849,7 +19852,7 @@ router.post('/getAutoTradeParents', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -19936,7 +19939,7 @@ router.post('/getAutoTradeParents', auth_token.required, async (req, res) => {
 router.post('/get_user_manual_triggers', auth_token.required, async (req,res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -19961,7 +19964,7 @@ router.post('/get_user_manual_triggers', auth_token.required, async (req,res) =>
         'symbol': { '$in': coins}
     }
 
-    console.log(where, "===> where")
+    // console.log(where, "===> where")
 
     conn.then(async (db) => {
         var Total_count = await db.collection(collectionName).find(where).count();
@@ -19974,7 +19977,7 @@ router.post('/get_user_manual_triggers', auth_token.required, async (req,res) =>
 
 async function getAllCostAvgParentSymbols(user_id, exchange, application_mode){
 
-    console.log('getAllCostAvgParentSymbols');
+    // console.log('getAllCostAvgParentSymbols');
     return new Promise((resolve, reject) => {
         conn.then(async db => {
             let searchCriteria = {};
@@ -19986,18 +19989,18 @@ async function getAllCostAvgParentSymbols(user_id, exchange, application_mode){
             searchCriteria['status'] = {$in : ['new', 'takingOrder', 'FILLED']};
 
             var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-            console.log(collectionName);
+            // console.log(collectionName);
             let data = await db.collection(collectionName).find(searchCriteria).project({ symbol: 1, admin_id: 1, _id: 0 }).toArray();
             var new_data = data.map(function(item) {
                 return item['symbol'];
             });
-            console.log(new_data)
+            // console.log(new_data)
             setTimeout(() => {
                 resolve(new_data);
             }, 100)
           });
     }).catch(err => {
-        console.log(err);
+        // console.log(err);
         resolve([])
     });
 }
@@ -20007,7 +20010,7 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -20079,7 +20082,7 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
                 if(application_mode == 'live'){
                     // Get All Cost Ang Parents Symbols (Merge Cost Avg)
                     autoTradeData['cost_avg_symbols'] = await getAllCostAvgParentSymbols(user_id, exchange, application_mode);
-                    // console.log(autoTradeData['cost_avg_symbols'])
+                    // // console.log(autoTradeData['cost_avg_symbols'])
                     // return false
                     await createAutoTradeParents(autoTradeData)
                 }else{
@@ -20147,7 +20150,7 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
                     autoTradeData['make_higher_sort_priority'] = 'yes'
                     // Get All Cost Ang Parents Symbols (Merge Cost Avg)
                     autoTradeData['cost_avg_symbols'] = await getAllCostAvgParentSymbols(user_id, exchange, application_mode);
-                    // console.log(autoTradeData['cost_avg_symbols'])
+                    // // console.log(autoTradeData['cost_avg_symbols'])
                     // return false
                     await createAutoTradeParents(autoTradeData)
                 } else {
@@ -20176,7 +20179,7 @@ async function checkIfBnbAutoBuyNeeded(user_id, exchange, application_mode, trad
         //set BNB if not already set
         if ((exchange == 'binance' || exchange == 'bam') && application_mode == 'live') {
             let bnbAutoBuySetting = await getBnbBuySettings(user_id, exchange)
-            // console.log(bnbAutoBuySetting)
+            // // console.log(bnbAutoBuySetting)
             if (bnbAutoBuySetting.length == 0) {
                 //set Auto buy bnb for very minimum val
                 //by default use BTC as base currency
@@ -20206,7 +20209,7 @@ router.get('/checkBnbMissingUsers', auth_token.required, async (req, res)=>{
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -20242,12 +20245,12 @@ router.get('/checkBnbMissingUsers', auth_token.required, async (req, res)=>{
 
     for(let i=0; i<result.length; i++){
 
-        // console.log(result[i]['user_id'])
+        // // console.log(result[i]['user_id'])
         // await checkIfBnbAutoBuyNeeded(result[i]['user_id'], 'binance', 'live')
         break;
     }
 
-    // console.log(result)
+    // // console.log(result)
 
     res.send({})
 
@@ -20257,7 +20260,7 @@ router.get('/checkBnbMissingUsers', auth_token.required, async (req, res)=>{
 router.post('/getBtcUsdtBalance', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -20363,17 +20366,17 @@ async function runDailyLimitUpdateCron(user_id, exchange){
         }
 
 
-        // console.log(user_id, exchange, limit_collection)
+        // // console.log(user_id, exchange, limit_collection)
         let dailyLimit = await db.collection(limit_collection).find(where).toArray()
 
-        // console.log('CRONE 11111 ============================ ', dailyLimit)
+        // // console.log('CRONE 11111 ============================ ', dailyLimit)
 
         if (dailyLimit.length > 0){
             //get ATG settings and update daily limit fields on ATG update
             let ATG_collection = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_'+exchange
             let ATG_settings = await db.collection(ATG_collection).find({'application_mode':'live', 'user_id':user_id}).toArray()
 
-            // console.log(ATG_settings[0]['step_4']['dailyTradeableBTC'], ATG_settings[0]['step_4']['dailyTradeableUSDT'])
+            // // console.log(ATG_settings[0]['step_4']['dailyTradeableBTC'], ATG_settings[0]['step_4']['dailyTradeableUSDT'])
 
             if (ATG_settings.length > 0){
 
@@ -20390,7 +20393,7 @@ async function runDailyLimitUpdateCron(user_id, exchange){
                         var dailyTradeableUSDT_usd_worth = parseFloat((ATG_settings[0]['step_4']['dailyTradeableUSDT']).toFixed(2))
                         var daily_buy_usd_limit = parseFloat((dailyTradeableBTC_usd_worth + dailyTradeableUSDT_usd_worth).toFixed(2))
 
-                        // console.log('CRONE ============================ ', ATG_settings[0]['step_4']['dailyTradeableBTC'], ATG_settings[0]['step_4']['dailyTradeableUSDT'])
+                        // // console.log('CRONE ============================ ', ATG_settings[0]['step_4']['dailyTradeableBTC'], ATG_settings[0]['step_4']['dailyTradeableUSDT'])
 
 
                         //user_id not equal to admin and vizzdeveloper
@@ -20430,7 +20433,7 @@ async function runDailyLimitUpdateCron(user_id, exchange){
         }
 
 
-        // console.log('Before Cron 2')
+        // // console.log('Before Cron 2')
 
         //Hit Cron2
         var cron_name = exchange == 'binance' ? 'unset_pick_parent_based_on_base_currency_daily_limit' : 'unset_pick_parent_based_on_base_currency_daily_limit_' + exchange
@@ -20522,7 +20525,7 @@ async function listmarketPriceMinNotationCoinArr(coin, exchange) {
                 coinObjArr[item.coin]['currentmarketPrice'] = item.price
                 let notationObj =  promisesResult[0].find(item2=>{return item2.symbol == item.coin ? true : false })
 
-                // console.log(item.coin, item.price, notationObj)
+                // // console.log(item.coin, item.price, notationObj)
                 if(typeof notationObj !== 'undefined'){
                   coinObjArr[item.coin]['marketMinNotation'] = typeof (notationObj.min_notation) !== 'undefined' ? notationObj.min_notation : 0;
                   coinObjArr[item.coin]['marketMinNotationStepSize'] = typeof (notationObj.step_size) !== 'undefined' ? notationObj.step_size : 0;
@@ -20567,7 +20570,7 @@ async function createAutoTradeParents(settings){
         let remove_duplicates = step4.remove_duplicates
 
         let coinsWorthArr = await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
-        // console.log('coinsWorthArr ', coinsWorthArr)
+        // // console.log('coinsWorthArr ', coinsWorthArr)
         // process.exit(0)
 
         let whereCoins = { '$in': coins}
@@ -20585,7 +20588,7 @@ async function createAutoTradeParents(settings){
         let user_remaining_usd_limit = await getUserRemainingLimit(user_id, exchange)
         let user_remaining_limit = 0
 
-        console.log('user_remaining_usd_limit ', user_remaining_usd_limit, 'test')
+        // console.log('user_remaining_usd_limit ', user_remaining_usd_limit, 'test')
 
 
 
@@ -20633,8 +20636,8 @@ async function createAutoTradeParents(settings){
 
 
 
-        console.log('Before Loop Start==============================')
-        console.log(coins)
+        // console.log('Before Loop Start==============================')
+        // console.log(coins)
         for(let i=0; i<coninsCount; i++){
 
             let coin = coins[i]
@@ -20686,24 +20689,24 @@ async function createAutoTradeParents(settings){
             usd_worth = parseFloat(usd_worth.toFixed(2))
             usdWorthQty = usd_worth * oneUsdWorthQty
             quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
-            // console.log('coin',coin,'quantity', quantity, ' < minReqQty', minReqQty, ' ------ usd_worth', usd_worth, ' :::: ','oneUsdWorthQty', oneUsdWorthQty, ' currentMarketPrice ', currentMarketPrice, 'BTCUSDTPRICE', BTCUSDTPRICE, 'user_remaining_limit', user_remaining_limit)
-            // console.log('digie_admin_ids', digie_admin_ids)
-            // console.log('user_id', user_id)
+            // // console.log('coin',coin,'quantity', quantity, ' < minReqQty', minReqQty, ' ------ usd_worth', usd_worth, ' :::: ','oneUsdWorthQty', oneUsdWorthQty, ' currentMarketPrice ', currentMarketPrice, 'BTCUSDTPRICE', BTCUSDTPRICE, 'user_remaining_limit', user_remaining_limit)
+            // // console.log('digie_admin_ids', digie_admin_ids)
+            // // console.log('user_id', user_id)
             // if(user_remaining_limit > usd_worth){
-            //     console.log('yes')
+            //     // console.log('yes')
             // } else {
-            //     console.log('no')
+            //     // console.log('no')
             // }
             // return false
             // if(coin == 'BTCUSDT'){
-            //   console.log(quantity, minReqQty)
+            //   // console.log(quantity, minReqQty)
             // }
             if (quantity < minReqQty) {
                 //Create trades with minReqQty
                 for (let index in bots){
-                  console.log(i)
+                  // console.log(i)
                   // if(coin == 'BTCUSDT'){
-                  //   console.log(quantity, minReqQty)
+                  //   // console.log(quantity, minReqQty)
                   // }
                     level = bots[index]
 
@@ -20766,7 +20769,7 @@ async function createAutoTradeParents(settings){
                         set1['$set']['pick_parent'] = 'no'
                         set1['$set']['shahzad_testing'] = 'yes'
                     }
-                    console.log(set1['$set'], 'ARRAY');
+                    // console.log(set1['$set'], 'ARRAY');
 
                     let upsert1 = {
                         'upsert': true
@@ -20783,7 +20786,7 @@ async function createAutoTradeParents(settings){
                                 'created_date': set1['$set']['modified_date'],
                             }
                             //get Id and update remaining fields
-                            // console.log('Inserted_id ', result.upsertedId._id)
+                            // // console.log('Inserted_id ', result.upsertedId._id)
                             db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields })
 
                             //TODO: insert parent creation log
@@ -20800,7 +20803,7 @@ async function createAutoTradeParents(settings){
                             db.collection(collectionName).find(where1).limit(1).toArray(async function (err, result2) {
                                 if (err) throw err;
                                 if (result2.length > 0) {
-                                    // console.log('modified_id ', String(result2[0]['_id']))
+                                    // // console.log('modified_id ', String(result2[0]['_id']))
 
                                     db.collection(collectionName).updateOne({'_id': result2[0]['_id'], 'pause_manually': {'$ne': 'yes'}}, {'$set': {'pause_status': 'play'}})
 
@@ -20822,9 +20825,9 @@ async function createAutoTradeParents(settings){
             } else {
                 //Create trades with defined quantity
                 for (let index in bots) {
-                    console.log(i)
+                    // console.log(i)
                     // if(coin == 'BTCUSDT'){
-                    //   console.log(quantity, minReqQty)
+                    //   // console.log(quantity, minReqQty)
                     // }
                     level = bots[index]
 
@@ -20892,7 +20895,7 @@ async function createAutoTradeParents(settings){
                     }
 
 
-                    console.log(set1['$set'], 'ARRAY');
+                    // console.log(set1['$set'], 'ARRAY');
 
                     db.collection(collectionName).updateOne(where1, set1, upsert1, async function(err, result) {
                         if(err) throw err;
@@ -20905,7 +20908,7 @@ async function createAutoTradeParents(settings){
                                 'created_date': set1['$set']['modified_date'],
                             }
                             //get Id and update remaining fields
-                            // console.log('Inserted_id ', result.upsertedId._id)
+                            // // console.log('Inserted_id ', result.upsertedId._id)
                             db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields })
 
                             //TODO: insert parent creation log
@@ -20921,7 +20924,7 @@ async function createAutoTradeParents(settings){
                             db.collection(collectionName).find(where1).limit(1).toArray(async function(err, result2) {
                                 if(err) throw err;
                                 if (result2.length > 0) {
-                                    // console.log('modified_id ', String(result2[0]['_id']))
+                                    // // console.log('modified_id ', String(result2[0]['_id']))
 
                                     db.collection(collectionName).updateOne({ '_id': result2[0]['_id'], 'pause_manually': { '$ne': 'yes' } }, { '$set': { 'pause_status': 'play' } })
 
@@ -20945,17 +20948,17 @@ async function createAutoTradeParents(settings){
 
         }
 
-        console.log('=================================After Loop End')
+        // console.log('=================================After Loop End')
 
         // { "_id" : ObjectId("5ef9cc0184c66a51207a3bb1"), "user_id" : "5c0912b7fc9aadaac61dd072", "daily_buy_usd_worth" : 0, "num_of_trades_buy_today" : 0, "daily_buy_usd_limit" : 41.412846272754, "created_date" : ISODate("2020-06-29T11:09:53Z"), "modified_date" : ISODate("2020-12-29T14:17:42.458Z"), "BTCTradesTodayCount" : 0, "USDTTradesTodayCount" : 0, "dailyTradeableBTC" : 0.27, "dailyTradeableBTC_usd_worth" : 20, "dailyTradeableUSDT" : 5000, "dailyTradeableUSDT_usd_worth" : 20, "daily_bought_btc_usd_worth" : 0, "daily_bought_usdt_usd_worth" : 0 }
 
 
         // sleep 7 seconds before sending call next()
         await new Promise(r => setTimeout(r, 7000));
-        // console.log('after sleep parents processed: ', keepParentIdsArr.length)
+        // // console.log('after sleep parents processed: ', keepParentIdsArr.length)
 
 
-        console.log('================After Wait for Seven Second=============')
+        // console.log('================After Wait for Seven Second=============')
         //cancel previous parent orders
         var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
         //TODO: if delete previous order selected then delete all previous parents
@@ -20979,7 +20982,7 @@ async function createAutoTradeParents(settings){
             let parents = await db.collection(collectionName).find(filter).project({ '_id': 1, 'application_mode': 1, 'created_date': 1 }).toArray()
 
 
-            // console.log('Working Till there', parents.length)
+            // // console.log('Working Till there', parents.length)
             if (parents.length > 0) {
                 let deleted = await db.collection(collectionName).updateMany(filter, set)
 
@@ -20998,14 +21001,14 @@ async function createAutoTradeParents(settings){
 
 
 
-        // console.log('Before remove duplicate')
+        // // console.log('Before remove duplicate')
         //TODO: cancel duplicate orders if loop end here
         if (typeof remove_duplicates != 'undefined' && remove_duplicates == 'yes' && (coins.length * bots.length) == keepParentIdsArr.length) {
             removeDuplicateParentsOtherThanThese(user_id, exchange, application_mode, keepParentIdsArr)
         }
 
 
-        // console.log('Before run DailyLimitCron')
+        // // console.log('Before run DailyLimitCron')
         //send update Daily trade limit call on ATG update
         let runDailyCron = await runDailyLimitUpdateCron(user_id, exchange)
 
@@ -21018,7 +21021,7 @@ async function createAutoTradeParents_test(settings) {
     return new Promise(async (resolve) => {
         // resolve(true)
 
-        console.log('createAutoTradeParents_test')
+        // console.log('createAutoTradeParents_test')
 
         var db = await conn
 
@@ -21044,7 +21047,7 @@ async function createAutoTradeParents_test(settings) {
         let remove_duplicates = step4.remove_duplicates
 
         let coinsWorthArr = await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
-        // console.log('coinsWorthArr ', coinsWorthArr)
+        // // console.log('coinsWorthArr ', coinsWorthArr)
         // process.exit(0)
 
         let whereCoins = { '$in': coins }
@@ -21107,7 +21110,7 @@ async function createAutoTradeParents_test(settings) {
             usd_worth = parseFloat(usd_worth.toFixed(2))
             usdWorthQty = usd_worth * oneUsdWorthQty
             quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
-            // console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth, ' :::: ', oneUsdWorthQty, ' price ', currentMarketPrice, 'btcusdt_price', BTCUSDTPRICE)
+            // // console.log(coin, quantity, ' < ', minReqQty, ' ------ ', usd_worth, ' :::: ', oneUsdWorthQty, ' price ', currentMarketPrice, 'btcusdt_price', BTCUSDTPRICE)
 
             if (quantity < minReqQty) {
                 //Create trades with minReqQty
@@ -21172,7 +21175,7 @@ async function createAutoTradeParents_test(settings) {
                                 'created_date': set1['$set']['modified_date'],
                             }
                             //get Id and update remaining fields
-                            // console.log('Inserted_id ', result.upsertedId._id)
+                            // // console.log('Inserted_id ', result.upsertedId._id)
                             db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields })
 
                             //TODO: insert parent creation log
@@ -21189,7 +21192,7 @@ async function createAutoTradeParents_test(settings) {
                             db.collection(collectionName).find(where1).limit(1).toArray(async function (err, result2) {
                                 if (err) throw err;
                                 if (result2.length > 0) {
-                                    // console.log('modified_id ', String(result2[0]['_id']))
+                                    // // console.log('modified_id ', String(result2[0]['_id']))
 
                                     db.collection(collectionName).updateOne({ '_id': result2[0]['_id'], 'pause_manually': { '$ne': 'yes' } }, { '$set': { 'pause_status': 'play' } })
 
@@ -21271,7 +21274,7 @@ async function createAutoTradeParents_test(settings) {
                                 'created_date': set1['$set']['modified_date'],
                             }
                             //get Id and update remaining fields
-                            // console.log('Inserted_id ', result.upsertedId._id)
+                            // // console.log('Inserted_id ', result.upsertedId._id)
                             db.collection(collectionName).updateOne({ '_id': result.upsertedId._id }, { '$set': remainingFields })
 
                             //TODO: insert parent creation log
@@ -21287,7 +21290,7 @@ async function createAutoTradeParents_test(settings) {
                             db.collection(collectionName).find(where1).limit(1).toArray(async function (err, result2) {
                                 if (err) throw err;
                                 if (result2.length > 0) {
-                                    // console.log('modified_id ', String(result2[0]['_id']))
+                                    // // console.log('modified_id ', String(result2[0]['_id']))
 
                                     db.collection(collectionName).updateOne({ '_id': result2[0]['_id'], 'pause_manually': { '$ne': 'yes' } }, { '$set': { 'pause_status': 'play' } })
 
@@ -21314,7 +21317,7 @@ async function createAutoTradeParents_test(settings) {
 
         //sleep 7 seconds before sending call next()
         await new Promise(r => setTimeout(r, 7000));
-        // console.log('after sleep parents processed: ', keepParentIdsArr.length)
+        // // console.log('after sleep parents processed: ', keepParentIdsArr.length)
 
         //cancel previous parent orders
         var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
@@ -21536,7 +21539,7 @@ async function createAutoTradeParentsNow(user_id, exchange, application_mode) {
                     let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
                     let ins = db.collection(collectionName).insertOne(parentObj, (err, result) => {
                         if (err) {
-                            //console.log(err)
+                            //// console.log(err)
                         } else {
                             //TODO: insert parent creation log
                             let show_hide_log = 'yes'
@@ -21561,7 +21564,7 @@ async function createAutoTradeParentsNow(user_id, exchange, application_mode) {
 router.post('/createAutoTradeParentsNow', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -21653,15 +21656,15 @@ async function findCoinsTradeWorth(totalTradeAbleInUSD, dailyTradeableBTC, daily
             let btcCoinObj = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
             BTCUSDTPrice = parseFloat(btcCoinObj['BTCUSDT']['currentmarketPrice'])
             let whereCoins = {'$in': coinsArr}
-            // console.log('coins condition ', whereCoins)
+            // // console.log('coins condition ', whereCoins)
             let coinData = await listmarketPriceMinNotationCoinArr(whereCoins, exchange)
-            // console.log('coinData ', coinData, coinsArr)
+            // // console.log('coinData ', coinData, coinsArr)
             let pricesArr = []
             if (coinsArr.length > 0){
                 await Promise.all(coinsArr.map(coin=>{
 
                     if (typeof coinData[coin] == 'undefined'){
-                        console.log(coin, '  currentmarketPrice ', coinData[coin])
+                        // console.log(coin, '  currentmarketPrice ', coinData[coin])
                     }
 
                     pricesArr.push({
@@ -21795,7 +21798,7 @@ async function calculatePerDayTradesWorths(totalTradeAbleInUSD, dailyTradeableBT
 
                     perTradeUsd = parseFloat(perTradeUsd.toFixed(2))
                     if (perTradeUsd > minQtyUsd && perTradeUsd <= dailyTradeable) {
-                        // console.log(perTradeUsd, ' <<<< ', minQtyUsd, coin['coin'])
+                        // // console.log(perTradeUsd, ' <<<< ', minQtyUsd, coin['coin'])
                         //if only one trade then use trade wroth near to minQty
                         perTradeUsd = tArr[i] == 1 ? perTradeUsd < dailyTradeable ? perTradeUsd : minQtyUsd : perTradeUsd
 
@@ -21872,7 +21875,7 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
 
         // let tradeCategory = await makeTradeCategory()
 
-        // console.log(' =-------------------=====::::::::::::::::::::::::: ', dailyTradeableBTC, dailyTradeableUSDT)
+        // // console.log(' =-------------------=====::::::::::::::::::::::::: ', dailyTradeableBTC, dailyTradeableUSDT)
 
         let dailyTradeableBTC_usd_worth = dailyTradeableBTC * BTCUSDTPrice
         let dailyTradeableUSDT_usd_worth = dailyTradeableUSDT
@@ -22030,7 +22033,7 @@ async function find_expected_number_of_trades_and_usd_worth(dailyTradeableBTC, d
             })
 
         })
-        // console.log(coinsCategoryWorth)
+        // // console.log(coinsCategoryWorth)
         resolve(coinsCategoryWorth)
 
     })//Promise End
@@ -22043,7 +22046,7 @@ router.post('/resetAutoTradeGenerator', auth_token.required, async (req, res) =>
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -22058,7 +22061,7 @@ router.post('/resetAutoTradeGenerator', auth_token.required, async (req, res) =>
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != '') {
 
         let data = await resetAutoTradeGenerator(user_id, exchange, application_mode)
-        // console.log(data)
+        // // console.log(data)
         res.send({
             status: true,
             message: 'Auto trade generator reset successfully.'
@@ -22127,7 +22130,7 @@ router.post('/getRemainingTestBalance', auth_token.required, async (req, res) =>
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -22183,7 +22186,7 @@ async function getRemainingTestBalance(user_id, exchange, application_mode) {
                     var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
                     var orderArr = await db.collection(collectionName).find(where).project({ 'symbol': 1, 'market_sold_price': 1}).toArray()
 
-                    console.log('total orders', orderArr.length)
+                    // console.log('total orders', orderArr.length)
 
                     if(orderArr.length > 0){
                         let count = orderArr.length
@@ -22215,7 +22218,7 @@ router.post('/getOpenBalance', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -22227,7 +22230,7 @@ router.post('/getOpenBalance', auth_token.required, async (req, res) => {
     let exchange = req.body.exchange
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '') {
         let data = await getOpenBalance(user_id, exchange)
-        // console.log(data)
+        // // console.log(data)
         res.send({
             status: true,
             data: data,
@@ -22340,7 +22343,7 @@ async function getOpenBalance(user_id, exchange) {
                 onlyBtc = parseFloat(onlyBtc.toFixed(6))
                 onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
 
-                // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
+                // // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
 
                 let resObj = {
                     'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0,
@@ -22349,8 +22352,8 @@ async function getOpenBalance(user_id, exchange) {
                     'OpenUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
                 }
 
-                // console.log('Open balance')
-                // console.log(resObj)
+                // // console.log('Open balance')
+                // // console.log(resObj)
 
                 resolve(resObj)
             } else {
@@ -22458,7 +22461,7 @@ async function getOpenBalance_current_market(user_id, exchange) {
                 onlyBtc = parseFloat(onlyBtc.toFixed(6))
                 onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
 
-                // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
+                // // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
 
                 let resObj = {
                     'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0,
@@ -22467,8 +22470,8 @@ async function getOpenBalance_current_market(user_id, exchange) {
                     'OpenUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
                 }
 
-                // console.log('Open balance')
-                // console.log(resObj)
+                // // console.log('Open balance')
+                // // console.log(resObj)
 
                 resolve(resObj)
             } else {
@@ -22558,7 +22561,7 @@ async function getCostAvgBalance(user_id, exchange) {
                     currBtc = quantity * purchased_price * (1 / BTCUSDTPRICE)
                     onlyUsdt += !isNaN(currUsd) ? currUsd : 0
 
-                    // console.log(order._id, '  ------  ', currUsd)
+                    // // console.log(order._id, '  ------  ', currUsd)
 
                 } else {
                     let calculateBtc = quantity * purchased_price
@@ -22578,7 +22581,7 @@ async function getCostAvgBalance(user_id, exchange) {
             onlyBtc = parseFloat(onlyBtc.toFixed(6))
             onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
 
-            // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
+            // // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
 
             let resObj = {
                 'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0,
@@ -22587,8 +22590,8 @@ async function getCostAvgBalance(user_id, exchange) {
                 'costAvgUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
             }
 
-            // console.log('CostAvg balance')
-            // console.log(resObj)
+            // // console.log('CostAvg balance')
+            // // console.log(resObj)
 
             resolve(resObj)
         } else {
@@ -22694,7 +22697,7 @@ async function getCostAvgBalance_current_market(user_id, exchange) {
             onlyBtc = parseFloat(onlyBtc.toFixed(6))
             onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
 
-            // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
+            // // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
 
             let resObj = {
                 'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0,
@@ -22703,8 +22706,8 @@ async function getCostAvgBalance_current_market(user_id, exchange) {
                 'costAvgUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
             }
 
-            // console.log('CostAvg balance')
-            // console.log(resObj)
+            // // console.log('CostAvg balance')
+            // // console.log(resObj)
 
             resolve(resObj)
         } else {
@@ -22718,7 +22721,7 @@ router.post('/getLTHBalance', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -22730,7 +22733,7 @@ router.post('/getLTHBalance', auth_token.required, async (req, res) => {
     let exchange = req.body.exchange
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '') {
         let data = await getLTHBalance(user_id, exchange)
-        // console.log(data)
+        // // console.log(data)
         res.send({
             status: true,
             data: data,
@@ -22824,8 +22827,8 @@ async function getLTHBalance(user_id, exchange) {
                     'LthUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
                 }
 
-                // console.log('LTH balance')
-                // console.log(resObj)
+                // // console.log('LTH balance')
+                // // console.log(resObj)
                 resolve(resObj)
             } else {
                 resolve({})
@@ -22913,8 +22916,8 @@ async function getLTHBalance_current_market(user_id, exchange) {
                     'LthUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
                 }
 
-                // console.log('LTH balance')
-                // console.log(resObj)
+                // // console.log('LTH balance')
+                // // console.log(resObj)
                 resolve(resObj)
             } else {
                 resolve({})
@@ -23012,7 +23015,7 @@ async function getOpenLTHBTCUSDTBalance(user_id, exchange) {
                 onlyBtc = parseFloat(onlyBtc.toFixed(6))
                 onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
 
-                // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
+                // // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
 
                 let resObj = {
                     'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0,
@@ -23117,7 +23120,7 @@ async function getOpenLTHBTCUSDTBalance_current_market(user_id, exchange) {
                 onlyBtc = parseFloat(onlyBtc.toFixed(6))
                 onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
 
-                // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
+                // // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
 
                 let resObj = {
                     'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0,
@@ -23136,7 +23139,7 @@ async function getOpenLTHBTCUSDTBalance_current_market(user_id, exchange) {
 router.post('/getOrderById', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -23167,7 +23170,7 @@ router.post('/getOrderById', auth_token.required, async (req, res) => {
 router.post('/getResumeOrderByOrderId', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -23228,7 +23231,7 @@ router.post('/getResumeOrderByOrderId', auth_token.required, async (req, res) =>
 router.post('/buyCoin', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -23371,7 +23374,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy', trading_ip='') {
         }
 
         if(exchange == 'binance'){
-            console.log('coinBuyNow', buyArr, exchange, buyType, trading_ip);
+            // console.log('coinBuyNow', buyArr, exchange, buyType, trading_ip);
 
 
             let url_binance = ''
@@ -23396,7 +23399,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy', trading_ip='') {
 
 
 
-            console.log(url_binance, reqData)
+            // console.log(url_binance, reqData)
             var options = {
                 method: 'POST',
                 // url: 'http://52.22.53.12:3600/buyBNBPost',
@@ -23410,11 +23413,11 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy', trading_ip='') {
             request(options, function (error, response, body) {
                 if (error) {
                     //Do nothing
-                    console.log(error)
+                    // console.log(error)
                 } else {
                     if (body.success == 'true' || body.success == true) {
 
-                        console.log('coinBuyNow======================================response',body)
+                        // console.log('coinBuyNow======================================response',body)
 
                         //Save Buy History
                         // saveBnbAutoBuyHistory(buyArr.user_id, exchange, body, buyType)
@@ -23435,7 +23438,7 @@ async function coinBuyNow(buyArr, exchange, buyType='autoBuy', trading_ip='') {
                         update_user_balance(buyArr.user_id)
 
                     }else{
-                        console.log(buyArr.user_id, '  -----------  ' ,body)
+                        // console.log(buyArr.user_id, '  -----------  ' ,body)
                     }
                 }
             })
@@ -23504,7 +23507,7 @@ async function coinAutoBuy(buyArr, exchange) {
                         //Update AutoBuy setting
                         db.collection(collectionName).updateOne(where, set, async (err, result) => {
                             if (err) {
-                                console.log(err)
+                                // console.log(err)
                                 resolve(false)
                             } else {
                                 resolve(true)
@@ -23514,7 +23517,7 @@ async function coinAutoBuy(buyArr, exchange) {
                         //Insert AutoBuy setting
                         db.collection(collectionName).insertOne(buyArr, async (err, result) => {
                             if (err) {
-                                console.log(err)
+                                // console.log(err)
                                 resolve(false)
                             } else {
                                 resolve(true)
@@ -23531,7 +23534,7 @@ async function coinAutoBuy(buyArr, exchange) {
 router.post('/hit_auto_buy_cron', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -23581,12 +23584,12 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                 newObj['_id'] = new ObjectID(obj['admin_id'])
 
 
-                console.log(newObj, 'huzaifa')
+                // console.log(newObj, 'huzaifa')
                 let userTrading_IP = await db.collection('users').findOne(newObj)
                 if (!userTrading_IP) {
                   continue;
                 }
-                console.log(userTrading_IP, '-=-=-==-=-=-=-=Huzaifa')
+                // console.log(userTrading_IP, '-=-=-==-=-=-=-=Huzaifa')
                 var trading_ip = userTrading_IP['trading_ip']
 
 
@@ -23639,7 +23642,7 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                 usdWorthQty = parseFloat(auto_buy_usdt_worth) * oneUsdWorthQty
                 quantity = parseFloat(usdWorthQty.toFixed(toFixedNum))
 
-                console.log(avaialableUsdWorth, ' < ', parseFloat(trigger_buy_usdt_worth))
+                // console.log(avaialableUsdWorth, ' < ', parseFloat(trigger_buy_usdt_worth))
                 if (avaialableUsdWorth < parseFloat(trigger_buy_usdt_worth)){
                     //TODO: check if balance available to buy more
                     //Add 10% extr over current quantity trying to purchase
@@ -23648,8 +23651,8 @@ async function hit_auto_buy_cron(user_id='', exchange) {
                     let currentQty = ((10 * (currentMarketPrice * quantity)) / 100);
                     let balance = (buy_currency == 'USDT' ? parseFloat(balanceObj['USDT']) : parseFloat(balanceObj['BTC']))
 
-                    console.log(balance, ' > ', currentQty)
-                    console.log('minReqQty ', minReqQty, 'quantity ', quantity)
+                    // console.log(balance, ' > ', currentQty)
+                    // console.log('minReqQty ', minReqQty, 'quantity ', quantity)
 
                     if (balance > currentQty) {
                         //TODO: send for buy
@@ -23695,10 +23698,10 @@ async function saveBnbAutoBuyHistory(user_id, exchange, response, buyType='autoB
             //Insert auto_buy_history
             db.collection(collectionName).insertOne(insData, async (err, result) => {
                 if (err) {
-                    console.log(err)
+                    // console.log(err)
                     resolve(false)
                 } else {
-                    // console.log(result)
+                    // // console.log(result)
                     resolve(true)
                 }
             })
@@ -23710,7 +23713,7 @@ async function saveBnbAutoBuyHistory(user_id, exchange, response, buyType='autoB
 router.post('/getBnbBuyHistory', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -23747,7 +23750,7 @@ async function getBnbBuyHistory(user_id, exchange) {
 //getBnbBuySettings
 router.post('/getBnbBuySettings', auth_token.required, async (req, res) => {
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -23795,7 +23798,7 @@ router.post('/buySellCoinBalance', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -23833,7 +23836,7 @@ router.post('/buySellCoinBalance', auth_token.required, async (req, res) => {
         var extra_quantity = 0;
         if(action == 'buy'){
           extra_quantity = await findQtyFromUsdWorth(symbol, 5, exchange,);
-          // console.log(extra_quantity,'Quantity');
+          // // console.log(extra_quantity,'Quantity');
         } else {
           extra_quantity = 0;
         }
@@ -23849,10 +23852,10 @@ router.post('/buySellCoinBalance', auth_token.required, async (req, res) => {
 
 
 
-            // console.log(dataArr)
+            // // console.log(dataArr)
 
             let result = await buySellCoinBalanceNow(dataArr, exchange)
-            // console.log('hit came')
+            // // console.log('hit came')
 
             res.send(result);
         }
@@ -23886,7 +23889,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                 request(options, function (error, response, body) {
                     if (error) {
                         //Do nothing
-                        console.log(error)
+                        // console.log(error)
 
                         resolve({
                             'status': false,
@@ -23894,7 +23897,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                         })
                     } else {
                         if (body.success == 'true') {
-                          // console.log('BODY Running')
+                          // // console.log('BODY Running')
                             body.reqData = reqData
                             //Save History
                             saveBuySellCoinBalanceHistory(dataArr.user_id, exchange, body, dataArr.action)
@@ -23906,7 +23909,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                                 'message': dataArr.action == 'buy' ? 'Balance buy successfull' : 'Balance sell successfull'
                             })
                         } else {
-                            // console.log(body, 'else')
+                            // // console.log(body, 'else')
                             resolve({
                                 'status': false,
                                 'response': body,
@@ -23929,7 +23932,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                 request(options, function (error, response, body) {
                     if (error) {
                         //Do nothing
-                        console.log(error)
+                        // console.log(error)
 
                         resolve({
                             'status': false,
@@ -23949,7 +23952,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                                 'message': dataArr.action == 'buy' ? 'Balance buy successfull' : 'Balance sell successfull'
                             })
                         } else {
-                            // console.log(body)
+                            // // console.log(body)
                             resolve({
                                 'status': false,
                                 'response': body,
@@ -23965,7 +23968,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                 // })
             } else if (exchange == 'kraken'){
 
-                // console.log(' Hit came, kraken ')
+                // // console.log(' Hit came, kraken ')
 
                 var options = {
                     method: 'POST',
@@ -23978,7 +23981,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                 request(options, function (error, response, body) {
                     if (error) {
                         //Do nothing
-                        console.log(error)
+                        // console.log(error)
 
                         resolve({
                             'status': false,
@@ -23987,7 +23990,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                     } else {
                         if (body.success == 'true') {
 
-                            // console.log(body)
+                            // // console.log(body)
 
                             body.reqData = reqData
                             //Save History
@@ -24000,7 +24003,7 @@ async function buySellCoinBalanceNow(dataArr, exchange) {
                                 'message': dataArr.action == 'buy' ? 'Balance buy successfull' : 'Balance sell successfull'
                             })
                         } else {
-                            console.log(body)
+                            // console.log(body)
                             resolve({
                                 'status': false,
                                 'response': body,
@@ -24046,7 +24049,7 @@ async function saveBuySellCoinBalanceHistory(user_id, exchange, response, action
 router.post('/update_qty_from_usd_worth', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -24070,10 +24073,10 @@ router.post('/update_qty_from_usd_worth', auth_token.required, async (req, res) 
     conn.then((db) => {
         db.collection('users').find(where_user).project({ '_id': 1, 'username':1 }).toArray(async (err, result) => {
             if (err) {
-                console.log(err)
+                // console.log(err)
             } else {
 
-                // console.log('total users: ', result.length)
+                // // console.log('total users: ', result.length)
 
                 let user_ids = [];
                 await Promise.all(result.map(user => { user_ids.push(String(user._id)); }))
@@ -24085,14 +24088,14 @@ router.post('/update_qty_from_usd_worth', auth_token.required, async (req, res) 
                         // for only this exchange and this symbol only
                         await update_qty_from_usd_worth(user_ids, exchange, symbol)
 
-                        // console.log('for only this exchange and this symbol only')
+                        // // console.log('for only this exchange and this symbol only')
 
                     } else if (typeof exchange != 'undefined' && exchange != '') {
 
                         // for only this exchange but all it's symbols
                         await update_qty_from_usd_worth(user_ids, exchange)
 
-                        // console.log('for only this exchange but all its symbol')
+                        // // console.log('for only this exchange but all its symbol')
 
                     } else if (typeof symbol != 'undefined' && symbol != '') {
 
@@ -24101,7 +24104,7 @@ router.post('/update_qty_from_usd_worth', auth_token.required, async (req, res) 
                         await update_qty_from_usd_worth(user_ids, 'bam', symbol)
                         await update_qty_from_usd_worth(user_ids, 'kraken', symbol)
 
-                        // console.log('for all exchange but only this symbol')
+                        // // console.log('for all exchange but only this symbol')
 
                     } else {
 
@@ -24110,13 +24113,13 @@ router.post('/update_qty_from_usd_worth', auth_token.required, async (req, res) 
                         await update_qty_from_usd_worth(user_ids, 'bam')
                         await update_qty_from_usd_worth(user_ids, 'kraken')
 
-                        // console.log('for all exchange and all coins')
+                        // // console.log('for all exchange and all coins')
 
                     }
 
                 }
 
-                // console.log('****************** Script End update_qty_from_usd_worth ********************')
+                // // console.log('****************** Script End update_qty_from_usd_worth ********************')
 
             }
         })
@@ -24131,7 +24134,7 @@ router.post('/update_qty_from_usd_worth', auth_token.required, async (req, res) 
 //update_qty_from_usd_worth
 async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
 
-    // console.log('update_qty_from_usd_worth')
+    // // console.log('update_qty_from_usd_worth')
 
     return new Promise(async (resolve) => {
         conn.then(async (db) => {
@@ -24177,8 +24180,8 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                 if (exchange == 'kraken' && item['_id']['symbol'] == 'EOSUSDT'){
                     continue;
                 }
-                // console.log('================================= ', collectionName, item['_id']['symbol'], ' total orders : ', item.orders.length)
-                // console.log(item.orders)
+                // // console.log('================================= ', collectionName, item['_id']['symbol'], ' total orders : ', item.orders.length)
+                // // console.log(item.orders)
 
                 let promise1 = listmarketPriceMinNotation('BTCUSDT', exchange)
                 let promise2 = listmarketPriceMinNotation(item['_id']['symbol'], exchange)
@@ -24217,10 +24220,10 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
 
                 if (splitArr[1] == '') {
                     oneUsdWorthQty = 1 / currentMarketPrice
-                    // console.log('USD COIN', oneUsdWorthQty);
+                    // // console.log('USD COIN', oneUsdWorthQty);
                 } else {
                     oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
-                    // console.log('BTC COIN', oneUsdWorthQty);
+                    // // console.log('BTC COIN', oneUsdWorthQty);
                 }
 
                 let ordersArrLen = item.orders.length
@@ -24251,7 +24254,7 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
 
                         if (qtyDiffPercentage >= 5){
 
-                            // console.log('qtyDiffPercentage  ', qtyDiffPercentage)
+                            // // console.log('qtyDiffPercentage  ', qtyDiffPercentage)
 
                             if (quantity < minReqQty) {
 
@@ -24264,9 +24267,9 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                                 mrqCheckQty = parseFloat(mrqCheckQty.toFixed(toFixedNum))
 
                                 if (quantity <= mrqCheckQty){
-                                    // console.log(quantity , '//////////////////////' , mrqCheckQty)
+                                    // // console.log(quantity , '//////////////////////' , mrqCheckQty)
 
-                                    // console.log('minQty error :  ', quantity, 'new calculated', ' < ', minReqQty, '(min required)', '   old Qty ===== ', order['quantity'])
+                                    // // console.log('minQty error :  ', quantity, 'new calculated', ' < ', minReqQty, '(min required)', '   old Qty ===== ', order['quantity'])
 
                                     //Pause parent
                                     updateFields = {
@@ -24291,9 +24294,9 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                                 }
                                 let where22 = { '_id': order['_id'] }
                                 let updatePromise = updateOne(where22, updateFields, collectionName)
-                                // console.log('old Qty ===== ', order['quantity'])
-                                // console.log('updatedQty ===== ', quantity)
-                                // console.log('order_id ', order['_id'], order['symbol'], collectionName, '    ||    old Qty ===== ', order['quantity'], '   ||   updatedQty ===== ', quantity, ' || USD WORTH :', order['usd_worth'])
+                                // // console.log('old Qty ===== ', order['quantity'])
+                                // // console.log('updatedQty ===== ', quantity)
+                                // // console.log('order_id ', order['_id'], order['symbol'], collectionName, '    ||    old Qty ===== ', order['quantity'], '   ||   updatedQty ===== ', quantity, ' || USD WORTH :', order['usd_worth'])
 
                                 let log_msg = 'Quantity was updated from (' + order['quantity']+') to ('+quantity+') by usd worth calculation with the change in market price from script'
                                 //Save LOG
@@ -24309,7 +24312,7 @@ async function update_qty_from_usd_worth(user_ids, exchange, symbol='') {
                 }
             }
 
-            // console.log(parent_orders[0]['orders'][0])
+            // // console.log(parent_orders[0]['orders'][0])
             resolve(true)
         })
     })
@@ -24352,7 +24355,7 @@ async function isMinQtyValid(symbol, qty, exchange){
         let qtyInUsdt = qty * currentMarketPrice;
         qtyInUsdt = qtyInUsdt.toFixed(2);
 
-        console.log(qty , ' < ', minReqQty)
+        // console.log(qty , ' < ', minReqQty)
         if (qty < parseFloat(minReqQty.toFixed(toFixedNum))) {
             minQty = minReqQty.toFixed(toFixedNum);
             return false
@@ -24377,7 +24380,7 @@ async function isMinQtyValid(symbol, qty, exchange){
             minReqQty += marketMinNotationStepSize
         }
 
-        console.log(qty, ' < ', minReqQty)
+        // console.log(qty, ' < ', minReqQty)
         if (qty < parseFloat(minReqQty.toFixed(toFixedNum))) {
             // minQty = (minReqQty).toFixed(toFixedNum);
             return false
@@ -24395,7 +24398,7 @@ async function isMinQtyValid(symbol, qty, exchange){
 router.post('/getUserDailyBuyTrades', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -24480,7 +24483,7 @@ router.post('/updateUserDailyBuyTrades', auth_token.required, async (req, res) =
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -24560,7 +24563,7 @@ async function updateUserDailyBuyTrades(where, exchange, currency, decrement) {
 router.post('/getTradeBuyLimitCheck', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -24646,7 +24649,7 @@ async function getTradeBuyLimitCheck(where, exchange) {
 /* CRON SCRIPT for setUserDailyBuyTrades */
 router.post('/setUserDailyBuyTrades', auth_token.required, async (req, res) => {
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -24728,7 +24731,7 @@ async function setUserDailyBuyTrades(user_id='', exchange){
 
                         let update = await db.collection(collectionName).updateOne(where, set)
                         saveATGLog(user_id, exchange, 'update_daily_trade', 'set User Daily Buy BTC and USDT Trades worth cron', 'live')
-                        // console.log(update)
+                        // // console.log(update)
                     }
                 }
             }
@@ -24902,7 +24905,7 @@ async function updateDailyTradedBalanceAndUsdWorth(user_id, exchange, data, appl
             let dailyTradeableBtcUSdWorth = dailyTradeableBTC * BTCUSDTPRICE
 
             let numBtcTradesWithUsdWorth = await calculateNumberOfTradesPerDay(dailyTradeableBtcUSdWorth, totalTradeAbleInUSD)
-            // console.log('btc', numBtcTradesWithUsdWorth)
+            // // console.log('btc', numBtcTradesWithUsdWorth)
             let btcNumTrades = typeof numBtcTradesWithUsdWorth['numberOfTrades'] != 'undefined' ? numBtcTradesWithUsdWorth['numberOfTrades'] : 0
             let btcQty = typeof numBtcTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numBtcTradesWithUsdWorth['perTradeUsd'] : 0
             if (btcQty != 0) {
@@ -24911,7 +24914,7 @@ async function updateDailyTradedBalanceAndUsdWorth(user_id, exchange, data, appl
             }
 
             let numUsdtTradesWithUsdWorth = await calculateNumberOfTradesPerDay(dailyTradeableUSDT, totalTradeAbleInUSD)
-            // console.log('usdt',numUsdtTradesWithUsdWorth)
+            // // console.log('usdt',numUsdtTradesWithUsdWorth)
             let usdtNumTrades = typeof numUsdtTradesWithUsdWorth['numberOfTrades'] != 'undefined' ? numUsdtTradesWithUsdWorth['numberOfTrades'] : 0
             let usdtQty = typeof numUsdtTradesWithUsdWorth['perTradeUsd'] != 'undefined' ? numUsdtTradesWithUsdWorth['perTradeUsd'] : 0
             if (usdtQty != 0) {
@@ -24934,7 +24937,7 @@ async function updateDailyTradedBalanceAndUsdWorth(user_id, exchange, data, appl
                 }
             }
 
-            // console.log('daily btc/usd trade value in usd and number of trades updated')
+            // // console.log('daily btc/usd trade value in usd and number of trades updated')
             let update = await db.collection(collectionName).updateOne(where, set);
 
             saveATGLog(user_id, exchange, 'daily_worth_no_of_buy', 'update Daily Traded Balance And Usd Worth', application_mode)
@@ -25035,7 +25038,7 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
 
         if (quantity < minReqQty) {
             //Do nothing
-            // console.log('min qty issue :::::: parent_id: ', parentObj['_id'])
+            // // console.log('min qty issue :::::: parent_id: ', parentObj['_id'])
         } else {
             let where = {
                 '_id': parentObj['_id']
@@ -25046,13 +25049,13 @@ async function updateAutoTradeQtyByUsdWorth(exchange, parentObj, application_mod
                     'usd_worth': usd_worth
                 }
             }
-            // console.log('parent order updated')
+            // // console.log('parent order updated')
             conn.then(async (db) => {
                 let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
                 db.collection(collectionName).updateOne(where, set, async (err, result)=>{
                     if(err){
                     }else{
-                        // console.log('parent_id: ', parentObj['_id'])
+                        // // console.log('parent_id: ', parentObj['_id'])
                         let show_hide_log = 'yes'
                         let type = 'auto_trade_usd_worth_update'
                         let log_msg = 'usd worth from (' + parentObj['usd_worth'] + ') to (' + usd_worth + ') and quantity from (' + parentObj['quantity'] + ') to (' + quantity +') updated by auto trade system'
@@ -25073,7 +25076,7 @@ router.post('/updateDailyTradeSettings_digie', auth_token.required, async (req, 
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -25082,17 +25085,17 @@ router.post('/updateDailyTradeSettings_digie', auth_token.required, async (req, 
     }
 
     // let myIp = req.headers['x-forwarded-for']
-    // console.log(req.body.user_id, '============================================================== Request Ip ::: ', JSON.stringify(req.headers))
-    // console.log(req.body.user_id, '==============================================================')
+    // // console.log(req.body.user_id, '============================================================== Request Ip ::: ', JSON.stringify(req.headers))
+    // // console.log(req.body.user_id, '==============================================================')
 
     var user_id = req.body.user_id
     let exchange = req.body.exchange
     let application_mode = typeof req.body.application_mode != 'undefined' && req.body.application_mode != '' ? req.body.application_mode : 'live'
 
 
-    // console.log('11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111     ', exchange, application_mode, typeof user_id)
-    // console.log('22222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222     ', exchange, application_mode, user_id)
-    // console.log('33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333     ', exchange, application_mode, JSON.stringify(user_id))
+    // // console.log('11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111     ', exchange, application_mode, typeof user_id)
+    // // console.log('22222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222     ', exchange, application_mode, user_id)
+    // // console.log('33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333     ', exchange, application_mode, JSON.stringify(user_id))
 
     if (typeof exchange != 'undefined' && exchange != '' && typeof user_id != 'undefined' && typeof user_id != 'object' && (user_id != '' || user_id != null || user_id != 'null')) {
     // if (false) {
@@ -25156,13 +25159,13 @@ async function  updateDailyTradeSettings(user_id, exchange, application_mode='li
     return new Promise(async (resolve) => {
         //TODO: 5) Find actual tradeable balance (BTC, USDT)
         let settingsArr = await getAutoTradeSettings(user_id, exchange, application_mode)
-        // console.log('new trade balnce settings ', settingsArr)
+        // // console.log('new trade balnce settings ', settingsArr)
 
         if (settingsArr.length > 0){
 
             let coins = await get_active_parent_coins_arr(user_id, exchange, application_mode)
             // let coins = settingsArr[0]['step_2']['coins']
-            // console.log('coins', coins)
+            // // console.log('coins', coins)
 
             if(coins.length > 0){
 
@@ -25183,7 +25186,7 @@ async function  updateDailyTradeSettings(user_id, exchange, application_mode='li
 
                 //TODO: 7) Update parent trades worth to this
                 let updatePrentTradeQty = await updateAutoTradeParentUsdWorth(user_id, exchange, application_mode, coinsWorthArr)
-                console.log('*********************  Update auto trade worth and balance End  ***********************')
+                // console.log('*********************  Update auto trade worth and balance End  ***********************')
             }
 
         }
@@ -25195,7 +25198,7 @@ async function  updateDailyTradeSettings(user_id, exchange, application_mode='li
 router.post('/updateDailyTradeSettings_digie_manual_run', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -25235,14 +25238,14 @@ router.post('/updateDailyTradeSettings_digie_manual_run', auth_token.required, a
 
     let users = await db.collection(collectionName).find(where).project({ 'user_id': 1 }).toArray()
 
-    console.log('total users  => ', users.length)
+    // console.log('total users  => ', users.length)
 
     if (users.length > 0) {
         totalUsers = users.length
         for (let i = 0; i < totalUsers; i++) {
             let user_id = users[i]['user_id']
             await updateDailyTradeSettings(user_id, exchange, application_mode)
-            console.log('Curr Iteration =>  ', i, '    -------------  user_id =>', user_id)
+            // console.log('Curr Iteration =>  ', i, '    -------------  user_id =>', user_id)
 
             // break;
             //wait for 20 seconds
@@ -25282,7 +25285,7 @@ async function updateATGSettingsArr(user_id, exchange, application_mode, updateO
 router.post('/updateDailyActualTradeAbleAutoTradeGen', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -25445,7 +25448,7 @@ async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, applica
                 }
             }
 
-            // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
+            // // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
 
             let updateSettings = await db.collection(collectionName).updateOne(where, set)
 
@@ -25463,7 +25466,7 @@ async function updateDailyActualTradeAbleAutoTradeGen(user_id, exchange, applica
 async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, application_mode = 'live') {
     return new Promise(async (resolve) => {
 
-        // console.log('************** Cron Testing ****************')
+        // // console.log('************** Cron Testing ****************')
 
         var db = await conn
 
@@ -25526,7 +25529,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
                 let tempBalanceObj = {}
                 walletBalanceArr.map(item => { tempBalanceObj[item.coin_symbol] = item.coin_balance })
 
-                // console.log('balance ', tempBalanceObj)
+                // // console.log('balance ', tempBalanceObj)
                 availableBTC = parseFloat(parseFloat(tempBalanceObj['BTC']).toFixed(6))
                 availableUSDT = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
                 // availableBNB = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
@@ -25542,7 +25545,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
 
                 let remainaingUsdWorthForTrading = ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])) - balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
 
-                // console.log('wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
+                // // console.log('wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
 
                 // if (user_id == superAdmin && application_mode == 'test') {
                 //     // availableBTC = 0.5
@@ -25555,7 +25558,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
 
                     let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
 
-                    // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
+                    // // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
 
                     availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
 
@@ -25577,11 +25580,11 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
 
                     let remainingTradddeeAble = trraadeable - usedUsdWorthInTrades > 0 ? trraadeable - usedUsdWorthInTrades : 0
 
-                    // console.log('222222222 remainingTradddeeAble ', remainingTradddeeAble)
+                    // // console.log('222222222 remainingTradddeeAble ', remainingTradddeeAble)
 
                     // availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
 
-                    // console.log('------------------------ ', availableBTC)
+                    // // console.log('------------------------ ', availableBTC)
 
                     // availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble
 
@@ -25614,8 +25617,8 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
                 // this.walletBalance['USDT'] = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
                 // this.walletBalance['BNB'] = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
 
-                // console.log('wallet availableBTC ', availableBTC)
-                // console.log('wallet availableUSDT ', availableUSDT)
+                // // console.log('wallet availableBTC ', availableBTC)
+                // // console.log('wallet availableUSDT ', availableUSDT)
 
                 //TODO: update actual tradeable
                 var where = {
@@ -25641,7 +25644,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
                     }
                 }
 
-                // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
+                // // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
 
                 let updateSettings = await db.collection(collectionName).updateOne(where, set)
 
@@ -25660,7 +25663,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new(user_id, exchange, app
 async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, application_mode = 'live') {
     return new Promise(async (resolve) => {
 
-        // console.log('************** Cron Testing ****************')
+        // // console.log('************** Cron Testing ****************')
 
         var db = await conn
 
@@ -25729,7 +25732,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                 let tempBalanceObj = {}
                 walletBalanceArr.map(item => { tempBalanceObj[item.coin_symbol] = item.coin_balance })
 
-                // console.log('balance ', tempBalanceObj)
+                // // console.log('balance ', tempBalanceObj)
                 availableBTC = parseFloat(parseFloat(tempBalanceObj['BTC']).toFixed(6))
                 availableUSDT = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
                 // availableBNB = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
@@ -25745,7 +25748,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                 let remainaingUsdWorthForTrading = ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])) - balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
 
-                // console.log('wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
+                // // console.log('wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
 
                 // if (user_id == superAdmin && application_mode == 'test') {
                 //     // availableBTC = 0.5
@@ -25756,22 +25759,22 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                     // totalTradeAbleInUSD = (btcInTrades * marketPricesArr['BTCUSDT']['currentmarketPrice']) >= tradeLimit ? 0 : ((tradeLimit / marketPricesArr['BTCUSDT']['currentmarketPrice']) - btcInTrades) * marketPricesArr['BTCUSDT']['currentmarketPrice']
 
-                    // console.log('Package is GREATER than total balance  ------------------------------------ ')
+                    // // console.log('Package is GREATER than total balance  ------------------------------------ ')
 
                     let _70percentOfTotal = (70 * tradeLimit) / 100;
-                    // console.log('_70percentOfTotal   ', _70percentOfTotal, ' -------------    usedUsdWorthInTrades ', usedUsdWorthInTrades)
+                    // // console.log('_70percentOfTotal   ', _70percentOfTotal, ' -------------    usedUsdWorthInTrades ', usedUsdWorthInTrades)
                     if (_70percentOfTotal > usedUsdWorthInTrades) {
                         var trraadeable = tradeLimit - _70percentOfTotal > 0 ? tradeLimit - _70percentOfTotal : 0
                     } else {
                         var trraadeable = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
                     }
-                    // console.log('after 70% check remainingTradddeeAble', trraadeable)
+                    // // console.log('after 70% check remainingTradddeeAble', trraadeable)
 
                     let remainingTradddeeAble = trraadeable
 
                     // let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
 
-                    // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
+                    // // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
 
                     availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
 
@@ -25789,17 +25792,17 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                 } else {
 
-                    // console.log('Package is GREATER than total balance  ------------------------------------ ')
+                    // // console.log('Package is GREATER than total balance  ------------------------------------ ')
 
                     let _70percentOfTotal = (70 * tradeLimit) / 100;
-                    // console.log('_70percentOfTotal   ', _70percentOfTotal, ' -------------    usedUsdWorthInTrades ', usedUsdWorthInTrades)
+                    // // console.log('_70percentOfTotal   ', _70percentOfTotal, ' -------------    usedUsdWorthInTrades ', usedUsdWorthInTrades)
 
                     if (_70percentOfTotal > usedUsdWorthInTrades) {
                         var trraadeable = tradeLimit - _70percentOfTotal > 0 ? tradeLimit - _70percentOfTotal : 0
                     } else {
                         var trraadeable = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
                     }
-                    // console.log('after 70% check remainingTradddeeAble', trraadeable)
+                    // // console.log('after 70% check remainingTradddeeAble', trraadeable)
 
                     // let trraadeable = remainaingUsdWorthForTrading >= tradeLimit ? tradeLimit : remainaingUsdWorthForTrading
                     // let remainingTradddeeAble = trraadeable - usedUsdWorthInTrades > 0 ? trraadeable - usedUsdWorthInTrades : 0
@@ -25810,7 +25813,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                     // let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
 
-                    // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
+                    // // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
 
                     availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
 
@@ -25821,11 +25824,11 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                     availableUSDT = parseFloat(availableUSDT.toFixed(2))
 
 
-                    // console.log('222222222 remainingTradddeeAble ', remainingTradddeeAble)
+                    // // console.log('222222222 remainingTradddeeAble ', remainingTradddeeAble)
 
                     // availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
 
-                    // console.log('------------------------ ', availableBTC)
+                    // // console.log('------------------------ ', availableBTC)
 
                     // availableUSDT = remainingTradddeeAble > parseFloat(tempBalanceObj['USDT']) ? parseFloat(tempBalanceObj['USDT']) : remainingTradddeeAble
 
@@ -25838,10 +25841,10 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                 walletBalance['USDT'] = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
                 walletBalance['BNB'] = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
 
-                // console.log('wallet availableBTC ', walletBalance['BTC'])
-                // console.log('wallet availableUSDT ', walletBalance['USDT'])
+                // // console.log('wallet availableBTC ', walletBalance['BTC'])
+                // // console.log('wallet availableUSDT ', walletBalance['USDT'])
 
-                // console.log('111 available BTC :: ', availableBTC, '  -------  available USDT :: ', availableUSDT)
+                // // console.log('111 available BTC :: ', availableBTC, '  -------  available USDT :: ', availableUSDT)
 
 
                 //package exceed check for BTC
@@ -25869,13 +25872,13 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                 let availableBtcUsdWorth = availableBTC * marketPricesArr['BTCUSDT']['currentmarketPrice']
                 availableUsdtUsdWorth = availableUSDT
 
-                // console.log('available BTC :: ', availableBTC, '  -------  available USDT :: ', availableUSDT)
+                // // console.log('available BTC :: ', availableBTC, '  -------  available USDT :: ', availableUSDT)
 
-                // console.log('availableBtcUsdWorth :: ', availableBtcUsdWorth, '  -------  availableUsdtUsdWorth :: ', availableUsdtUsdWorth)
+                // // console.log('availableBtcUsdWorth :: ', availableBtcUsdWorth, '  -------  availableUsdtUsdWorth :: ', availableUsdtUsdWorth)
 
                 // when both BTC and USDT is greater or equal to package
                 if (availableBtcUsdWorth >= totalTradeAbleInUSD && availableUsdtUsdWorth >= totalTradeAbleInUSD) {
-                    // console.log('// when both BTC and USDT is greater or equal to package')
+                    // // console.log('// when both BTC and USDT is greater or equal to package')
 
                     btcPercentage = 50
                     usdtPercentage = 50
@@ -25885,15 +25888,15 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                     // when combined BTC and USDT balance are greater than package
                 } else if ((availableBtcUsdWorth + availableUsdtUsdWorth) >= totalTradeAbleInUSD) {
-                    // console.log('// when combined BTC and USDT balance are greater than package')
+                    // // console.log('// when combined BTC and USDT balance are greater than package')
 
                     // BTC alone is greater than package
                     if (availableBtcUsdWorth >= totalTradeAbleInUSD) {
-                        // console.log('// BTC alone is greater than package')
+                        // // console.log('// BTC alone is greater than package')
 
                         //if smaller balance is greater than 50% then use 50 / 50
                         if (((availableUsdtUsdWorth / totalTradeAbleInUSD) * 100) >= 50) {
-                            // console.log('//if smaller balance is greater than 50% then use 50 / 50')
+                            // // console.log('//if smaller balance is greater than 50% then use 50 / 50')
 
                             btcPercentage = 50
                             usdtPercentage = 50
@@ -25903,7 +25906,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                             // find smaller percentage and assign that to that currency and assig the menaing to the other currency
                         } else {
-                            // console.log('// find smaller percentage and assign that to that currency and assig the menaing to the other currency')
+                            // // console.log('// find smaller percentage and assign that to that currency and assig the menaing to the other currency')
 
                             usdtPercentage = ((availableUsdtUsdWorth / totalTradeAbleInUSD) * 100)
                             btcPercentage = 100 - usdtPercentage
@@ -25915,11 +25918,11 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                         // USDT alone is greater than package
                     } else if (availableUsdtUsdWorth >= totalTradeAbleInUSD) {
-                        // console.log('// USDT alone is greater than package')
+                        // // console.log('// USDT alone is greater than package')
 
                         //if smaller balance is greater than 50% then use 50 / 50
                         if (((availableBtcUsdWorth / totalTradeAbleInUSD) * 100) >= 50) {
-                            // console.log('//if smaller balance is greater than 50% then use 50 / 50')
+                            // // console.log('//if smaller balance is greater than 50% then use 50 / 50')
 
                             btcPercentage = 50
                             usdtPercentage = 50
@@ -25929,11 +25932,11 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                             // find smaller percentage and assign that to that currency and assig the menaing to the other currency
                         } else {
-                            // console.log('// find smaller percentage and assign that to that currency and assig the menaing to the other currency')
+                            // // console.log('// find smaller percentage and assign that to that currency and assig the menaing to the other currency')
 
                             btcPercentage = ((availableBtcUsdWorth / totalTradeAbleInUSD) * 100)
 
-                            // console.log('-----========', btcPercentage)
+                            // // console.log('-----========', btcPercentage)
                             usdtPercentage = 100 - btcPercentage
 
                             tradeableBtc = (btcPercentage * availableBTC) / 100
@@ -25943,7 +25946,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
                         // BTC and USDT combined is greater than package
                     } else {
-                        // console.log('// BTC and USDT combined is greater than package')
+                        // // console.log('// BTC and USDT combined is greater than package')
                         //get percentage of one and assign the remaing percentage to the other
                         btcPercentage = ((availableBtcUsdWorth / totalTradeAbleInUSD) * 100)
                         usdtPercentage = 100 - btcPercentage
@@ -25954,24 +25957,24 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                     }
 
                 } else { // when combined BTC and USDT balance are less than package
-                    // console.log('// when combined BTC and USDT balance are less than package')
+                    // // console.log('// when combined BTC and USDT balance are less than package')
 
                     // availableBtcUsdWorth
                     // availableUsdtUsdWorth
 
                     if (false && availableBtcUsdWorth <= (totalTradeAbleInUSD / 2) && availableUsdtUsdWorth <= (totalTradeAbleInUSD / 2)) {
-                        // console.log('// when both BTC and USDT are less than or equal to 50% of the package')
+                        // // console.log('// when both BTC and USDT are less than or equal to 50% of the package')
                         //assign the percentage of the balances avalable for both BTC and USDT
                         btcPercentage = 100
                         usdtPercentage = 100
                         tradeableBtc = availableBTC
                         tradeableUsdt = availableUSDT
                     } else {
-                        // console.log('// when both BTC and/or USDT are greater than 50% of the package')
+                        // // console.log('// when both BTC and/or USDT are greater than 50% of the package')
 
                         //when BTC is greater than USDT balance
                         if (availableBtcUsdWorth > availableUsdtUsdWorth) {
-                            // console.log('//when BTC is greater than USDT balance')
+                            // // console.log('//when BTC is greater than USDT balance')
 
                             usdtPercentage = parseFloat((((availableUsdtUsdWorth / totalTradeAbleInUSD) * 100)).toFixed(2))
                             btcPercentage = parseFloat((100 - usdtPercentage).toFixed(2))
@@ -25981,7 +25984,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 
 
                         } else if (availableBtcUsdWorth < availableUsdtUsdWorth) {
-                            // console.log('//when BTC is greater than USDT balance')
+                            // // console.log('//when BTC is greater than USDT balance')
 
                             btcPercentage = parseFloat((((availableBtcUsdWorth / totalTradeAbleInUSD) * 100)).toFixed(2))
                             usdtPercentage = parseFloat((100 - btcPercentage).toFixed(2))
@@ -25990,7 +25993,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                             tradeableUsdt = (usdtPercentage * availableUSDT) / 100
 
                         } else {
-                            // console.log('//when BTC == USDT balance (usd worth)')
+                            // // console.log('//when BTC == USDT balance (usd worth)')
 
                             btcPercentage = 100
                             usdtPercentage = 100
@@ -26013,8 +26016,8 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                     }
                 }
 
-                // console.log('btcPercentage ', btcPercentage, ' ------- usdtPercentage ', usdtPercentage)
-                // console.log('tradeableBtc ', tradeableBtc, ' ------- tradeableUsdt ', tradeableUsdt)
+                // // console.log('btcPercentage ', btcPercentage, ' ------- usdtPercentage ', usdtPercentage)
+                // // console.log('tradeableBtc ', tradeableBtc, ' ------- tradeableUsdt ', tradeableUsdt)
 
                 //set btc/usdt wrt daily percentage
                 dailyBtc = (dailTradeAbleBalancePercentage * tradeableBtc) / 100
@@ -26026,9 +26029,9 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                 dailyBtcUsdWorth = parseFloat(dailyBtcUsdWorth.toFixed(2))
                 dailyUsdtUsdWorth = parseFloat(dailyUsdtUsdWorth.toFixed(2))
 
-                // console.log('dailTradeAbleBalancePercentage ', dailTradeAbleBalancePercentage)
-                // console.log('dailyBtc ', dailyBtc, ' ------- dailyUsdt ', dailyUsdt)
-                // console.log('dailyBtcUsdWorth ', dailyBtcUsdWorth, ' ------- dailyUsdtUsdWorth ', dailyUsdtUsdWorth)
+                // // console.log('dailTradeAbleBalancePercentage ', dailTradeAbleBalancePercentage)
+                // // console.log('dailyBtc ', dailyBtc, ' ------- dailyUsdt ', dailyUsdt)
+                // // console.log('dailyBtcUsdWorth ', dailyBtcUsdWorth, ' ------- dailyUsdtUsdWorth ', dailyUsdtUsdWorth)
 
                 //set old ATG fields
                 btcInvestPercentage = btcPercentage == 100 && usdtPercentage == 100 ? btcPercentage / 2 : btcPercentage
@@ -26083,8 +26086,8 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                 // walletBalance['USDT'] = parseFloat(parseFloat(tempBalanceObj['USDT']).toFixed(2))
                 // walletBalance['BNB'] = parseFloat(parseFloat(tempBalanceObj['BNB']).toFixed(6))
 
-                // console.log('wallet availableBTC ', availableBTC)
-                // console.log('wallet availableUSDT ', availableUSDT)
+                // // console.log('wallet availableBTC ', availableBTC)
+                // // console.log('wallet availableUSDT ', availableUSDT)
 
                 //TODO: update actual tradeable
                 var where = {
@@ -26115,11 +26118,11 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
                     }
                 }
 
-                // console.log("resultttttttttttttt ------------------------------------------------------------- ")
-                // console.log(set)
-                // console.log(settings['user_id'] + " dailyTradeableBTC: " + dailyTradeableBTC + " dailyTradeableUSDT: " + dailyTradeableUSDT)
+                // // console.log("resultttttttttttttt ------------------------------------------------------------- ")
+                // // console.log(set)
+                // // console.log(settings['user_id'] + " dailyTradeableBTC: " + dailyTradeableBTC + " dailyTradeableUSDT: " + dailyTradeableUSDT)
 
-                // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
+                // // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
 
                 let updateSettings = await db.collection(collectionName).updateOne(where, set)
 
@@ -26138,7 +26141,7 @@ async function updateDailyActualTradeAbleAutoTradeGen_new1(user_id, exchange, ap
 async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, application_mode = 'live', req='') {
     return new Promise(async (resolve) => {
 
-        // console.log('************** Cron Testing ****************')
+        // // console.log('************** Cron Testing ****************')
 
         var db = await conn
 
@@ -26246,11 +26249,11 @@ async function updateDailyActualTradeAbleAutoTradeGen_new2(user_id, exchange, ap
                         }
                     }
 
-                    // console.log("resultttttttttttttt ------------------------------------------------------------- ")
-                    // console.log(set)
-                    // console.log(settings['user_id'] + " dailyTradeableBTC: " + dailyTradeableBTC + " dailyTradeableUSDT: " + dailyTradeableUSDT)
+                    // // console.log("resultttttttttttttt ------------------------------------------------------------- ")
+                    // // console.log(set)
+                    // // console.log(settings['user_id'] + " dailyTradeableBTC: " + dailyTradeableBTC + " dailyTradeableUSDT: " + dailyTradeableUSDT)
 
-                    // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
+                    // // console.log('user_id: ', settings.user_id, settings.step_4.actualTradeableBTC, '/', actualTradeableBTC, settings.step_4.actualTradeableUSDT, '/', actualTradeableUSDT)
 
                     let updateSettings = await db.collection(collectionName).updateOne(where, set)
 
@@ -26325,7 +26328,7 @@ function findFrequentOccuringVal(arr) {
 router.post('/find_available_btc_usdt_atg', auth_token.required, async (req, res)=>{
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -26391,9 +26394,9 @@ async function newAtgApiCall(payload, req=''){
             'payload': payload,
         }
 
-        // console.log(payload)
+        // // console.log(payload)
         let apiResult = await customApiRequest(reqObj)
-        // console.log(apiResult)
+        // // console.log(apiResult)
         resolve(apiResult.status ? apiResult.body : false)
     })
 }
@@ -26401,7 +26404,7 @@ async function newAtgApiCall(payload, req=''){
 router.get('/findCustomPackageVal', auth_token.required, async (req,res)=>{
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -26414,7 +26417,7 @@ router.get('/findCustomPackageVal', auth_token.required, async (req,res)=>{
     let atgCollection = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_'+ exchange
 
     let atgSettings = await db.collection(atgCollection).find({'application_mode':'live'}).toArray()
-    console.log(atgSettings.length)
+    // console.log(atgSettings.length)
 
     let marketPricesArr = await getPricesArr(exchange, ['BTCUSDT'])
     let BTCUSDTPrice = marketPricesArr['BTCUSDT']['currentmarketPrice']
@@ -26451,8 +26454,8 @@ router.get('/findCustomPackageVal', auth_token.required, async (req,res)=>{
 
         let item = atgSettings[i]
 
-        console.log('-------------------------------------------------------------------')
-        console.log('availableBTC  ', item.step_4['availableBTC'], '   ----   ', item.step_4['availableUSDT'])
+        // console.log('-------------------------------------------------------------------')
+        // console.log('availableBTC  ', item.step_4['availableBTC'], '   ----   ', item.step_4['availableUSDT'])
 
         let customBtcPackage = 0.02
         let customUsdtPackage = 1000
@@ -26469,7 +26472,7 @@ router.get('/findCustomPackageVal', auth_token.required, async (req,res)=>{
             return (Math.abs(curr - usdtGoal) < Math.abs(prev - usdtGoal) ? curr : prev);
         });
 
-        console.log(item._id, '  ----   customBtcPackage  ', customBtcPackage, '   ----   customUsdtPackage', customUsdtPackage)
+        // console.log(item._id, '  ----   customBtcPackage  ', customBtcPackage, '   ----   customUsdtPackage', customUsdtPackage)
 
         // await db.collection(atgCollection).updateOne({ '_id': item._id }, { '$set': { 'step_4.customBtcPackage': btcPackage, 'step_4.customUsdtPackage': usdtPackage }})
 
@@ -26550,14 +26553,14 @@ async function is_trade_limit_exceeded(user_id, exchange, req='') {
                 btcBalance = typeof btcBalanceObj[0] != 'undefined' && typeof btcBalanceObj[0]['coin_balance'] != 'undefined' ? parseFloat(btcBalanceObj[0]['coin_balance']) : 0
                 usdtBalance = typeof usdtBalanceObj[0] != 'undefined' && typeof usdtBalanceObj[0]['coin_balance'] != 'undefined' ? parseFloat(usdtBalanceObj[0]['coin_balance']) : 0
 
-                // console.log('wallet BTC :: ', btcBalance, '  -------  wallet USDT :: ', usdtBalance)
+                // // console.log('wallet BTC :: ', btcBalance, '  -------  wallet USDT :: ', usdtBalance)
 
                 btcBalance = parseFloat(btcBalance.toFixed(6))
                 usdtBalance = parseFloat(usdtBalance.toFixed(2))
 
                 //new formula for available from old ATG
                 let balanceArr = userBalancesInfo['data']
-                // console.log('before1 ', balanceArr)
+                // // console.log('before1 ', balanceArr)
                 let walletBalanceArr = balanceArr['avaiableBalance']
 
                 let tempBalanceObj = {}
@@ -26576,25 +26579,25 @@ async function is_trade_limit_exceeded(user_id, exchange, req='') {
 
                 let remainaingUsdWorthForTrading = ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])) - balanceArr['openLthBTCUSDTBalance']['OpenLTHUsdWorth']
 
-                // console.log('tradeLimit:  ', tradeLimit,  '   ---    wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
+                // // console.log('tradeLimit:  ', tradeLimit,  '   ---    wallet  ', ((parseFloat(tempBalanceObj['BTC']) * marketPricesArr['BTCUSDT']['currentmarketPrice']) + parseFloat(tempBalanceObj['USDT'])), ' wallet + used ', totalAvailableBalanceForPackageSelection, ' only used ', usedUsdWorthInTrades)
 
                 if (tradeLimit <= totalAvailableBalanceForPackageSelection) {
 
-                    // console.log('Package is less than total balance  ------------------------------------ ')
+                    // // console.log('Package is less than total balance  ------------------------------------ ')
 
                     let _70percentOfTotal = (70 * tradeLimit) / 100;
-                    // console.log('_70percentOfTotal   ', _70percentOfTotal, ' -------------    usedUsdWorthInTrades ', usedUsdWorthInTrades)
+                    // // console.log('_70percentOfTotal   ', _70percentOfTotal, ' -------------    usedUsdWorthInTrades ', usedUsdWorthInTrades)
 
                     if (_70percentOfTotal > usedUsdWorthInTrades) {
                         var remainingTradddeeAble = tradeLimit - _70percentOfTotal > 0 ? tradeLimit - _70percentOfTotal : 0
                     } else {
                         var remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
                     }
-                    // console.log('after 70% check remainingTradddeeAble', remainingTradddeeAble)
+                    // // console.log('after 70% check remainingTradddeeAble', remainingTradddeeAble)
 
                     // let remainingTradddeeAble = tradeLimit - usedUsdWorthInTrades > 0 ? tradeLimit - usedUsdWorthInTrades : 0
 
-                    // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
+                    // // console.log('11111111 remainingTradddeeAble ', remainingTradddeeAble)
 
                     availableBTC = (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice']) > parseFloat(tempBalanceObj['BTC']) ? parseFloat(tempBalanceObj['BTC']) : (remainingTradddeeAble / marketPricesArr['BTCUSDT']['currentmarketPrice'])
 
@@ -26605,7 +26608,7 @@ async function is_trade_limit_exceeded(user_id, exchange, req='') {
                     availableUSDT = parseFloat(availableUSDT.toFixed(2))
 
                     if (remainingTradddeeAble <= 0) {
-                        // console.log('Your trade limit has been exceeded please upgrade to a bigger package', 'ERROR');
+                        // // console.log('Your trade limit has been exceeded please upgrade to a bigger package', 'ERROR');
                         resolve(true)
                     }
                     resolve(false)
@@ -26621,7 +26624,7 @@ async function is_trade_limit_exceeded(user_id, exchange, req='') {
 router.post('/is_trade_limit_exceeded', auth_token.required, async (req, res)=>{
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -26749,7 +26752,7 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
                 }
             }
 
-            console.log('user_id: ', settings.user_id, ' actualTradeable', actualTradeableBTC, '/', actualTradeableUSDT, ' :::::::  dailyTradeable ', dailyTradeableBTC, '/', dailyTradeableUSDT)
+            // console.log('user_id: ', settings.user_id, ' actualTradeable', actualTradeableBTC, '/', actualTradeableUSDT, ' :::::::  dailyTradeable ', dailyTradeableBTC, '/', dailyTradeableUSDT)
 
             // delete settings
             // delete balanceArr
@@ -26795,7 +26798,7 @@ async function findLimitExceedUsers(user_id, exchange, application_mode = 'live'
 router.post('/getBtcUsdtPackages', auth_token.required, async (req, res)=>{
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -26816,7 +26819,7 @@ router.post('/getBtcUsdtPackages', auth_token.required, async (req, res)=>{
     let collectionName = exchange == 'binance' ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange
     let data = await db.collection(collectionName).find(where).project({'step_4.customBtcPackage': 1, 'step_4.customUsdtPackage':1}).toArray()
 
-    // console.log(data)
+    // // console.log(data)
 
     if (data.length > 0){
         res.send({
@@ -26841,7 +26844,7 @@ router.post('/getBtcUsdtPackages', auth_token.required, async (req, res)=>{
 router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -26897,7 +26900,7 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
             }
 
 
-            // console.log(where1, 'where1', where2, 'where2')
+            // // console.log(where1, 'where1', where2, 'where2')
             let project2 = {
                 'admin_id': 1,
                 'application_mode': 1,
@@ -26915,10 +26918,10 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
             let soldPromise = db.collection(soldCollection).find(where2).sort(sort2).project(project2).limit(10).toArray()
 
             let myPromise = await Promise.all([buyPromise, soldPromise])
-            // console.log(myPromise[0].length)
-            // console.log(myPromise[1].length)
-            // console.log(myPromise[0], '====>    buyPromise')
-            // console.log(myPromise[1].length, '====>    soldPromise')
+            // // console.log(myPromise[0].length)
+            // // console.log(myPromise[1].length)
+            // // console.log(myPromise[0], '====>    buyPromise')
+            // // console.log(myPromise[1].length, '====>    soldPromise')
             let tempOrders = myPromise[0].concat(myPromise[1])
 
             let orders = []
@@ -26931,7 +26934,7 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
             });
 
 
-            // console.log(orders)
+            // // console.log(orders)
 
             // orders = orders.slice(0, 10);
 
@@ -26954,7 +26957,7 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
 
 router.post('/get_btcusdt_coin_quantity', auth_token.required, async (req, res) => {
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -27018,7 +27021,7 @@ async function get_lthBalance_quantity(user_id, exchange){
             'cost_avg': { '$nin': ['taking_child', 'yes', 'completed'] }
         }
         let lthOrders = await db.collection(collectionName).find(where).project( {quantity: 1, symbol: 1}).toArray();
-        // console.log(lthOrders, 'lthOrders')
+        // // console.log(lthOrders, 'lthOrders')
         let LthBtcusdt = 0;
         if (lthOrders.length > 0) {
 
@@ -27045,8 +27048,8 @@ async function get_lthBalance_quantity(user_id, exchange){
                 'LthBtcusdt': !isNaN(LthBtcusdt) ? LthBtcusdt : 0,
             }
 
-            // console.log('LTH balance',LthBtcusdt)
-            // console.log(resObj)
+            // // console.log('LTH balance',LthBtcusdt)
+            // // console.log(resObj)
             resolve(resObj)
         } else {
             resolve({})
@@ -27087,7 +27090,7 @@ async function get_openBalance_quantity(user_id, exchange){
             }]
         let openOrders = await db.collection(collectionName).find(where).project( {quantity: 1, symbol: 1}).toArray();
         let OpenBtcusdt = 0;
-        // console.log(openOrders, 'openOrders')
+        // // console.log(openOrders, 'openOrders')
         if (openOrders.length > 0) {
 
             let totalOpen = openOrders.length
@@ -27114,8 +27117,8 @@ async function get_openBalance_quantity(user_id, exchange){
                 'OpenBtcusdt': !isNaN(OpenBtcusdt) ? OpenBtcusdt : 0,
             }
 
-            // console.log('Open balance')
-            // console.log(resObj)
+            // // console.log('Open balance')
+            // // console.log(resObj)
             resolve(resObj)
         } else {
             resolve({})
@@ -27168,7 +27171,7 @@ async function get_costAvgBalance_quantity(user_id, exchange){
     where = {'_id': {'$in': costAvgIds}, 'status':{'$ne':'canceled'}}
 
     let lthOrders = await db.collection(buy_collection).find(where).project( {quantity: 1, symbol: 1}).toArray();
-    // console.log(lthOrders, 'costAvgOrders')
+    // // console.log(lthOrders, 'costAvgOrders')
     let LthBtc = 0;
 
 
@@ -27198,8 +27201,8 @@ async function get_costAvgBalance_quantity(user_id, exchange){
             'costAvgBtcusdt': !isNaN(LthBtc) ? LthBtc : 0,
         }
 
-        // console.log('CostAvg Balance')
-        // console.log(resObj)
+        // // console.log('CostAvg Balance')
+        // // console.log(resObj)
         resolve(resObj)
     } else {
         resolve({})
@@ -27211,7 +27214,7 @@ async function get_costAvgBalance_quantity(user_id, exchange){
 router.post('/get_dashboard_wallet', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -27223,7 +27226,7 @@ router.post('/get_dashboard_wallet', auth_token.required, async (req, res) => {
     let admin_id = req.payload.id;
 
 
-    console.log(exchange, admin_id)
+    // console.log(exchange, admin_id)
     if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
 
         let result = await get_dashboard_wallet(admin_id, exchange)
@@ -27355,7 +27358,7 @@ async function get_dashboard_wallet(admin_id, exchange){
 router.post('/getParentsGridData', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -27459,7 +27462,7 @@ router.get('/fixUsdWorth', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -27504,7 +27507,7 @@ router.get('/fixUsdWorth', auth_token.required, async (req, res) => {
                 }
 
                 usd_worth = parseFloat(usd_worth.toFixed(2))
-                console.log(typeof usd_worth, usd_worth)
+                // console.log(typeof usd_worth, usd_worth)
                 // break;
                 // process.exit(0)
 
@@ -27518,14 +27521,14 @@ router.get('/fixUsdWorth', auth_token.required, async (req, res) => {
                 }
                 if (!isNaN(usd_worth)){
                     db.collection('buy_orders').updateOne(where, set);
-                    // console.log(queryRes[i]['_id'])
+                    // // console.log(queryRes[i]['_id'])
                     ids.push(queryRes[i]['_id'])
                 }
                 // break;
             }
         }
-        // console.log(ids)
-        // console.log('============================================================')
+        // // console.log(ids)
+        // // console.log('============================================================')
 
         //convert to float
         where = {
@@ -27538,7 +27541,7 @@ router.get('/fixUsdWorth', auth_token.required, async (req, res) => {
         queryRes = await db.collection(collectionName).find(where).toArray();
         queryResCount = queryRes.length
 
-        // console.log(queryResCount)
+        // // console.log(queryResCount)
         // process.exit(0)
 
         ids = []
@@ -27558,8 +27561,8 @@ router.get('/fixUsdWorth', auth_token.required, async (req, res) => {
                 ids.push(queryRes[i]['_id'])
             }
         }
-        // console.log(ids)
-        console.log('================================ Usd worth fixed =======================================')
+        // // console.log(ids)
+        // console.log('================================ Usd worth fixed =======================================')
 
         res.send({
             'status': true,
@@ -28628,7 +28631,7 @@ async function getOrderStats(postData2){
 router.post('/getOrderStats', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -28666,7 +28669,7 @@ router.post('/getOrderStats', auth_token.required, async (req, res) => {
 router.post('/get_user_id', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -28706,7 +28709,7 @@ router.post('/get_user_id', auth_token.required, async (req, res) => {
 router.post('/check_parent_exists', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -28758,7 +28761,7 @@ router.post('/get_username', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -28794,7 +28797,7 @@ router.post('/getAvailableTradingPoints', auth_token.required, async (req, res) 
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -28887,7 +28890,7 @@ async function customApiRequest(reqObj){
         request(options, function (error, response, body) {
             if (error) {
 
-                // console.log(error)
+                // // console.log(error)
                 resolve({
                     'status': false,
                     'message': 'Something went wrong.'
@@ -28908,7 +28911,7 @@ router.post('/save_dashboard_settings', auth_token.required, async (req, res) =>
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -28933,7 +28936,7 @@ router.post('/save_dashboard_settings', auth_token.required, async (req, res) =>
         }
 
         let result = await db.collection(dashboard_settings_collection).updateOne(where, insertData, {upsert:true});
-        // console.log(result)
+        // // console.log(result)
 
         if (result.upsertedCount > 0 || result.modifiedCount > 0){
             res.send({
@@ -28958,7 +28961,7 @@ router.post('/save_dashboard_settings', auth_token.required, async (req, res) =>
 router.post('/get_dashboard_settings', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -29065,7 +29068,7 @@ async function get_current_market_prices(exchange, coins=[]) {
 router.post('/isKeyUpdated', auth_token.required, async (req,res) =>{
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -29111,7 +29114,7 @@ router.post('/isKeyUpdated', auth_token.required, async (req,res) =>{
 router.post('/validateApiKeys', auth_token.required, async (req, res)=>{
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -29203,7 +29206,7 @@ router.post('/validateApiKeys', auth_token.required, async (req, res)=>{
                 'key3': apiKey3Status,
                 'message': ''
             }
-            // console.log(responseObj)
+            // // console.log(responseObj)
 
             res.send(responseObj)
 
@@ -29228,7 +29231,7 @@ router.post('/validateApiKeys', auth_token.required, async (req, res)=>{
                 'key1': apiKey1Status,
                 'message': ''
             }
-            // console.log(responseObj)
+            // // console.log(responseObj)
 
             res.send(responseObj)
 
@@ -29254,7 +29257,7 @@ router.post('/validateApiKeys', auth_token.required, async (req, res)=>{
                 'key1': apiKey1Status,
                 'message': ''
             }
-            // console.log(responseObj)
+            // // console.log(responseObj)
 
             res.send(responseObj)
         }
@@ -29310,7 +29313,7 @@ async function remove_api_key(user_ip, user_id, exchange, keyNo, auth_token){
 
 
 
-        console.log(user_ip, user_id, exchange)
+        // console.log(user_ip, user_id, exchange)
 
       let ip ='';
       let port = 2500;
@@ -29365,7 +29368,7 @@ async function remove_api_key(user_ip, user_id, exchange, keyNo, auth_token){
 
 
 
-        console.log(url);
+        // console.log(url);
         var options = {
             method: 'POST',
             url: url,
@@ -29379,7 +29382,7 @@ async function remove_api_key(user_ip, user_id, exchange, keyNo, auth_token){
             },
         };
         request(options, function (error, response, body) {
-            // console.log(body)
+            // // console.log(body)
             if (body.success == false) {
                 resolve({
                     'success': false,
@@ -29394,7 +29397,7 @@ async function remove_api_key(user_ip, user_id, exchange, keyNo, auth_token){
 
 router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -29420,7 +29423,7 @@ router.post('/disable_exchange_key', auth_token.required, async (req, res) => {
 
         var data = await remove_api_key(user_ip, user_id, exchange, keyNo, auth_token)
 
-        console.log(data)
+        // console.log(data)
 
         if(data.success == true){
             if(exchange == 'binance'){
@@ -29519,16 +29522,16 @@ async function getCoinName(symbol){
     let arr2 = symbol.split('USDT')
     let temp_symbol = '';
     if ((arr1[0] == '' && arr1[1] == '') || (arr2[0] == '' && arr2[1] == '')) {
-        // console.log(' 1 ', symbol)
+        // // console.log(' 1 ', symbol)
         temp_symbol = symbol
     } else if (arr1[1] == '') {
-        // console.log(' 2 ', arr1[0])
+        // // console.log(' 2 ', arr1[0])
         temp_symbol = arr1[0]
     } else if (arr2[1] == '') {
-        // console.log(' 3 ', arr2[0])
+        // // console.log(' 3 ', arr2[0])
         temp_symbol = arr2[0]
     } else {
-        // console.log(' 4 ', symbol)
+        // // console.log(' 4 ', symbol)
         temp_symbol = symbol
     }
 
@@ -29537,7 +29540,7 @@ async function getCoinName(symbol){
 
 async function getTradeHistory(filter, exchange, timezone) {
 
-    // console.log(new Date())
+    // // console.log(new Date())
     const db = await conn
     // exchange = 'kraken'
     let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
@@ -29630,17 +29633,17 @@ async function getTradeHistory(filter, exchange, timezone) {
     pipeline.push({ '$skip': skip })
     pipeline.push({ '$limit': limit })
 
-    // console.log(JSON.stringify(pipeline))
-    // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
+    // // console.log(JSON.stringify(pipeline))
+    // // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
 
     let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
 
-    // console.log(trades)
-    // console.log(trades[0]['trades']['value'])
+    // // console.log(trades)
+    // // console.log(trades[0]['trades']['value'])
 
     // process.exit(1)
 
-    // console.log(new Date(), '=================================')
+    // // console.log(new Date(), '=================================')
 
     let tradeIds = trades.map(item => item.trades.value.ordertxid)
 
@@ -29684,7 +29687,7 @@ async function getTradeHistory(filter, exchange, timezone) {
         ]
     }
 
-    // console.log(JSON.stringify(whereDigie))
+    // // console.log(JSON.stringify(whereDigie))
 
     let digieBuyTrades = await db.collection(buy_collection).aggregate(whereDigie).toArray()
     let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
@@ -29704,7 +29707,7 @@ async function getTradeHistory(filter, exchange, timezone) {
             });
             timeZoneTime = new Date(timeZoneTime);
         } catch (e) {
-            console.log(e);
+            // console.log(e);
         }
         let date = timeZoneTime.toLocaleString() + ' ' + timezone;
 
@@ -29727,7 +29730,7 @@ async function getTradeHistory(filter, exchange, timezone) {
 
             let digieEntry = digieTrades.find(item => item.binance_order_id == tradeId || item.binance_order_id_sell == tradeId || item.tradeId == tradeId || item.tradeId_sell == tradeId ? true : false)
 
-            // console.log(digieEntry)
+            // // console.log(digieEntry)
 
             if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
 
@@ -29783,7 +29786,7 @@ async function getTradeHistory(filter, exchange, timezone) {
             let _3percentQuantityAbove = quantity + (quantity * 3) /100
             let _3percentQuantityBelow = quantity - (quantity * 3) /100
 
-            // console.log(quantity, _3percentQuantityAbove)
+            // // console.log(quantity, _3percentQuantityAbove)
 
             // let tradeTime = new Date(currTrade.time * timeMultiplyer);
             let tradeTime = parseFloat(currTrade.time);
@@ -29791,12 +29794,12 @@ async function getTradeHistory(filter, exchange, timezone) {
             let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
             _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 1); // timestamp
             _1minuteAbove = new Date(_1minuteAbove); // Date object
-            // console.log(_1minuteAbove);
+            // // console.log(_1minuteAbove);
 
             let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
             _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 1); // timestamp
             _1minuteBelow = new Date(_1minuteBelow); // Date object
-            // console.log(_1minuteBelow);
+            // // console.log(_1minuteBelow);
 
             //digie duplicate
             var whereDigie1 = [
@@ -29847,15 +29850,15 @@ async function getTradeHistory(filter, exchange, timezone) {
 
         }
     }
-    // console.log(checkTradesArr.length)
+    // // console.log(checkTradesArr.length)
 
-    // console.log(new Date())
+    // // console.log(new Date())
 
     trades.forEach(item=>{
         return item.strUnixTime = (item.trades.value.time).toString()
     })
 
-    // console.log(trades)
+    // // console.log(trades)
 
     trades = trades.sort(function (x, y) {
         return y.strUnixTime - x.strUnixTime ;
@@ -29870,7 +29873,7 @@ async function getTradeHistory(filter, exchange, timezone) {
         'userDoubtTradeIdsArr': userDoubtTradeIdsArr,
     }
 
-    // console.log('kraken_trades', trades.length, ' digieTrades ', digieTrades.length, ' digieDuplicateTradeIdsArr ', digieDuplicateTradeIdsArr.length, ' digieDoubtTradeIdsArr ', digieDoubtTradeIdsArr.length, ' userDoubtTradeIdsArr ', userDoubtTradeIdsArr.length)
+    // // console.log('kraken_trades', trades.length, ' digieTrades ', digieTrades.length, ' digieDuplicateTradeIdsArr ', digieDuplicateTradeIdsArr.length, ' digieDoubtTradeIdsArr ', digieDoubtTradeIdsArr.length, ' userDoubtTradeIdsArr ', userDoubtTradeIdsArr.length)
 
     return resultObj
 }
@@ -29901,7 +29904,7 @@ router.post('/checkBinanceDuplicatesForTradeHistory', auth_token.required, async
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -29909,7 +29912,7 @@ router.post('/checkBinanceDuplicatesForTradeHistory', auth_token.required, async
         return false;
     }
 
-    // console.log(req.body)
+    // // console.log(req.body)
 
     let user_id = req.body.user_id
     // let user_id = req.payload.id;
@@ -29954,7 +29957,7 @@ router.post('/checkBinanceDuplicatesForTradeHistory', auth_token.required, async
             let data = await checkBinanceDuplicatesForTradeHistory(user_id, exchange)
         }
     }else{
-        console.log('user_id, exchange required')
+        // console.log('user_id, exchange required')
     }
 
     res.send({})
@@ -30036,12 +30039,12 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
 
     let total_count = countArr.buyCount + countArr.soldCount
 
-    console.log('total records', total_count)
+    // console.log('total records', total_count)
 
     let per_page = 50;
     let num_pages = Math.ceil(total_count / per_page);
 
-    console.log('total pages', num_pages)
+    // console.log('total pages', num_pages)
 
     for (let i = 1; i <= num_pages; i++) {
 
@@ -30049,7 +30052,7 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
         skip = (page - 1) * per_page
         limit = per_page
 
-        console.log('page: ', page, skip)
+        // console.log('page: ', page, skip)
 
         let ifSkipExists = pipeline.findIndex(item => item['$skip'] == (page - 2) * per_page)
         let ifLimitExists = pipeline.findIndex(item => item['$limit'] == 50)
@@ -30111,7 +30114,7 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
             whereDigie[0]['$match']['do_not_pick'] = true
         }
 
-        // console.log(JSON.stringify(whereDigie))
+        // // console.log(JSON.stringify(whereDigie))
 
         let digieBuyTrades = await db.collection(buy_collection).aggregate(whereDigie).toArray()
         let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
@@ -30133,7 +30136,7 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
                 });
                 timeZoneTime = new Date(timeZoneTime);
             } catch (e) {
-                console.log(e);
+                // console.log(e);
             }
             let date = timeZoneTime.toLocaleString() + ' ' + timezone;
 
@@ -30194,7 +30197,7 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
                 let _3percentQuantityAbove = quantity + (quantity * 3) / 100
                 let _3percentQuantityBelow = quantity - (quantity * 3) / 100
 
-                // console.log(quantity, _3percentQuantityAbove)
+                // // console.log(quantity, _3percentQuantityAbove)
 
                 // let tradeTime = new Date(currTrade.time * timeMultiplyer);
                 let tradeTime = parseFloat(currTrade.time);
@@ -30202,12 +30205,12 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
                 let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
                 _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 2); // timestamp
                 _1minuteAbove = new Date(_1minuteAbove); // Date object
-                // console.log(_1minuteAbove);
+                // // console.log(_1minuteAbove);
 
                 let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
                 _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 2); // timestamp
                 _1minuteBelow = new Date(_1minuteBelow); // Date object
-                // console.log(_1minuteBelow);
+                // // console.log(_1minuteBelow);
 
                 //digie duplicate
                 var whereDigie1 = [
@@ -30272,7 +30275,7 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
 
             }
         }
-        // console.log(checkTradesArr.length)
+        // // console.log(checkTradesArr.length)
 
         let resultObj = {
             'countArr': countArr,
@@ -30285,15 +30288,15 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
 
         let filteredTrades = await filterMappedAndDuplicateTrades(resultObj, exchange)
 
-        // console.log(filteredTrades.length)
+        // // console.log(filteredTrades.length)
 
         //save in the trade_history_view collection
-        // console.log(JSON.stringify(filteredTrades))
+        // // console.log(JSON.stringify(filteredTrades))
 
         if (filteredTrades.length > 0){
             let trade_history_filtered_collection_name = exchange == 'binance' ? 'trade_history_filtered' : 'trade_history_filtered_'+exchange
             //DB Save Call
-            console.log('save call ' + page)
+            // console.log('save call ' + page)
             await db.collection(trade_history_filtered_collection_name).insertMany(filteredTrades)
         }
 
@@ -30315,7 +30318,7 @@ async function checkBinanceDuplicatesForTradeHistory(user_id, exchange){
     set['$set'][userField] = new Date()
     await db.collection('users').updateOne({ '_id': new ObjectID(String(user_id)) }, set)
 
-    console.log(' completed ')
+    // console.log(' completed ')
 
     return true;
 }
@@ -30324,7 +30327,7 @@ async function checkFractionDuplicateTrades(user_id, exchange){
     return new Promise(async (resolve)=>{
 
         if(exchange == 'binance'){
-            console.log('fraction duplocate code running')
+            // console.log('fraction duplocate code running')
 
             const db = await conn
 
@@ -30363,19 +30366,19 @@ async function checkFractionDuplicateTrades(user_id, exchange){
                 },
             ]
 
-            console.log(JSON.stringify(fractionPipeline))
+            // console.log(JSON.stringify(fractionPipeline))
 
             let fraction_duplicate_trades = await db.collection(mappedCollection).aggregate(fractionPipeline).toArray()
 
             var tradeIds = []
 
-            console.log('total Ids ', fraction_duplicate_trades.length)
+            // console.log('total Ids ', fraction_duplicate_trades.length)
 
             if (fraction_duplicate_trades.length > 0) {
 
                 tradeIds = typeof fraction_duplicate_trades[0]['orderIds'] != 'undefined' && fraction_duplicate_trades[0]['orderIds'].length > 0 ? fraction_duplicate_trades[0]['orderIds'] : [];
 
-                console.log('tradeIds ', tradeIds)
+                // console.log('tradeIds ', tradeIds)
 
                 if (tradeIds.length > 0){
                     //re run trades with quantities added
@@ -30436,8 +30439,8 @@ async function checkExchangeTrades(user_id, exchange, tradeIds_){
 
         let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
 
-        console.log('fraction trades count', trades.length)
-        console.log(trades)
+        // console.log('fraction trades count', trades.length)
+        // console.log(trades)
 
         let tradeIds = trades.map(item => item.trades.value.ordertxid)
 
@@ -30486,7 +30489,7 @@ async function checkExchangeTrades(user_id, exchange, tradeIds_){
             whereDigie[0]['$match']['do_not_pick'] = true
         }
 
-        // console.log(JSON.stringify(whereDigie))
+        // // console.log(JSON.stringify(whereDigie))
 
         let digieBuyTrades = await db.collection(buy_collection).aggregate(whereDigie).toArray()
         let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
@@ -30508,7 +30511,7 @@ async function checkExchangeTrades(user_id, exchange, tradeIds_){
                 });
                 timeZoneTime = new Date(timeZoneTime);
             } catch (e) {
-                console.log(e);
+                // console.log(e);
             }
             let date = timeZoneTime.toLocaleString() + ' ' + timezone;
 
@@ -30569,7 +30572,7 @@ async function checkExchangeTrades(user_id, exchange, tradeIds_){
                 let _3percentQuantityAbove = quantity + (quantity * 3) / 100
                 let _3percentQuantityBelow = quantity - (quantity * 3) / 100
 
-                // console.log(quantity, _3percentQuantityAbove)
+                // // console.log(quantity, _3percentQuantityAbove)
 
                 // let tradeTime = new Date(currTrade.time * timeMultiplyer);
                 let tradeTime = parseFloat(currTrade.time);
@@ -30577,12 +30580,12 @@ async function checkExchangeTrades(user_id, exchange, tradeIds_){
                 let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
                 _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 1); // timestamp
                 _1minuteAbove = new Date(_1minuteAbove); // Date object
-                // console.log(_1minuteAbove);
+                // // console.log(_1minuteAbove);
 
                 let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
                 _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 1); // timestamp
                 _1minuteBelow = new Date(_1minuteBelow); // Date object
-                // console.log(_1minuteBelow);
+                // // console.log(_1minuteBelow);
 
                 //digie duplicate
                 var whereDigie1 = [
@@ -30647,7 +30650,7 @@ async function checkExchangeTrades(user_id, exchange, tradeIds_){
 
             }
         }
-        // console.log(checkTradesArr.length)
+        // // console.log(checkTradesArr.length)
 
         let resultObj = {
             'countArr': {},
@@ -30665,14 +30668,14 @@ async function checkExchangeTrades(user_id, exchange, tradeIds_){
 
         let filteredTrades = await filterMappedAndDuplicateTrades(resultObj, exchange)
 
-        console.log(filteredTrades.length)
+        // console.log(filteredTrades.length)
 
         //save in the trade_history_view collection
-        // console.log(JSON.stringify(filteredTrades))
+        // // console.log(JSON.stringify(filteredTrades))
 
         if (filteredTrades.length > 0) {
             //DB Save Call
-            // console.log('save call ' + page)
+            // // console.log('save call ' + page)
             await db.collection(trade_history_filtered_collection_name).insertMany(filteredTrades)
         }
 
@@ -30729,7 +30732,7 @@ async function filterMappedAndDuplicateTrades(trades, exchange){
 
             if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
 
-                // console.log(krakenTrades[i])
+                // // console.log(krakenTrades[i])
 
                 // krakenObj['_id'] = (new Date).toString() + Math.random() + Math.random() + 'fewrt45wet'
                 krakenObj['order_id'] = ID
@@ -30772,7 +30775,7 @@ async function filterMappedAndDuplicateTrades(trades, exchange){
             // let timeElapsString = timeAgo.format(Date.now() - diff);
             // krakenObj['timeElapsString'] = timeElapsString
 
-            // console.log(krakenObj)
+            // // console.log(krakenObj)
 
             /* ******************* keep these fields only *************************** */
             let tempInsObj = {
@@ -30804,7 +30807,7 @@ async function filterMappedAndDuplicateTrades(trades, exchange){
 router.get('/checkDuplicateTrades', auth_token.required, async (req, res)=>{
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -30987,8 +30990,8 @@ async function checkDuplicateTrades(){
 
     await db.collection(trade_history_collection).aggregate(pipeline, { 'allowDiskUse': true }).toArray()
 
-    console.log('user_id :::: ', user_id, '  ----> initial filtration done')
-    console.log('  ----> ->>>>>>>>>>>>>>>>>  mapped filtration start')
+    // console.log('user_id :::: ', user_id, '  ----> initial filtration done')
+    // console.log('  ----> ->>>>>>>>>>>>>>>>>  mapped filtration start')
     //set status as mapped on all mapped orders and insert into filtered trade history new col "filtered_trade_history"
     let whereMapped = {
         'is_mapped': 'yes',
@@ -30999,12 +31002,12 @@ async function checkDuplicateTrades(){
     //pagination code for script
     var total_count = await await db.collection(temp_trade_history_duplicate_filter_col).countDocuments(whereMapped)
 
-    console.log('total records', total_count)
+    // console.log('total records', total_count)
 
     var per_page = 50;
     var num_pages = Math.ceil(total_count / per_page);
 
-    console.log('total count ',total_count ,'  -----  total pages', num_pages)
+    // console.log('total count ',total_count ,'  -----  total pages', num_pages)
 
     for (let i = 1; i <= num_pages; i++) {
 
@@ -31012,7 +31015,7 @@ async function checkDuplicateTrades(){
         let skip = (page - 1) * per_page
         let limit = per_page
 
-        console.log('page: ', page, skip)
+        // console.log('page: ', page, skip)
 
         let mappedTrades = await db.collection(temp_trade_history_duplicate_filter_col).find(whereMapped).skip(skip).limit(limit).toArray()
 
@@ -31053,8 +31056,8 @@ async function checkDuplicateTrades(){
 
                 let tradeIds = currTrade.fractions.map(item => item.trades.value.ordertxid)
 
-                console.log(mappedTradeArr[0]['trades']['value'])
-                console.log(tradeIds)
+                // console.log(mappedTradeArr[0]['trades']['value'])
+                // console.log(tradeIds)
 
                 //update in trade history collection
                 await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
@@ -31065,8 +31068,8 @@ async function checkDuplicateTrades(){
         db = await conn
     }
 
-    console.log('  ----> mapped filtration done')
-    console.log('  ----> ->>>>>>>>>>>>>>>>>  Unmapped filtration start')
+    // console.log('  ----> mapped filtration done')
+    // console.log('  ----> ->>>>>>>>>>>>>>>>>  Unmapped filtration start')
 
     let whereUnmapped = {
         'is_mapped': 'no',
@@ -31077,12 +31080,12 @@ async function checkDuplicateTrades(){
     //pagination code for script
     var total_count = await await db.collection(temp_trade_history_duplicate_filter_col).countDocuments(whereUnmapped)
 
-    console.log('total records', total_count)
+    // console.log('total records', total_count)
 
     var per_page = 50;
     var num_pages = Math.ceil(total_count / per_page);
 
-    console.log('total count ',total_count ,'  -----  total pages', num_pages)
+    // console.log('total count ',total_count ,'  -----  total pages', num_pages)
 
     for (let i = 1; i <= num_pages; i++) {
 
@@ -31090,7 +31093,7 @@ async function checkDuplicateTrades(){
         let skip = (page - 1) * per_page
         let limit = per_page
 
-        console.log('page: ', page, skip)
+        // console.log('page: ', page, skip)
 
         checkTradesArr = await db.collection(temp_trade_history_duplicate_filter_col).find(whereUnmapped).skip(skip).limit(limit).toArray()
 
@@ -31102,7 +31105,7 @@ async function checkDuplicateTrades(){
 
                 let currTrade = checkTradesArr[i]['parent']['trades']['value']
 
-                console.log(currTrade)
+                // console.log(currTrade)
                 // continue
 
                 // let currTrade = checkTradesArr[i]['trades']['value']
@@ -31111,7 +31114,7 @@ async function checkDuplicateTrades(){
                 let _3percentQuantityAbove = quantity + (quantity * 3) / 100
                 let _3percentQuantityBelow = quantity - (quantity * 3) / 100
 
-                // console.log(quantity, _3percentQuantityAbove)
+                // // console.log(quantity, _3percentQuantityAbove)
 
                 // let tradeTime = new Date(currTrade.time * timeMultiplyer);
                 let tradeTime = parseFloat(currTrade.time);
@@ -31119,12 +31122,12 @@ async function checkDuplicateTrades(){
                 let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
                 _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 2); // timestamp
                 _1minuteAbove = new Date(_1minuteAbove); // Date object
-                // console.log(_1minuteAbove);
+                // // console.log(_1minuteAbove);
 
                 let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
                 _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 2); // timestamp
                 _1minuteBelow = new Date(_1minuteBelow); // Date object
-                // console.log(_1minuteBelow);
+                // // console.log(_1minuteBelow);
 
                 //digie duplicate
                 var whereDigie1 = [
@@ -31191,9 +31194,9 @@ async function checkDuplicateTrades(){
 
                     let tradeIds = currTrade_temp.fractions.map(item => item.trades.value.ordertxid)
 
-                    console.log('************************************************** Digie duplicate')
-                    console.log(duplicateTradeArr[0]['trades']['value'])
-                    console.log(tradeIds)
+                    // console.log('************************************************** Digie duplicate')
+                    // console.log(duplicateTradeArr[0]['trades']['value'])
+                    // console.log(tradeIds)
 
                 //update in trade history collection
                 await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
@@ -31264,9 +31267,9 @@ async function checkDuplicateTrades(){
 
                         let tradeIds = currTrade_temp.fractions.map(item => item.trades.value.ordertxid)
 
-                        console.log('************************************************** Digie Doubt')
-                        console.log(duplicateTradeArr[0]['trades']['value'])
-                        console.log(tradeIds)
+                        // console.log('************************************************** Digie Doubt')
+                        // console.log(duplicateTradeArr[0]['trades']['value'])
+                        // console.log(tradeIds)
 
                         //update in trade history collection
                         await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
@@ -31312,9 +31315,9 @@ async function checkDuplicateTrades(){
                         let tradeIds = currTrade_temp.fractions.map(item => item.trades.value.ordertxid)
 
 
-                        console.log('************************************************** User Doubt')
-                        console.log(duplicateTradeArr[0]['trades']['value'])
-                        console.log(tradeIds)
+                        // console.log('************************************************** User Doubt')
+                        // console.log(duplicateTradeArr[0]['trades']['value'])
+                        // console.log(tradeIds)
 
                         //update in trade history collection
                         // await db.collection(trade_history_collection).updateMany({ 'trades.value.ordertxid': { '$in': tradeIds } }, { '$set': { 'tradesChecked': 'yes' } })
@@ -31329,7 +31332,7 @@ async function checkDuplicateTrades(){
         db = await conn
     }
 
-    console.log('  ----> Unmapped filtration done')
+    // console.log('  ----> Unmapped filtration done')
 
     let resultObj = {
         'digieDuplicateTradeIdsArr': digieDuplicateTradeIdsArr,
@@ -31337,7 +31340,7 @@ async function checkDuplicateTrades(){
         'userDoubtTradeIdsArr': userDoubtTradeIdsArr,
     }
 
-    console.log(resultObj)
+    // console.log(resultObj)
 
 }
 
@@ -31350,7 +31353,7 @@ async function getUserTimezone(user_id){
         let userObj = await db.collection('users').findOne({ '_id': new ObjectID(String(user_id)) }, {_id:0, timezone:1})
 
         if (userObj) {
-            // console.log('if ran', userObj)
+            // // console.log('if ran', userObj)
 
             var timezone = userObj['timezone'];
 
@@ -31974,7 +31977,7 @@ async function getUserTimezone(user_id){
 
             resolve(tempTimezone)
         }else{
-            // console.log('else ran', userObj)
+            // // console.log('else ran', userObj)
             resolve('America/New_York')
         }
 
@@ -31985,7 +31988,7 @@ async function getUserTimezone(user_id){
 router.post('/getTradeHistory', auth_token.required, async (req, res)=>{
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -32001,7 +32004,7 @@ router.post('/getTradeHistory', auth_token.required, async (req, res)=>{
 
     let trades = await getTradeHistoryAsim(where, exchange, timezone)
 
-    // console.log(trades)
+    // // console.log(trades)
 
     res.send(trades)
 
@@ -32009,7 +32012,7 @@ router.post('/getTradeHistory', auth_token.required, async (req, res)=>{
 
 async function getTradeHistoryAsim(filter, exchange, timezone) {
 
-    // console.log(new Date())
+    // // console.log(new Date())
     const db = await conn
     // exchange = 'kraken'
     let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
@@ -32158,14 +32161,14 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     pipeline.push({ '$skip': skip })
     pipeline.push({ '$limit': limit })
 
-    // console.log(JSON.stringify(pipeline))
-    // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
+    // // console.log(JSON.stringify(pipeline))
+    // // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
 
-    console.log(pipeline)
+    // console.log(pipeline)
     let trades = await db.collection(collectionName).aggregate(pipeline, { allowDiskUse: true }).toArray()
 
-    // console.log(trades)
-    // console.log(trades[0]['trades']['value'])
+    // // console.log(trades)
+    // // console.log(trades[0]['trades']['value'])
 
     let timeMultiplyer = 1;
     if (exchange == 'kraken') {
@@ -32181,7 +32184,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
             });
             timeZoneTime = new Date(timeZoneTime);
         } catch (e) {
-            console.log(e);
+            // console.log(e);
         }
         let date = timeZoneTime.toLocaleString() + ' ' + timezone;
 
@@ -32189,13 +32192,13 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         return item
     })
 
-    // console.log(new Date())
+    // // console.log(new Date())
 
     trades.forEach(item => {
         return item.strUnixTime = (item.trades.value.time).toString()
     })
 
-    // console.log(trades)
+    // // console.log(trades)
 
     trades = trades.sort(function (x, y) {
         return y.strUnixTime - x.strUnixTime;
@@ -32210,7 +32213,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         'userDoubtTradeIdsArr': [],
     }
 
-    // console.log('kraken_trades', trades.length, ' digieTrades ', digieTrades.length, ' digieDuplicateTradeIdsArr ', digieDuplicateTradeIdsArr.length, ' digieDoubtTradeIdsArr ', digieDoubtTradeIdsArr.length, ' userDoubtTradeIdsArr ', userDoubtTradeIdsArr.length)
+    // // console.log('kraken_trades', trades.length, ' digieTrades ', digieTrades.length, ' digieDuplicateTradeIdsArr ', digieDuplicateTradeIdsArr.length, ' digieDoubtTradeIdsArr ', digieDoubtTradeIdsArr.length, ' userDoubtTradeIdsArr ', userDoubtTradeIdsArr.length)
 
     return resultObj
 }
@@ -32219,7 +32222,7 @@ router.post('/mapTrade', auth_token.required, async (req, res) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -32247,7 +32250,7 @@ router.post('/mapTrade', auth_token.required, async (req, res) => {
         'created_date': time,
     }
 
-    // console.log('payload', payload)
+    // // console.log('payload', payload)
     // process.exit(0)
 
     let reqObj = {
@@ -32262,7 +32265,7 @@ router.post('/mapTrade', auth_token.required, async (req, res) => {
     }
     let apiResult = await customApiRequest(reqObj)
 
-    // console.log(apiResult)
+    // // console.log(apiResult)
 
     let success = 'successfully created child under this userid and exchange'
     if (apiResult.status && apiResult.body && apiResult.body.status == success){
@@ -32290,7 +32293,7 @@ router.post('/mapTrade', auth_token.required, async (req, res) => {
 router.post('/mapSoldTrade', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -32384,7 +32387,7 @@ router.post('/mapSoldTrade', auth_token.required, async (req, res) => {
 router.get('/get_current_market_prices', auth_token.required, async (req, res)=>{
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -32417,7 +32420,7 @@ router.get('/get_current_market_prices', auth_token.required, async (req, res)=>
 router.post('/checkBinanceApiSecret', auth_token.required, async (req, res) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -32522,7 +32525,7 @@ async function candleCoins() {
 router.post('/findQtyFromUsdWorth', auth_token.required, async (req, res)=>{
 
   var user_exist = await getUserByID(req.payload.id);
-  // console.log(user_exist)
+  // // console.log(user_exist)
   if(!user_exist){
       resp.status(401).send({
           message: 'User Not exist'
@@ -32564,11 +32567,11 @@ async function findQtyFromUsdWorth(coin, usd, exchange){
       if (splitArr[1] == '') {
           oneUsdWorthQty = 1 / currentMarketPrice
           usdWorthQty = usd * oneUsdWorthQty
-          // console.log('USD COIN', oneUsdWorthQty);
+          // // console.log('USD COIN', oneUsdWorthQty);
       } else {
           oneUsdWorthQty = 1 / (currentMarketPrice * BTCUSDTPRICE)
           usdWorthQty = usd * oneUsdWorthQty
-          // console.log('BTC COIN', oneUsdWorthQty);
+          // // console.log('BTC COIN', oneUsdWorthQty);
       }
       // var toFixedNum = 6
       var toFixedNum = (marketMinNotationStepSize + '.').split('.')[1].length
@@ -32576,7 +32579,7 @@ async function findQtyFromUsdWorth(coin, usd, exchange){
           toFixedNum = 6
       }
 
-      // console.log(usdWorthQty, 'usdWorthQty', toFixedNum)
+      // // console.log(usdWorthQty, 'usdWorthQty', toFixedNum)
 
 
       qty = !isNaN(parseFloat(usdWorthQty.toFixed(toFixedNum))) ? parseFloat(usdWorthQty.toFixed(toFixedNum)) : 0
@@ -32603,7 +32606,7 @@ router.all('/getAllGlobalCoins',async (req, res) => {
 
 
     // var user_exist = await getUserByID(req.payload.id);
-    // // console.log(user_exist)
+    // // // console.log(user_exist)
     // if(!user_exist){
     //     resp.status(401).send({
     //         message: 'User Not exist'
@@ -32611,7 +32614,7 @@ router.all('/getAllGlobalCoins',async (req, res) => {
     //     return false;
     // }
 
-    // console.log(req.body)
+    // // console.log(req.body)
 
     if (typeof req.body.candleCoins != 'undefined' && req.body.candleCoins == 'candleCoins') {
 
@@ -32635,7 +32638,7 @@ router.all('/getAllGlobalCoins',async (req, res) => {
         // let binance_symbols = binance.map(item=> item.symbol)
         // let bam_symbols = bam.map(item=> item.symbol)
         // let kraken_symbols = kraken.map(item=> item.symbol)
-        // console.log(binance_symbols.length, bam_symbols.length, kraken_symbols.length)
+        // // console.log(binance_symbols.length, bam_symbols.length, kraken_symbols.length)
 
         if (binance.length > 0 || bam.length > 0 || kraken.length > 0){
 
@@ -32666,7 +32669,7 @@ router.all('/getAllGlobalCoins',async (req, res) => {
 router.get('/createATGFromScriptForUser', auth_token.required, async (req, res)=>{
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -32698,7 +32701,7 @@ async function createATGFromScriptForUser(){
 
             if (user_atg_settings.length >0){
 
-                console.log('current user in progress  :::  user_id  :::  ', user_id)
+                // console.log('current user in progress  :::  user_id  :::  ', user_id)
 
                 //reset ATG call
                 var reqObj = {
@@ -32711,12 +32714,12 @@ async function createATGFromScriptForUser(){
                     },
                 }
                 var apiResult = await customApiRequest(reqObj)
-                console.log(' XXXXXXXX reset call done')
+                // console.log(' XXXXXXXX reset call done')
 
                 user_atg_settings = user_atg_settings[0]
 
 
-                console.log(' >>>>>>>>>> ATG create call done')
+                // console.log(' >>>>>>>>>> ATG create call done')
 
                 //Create ATG call
                 var reqObj = {
@@ -32731,7 +32734,7 @@ async function createATGFromScriptForUser(){
                 }
                 var apiResult = await customApiRequest(reqObj)
 
-                console.log(' __________________ ATG done ')
+                // console.log(' __________________ ATG done ')
 
 
             }
@@ -32739,7 +32742,7 @@ async function createATGFromScriptForUser(){
             // break;
         }
 
-        console.log('************ Script Completed ************')
+        // console.log('************ Script Completed ************')
     }
 
     return true
@@ -32777,7 +32780,7 @@ router.post('/order_move_sold_to_buy', auth_token.required, async (req, resp) =>
 
 
   var user_exist = await getUserByID(req.payload.id);
-  // console.log(user_exist)
+  // // console.log(user_exist)
   if(!user_exist){
       resp.status(401).send({
           message: 'User Not exist'
@@ -32811,7 +32814,7 @@ function order_move_sold_to_buy(exchange, order_id) {
               if (err) {
                   resolve(err)
               } else {
-                  // console.log(result, 'Order in Sold Collection')
+                  // // console.log(result, 'Order in Sold Collection')
                   if(result.length > 0){
                     let collection_name = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
                     let data = {}
@@ -32851,15 +32854,15 @@ function order_move_sold_to_buy(exchange, order_id) {
                       data['cost_avg_array'].filter(actual_order => actual_order.order_sold == 'yes').map(order => {
 
 
-                        console.log(order['filledPriceSell'], order['filledPriceBuy'])
+                        // console.log(order['filledPriceSell'], order['filledPriceBuy'])
                         totalCAProfit += getPercentageDiff(+order['filledPriceSell'], +order['filledPriceBuy']);
-                        console.log(totalCAProfit)
+                        // console.log(totalCAProfit)
                       });
                     }
 
                     var avgCAProfit = +totalCAProfit
 
-                    console.log(totalCAProfit, 'totalCAProfit', avgCAProfit, 'avgCAProfit')
+                    // console.log(totalCAProfit, 'totalCAProfit', avgCAProfit, 'avgCAProfit')
                     if(data['defined_sell_percentage'] >= 3){
                       last_ca_ledger_loss = data['defined_sell_percentage'] - (avgCAProfit);
                     } else {
@@ -32869,7 +32872,7 @@ function order_move_sold_to_buy(exchange, order_id) {
 
 
 
-                    console.log('last_ca_ledger_loss', last_ca_ledger_loss)
+                    // console.log('last_ca_ledger_loss', last_ca_ledger_loss)
 
 
 
@@ -32941,7 +32944,7 @@ function order_move_sold_to_buy(exchange, order_id) {
                     delete data['market_lowest_value'];
                     delete data['nextStopLossPrice'];
 
-                    // console.log('data', data)
+                    // // console.log('data', data)
 
                     // On Shahzad Demand
                     data['is_sell_order'] = 'yes';
@@ -32961,14 +32964,14 @@ function order_move_sold_to_buy(exchange, order_id) {
                       } else {
 
 
-                        // console.log(result.insertedId, 'result');
+                        // // console.log(result.insertedId, 'result');
 
                         var doc_id = result.insertedId
                         var updated_data_in_cost_avg_array = []
                         // data['cost_avg_array'][0]['buy_order_id'] = doc_id.toString()
                         data['cost_avg_array'][0]['buy_order_id'] = doc_id
 
-                        // console.log(doc_id, data['cost_avg_array'])
+                        // // console.log(doc_id, data['cost_avg_array'])
                         var update_inserted_order = await db.collection(collection_name).updateOne({_id: ObjectID(doc_id)}, {$set: {cost_avg_array: data['cost_avg_array']}})
                         var move_costAvg_completed = await db.collection(collectionName).updateOne(where, {$set: {move_costAvg: "completed", status:'CA_SOLD_COMPLETE', show_order: 'no'}})
                         resolve('Inserted Successfully to Buy Collection')
@@ -32991,17 +32994,17 @@ function update_sub_document(id2, collection, value, field) {
       where[field+'.orderFilledId'] = value.orderFilledId;
       //var oldData = db.collection(collection).findOne(where).toArray();
 
-      console.log("::::  where ::::", where)
-      console.log("::::  value.orderFilledId ::::", value.orderFilledId)
+      // console.log("::::  where ::::", where)
+      // console.log("::::  value.orderFilledId ::::", value.orderFilledId)
       var oldData = db.collection(global.Orders).find(where).toArray((err, result) => {
-        //console.log("::::  where ::::", where)
-        console.log("::::  result ::::", result)
-        console.log("::::  result ::::", result._id)
-        console.log("::::  value ::::", value)
-        console.log("::::  field ::::", field)
+        //// console.log("::::  where ::::", where)
+        // console.log("::::  result ::::", result)
+        // console.log("::::  result ::::", result._id)
+        // console.log("::::  value ::::", value)
+        // console.log("::::  field ::::", field)
 
         if (typeof result._id == 'undefined' || result._id == 'undefined') {
-          console.log("::::  I am here  ::::")
+          // console.log("::::  I am here  ::::")
           var upd_arr = {};
           let fieldObj = {};
           fieldObj[field] = value;
@@ -33011,10 +33014,10 @@ function update_sub_document(id2, collection, value, field) {
 
           db.collection(collection).updateOne(where1, upd_arr, (err1, result1) => {
             if (err1) {
-              //console.log("::::  err1 ::::", err1)
+              //// console.log("::::  err1 ::::", err1)
               resolve(err1);
             } else {
-              //console.log("::::  result1 ::::", result1)
+              //// console.log("::::  result1 ::::", result1)
               resolve(result1);
             }
           });
@@ -33036,7 +33039,7 @@ router.post('/get_atg_total_count_vs_atg_actual_count', auth_token.required, asy
 
 
   var user_exist = await getUserByID(req.payload.id);
-  // console.log(user_exist)
+  // // console.log(user_exist)
   if(!user_exist){
       resp.status(401).send({
           message: 'User Not exist'
@@ -33592,7 +33595,7 @@ function get_atg_total_count_vs_atg_actual_count(exchange, application_mode, ski
 
         var data = await db.collection(main_collection).aggregate(userArrayFilter).toArray();
 
-        console.log('DataCount', count)
+        // console.log('DataCount', count)
         if(data.length > 0){
           resolve({ 'users': data, 'total':count[0]['total']});
         } else {
@@ -33615,7 +33618,7 @@ router.post('/addUserFavouriteCoin', auth_token.required, async function (req, r
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -33686,7 +33689,7 @@ router.post('/addUserFavouriteCoin', auth_token.required, async function (req, r
 router.post('/get_user_favourite_coins', auth_token.required, async (req, resp) => {
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -33741,7 +33744,7 @@ router.post('/sellCostAvgOrder_new', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -33931,7 +33934,7 @@ router.post('/sellCostAvgOrder_new', auth_token.required, async (req, resp) => {
 
 
 function update_user_wallet_binance(user_id, trading_ip){
-    console.log(trading_ip)
+    // console.log(trading_ip)
 
 
 
@@ -33967,7 +33970,7 @@ function update_user_wallet_binance(user_id, trading_ip){
 
 
 
-      console.log(url, 'update_balace')
+      // console.log(url, 'update_balace')
 
         var options = {
             method: 'POST',
@@ -33977,7 +33980,7 @@ function update_user_wallet_binance(user_id, trading_ip){
             },
         };
         request(options, function (error, response, body) {
-            console.log(body)
+            // console.log(body)
             if (body.success == false) {
                 resolve({
                     'success': false,
@@ -33997,7 +34000,7 @@ router.post('/update_user_wallet_binance', auth_token.required, async (req, resp
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -34032,7 +34035,7 @@ router.post('/update_user_wallet_binance', auth_token.required, async (req, resp
 
 
 function updateUserTradeHistory(user_id, exchange){
-    // console.log(user_id)
+    // // console.log(user_id)
     return new Promise((resolve) => {
         var options = {
             method: 'GET',
@@ -34043,7 +34046,7 @@ function updateUserTradeHistory(user_id, exchange){
             },
         };
         request(options, function (error, response, body) {
-            console.log('Lo gi',body)
+            // console.log('Lo gi',body)
             if (error) {
                 resolve({
                     'success': false,
@@ -34063,7 +34066,7 @@ router.post('/updateUserTradeHistory', auth_token.required, async (req, resp) =>
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -34096,7 +34099,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
 
 
     var user_exist = await getUserByID(req.payload.id);
-    // console.log(user_exist)
+    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -34124,9 +34127,9 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
         let array = {}
         var collectionName = exchange == 'binance' ? 'users' : 'kraken_credentials';
 
-        // console.log(collectionName, exchange)
+        // // console.log(collectionName, exchange)
         db.collection(collectionName).findOne(search_arr, async function (err, data) {
-            // console.log("HURRAH DATA: ", data)
+            // // console.log("HURRAH DATA: ", data)
 
             if (err) throw err;
             if (data != undefined || data != null) {
