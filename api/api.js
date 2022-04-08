@@ -14738,6 +14738,7 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
     // var krakenCredentials3 = await getKrakenCredentials3(trading_ip, user_id);
 
     var kraken_data = await getKrakenCredentials_new(trading_ip, user_id, auth_token);
+    console.log("Kraken Data: ", kraken_data)
 
 
     // console.log(kraken_data)
@@ -14749,6 +14750,10 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
     obj['api_key'] = '';
     obj['api_key_secondary'] = '';
     obj['api_key_third_key'] = '';
+    // Source:
+    kraken_data.key ? obj['key'] = kraken_data.key : console.log('kraken_data dont have key')
+    kraken_data.secret ? obj['secret'] = kraken_data.secret : console.log('kraken_data dont have secret')
+
     // First Secret Key
     if(kraken_data != false){
         if(kraken_data.secret_1 == ''){
