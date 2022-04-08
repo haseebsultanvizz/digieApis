@@ -13315,7 +13315,7 @@ async function get_api_secret(user_ip, admin_id, auth_token){
 
       let url = 'https://'+ ip +'/getApiSecretBalanceTradingBinance'
 
-        // console.log(url)
+        console.log("\nURL: ", url)
         request.post({
           url: url,
           json: {
@@ -14901,7 +14901,7 @@ function getKrakenCredentials_new(trading_ip, user_id, auth_token) {
         }
 
         let url1 = 'https://'+ip+'/getApiSecretBalanceTrading';
-        // console.log(url1)
+        console.log("\nURL: ", url1)
         request.post({
             url: url1,
             json: {
