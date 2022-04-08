@@ -7202,9 +7202,9 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
     if(req.body.order_listing_filter && req.body.order_listing_filter !== ''){
         order_listing_filter = JSON.parse(req.body.order_listing_filter)
     }
-    // console.log("order_listing_filter: ", order_listing_filter)
+    console.log("order_listing_filter: ", order_listing_filter)
 
-    if(order_listing_filter !== {} && order_listing_filter.searchUsername !== ''){
+    if(Object.keys(order_listing_filter).length > 0 && order_listing_filter.searchUsername !== ''){
         tempWhere = { username_lowercase: order_listing_filter.searchUsername.toLowerCase()}
         let user = await get_user_id_using_user_name('users', tempWhere)
 
