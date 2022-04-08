@@ -13438,6 +13438,9 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                               data['api_secret_2'] = userInfo.secret_2;
                               data['api_key_3'] = userInfo.api_key_3;
                               data['api_secret_3'] = userInfo.secret_3;
+                              // Source:
+                              userInfo.key ? data['key'] = userInfo.key : console.log('userInfo dont have key')
+                              userInfo.secret ? data['secret'] = userInfo.secret : console.log('userInfo dont have secret')
                             }
 
 
