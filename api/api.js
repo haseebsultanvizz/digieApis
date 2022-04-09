@@ -920,6 +920,22 @@ router.post('/authenticate', async function (req, resp, next) {
 
                             var token = await generatejwtToken(userArr['_id'], userArr['username']);
                             console.log("\nToken: ", token)
+
+                            let binance_key_or_secret_added
+                            var binance_data = await get_api_secret(userArr['trading_ip'], userArr['_id'], token);
+                            console.log("\nbinance Data: ", binance_data)
+                            let binance_api_key = (typeof binance_data['api_key'] == 'undefined') ? '' : binance_data['api_key'];
+                            console.log("binance_api_key: ", binance_api_key)
+                            let binance_api_secret = (typeof binance_data['api_secret'] == 'undefined') ? '' : binance_data['api_secret'];
+                            console.log("binance_api_secret: ", binance_api_secret)
+                            if (binance_api_key == '' || binance_api_secret == '' || binance_api_key == null || binance_api_secret == null) {
+                                binance_key_or_secret_added = 'no';
+                            } else {
+                                binance_key_or_secret_added = 'yes';
+                            }
+                            // }
+                            console.log("binance_key_or_secret_added: ", binance_key_or_secret_added)
+                            
                             let kraken_key_or_secret_added
                             // if binance key or secret not set then check for kraken
                             // if(check_api_settings = 'no'){
@@ -927,7 +943,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             console.log("\nKraken Data: ", kraken_data)
                             let kraken_api_key = (typeof kraken_data['api_key_1'] == 'undefined') ? '' : kraken_data['api_key_1'];
                             console.log("Kraken_api_key: ", kraken_api_key)
-                            let kraken_api_secret = (typeof kraken_data['secret_1'] == 'undefined') ? '' : kraken_data['api_key_1'];
+                            let kraken_api_secret = (typeof kraken_data['secret_1'] == 'undefined') ? '' : kraken_data['secret_1'];
                             console.log("Kraken_api_secret: ", kraken_api_secret)
                             if (kraken_api_key == '' || kraken_api_secret == '' || kraken_api_key == null || kraken_api_secret == null) {
                                 kraken_key_or_secret_added = 'no';
@@ -951,6 +967,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.email_address = userArr['email_address'];
                             respObj.timezone = userArr['timezone'];
                             respObj.check_api_settings = check_api_settings;
+                            respObj.binance_key_or_secret_added = binance_key_or_secret_added
                             respObj.kraken_key_or_secret_added = kraken_key_or_secret_added;
                             respObj.application_mode = app_mode
                             respObj.leftmenu = userArr['leftmenu'];
