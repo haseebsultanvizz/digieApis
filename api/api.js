@@ -913,27 +913,27 @@ router.post('/authenticate', async function (req, resp, next) {
                             }
 
                             let exchangesArr = await getUserExchangesWithAPISet(String(userArr['_id']))
-                            if (exchangesArr.length > 0 && app_mode != 'test' && app_mode != '') {
-                                check_api_settings = 'yes';
-                                app_mode = 'live'
-                            }
+                            // if (exchangesArr.length > 0 && app_mode != 'test' && app_mode != '') {
+                            //     check_api_settings = 'yes';
+                            //     app_mode = 'live'
+                            // }
 
                             var token = await generatejwtToken(userArr['_id'], userArr['username']);
                             console.log("\nToken: ", token)
-                            let check_api_settings_kraken
+                            let kraken_key_or_secret_added
                             // if binance key or secret not set then check for kraken
                             // if(check_api_settings = 'no'){
                             var kraken_data = await getKrakenCredentials_new(userArr['trading_ip'], userArr['_id'], token);
                             console.log("\nKraken Data: ", kraken_data)
-                            let kraken_api_key = (typeof kraken_data['api_key'] == 'undefined') ? '' : kraken_data['api_key'];
-                            let kraken_api_secret = (typeof kraken_data['api_secret'] == 'undefined') ? '' : kraken_data['api_secret'];
+                            let kraken_api_key = (typeof kraken_data['api_key_1:'] == 'undefined') ? '' : kraken_data['api_key'];
+                            let kraken_api_secret = (typeof kraken_data['secret_1:'] == 'undefined') ? '' : kraken_data['api_secret'];
                             if (kraken_api_key == '' || kraken_api_secret == '' || kraken_api_key == null || kraken_api_secret == null) {
-                                check_api_settings_kraken = 'no';
+                                kraken_key_or_secret_added = 'no';
                             } else {
-                                check_api_settings_kraken = 'yes';
+                                kraken_key_or_secret_added = 'yes';
                             }
                             // }
-                            console.log("Check_api_settings_kraken: ", check_api_settings_kraken)
+                            console.log("kraken_key_or_secret_added: ", kraken_key_or_secret_added)
 
                             respObj.id = userArr['_id'];
                             respObj.username = userArr['username'];
@@ -949,7 +949,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.email_address = userArr['email_address'];
                             respObj.timezone = userArr['timezone'];
                             respObj.check_api_settings = check_api_settings;
-                            respObj.check_api_settings_kraken = check_api_settings_kraken;
+                            respObj.kraken_key_or_secret_added = kraken_key_or_secret_added;
                             respObj.application_mode = app_mode
                             respObj.leftmenu = userArr['leftmenu'];
                             respObj.user_role = userArr['user_role'];
