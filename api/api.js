@@ -925,9 +925,9 @@ router.post('/authenticate', async function (req, resp, next) {
                             // if(check_api_settings = 'no'){
                             var kraken_data = await getKrakenCredentials_new(userArr['trading_ip'], userArr['_id'], token);
                             console.log("\nKraken Data: ", kraken_data)
-                            let kraken_api_key = (typeof kraken_data['api_key_1'] == 'undefined') ? '' : kraken_data['api_key'];
+                            let kraken_api_key = (typeof kraken_data['api_key_1'] == 'undefined') ? '' : kraken_data['api_key_1'];
                             console.log("Kraken_api_key: ", kraken_api_key)
-                            let kraken_api_secret = (typeof kraken_data['secret_1'] == 'undefined') ? '' : kraken_data['api_secret'];
+                            let kraken_api_secret = (typeof kraken_data['secret_1'] == 'undefined') ? '' : kraken_data['api_key_1'];
                             console.log("Kraken_api_secret: ", kraken_api_secret)
                             if (kraken_api_key == '' || kraken_api_secret == '' || kraken_api_key == null || kraken_api_secret == null) {
                                 kraken_key_or_secret_added = 'no';
