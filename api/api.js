@@ -850,9 +850,9 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
 
 //when first time user login call this function
 router.post('/authenticate', async function (req, resp, next) {
+    console.log('Inside authenticate funtion...')
     conn.then(async (db) => {
         var credentials = auth(req)
-
 
         if (!credentials || !check(credentials.name, credentials.pass)) {
             resp.status(403).send({
@@ -864,9 +864,6 @@ router.post('/authenticate', async function (req, resp, next) {
 
             var encrypted_pass = CryptoJS.AES.decrypt(pass, 'digiebot_trading');
             pass = encrypted_pass.toString(CryptoJS.enc.Utf8);
-
-
-
             pass = pass.trim();
             username = username.trim();
             //Convert password to md5
@@ -906,6 +903,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             } else {
                                 var check_api_settings = 'yes';
                             }
+                            
                             let application_mode = (typeof userArr['application_mode'] == 'undefined') ? '' : userArr['application_mode'];
 
                             if (application_mode == "" || application_mode == null || application_mode == 'no') {
@@ -920,8 +918,22 @@ router.post('/authenticate', async function (req, resp, next) {
                                 app_mode = 'live'
                             }
 
-
                             var token = await generatejwtToken(userArr['_id'], userArr['username']);
+                            console.log("\nToken: ", token)
+                            let check_api_settings_kraken
+                            // if binance key or secret not set then check for kraken
+                            // if(check_api_settings = 'no'){
+                            var kraken_data = await getKrakenCredentials_new(userArr['trading_ip'], userArr['_id'], token);
+                            console.log("\nKraken Data: ", kraken_data)
+                            let kraken_api_key = (typeof kraken_data['api_key'] == 'undefined') ? '' : kraken_data['api_key'];
+                            let kraken_api_secret = (typeof kraken_data['api_secret'] == 'undefined') ? '' : kraken_data['api_secret'];
+                            if (kraken_api_key == '' || kraken_api_secret == '' || kraken_api_key == null || kraken_api_secret == null) {
+                                check_api_settings_kraken = 'no';
+                            } else {
+                                check_api_settings_kraken = 'yes';
+                            }
+                            // }
+                            console.log("Check_api_settings_kraken: ", check_api_settings_kraken)
 
                             respObj.id = userArr['_id'];
                             respObj.username = userArr['username'];
@@ -937,6 +949,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.email_address = userArr['email_address'];
                             respObj.timezone = userArr['timezone'];
                             respObj.check_api_settings = check_api_settings;
+                            respObj.check_api_settings_kraken = check_api_settings_kraken;
                             respObj.application_mode = app_mode
                             respObj.leftmenu = userArr['leftmenu'];
                             respObj.user_role = userArr['user_role'];
@@ -1028,12 +1041,7 @@ router.post('/authenticate', async function (req, resp, next) {
                                     app_mode = 'live'
                                 }
 
-
-
                                 var token = await generatejwtToken(userArr['_id'], userArr['username']);
-
-
-
 
                                 respObj.id = userArr['_id'];
                                 respObj.username = userArr['username'];
@@ -13296,9 +13304,6 @@ async function get_api_secret(user_ip, admin_id, auth_token){
       let ip = '';
       let port = 2500
 
-
-
-
       if(user_ip == '3.227.143.115'){
         ip = 'ip1-kraken.digiebot.com/api/user'
       } else if(user_ip == '3.228.180.22'){
@@ -13310,6 +13315,8 @@ async function get_api_secret(user_ip, admin_id, auth_token){
       } else if(user_ip == '35.153.9.225'){
         ip = 'ip5-kraken.digiebot.com/api/user'
       } else if(user_ip == '54.157.102.20'){
+        ip = 'ip6-kraken.digiebot.com/api/user'
+      } else if(trading_ip == '182.180.129.241'){
         ip = 'ip6-kraken.digiebot.com/api/user'
       }
 
@@ -13351,9 +13358,7 @@ async function get_api_secret(user_ip, admin_id, auth_token){
 //post call for getting user info for manage user component
 router.post('/get_user_info', auth_token.required, async function (req, res, next) {
 
-
     var user_exist = await getUserByID(req.payload.id);
-    // // console.log(user_exist)
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -13380,7 +13385,6 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                     if (err) throw err;
                     if (data != undefined || data != null) {
                         if (Object.keys(data).length > 0) {
-
                             let fieldsArr = [
                                 'api_key',
                                 'api_secret',
@@ -13390,7 +13394,6 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                                 'username',
                                 'email_address',
                                 'phone_number',
-                                // 'password',
                                 'permission_for',
                                 'timezone',
                                 'default_exchange',
@@ -13404,21 +13407,6 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                                     delete data[key]
                                 }
                             }
-
-
-
-                            // if(typeof data['hash'] != 'undefined' && data['hash'] != ''){
-                            //     var allData = await authenticatejwtTokenForUserInfo(data['hash'])
-                            //     // console.log(allData)
-
-
-                            //     data['api_key'] = allData['api_key']
-                            //     data['api_secret'] = allData['api_secret']
-                            // }
-
-
-                            // // console.log(data, 'USER')
-
 
                             var userInfo = await get_api_secret(data['trading_ip'], (data['_id']).toString(), auth_token);
 
@@ -13442,15 +13430,6 @@ router.post('/get_user_info', auth_token.required, async function (req, res, nex
                               userInfo.key ? data['key'] = userInfo.key : console.log('userInfo dont have key')
                               userInfo.secret ? data['secret'] = userInfo.secret : console.log('userInfo dont have secret')
                             }
-
-
-                            // // console.log(userInfo)
-                            // return false
-
-
-
-
-
 
                             data['profile_image'] = "data:image/gif;base64,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"
                             res.status(200).send({
@@ -14877,14 +14856,11 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
 
 
 function getKrakenCredentials_new(trading_ip, user_id, auth_token) {
+    console.log("\nInside getKrakenCredentials_new() function...")
     return new Promise((resolve, reject) => {
-
-
-
 
         let ip = '';
         let port = 2500
-
 
         if(trading_ip == '3.227.143.115'){
           ip = 'ip1-kraken.digiebot.com/api/user'
@@ -14897,6 +14873,8 @@ function getKrakenCredentials_new(trading_ip, user_id, auth_token) {
         } else if(trading_ip == '35.153.9.225'){
           ip = 'ip5-kraken.digiebot.com/api/user'
         } else if(trading_ip == '54.157.102.20'){
+          ip = 'ip6-kraken.digiebot.com/api/user'
+        } else if(trading_ip == '182.180.129.241'){
           ip = 'ip6-kraken.digiebot.com/api/user'
         }
 
@@ -27225,7 +27203,7 @@ router.post('/get_dashboard_wallet', auth_token.required, async (req, res) => {
     var user_exist = await getUserByID(req.payload.id);
     // // console.log(user_exist)
     if(!user_exist){
-        resp.status(401).send({
+        res.status(401).send({
             message: 'User Not exist'
         });
         return false;
