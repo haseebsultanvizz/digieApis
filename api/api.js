@@ -926,7 +926,9 @@ router.post('/authenticate', async function (req, resp, next) {
                             var kraken_data = await getKrakenCredentials_new(userArr['trading_ip'], userArr['_id'], token);
                             console.log("\nKraken Data: ", kraken_data)
                             let kraken_api_key = (typeof kraken_data['api_key_1:'] == 'undefined') ? '' : kraken_data['api_key'];
+                            console.log("Kraken_api_key: ", kraken_api_key)
                             let kraken_api_secret = (typeof kraken_data['secret_1:'] == 'undefined') ? '' : kraken_data['api_secret'];
+                            console.log("Kraken_api_secret: ", kraken_api_secret)
                             if (kraken_api_key == '' || kraken_api_secret == '' || kraken_api_key == null || kraken_api_secret == null) {
                                 kraken_key_or_secret_added = 'no';
                             } else {
@@ -14730,8 +14732,8 @@ router.post('/getKrakenCredentials', auth_token.required, async (req, resp) => {
     obj['api_key_secondary'] = '';
     obj['api_key_third_key'] = '';
     // Source:
-    kraken_data.key ? obj['key'] = kraken_data.key : console.log('kraken_data dont have key')
-    kraken_data.secret ? obj['secret'] = kraken_data.secret : console.log('kraken_data dont have secret')
+    kraken_data.key ? obj['sourceKey'] = kraken_data.key : console.log('kraken_data dont have key')
+    kraken_data.secret ? obj['sourceSecret'] = kraken_data.secret : console.log('kraken_data dont have secret')
 
     // First Secret Key
     if(kraken_data != false){
