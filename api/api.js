@@ -959,7 +959,8 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.trading_ip = userArr['trading_ip'];
                             respObj.is_global_user = 'yes';
                             respObj.exchangesArr = exchangesArr;
-                            respObj.default_exchange = typeof userArr['default_exchange'] != 'undefined' && userArr['default_exchange'] != '' ? userArr['default_exchange'] : (exchangesArr.length > 0 ? exchangesArr[0] : 'binance');
+                            // respObj.default_exchange = typeof userArr['default_exchange'] != 'undefined' && userArr['default_exchange'] != '' ? userArr['default_exchange'] : (exchangesArr.length > 0 ? exchangesArr[0] : 'binance');
+                            respObj.default_exchange = userArr['default_exchange'] ? userArr['default_exchange'] : ''
 
                             if (typeof userArr['maxBtcCustomPackage'] != 'undefined'){
                                 respObj.maxBtcCustomPackage = userArr['maxBtcCustomPackage']
