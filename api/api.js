@@ -721,7 +721,7 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
     try {
             
         var user_id = req.payload.id
-        // console.log("User id: ", user_id)
+        console.log("User id: ", user_id)
 
         var user_exist = await getUserByID(user_id);
         
@@ -762,53 +762,77 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
         if(hasError == 0){
             var collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
             let pipeline = [
-                
-                // Match Clause
+                // Project Clause
                 {
-                    '$match':{
-                        "admin_id":user_id,
-                        "sell_date":{$gte: new Date(dateFrom), $lte: new Date(dateTo) },
-                        "application_mode":"live", 
-                        "parent_status":{$ne: "parent"}, 
-                        "status":{$nin: ['canceled', 'archive', 'APIKEY_ERROR',"COIN_BAN_ERROR"]},
-                        "symbol": {$nin:["POEBTC","NCASHBTC"]},
-                    }
-                },
-                // first we will project
-                {
-                    $project:
-                    {
-                        accumulations: 1,
-                        is_accumulated: 1,
-                        // making last three Characters to calculate STD or BTC accordingly.
-                        cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ] },
+                    $project: {
+                        sell_date:1,
+                        admin_id:1,
+                        symbol:1,
+                        application_mode: 1,
                         purchased_price: 1,
                         market_sold_price: 1,
-                        quantity: 1
+                        status: 1,
+                        quantity: 1,
+                        // making last three Characters to calculate STD or BTC accordingly.
+                        cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ]},
+                        purchased: {$multiply: [{$toDouble: "$purchased_price"}, {$toDouble: "$quantity"}]},
+                        sold: {$multiply: [{$toDouble: "$market_sold_price"}, {$toDouble: "$quantity"}]},
                     }
                 },
+                // Match Clause
+                {
+                    $match: {
+                        admin_id:user_id,
+                        sell_date:{$gte: new Date(dateFrom), $lte: new Date(dateTo) },
+                        application_mode:"live", 
+                        parent_status:{$ne: "parent"}, 
+                        status:{$nin: ['canceled', 'archive', 'APIKEY_ERROR',"COIN_BAN_ERROR"]},
+                        symbol: {$nin:["POEBTC","NCASHBTC"]}
+                    }
+                },
+                // Project again
+                {
+                    $project: {
+                        admin_id: 1,
+                        application_mode: 1,
+                        sell_date: 1,
+                        profit: {$subtract: ["$sold", "$purchased"]},
+                        purchased: 1,
+                        sold: 1,
+                        cointype: 1,
+                        status: 1,
+                    }
+                },
+                // Finally Use Group Clause
+                {
+                    $group: {
+                        _id: '$cointype',
+                        accumulations: {$sum: '$profit'}
+                    }
+                }
+
             ];
-            let accumulationData1 = await fetchUserAccumulations(collection,pipeline);
-            console.log(accumulationData1.length)
+            // console.log(pipeline)
+            let accumulationData1 = await fetchUserAccumulations(collection, pipeline);
+            console.log("Accumulations Data 1: ", accumulationData1)
 
             var collection2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             let pipeline2 = [
-                // Match Clause
                 {
-                    '$match':{
-                        "admin_id": user_id,
-                        "sell_date": {$gte: new Date(dateFrom), $lte: new Date(dateTo) },
-                        "application_mode":"live", 
-                        "status":{$nin: ['canceled', 'archive', 'APIKEY_ERROR',"COIN_BAN_ERROR"]},
-                        "symbol": {$nin:["POEBTC","NCASHBTC"]},
-                        "cost_avg": {$in: ['taking_child', 'yes']},
-                        "cost_avg_array": {$exists: true},
+                    $match: {
+                        admin_id: user_id,
+                        sell_date: {$gte: new Date(dateFrom), $lte: new Date(dateTo)},
+                        application_mode: "live", 
+                        status: {$nin: ['canceled', 'archive', 'APIKEY_ERROR',"COIN_BAN_ERROR"]},
+                        symbol: {$nin: ["POEBTC","NCASHBTC"]},
+                        cost_avg: {$in: ['taking_child', 'yes']},
+                        cost_avg_array: {$exists: true},
                     }
                 },
-                // first we will project
                 {
                     $project:
                     {
+                        admin_id: 1,
                         accumulations: 1,
                         is_accumulated: 1,
                         // making last three Characters to calculate STD or BTC accordingly.
@@ -816,18 +840,77 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
                         purchased_price: 1,
                         market_sold_price: 1,
                         quantity: 1, 
-                        cost_avg_array: 1
+                        cost_avg_array: 1,
                     }
                 },
+                {
+                    $unwind: {
+                        path: '$cost_avg_array'
+                    }
+                },
+                {
+                    $match: {
+                        'cost_avg_array.order_sold': 'yes'
+                    }
+                },
+                {
+                    $project: 
+                    {
+                        invested: { $multiply: [
+                            {$toDouble: "$cost_avg_array.filledPriceBuy"},
+                            {$toDouble: "$cost_avg_array.filledQtyBuy"}
+                          ]
+                        },
+                        returned: { $multiply: [
+                            {$toDouble: "$cost_avg_array.filledPriceSell"},
+                            {$toDouble: "$cost_avg_array.filledQtyBuy"}
+                          ]
+                        },
+                        admin_id: 1,
+                        accumulations: 1,
+                        is_accumulated: 1,
+                        cointype: 1
+                    }
+                },
+                {
+                    $project: 
+                    {
+                        profit: {
+                          $subtract: ['$returned', '$invested']
+                        },
+                        admin_id: 1,
+                        accumulations: 1,
+                        is_accumulated: 1,
+                        cointype: 1
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$cointype',
+                        accumulations: {
+                          $sum: '$profit'
+                        }
+                    }
+                }
             ];
-            // console.log("Collection2: ", pipeline2)
-            let accumulationData2 = await fetchUserAccumulations2(collection2, pipeline2);
-            console.log(accumulationData2.length)
 
-            const accumulationData = accumulationData1.concat(accumulationData2)
-            console.log(accumulationData.length)
+            // console.log("\nPipeline2: ", pipeline2)
+            let accumulationData2 = await fetchUserAccumulations(collection2, pipeline2);
+            console.log("Accumulations Data 2: ", accumulationData2)
 
-            if(!accumulationData.length){
+            let btc1 = accumulationData1.find(ele => ele['_id'] == 'BTC')
+            let btc2 = accumulationData2.find(ele => ele['_id'] == 'BTC')
+            let sdt1 = accumulationData1.find(ele => ele['_id'] == 'SDT')
+            let sdt2 = accumulationData2.find(ele => ele['_id'] == 'SDT')
+
+            const accumulationData = {
+                BTC: (btc1 ? btc1.accumulations : 0) + (btc2 ? btc2.accumulations : 0),
+                SDT: (sdt1 ? sdt1 .accumulations : 0) + (sdt2 ? sdt2.accumulations : 0)
+            }
+            
+            console.log("\nTOTAL: ", accumulationData)
+
+            if(!accumulationData){
                 resp.status(203).send({
                     message: "Please Try Later , Accumulation Data is Not Available at the Moment.",
                     errors:[],
@@ -859,6 +942,7 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
             return false;
         }
     } catch (error) {
+        console.log("Error: ", error)
         resp.status(500).send({
             message: "Unable To Handle The Request. Please Try in a While",
             status:500,
@@ -1440,54 +1524,6 @@ function fetchUserAccumulations(collectionName, filter) {
         })
     })
 } //End of fetchUserAccumulations
-
-//fetchUserAccumulations2
-function fetchUserAccumulations2(collectionName, filter) {
-    return new Promise((resolve) => {
-        conn.then(async (db) => {
-
-            var data = await db.collection(collectionName).aggregate(filter).toArray();
-            orderCount = 0
-            if(data.length > 0){
-                const outputArr = []
-                data.forEach(order => {
-                    orderCount = orderCount + 1
-                    if(order.cost_avg_array.length > 1){
-                        order.cost_avg_array.forEach(childOrder => {
-                            if(childOrder.order_sold == 'yes' && !childOrder['buy_order_id'].equals(order['_id']) ){
-                                
-                                const cInvested = Number(childOrder['filledQtyBuy']) * Number(childOrder['filledPriceBuy'])
-                                const cReturn = Number(childOrder['filledQtySell']) * Number(childOrder['filledPriceSell'])
-                                
-                                const cAccumulations = {
-                                    invest: cInvested,
-                                    return: cReturn,
-                                    profit: cReturn - cInvested
-                                }
-
-                                outputArr.push({
-                                    _id: childOrder['buy_order_id'],
-                                    market_sold_price: childOrder['filledPriceSell'],
-                                    purchased_price: childOrder['filledPriceBuy'],
-                                    quantity: childOrder['filledQtySell'],
-                                    accumulations: cAccumulations,
-                                    cointype: order.cointype,
-                                    is_ca_order: 'yes'
-                                })
-
-                            }
-                        })
-                    }
-                })
-                // console.log("OrdersCount: ", orderCount)
-                // console.log("Ouput: ", outputArr.length)
-                resolve(outputArr);
-            } else {
-              resolve([])
-            }
-        })
-    })
-} //End of fetchUserAccumulations2
 
 async function get_all_users_current_trading_points(){
 
