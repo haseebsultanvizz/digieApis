@@ -23088,242 +23088,6 @@ async function getCostAvgBalance_current_market(user_id, exchange) {
     })
 }
 
-// new:
-async function getCostAvgBalance_current_market_manual(user_id, exchange) {
-    return new Promise(async (resolve) => {
-
-        const db = await conn
-
-        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-
-        var where = {
-            'admin_id': user_id,
-            'application_mode': 'live',
-            'status': { '$ne': 'canceled' },
-            'trigger_type': 'no'
-        }
-
-        where['$or'] = [
-            {
-                'cost_avg': { '$in': ['taking_child', 'yes'] },
-                'cavg_parent': 'yes',
-                'show_order': 'yes',
-                'avg_orders_ids.0': { '$exists': false },
-                'move_to_cost_avg': 'yes',
-            },
-            {
-                'cost_avg': { '$in': ['taking_child', 'yes'] },
-                'cavg_parent': 'yes',
-                'show_order': 'yes',
-                'avg_orders_ids.0': { '$exists': true }
-            },
-        ]
-
-        let p1 = db.collection(buy_collection).find(where).toArray();
-        let p2 = db.collection(sold_collection).find(where).toArray();
-
-        let myPromises = await Promise.all([p1, p2])
-
-        let trades = myPromises[0].concat(myPromises[1])
-        let costAvgIds = trades.map(item=>item._id);
-        let avg_orders_ids = trades.map(item => item.avg_orders_ids);
-        avg_orders_ids = avg_orders_ids.filter(item => typeof item != 'undefined')
-        avg_orders_ids.forEach(item=>{costAvgIds = costAvgIds.concat(item)})
-
-        where = {'_id': {'$in': costAvgIds}, 'status':{'$ne':'canceled'}}
-
-        let lthOrders = await db.collection(buy_collection).find(where).toArray();
-
-        if (lthOrders.length > 0) {
-
-            let totalLth = lthOrders.length
-
-            // let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
-            // let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
-
-            let pricesObj = await get_current_market_prices(exchange, [])
-            var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
-
-
-            let LthBtc = 0;
-            let LthUsdWorth = 0;
-
-            let onlyBtc = 0;
-            let onlyUsdt = 0;
-
-            for (let i = 0; i < totalLth; i++) {
-
-                let order = lthOrders[i]
-
-                let selectedCoin = order['symbol'];
-                let quantity = order['quantity'];
-                let purchased_price = order['purchased_price'];
-                purchased_price = pricesObj[selectedCoin]
-                let currUsd = 0
-                let currBtc = 0
-
-                let splitArr = selectedCoin.split('USDT');
-                if (splitArr[1] == '') {
-                    let qtyInUsdt = quantity * purchased_price
-                    currUsd = parseFloat(qtyInUsdt.toFixed(2))
-                    currBtc = quantity * purchased_price * (1 / BTCUSDTPRICE)
-                    onlyUsdt += !isNaN(currUsd) ? currUsd : 0
-                } else {
-                    let calculateBtc = quantity * purchased_price
-                    currBtc = calculateBtc
-                    let calculateUsd = calculateBtc * BTCUSDTPRICE
-                    currUsd = parseFloat(calculateUsd.toFixed(2))
-                    onlyBtc += !isNaN(currBtc) ? currBtc : 0
-                }
-
-                LthBtc += currBtc
-                LthUsdWorth += currUsd
-
-            }
-
-            LthBtc = parseFloat(LthBtc.toFixed(6))
-            LthUsdWorth = parseFloat(LthUsdWorth.toFixed(2))
-            onlyBtc = parseFloat(onlyBtc.toFixed(6))
-            onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
-
-            // // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
-
-            let resObj = {
-                'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0,
-                'onlyUsdt': !isNaN(onlyUsdt) ? onlyUsdt : 0,
-                'costAvgBtcWorth': !isNaN(LthBtc) ? LthBtc : 0,
-                'costAvgUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
-            }
-
-            // // console.log('CostAvg balance')
-            // // console.log(resObj)
-
-            resolve(resObj)
-        } else {
-            resolve({})
-        }
-    })
-}
-
-async function getCostAvgBalance_current_market_auto(user_id, exchange) {
-    return new Promise(async (resolve) => {
-
-        const db = await conn
-
-        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-
-        var where = {
-            'admin_id': user_id,
-            'application_mode': 'live',
-            'status': { '$ne': 'canceled' },
-            'trigger_type': 'barrier_percentile_trigger'
-        }
-
-        where['$or'] = [
-            {
-                'cost_avg': { '$in': ['taking_child', 'yes'] },
-                'cavg_parent': 'yes',
-                'show_order': 'yes',
-                'avg_orders_ids.0': { '$exists': false },
-                'move_to_cost_avg': 'yes',
-            },
-            {
-                'cost_avg': { '$in': ['taking_child', 'yes'] },
-                'cavg_parent': 'yes',
-                'show_order': 'yes',
-                'avg_orders_ids.0': { '$exists': true }
-            },
-        ]
-
-        let p1 = db.collection(buy_collection).find(where).toArray();
-        let p2 = db.collection(sold_collection).find(where).toArray();
-
-        let myPromises = await Promise.all([p1, p2])
-
-        let trades = myPromises[0].concat(myPromises[1])
-        let costAvgIds = trades.map(item=>item._id);
-        let avg_orders_ids = trades.map(item => item.avg_orders_ids);
-        avg_orders_ids = avg_orders_ids.filter(item => typeof item != 'undefined')
-        avg_orders_ids.forEach(item=>{costAvgIds = costAvgIds.concat(item)})
-
-        where = {'_id': {'$in': costAvgIds}, 'status':{'$ne':'canceled'}}
-
-        let lthOrders = await db.collection(buy_collection).find(where).toArray();
-
-        if (lthOrders.length > 0) {
-
-            let totalLth = lthOrders.length
-
-            // let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
-            // let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
-
-            let pricesObj = await get_current_market_prices(exchange, [])
-            var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
-
-
-            let LthBtc = 0;
-            let LthUsdWorth = 0;
-
-            let onlyBtc = 0;
-            let onlyUsdt = 0;
-
-            for (let i = 0; i < totalLth; i++) {
-
-                let order = lthOrders[i]
-
-                let selectedCoin = order['symbol'];
-                let quantity = order['quantity'];
-                let purchased_price = order['purchased_price'];
-                purchased_price = pricesObj[selectedCoin]
-                let currUsd = 0
-                let currBtc = 0
-
-                let splitArr = selectedCoin.split('USDT');
-                if (splitArr[1] == '') {
-                    let qtyInUsdt = quantity * purchased_price
-                    currUsd = parseFloat(qtyInUsdt.toFixed(2))
-                    currBtc = quantity * purchased_price * (1 / BTCUSDTPRICE)
-                    onlyUsdt += !isNaN(currUsd) ? currUsd : 0
-                } else {
-                    let calculateBtc = quantity * purchased_price
-                    currBtc = calculateBtc
-                    let calculateUsd = calculateBtc * BTCUSDTPRICE
-                    currUsd = parseFloat(calculateUsd.toFixed(2))
-                    onlyBtc += !isNaN(currBtc) ? currBtc : 0
-                }
-
-                LthBtc += currBtc
-                LthUsdWorth += currUsd
-
-            }
-
-            LthBtc = parseFloat(LthBtc.toFixed(6))
-            LthUsdWorth = parseFloat(LthUsdWorth.toFixed(2))
-            onlyBtc = parseFloat(onlyBtc.toFixed(6))
-            onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
-
-            // // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
-
-            let resObj = {
-                'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0,
-                'onlyUsdt': !isNaN(onlyUsdt) ? onlyUsdt : 0,
-                'costAvgBtcWorth': !isNaN(LthBtc) ? LthBtc : 0,
-                'costAvgUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
-            }
-
-            // // console.log('CostAvg balance')
-            // // console.log(resObj)
-
-            resolve(resObj)
-        } else {
-            resolve({})
-        }
-    })
-}
-// ------------
-
 //getLTHBalance
 router.post('/getLTHBalance', auth_token.required, async (req, res) => {
 
@@ -27865,16 +27629,13 @@ async function get_dashboard_wallet(admin_id, exchange){
 
         let lthBalance_current_market = getLTHBalance_current_market(admin_id, exchange)
         let openBalance_current_market = getOpenBalance_current_market(admin_id, exchange)
-        // new:
-        let openBalance_current_market_manual = getOpenBalance_current_market(admin_id, exchange)
-        let openBalance_current_market_auto = getOpenBalance_current_market(admin_id, exchange)
 
         let openLTHBTCUSDTBalance_current_market = getOpenLTHBTCUSDTBalance_current_market(admin_id, exchange)
         let costAvgBalance_current_market = getCostAvgBalance_current_market(admin_id, exchange)
 
         let myPromises = await Promise.all([lthBalance, openBalance, avaiableBalance, openLTHBTCUSDTBalance, costAvgBalance, openBalanceManual, openBalanceAuto])
 
-        let myPromises11 = await Promise.all([lthBalance_current_market, openBalance_current_market, openLTHBTCUSDTBalance_current_market, costAvgBalance_current_market, openBalance_current_market_manual, openBalance_current_market_auto])
+        let myPromises11 = await Promise.all([lthBalance_current_market, openBalance_current_market, openLTHBTCUSDTBalance_current_market, costAvgBalance_current_market])
 
         if (Object.keys(myPromises[0]).length === 0 && myPromises[0].constructor === Object) {
             myPromises[0] = {
@@ -27967,26 +27728,6 @@ async function get_dashboard_wallet(admin_id, exchange){
             }
         }
 
-        // new:
-        if (Object.keys(myPromises11[4]).length === 0 && myPromises11[4].constructor === Object) {
-            myPromises11[4] = {
-                'onlyBtc': 0,
-                'onlyUsdt': 0,
-                'costAvgBtcWorth': 0,
-                'costAvgUsdWorth': 0,
-            }
-        }
-
-        if (Object.keys(myPromises11[5]).length === 0 && myPromises11[5].constructor === Object) {
-            myPromises11[5] = {
-                'onlyBtc': 0,
-                'onlyUsdt': 0,
-                'costAvgBtcWorth': 0,
-                'costAvgUsdWorth': 0,
-            }
-        }
-        // ------------
-
         // end current price calculations
 
         resolve({
@@ -28003,8 +27744,6 @@ async function get_dashboard_wallet(admin_id, exchange){
 
                 'lthBalance_current_market': myPromises11[0],
                 'openBalance_current_market': myPromises11[1],
-                'openBalance_current_market_manual': myPromises11[4],
-                'openBalance_current_market_auto': myPromises11[5],
 
                 'openLthBTCUSDTBalance_current_market': myPromises11[2],
                 'costAvgBalance_current_market': myPromises11[3],
