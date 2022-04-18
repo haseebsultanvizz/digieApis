@@ -813,7 +813,45 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
 
             ];
             // console.log(pipeline)
-            let accumulationData1 = await fetchUserAccumulations(collection, pipeline);
+
+            // if jamesparker account then different query:
+            // that is: instead of calculating accumulation by formula, use the already added accumulations property
+            let pipeline0 = [
+                // Match Clause
+                {
+                    $match: {
+                        admin_id: user_id,
+                        sell_date:{$gte: new Date(dateFrom), $lte: new Date(dateTo) },
+                        application_mode: "live", 
+                        status: {$nin: ['canceled', 'archive', 'APIKEY_ERROR',"COIN_BAN_ERROR"]},
+                        symbol: {$nin: ["POEBTC","NCASHBTC"]},
+                        is_accumulated: 1,
+                        accumulations: {$exists: true}
+                    }
+                },
+                // Project again
+                {
+                    $project: {
+                        admin_id: 1,
+                        accumulations: 1,
+                        is_accumulated: 1,
+                        // making last three Characters to calculate STD or BTC accordingly.
+                        cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ] },
+                    }
+                },
+                // Finally Use Group Clause
+                {
+                    $group: {
+                        _id: '$cointype',
+                        accumulations: {
+                          '$sum': '$accumulations.profit'
+                        }
+                    }
+                }
+
+            ];
+            
+            let accumulationData1 = (user_id == ObjectID('5eb5a5a628914a45246bacc6') ? await fetchUserAccumulations(collection, pipeline0) : await fetchUserAccumulations(collection, pipeline))
             console.log("Accumulations Data 1: ", accumulationData1)
 
             var collection2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
