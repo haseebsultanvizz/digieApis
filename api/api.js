@@ -7468,8 +7468,10 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                 // console.log(tempOrders.length);
                 let orders = []
                 tempOrders.map(order=>{
-                    order['t_date'] = order['buy_date'] ? order['buy_date'] : console.log(order['buy_date'])
-                    orders.push(order)
+                    if(order!=undefined){
+                        order['t_date'] = order['buy_date'] ? order['buy_date'] : console.log(order['buy_date'])
+                        orders.push(order)
+                    }
                 })
                 orders.sort(function (a, b) {
                   return new Date(b.t_date) - new Date(a.t_date);
