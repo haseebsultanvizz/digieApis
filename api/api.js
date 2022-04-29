@@ -32450,8 +32450,6 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     }
 
     let pipeline = [
-
-
         {
             '$match': {
               'user_id': user_id,
@@ -32626,7 +32624,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     }
 
 
-    // let countArr = await countTradeHistory(pipeline, collectionName)
+    let countArr = await countTradeHistory(pipeline, collectionName)
     // console.log("CountArr: ", countArr)
     pipeline.push({ '$skip': skip })
     pipeline.push({ '$limit': limit })
@@ -32667,7 +32665,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     });
 
     let resultObj = {
-        'countArr': trades.length,
+        'countArr': countArr,
         'kraken_trades': trades,
         'digie_trades': [],
         'digieDuplicateTradeIdsArr': [],
