@@ -32532,13 +32532,6 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         },
         // lookups for order node
         {
-            $addFields: {
-                'orderId': {
-                    '$toObjectId': '$order_id'
-                }
-            }
-        },
-        {
             $lookup: {
                 from: 'sold_buy_orders_kraken',
                 localField: 'orderId',
