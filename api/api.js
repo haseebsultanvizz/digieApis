@@ -30281,7 +30281,6 @@ async function getTradeHistory(filter, exchange, timezone) {
 }
 
 async function countTradeHistory(pipeline, collectionName) {
-
     const db = await conn
     let countPipeline = JSON.parse(JSON.stringify(pipeline))
 
@@ -32388,7 +32387,6 @@ async function getUserTimezone(user_id){
 }
 
 router.post('/getTradeHistory', auth_token.required, async (req, res)=>{
-
     var user_exist = await getUserByID(req.payload.id);
     // // console.log(user_exist)
     if(!user_exist){
@@ -32413,10 +32411,7 @@ router.post('/getTradeHistory', auth_token.required, async (req, res)=>{
 })
 
 async function getTradeHistoryAsim(filter, exchange, timezone) {
-
-    // // console.log(new Date())
     const db = await conn
-    // exchange = 'kraken'
     let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
 
     let where = {}
@@ -32504,9 +32499,89 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         }
     ]
 
+    let pipelineKraken = [
+        {
+            '$match': {
+              'user_id': user_id,
+              '$and': [
+                {
+                  'status': {
+                    '$ne': 'fractionChild'
+                  }
+                }
+              ]
+            }
+        },
+        {
+            '$addFields': {
+              'convertedId': {
+                '$toObjectId': '$user_id'
+              },
+              'orderId': {
+                '$toObjectId': '$order_id'
+              },
+            }
+        },
+        {
+            '$lookup': {
+              'from': 'users',
+              'localField': 'convertedId',
+              'foreignField': '_id',
+              'as': 'string'
+            }
+        },
+        // lookups for order node
+        {
+            $addFields: {
+                'orderId': {
+                    '$toObjectId': '$order_id'
+                }
+            }
+        },
+        {
+            $lookup: {
+                from: 'sold_buy_orders_kraken',
+                localField: 'orderId',
+                foreignField: '_id',
+                as: 'sold_order'
+            }
+        },
+        {
+            $lookup: {
+                from: 'buy_orders_kraken',
+                localField: 'orderId',
+                foreignField: '_id',
+                as: 'buy_order'
+              }
+        },
+        // ends here
+        {
+            '$project': {
+              'username': {
+                '$arrayElemAt': [
+                  '$string.username', 0
+                ]
+              },
+              'user_id': 1,
+              'status': 1,
+              'symbol': 1,
+              'trades': 1,
+              order: {$concatArrays: ['$sold_order', '$buy_order']}
+            }
+        },
+        {
+            '$sort': {
+                'trades.value.time': -1,
+            }
+        }
+    ]
+
+    
+    collectionName.includes('kraken') ? pipeline = pipelineKraken : pipeline
+    
+
     if (typeof mapped_status != 'undefined' && mapped_status != '' || multi_status.length > 0) {
         // pipeline[0]['$match']['status'] = mapped_status
-
         pipeline[0]['$match']['status'] = { '$in': multi_status}
     }
 
@@ -32558,19 +32633,11 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     }
 
 
-    let countArr = await countTradeHistory(pipeline, collectionName)
-
+    // let countArr = await countTradeHistory(pipeline, collectionName)
+    // console.log("CountArr: ", countArr)
     pipeline.push({ '$skip': skip })
     pipeline.push({ '$limit': limit })
-
-    // // console.log(JSON.stringify(pipeline))
-    // // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
-
-    // console.log(pipeline)
     let trades = await db.collection(collectionName).aggregate(pipeline, { allowDiskUse: true }).toArray()
-
-    // // console.log(trades)
-    // // console.log(trades[0]['trades']['value'])
 
     let timeMultiplyer = 1;
     if (exchange == 'kraken') {
@@ -32607,7 +32674,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     });
 
     let resultObj = {
-        'countArr': countArr,
+        'countArr': trades.length,
         'kraken_trades': trades,
         'digie_trades': [],
         'digieDuplicateTradeIdsArr': [],
