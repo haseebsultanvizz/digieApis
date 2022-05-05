@@ -7493,6 +7493,84 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
     }
 }) //end getAllLTHOPENOrders
 
+
+// New ---------------------
+router.post('/getUsersSymbolTradesCheck', auth_token.required, async (req,res) => {
+    console.log('/getUsersSymbolTradesCheck...')
+    console.log("Req payload: ", req.payload)
+    console.log("Req body: ", req.body)
+    var user_exist = await getUserByID(req.payload.id)
+    
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+    const admin_id = req.payload.id
+    console.log("Admin_id: ", admin_id)
+    let exchange = req.body.exchange
+
+    if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
+        if(admin_id){
+            conn.then(async (db) => {
+                let pipeline = [
+                        {    
+                            $match: {
+                                admin_id: admin_id,
+                                application_mode: 'live',
+                                trigger_type: 'barrier_percentile_trigger',
+                                buy_date: {$gte: new Date('2021-01-01')},
+                                status: {
+                                $in: ['FILLED','LTH', 'CA_TAKING_CHILD']
+                                },
+                                $or: [
+                                {cost_avg: {$in: ["yes", "taking_child", "completed"]}}, 
+                                {cost_avg: {$exists: false}},
+                                {cost_avg: null},
+                                {cost_avg: ""}
+                                ],
+                                symbol: {$in: req.body.userCoinsArr}
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: '$symbol',
+                                count: {$sum: 1}
+                            }
+                        },
+                        {
+                            $project: {
+                                symbol: '$_id',
+                                _id: 0,
+                                tradeCount: '$count'
+                            }
+                        }
+                    ]
+                    
+                let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
+                let buyPromise = db.collection(buyCollection).aggregate(pipeline).toArray();
+                let myPromise = await Promise.all([buyPromise])
+                let orders = myPromise[0]
+                console.log("TempOrders: ", orders)
+
+                res.send({
+                    success: true,
+                    data: orders,
+                    message: 'Data found successfully',
+                })
+            });
+        }
+    } else {
+        res.send({
+            status: false,
+            message: 'exchange and user_id are required',
+        })
+    }
+})
+// -----------------
+
 router.post('/getAllLTHOPENOrdersManual', auth_token.required, async (req, res) => {
     var user_exist = await getUserByID(req.payload.id);
     // // console.log(user_exist)
