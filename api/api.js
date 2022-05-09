@@ -30018,346 +30018,6 @@ async function getCoinName(symbol){
     return temp_symbol;
 }
 
-async function getTradeHistory(filter, exchange, timezone) {
-
-    // // console.log(new Date())
-    const db = await conn
-    // exchange = 'kraken'
-    let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
-
-    let where = {}
-
-    let user_id = filter.admin_id
-    let application_mode = filter.application_mode
-    let coins = filter.coins
-    let end_date = filter.end_date
-    let limit = filter.limit
-    // let limit = 1
-    let order_level = filter.order_level
-    let order_type = filter.order_type
-    let skip = filter.skip
-    let start_date = filter.start_date
-    let status = filter.status
-    let trigger_type = filter.trigger_type
-    let mapped_status = filter.mapped_status
-
-    order_type = order_type == 'all' ? '' : order_type
-
-    if (typeof filter.searchUsername != 'undefined' && filter.searchUsername != ''){
-
-        let tempWhere = {}
-        tempWhere['$or'] = [{
-            username_lowercase: filter.searchUsername.toLowerCase()
-        }, {
-            email_address: filter.searchUsername
-        }]
-        let user = await db.collection('users').find(tempWhere).project({ '_id': 1 }).toArray();
-        user_id = user.length > 0 ? String(user[0]['_id']) : user_id
-
-    }
-
-    let pipeline = [
-        {
-            '$match': {
-                'user_id': user_id,
-            }
-        },
-        {
-            '$sort': {
-                'trades.value.time': -1,
-            }
-        }
-    ]
-
-    if (typeof mapped_status != 'undefined' && mapped_status != ''){
-        pipeline[0]['$match']['status'] = mapped_status
-    }
-
-    if (coins.length > 0) {
-        pipeline[0]['$match']['trades.value.pair'] = { '$in': coins }
-    }
-
-    if (order_type != '') {
-        pipeline[0]['$match']['trades.value.ordertype'] = order_type
-    }
-
-    if (status == 'buy') {
-        pipeline[0]['$match']['trades.value.type'] = 'buy'
-    } else if (status == 'sold') {
-        pipeline[0]['$match']['trades.value.type'] = 'sell'
-    }
-
-    if (start_date != '' || end_date != '') {
-
-        // var unixTimestamp = Math.floor(new Date("2017-09-15 00:00:00.000").getTime() / 1000);
-        let condObj = {}
-
-        if (start_date != '') {
-            start_date += ' 00:00:00.000'
-            condObj['$gte'] = Math.floor(new Date(start_date).getTime() / 1000)
-        }
-        if (end_date != '') {
-            end_date += ' 23:59:59.000'
-            condObj['$lte'] = Math.floor(new Date(end_date).getTime() / 1000)
-        }
-
-        if (condObj && Object.keys(condObj).length === 0 && condObj.constructor === Object) {
-            //do nothing
-        } else {
-            pipeline[0]['$match']['trades.value.time'] = condObj
-        }
-    }
-
-    let countArr = await countTradeHistory(pipeline, collectionName)
-
-    pipeline.push({ '$skip': skip })
-    pipeline.push({ '$limit': limit })
-
-    // // console.log(JSON.stringify(pipeline))
-    // // console.log(pipeline[0]['$match']['trades.value.pair']['$in'])
-
-    let trades = await db.collection(collectionName).aggregate(pipeline).toArray()
-
-    // // console.log(trades)
-    // // console.log(trades[0]['trades']['value'])
-
-    // process.exit(1)
-
-    // // console.log(new Date(), '=================================')
-
-    let tradeIds = trades.map(item => item.trades.value.ordertxid)
-
-    let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-    let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
-
-    let whereDigie = [
-        {
-            '$match': {
-                'admin_id': user_id,
-                'application_mode': 'live',
-                '$or': [
-                    {
-                        'tradeId': { '$in': tradeIds },
-                    },
-                    {
-                        'kraken_order_id': { '$in': tradeIds },
-                    },
-                    {
-                        'sell_kraken_order_id': { '$in': tradeIds },
-                    }
-                ]
-            }
-        }
-    ]
-
-    if (exchange == 'binance') {
-        whereDigie[0]['$match']['$or'] = [
-            {
-                'binance_order_id': { '$in': tradeIds },
-            },
-            {
-                'binance_order_id_sell': { '$in': tradeIds },
-            },
-            {
-                'tradeId': { '$in': tradeIds },
-            },
-            {
-                'tradeId_sell': { '$in': tradeIds },
-            },
-        ]
-    }
-
-    // // console.log(JSON.stringify(whereDigie))
-
-    let digieBuyTrades = await db.collection(buy_collection).aggregate(whereDigie).toArray()
-    let digieSoldTrades = await db.collection(sold_collection).aggregate(whereDigie).toArray()
-    let digieTrades = digieBuyTrades.concat(digieSoldTrades)
-
-    let timeMultiplyer = 1;
-    if(exchange == 'kraken'){
-        timeMultiplyer = 1000
-    }
-
-    trades = trades.map(item => {
-
-        let timeZoneTime = item.trades.value.time * timeMultiplyer;
-        try {
-            timeZoneTime = new Date(timeZoneTime).toLocaleString("en-US", {
-                timeZone: timezone
-            });
-            timeZoneTime = new Date(timeZoneTime);
-        } catch (e) {
-            // console.log(e);
-        }
-        let date = timeZoneTime.toLocaleString() + ' ' + timezone;
-
-        item['trades']['value']['formattedDate'] = date
-        return item
-    })
-
-    //categorise trades that not exist
-    let checkTradesArr = []
-    let digieDuplicateTradeIdsArr = []
-    let digieDoubtTradeIdsArr = []
-    let userDoubtTradeIdsArr = []
-
-    if(exchange == 'binance'){
-        trades.forEach(item => {
-
-            let krakenObj = Object.assign(item)
-            krakenObj = krakenObj.trades.value
-            let tradeId = krakenObj.ordertxid
-
-            let digieEntry = digieTrades.find(item => item.binance_order_id == tradeId || item.binance_order_id_sell == tradeId || item.tradeId == tradeId || item.tradeId_sell == tradeId ? true : false)
-
-            // // console.log(digieEntry)
-
-            if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
-
-                if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
-                    // krakenObj['tradeMappType'] = 'User duplicate'
-                } else {
-                    // krakenObj['_id'] = (new Date).toString() + Math.random() + Math.random() + 'fewrt45wet'
-                    // krakenObj['symbol'] = typeof this.krakenPairObj[krakenObj.pair] != 'undefined' ? this.krakenPairObj[krakenObj.pair] : krakenObj.pair
-                    // krakenObj['quantity'] = krakenObj.vol
-                    // krakenObj['trigger_type'] = ''
-                    // krakenObj['tradeMappType'] = 'Digie duplicate'
-                    // krakenObj['user_id'] = krakenTrades[0]['user_id']
-                    checkTradesArr.push(item)
-                    // item.trades.value.ordertxid
-                }
-            }
-        })
-    }
-
-    if(exchange == 'kraken'){
-        trades.forEach(item=>{
-
-            let krakenObj = Object.assign(item)
-            krakenObj = krakenObj.trades.value
-            let tradeId = krakenObj.ordertxid
-
-            let digieEntry = digieTrades.find(item => item.tradeId == tradeId || item.kraken_order_id == tradeId || item.sell_kraken_order_id == tradeId ? true : false)
-
-            if (typeof digieEntry == 'undefined' || (digieEntry && Object.keys(digieEntry).length === 0 && digieEntry.constructor === Object)) {
-
-                if (krakenObj.ordertype == 'limit' || krakenObj.ordertype == 'stop-loss') {
-                    // krakenObj['tradeMappType'] = 'User duplicate'
-                }else{
-                    // krakenObj['_id'] = (new Date).toString() + Math.random() + Math.random() + 'fewrt45wet'
-                    // krakenObj['symbol'] = typeof this.krakenPairObj[krakenObj.pair] != 'undefined' ? this.krakenPairObj[krakenObj.pair] : krakenObj.pair
-                    // krakenObj['quantity'] = krakenObj.vol
-                    // krakenObj['trigger_type'] = ''
-                    // krakenObj['tradeMappType'] = 'Digie duplicate'
-                    // krakenObj['user_id'] = krakenTrades[0]['user_id']
-                    checkTradesArr.push(item)
-                    // item.trades.value.ordertxid
-                }
-            }
-        })
-    }
-
-    if (checkTradesArr.length > 0){
-        for (let i = 0; i < checkTradesArr.length; i++){
-
-            let currTrade = checkTradesArr[i]['trades']['value']
-            let quantity = parseFloat(currTrade['vol'])
-            let pair = currTrade['pair']
-            let _3percentQuantityAbove = quantity + (quantity * 3) /100
-            let _3percentQuantityBelow = quantity - (quantity * 3) /100
-
-            // // console.log(quantity, _3percentQuantityAbove)
-
-            // let tradeTime = new Date(currTrade.time * timeMultiplyer);
-            let tradeTime = parseFloat(currTrade.time);
-
-            let _1minuteAbove = new Date(tradeTime * timeMultiplyer)
-            _1minuteAbove.setMinutes(_1minuteAbove.getMinutes() + 1); // timestamp
-            _1minuteAbove = new Date(_1minuteAbove); // Date object
-            // // console.log(_1minuteAbove);
-
-            let _1minuteBelow = new Date(tradeTime * timeMultiplyer)
-            _1minuteBelow.setMinutes(_1minuteBelow.getMinutes() - 1); // timestamp
-            _1minuteBelow = new Date(_1minuteBelow); // Date object
-            // // console.log(_1minuteBelow);
-
-            //digie duplicate
-            var whereDigie1 = [
-                {
-                    '$match': {
-                        'admin_id': user_id,
-                        'application_mode': 'live',
-                        'quantity': quantity,
-                        'symbol': pair,
-                        'created_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove},
-                    }
-                }
-            ]
-
-            var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
-            var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
-            var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
-
-            if (digieTrades1.length > 0){
-                //confirmed duplicate
-                digieDuplicateTradeIdsArr.push(currTrade.ordertxid)
-
-            }else{
-                //digie doubt
-                var whereDigie1 = [
-                    {
-                        '$match': {
-                            'admin_id': user_id,
-                            'application_mode': 'live',
-                            'quantity': { '$gte': _3percentQuantityBelow, '$lte': _3percentQuantityAbove },
-                            'symbol': pair,
-                            'created_date': { '$gte': _1minuteBelow, '$lte': _1minuteAbove},
-                        }
-                    }
-                ]
-
-                var digieBuyTrades1 = await db.collection(buy_collection).aggregate(whereDigie1).toArray()
-                var digieSoldTrades1 = await db.collection(sold_collection).aggregate(whereDigie1).toArray()
-                var digieTrades1 = digieBuyTrades1.concat(digieSoldTrades1)
-
-                if (digieTrades1.length > 0){
-                    //confirmed duplicate
-                    digieDoubtTradeIdsArr.push(currTrade.ordertxid)
-                }else{
-                    userDoubtTradeIdsArr.push(currTrade.ordertxid)
-                }
-            }
-
-        }
-    }
-    // // console.log(checkTradesArr.length)
-
-    // // console.log(new Date())
-
-    trades.forEach(item=>{
-        return item.strUnixTime = (item.trades.value.time).toString()
-    })
-
-    // // console.log(trades)
-
-    trades = trades.sort(function (x, y) {
-        return y.strUnixTime - x.strUnixTime ;
-    });
-
-    let resultObj = {
-        'countArr': countArr,
-        'kraken_trades': trades,
-        'digie_trades': digieTrades,
-        'digieDuplicateTradeIdsArr': digieDuplicateTradeIdsArr,
-        'digieDoubtTradeIdsArr': digieDoubtTradeIdsArr,
-        'userDoubtTradeIdsArr': userDoubtTradeIdsArr,
-    }
-
-    // // console.log('kraken_trades', trades.length, ' digieTrades ', digieTrades.length, ' digieDuplicateTradeIdsArr ', digieDuplicateTradeIdsArr.length, ' digieDoubtTradeIdsArr ', digieDoubtTradeIdsArr.length, ' userDoubtTradeIdsArr ', userDoubtTradeIdsArr.length)
-
-    return resultObj
-}
-
 async function countTradeHistory(pipeline, collectionName) {
     const db = await conn
     let countPipeline = JSON.parse(JSON.stringify(pipeline))
@@ -30365,8 +30025,11 @@ async function countTradeHistory(pipeline, collectionName) {
     //buy count
     let buyCountPipeLine = Object.assign([], countPipeline)
     buyCountPipeLine.push({ '$count': 'totalItems' })
-    buyCountPipeLine[0]['$match']['trades.value.type'] = 'buy'
+    // buyCountPipeLine[0]['$match']['trades.value.type'] = 'buy'
+    console.log('check')
+    // console.log("Buy Count Pipeline: ", buyCountPipeLine)
     let buyCountRes = await db.collection(collectionName).aggregate(buyCountPipeLine, { allowDiskUse: true }).toArray()
+    console.log('check2')
     buyCountRes = buyCountRes.length > 0 ? buyCountRes[0].totalItems : 0
 
     //sold count
@@ -32465,6 +32128,7 @@ async function getUserTimezone(user_id){
 }
 
 router.post('/getTradeHistory', auth_token.required, async (req, res)=>{
+    console.log('getTradeHistory...')
     var user_exist = await getUserByID(req.payload.id);
     // // console.log(user_exist)
     if(!user_exist){
@@ -32482,13 +32146,12 @@ router.post('/getTradeHistory', auth_token.required, async (req, res)=>{
 
     let trades = await getTradeHistoryAsim(where, exchange, timezone)
 
-    // // console.log(trades)
-
     res.send(trades)
 
 })
 
 async function getTradeHistoryAsim(filter, exchange, timezone) {
+    console.log("getTradeHistoryAsim...")
     const db = await conn
     let collectionName = (exchange == 'binance') ? 'user_trade_history' : 'user_trade_history_' + exchange
 
@@ -32531,20 +32194,20 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         {
             '$match': {
               'user_id': user_id,
-              '$and': [
-                {
-                  'status': {
-                    '$ne': 'fractionChild'
-                  }
-                }
-              ]
+              'status': { '$ne': 'fractionChild' }
+            }
+        },
+        {
+            '$sort': {
+                'trades.value.time': -1,
             }
         },
         {
             '$addFields': {
               'convertedId': {
                 '$toObjectId': '$user_id'
-              }
+              },
+              'orderId': '$trades.value.orderId'
             }
         },
         {
@@ -32553,6 +32216,22 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
               'localField': 'convertedId',
               'foreignField': '_id',
               'as': 'string'
+            }
+        },
+        {
+            $lookup: {
+                from: 'buy_orders',
+                localField: 'orderId',
+                foreignField: 'binance_order_id',
+                as: 'buy_order'
+            }
+        },
+        {
+            $lookup: {
+                from: 'sold_buy_orders',
+                localField: 'orderId',
+                foreignField: 'binance_order_id',
+                as: 'sold_order'
             }
         },
         {
@@ -32565,12 +32244,8 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
               'user_id': 1,
               'status': 1,
               'symbol': 1,
-              'trades': 1
-            }
-        },
-        {
-            '$sort': {
-                'trades.value.time': -1,
+              'trades': 1,
+              order: {$concatArrays: ['$sold_order', '$buy_order']}
             }
         }
     ]
@@ -32579,13 +32254,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         {
             '$match': {
               'user_id': user_id,
-              '$and': [
-                {
-                  'status': {
-                    '$ne': 'fractionChild'
-                  }
-                }
-              ]
+              'status': { '$ne': 'fractionChild' }
             }
         },
         {
@@ -32701,12 +32370,15 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         }
     }
 
-
+    // console.log("Pipeline: ", pipeline)
     let countArr = await countTradeHistory(pipeline, collectionName)
-    // console.log("CountArr: ", countArr)
+    console.log("CountArr: ", countArr)
     pipeline.push({ '$skip': skip })
     pipeline.push({ '$limit': limit })
+    console.log("Pipeline: ", pipeline)
+
     let trades = await db.collection(collectionName).aggregate(pipeline, { allowDiskUse: true }).toArray()
+    console.log("Trades: ", trades.length)
 
     let timeMultiplyer = 1;
     if (exchange == 'kraken') {
