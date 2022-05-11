@@ -34348,6 +34348,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                 if(exchange == 'binance'){
                     resp.status(200).send({
                         "success": true,
+                        "history_updated_time": data['binance_trade_history_updated_date'] ? data['binance_trade_history_updated_date'] : '',
                         "balance_modified_time": data['balance_modified_time'] ? data['balance_modified_time'] : '',
                         "is_api_key_valid": data['is_api_key_valid'],
                         "is_api_key_valid_secondary": typeof data['is_api_key_valid_secondary'] != 'undefined' && data['is_api_key_valid_secondary'] != ''? data['is_api_key_valid_secondary'] : 'no',
@@ -34366,6 +34367,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                 } else {
                     resp.status(200).send({
                     "success": true,
+                    "history_updated_time": data['history_update'] ? data['history_update'] : '',
                     "is_balance_updated_kraken": data['is_balance_updated_kraken'] ? data['is_balance_updated_kraken'] : '',
                     "is_api_key_valid": data['is_api_key_valid'],
                     "is_api_key_valid_secondary": data['is_api_key_valid_secondary'],
