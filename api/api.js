@@ -30025,7 +30025,7 @@ async function countTradeHistory(pipeline, collectionName) {
     //buy count
     let buyCountPipeLine = Object.assign([], countPipeline)
     buyCountPipeLine.push({ '$count': 'totalItems' })
-    // buyCountPipeLine[0]['$match']['trades.value.type'] = 'buy'
+    buyCountPipeLine[0]['$match']['trades.value.type'] = 'buy'
     console.log('check')
     // console.log("Buy Count Pipeline: ", buyCountPipeLine)
     let buyCountRes = await db.collection(collectionName).aggregate(buyCountPipeLine, { allowDiskUse: true }).toArray()
@@ -32194,7 +32194,8 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         {
             '$match': {
               'user_id': user_id,
-              'status': { '$ne': 'fractionChild' }
+              'status': { '$ne': 'fractionChild' },
+              "trades.value.time": {$gte: 1640977200000} // fetch only after 01-01-2022
             }
         },
         {
@@ -32254,7 +32255,8 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
         {
             '$match': {
               'user_id': user_id,
-              'status': { '$ne': 'fractionChild' }
+              'status': { '$ne': 'fractionChild' },
+              "trades.value.time": {$gte: 1640977200} // fetch only after 01-01-2022
             }
         },
         {
