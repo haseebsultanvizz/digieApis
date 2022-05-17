@@ -7107,11 +7107,11 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     for (let key in mapArray1) {
                         if(mapArray1[key] !== undefined){
                             if(mapArray1[key]["buy_fraction_filled_order_arr"]){
-                                // const order_sold_status = mapArray1[key]['is_sell_order'] == 'sold' ? 'yes' : 'no'
+                                const order_sold_status = mapArray1[key]['is_sell_order'] == 'sold' ? 'yes' : 'no'
                                 let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
                                 if(typeof fractionOrderArr != 'undefined'){
                                     var dataToAppend = {};
-                                    dataToAppend["order_sold"]       = "no"
+                                    dataToAppend["order_sold"]       = order_sold_status
                                     dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
                                     dataToAppend["filledQtyBuy"]     = fractionOrderArr[0]["filledQty"]
                                     dataToAppend["commissionBuy"]    = fractionOrderArr[0]["commission"]
@@ -7125,7 +7125,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                                     console.log("fractionOrderArr: ", fractionOrderArr)
                                     console.log("order id: ", mapArray1[key]['_id'])
                                     var dataToAppend = {};
-                                    dataToAppend["order_sold"]       = "no";
+                                    dataToAppend["order_sold"]       = order_sold_status;
                                     dataToAppend["buy_order_id"]     = mapArray1[key]["_id"];
                                     dataToAppend["filledQtyBuy"]     = typeof mapArray1[key]['quantity'] != 'undefined' && mapArray1[key]['quantity'] != '' ? mapArray1[key]['quantity'].toFixed(8) : '';
                                     dataToAppend["commissionBuy"]    = '';
@@ -7469,6 +7469,8 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                   'market_sold_price': 1,
                   'sell_profit_percent': 1,
                   'lth_profit': 1,
+                  'cost_avg_array': 1,
+                  'cost_avg': 1
                 }
                 let cost_avg_array_orders = [...tempOrders].filter(order => {
                   return typeof order.cost_avg_array != 'undefined' && order.cost_avg_array.length >  1;
