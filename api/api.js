@@ -6808,6 +6808,7 @@ router.post('/deleteOrderPermanently', auth_token.required, async (req, resp) =>
 
 
 function UpdateChildOrders(order_id, buy_parent_id, exchange) {
+    console.log('UpdateChildOrders...')
   return new Promise((resolve, reject) => {
     conn.then(db => {
         let searchCriteria = {};
@@ -6989,8 +6990,8 @@ function arraymove(arr, fromIndex, toIndex) {
 
 //post call from component for makeCostAvg
 router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
-    // console.log("/makeCostAvg Req Body: ", req.body)
-    // console.log("/makeCostAvg Req Payload: ", req.payload)
+    console.log("/makeCostAvg Req Body: ", req.body)
+    console.log("/makeCostAvg Req Payload: ", req.payload)
     let order_listing_filter = {}
     let admin_id = req.payload.id;
 
@@ -7058,63 +7059,90 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 if(admin_id){
                     var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], admin_id, exchange, tab)
                 } 
-                // console.log("Map Array IDs: ")
-                mapArray1.forEach(o => {
-                    // console.log(o._id)
+                console.log("Map Array 1 - Before: ", mapArray1)
+                let mapArrayTemp = mapArray1
+                mapArrayTemp.forEach((o, index) => {
+                    if(o == undefined){
+                        console.log(o)
+                        console.log(index)
+                        mapArray.splice(index, 1)
+                    }
                 })
-                
+                console.log("Map Array 1 - After: ", mapArray1)
+                // return
                 let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
                 let myPromises = await Promise.all([promise1]);
                 let coin_Data = myPromises[0];
                 let currentmarketPrice = coin_Data['currentmarketPrice'][0]['price'];
 
+                // console.log("Map Array 1: ", mapArray1)
+                // 627e29a43967ee60d01109ae
                 if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
                     mapArray1.map( x => {
-                        var orderSellPrice = (typeof x.market_sold_price != 'undefined' && x.market_sold_price != '' && !isNaN(parseFloat(x.market_sold_price))) ? parseFloat(x.market_sold_price) : '';
-                        if(orderSellPrice != ''){
-                            x.profitLoss = getPercentageDiff(orderSellPrice, x['purchased_price']);
-                        } else {
-                            x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
+                        // console.log("X: ", x)
+                        if(x){
+                            var orderSellPrice = (typeof x.market_sold_price != 'undefined' && x.market_sold_price != '' && !isNaN(parseFloat(x.market_sold_price))) ? parseFloat(x.market_sold_price) : '';
+                            if(orderSellPrice != ''){
+                                x.profitLoss = getPercentageDiff(orderSellPrice, x['purchased_price']);
+                            } else {
+                                x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
+                            }
+                            // // console.log(x._id, "x.profitLoss: ", x.profitLoss)
                         }
-                        // // console.log(x._id, "x.profitLoss: ", x.profitLoss)
                     });
 
+                    // return
                     await new Promise(r => setTimeout(r, 100));
 
                     mapArray1 = [...mapArray1].sort((a, b) => parseFloat(a.profitLoss) - parseFloat(b.profitLoss));
+                    // console.log("Map Array 1 sort: ", mapArray1)
                     const findParentIndex = (order) => (order["_id"]).toString() == order_id
                     const parentIndex = mapArray1.findIndex(findParentIndex)
                     if(parentIndex != -1){
-                    mapArray1 = arraymove(mapArray1, parentIndex, 0);
+                        mapArray1 = arraymove(mapArray1, parentIndex, 0);
                     }
 
                     await new Promise(r => setTimeout(r, 500));
                     // return false
                     for (let key in mapArray1) {
-                    let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
-                    if(typeof fractionOrderArr != 'undefined'){
-                        var dataToAppend = {};
-                        dataToAppend["order_sold"]       = "no"
-                        dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
-                        dataToAppend["filledQtyBuy"]     = fractionOrderArr[0]["filledQty"]
-                        dataToAppend["commissionBuy"]    = fractionOrderArr[0]["commission"]
-                        dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
-                        dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
-                        dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
-                        // // console.log("highestParentOrder:", highestParentOrder)
-                        costAverageArr.push(dataToAppend);
-                    } else {
-                        var dataToAppend = {};
-                        dataToAppend["order_sold"]       = "no";
-                        dataToAppend["buy_order_id"]     = mapArray1[key]["_id"];
-                        dataToAppend["filledQtyBuy"]     = typeof mapArray1[key]['quantity'] != 'undefined' && mapArray1[key]['quantity'] != '' ? mapArray1[key]['quantity'].toFixed(8) : '';
-                        dataToAppend["commissionBuy"]    = '';
-                        dataToAppend["filledPriceBuy"]   = typeof mapArray1[key]['purchased_price'] != 'undefined' && mapArray1[key]['purchased_price'] != '' ? mapArray1[key]['purchased_price'].toFixed(8) : '';
-                        dataToAppend["orderFilledIdBuy"] = typeof mapArray1[key]['tradeId'] != 'undefined' && mapArray1[key]['tradeId'] != '' ? mapArray1[key]['tradeId'] : '';
-                        dataToAppend["buyTimeDate"]      = new Date(mapArray1[key]['created_date']);
-                        costAverageArr.push(dataToAppend);
+                        if(mapArray1[key] !== undefined){
+                            if(mapArray1[key]["buy_fraction_filled_order_arr"]){
+                                // const order_sold_status = mapArray1[key]['is_sell_order'] == 'sold' ? 'yes' : 'no'
+                                let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
+                                if(typeof fractionOrderArr != 'undefined'){
+                                    var dataToAppend = {};
+                                    dataToAppend["order_sold"]       = "no"
+                                    dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
+                                    dataToAppend["filledQtyBuy"]     = fractionOrderArr[0]["filledQty"]
+                                    dataToAppend["commissionBuy"]    = fractionOrderArr[0]["commission"]
+                                    dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
+                                    dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
+                                    dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
+                                    // // console.log("highestParentOrder:", highestParentOrder)
+                                    costAverageArr.push(dataToAppend);
+                                    console.log("dataToAppend: ", dataToAppend)
+                                } else {
+                                    console.log("fractionOrderArr: ", fractionOrderArr)
+                                    console.log("order id: ", mapArray1[key]['_id'])
+                                    var dataToAppend = {};
+                                    dataToAppend["order_sold"]       = "no";
+                                    dataToAppend["buy_order_id"]     = mapArray1[key]["_id"];
+                                    dataToAppend["filledQtyBuy"]     = typeof mapArray1[key]['quantity'] != 'undefined' && mapArray1[key]['quantity'] != '' ? mapArray1[key]['quantity'].toFixed(8) : '';
+                                    dataToAppend["commissionBuy"]    = '';
+                                    dataToAppend["filledPriceBuy"]   = typeof mapArray1[key]['purchased_price'] != 'undefined' && mapArray1[key]['purchased_price'] != '' ? mapArray1[key]['purchased_price'].toFixed(8) : '';
+                                    dataToAppend["orderFilledIdBuy"] = typeof mapArray1[key]['tradeId'] != 'undefined' && mapArray1[key]['tradeId'] != '' ? mapArray1[key]['tradeId'] : '';
+                                    dataToAppend["buyTimeDate"]      = new Date(mapArray1[key]['created_date']);
+                                    costAverageArr.push(dataToAppend);
+                                    var dataToAppend = {};
+                                    console.log('DataToAppend: ', dataToAppend)
+                                }
+                            } else {
+                                console.log(mapArray1[key])
+                            }
+                        }
                     }
-                    }
+                    console.log('here')
+                    // return
                     await new Promise(r => setTimeout(r, 500));
                     if(costAverageArr.length > 0){
                         for(let key in mapArray1){
@@ -7283,7 +7311,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
 // UnParentAllOtherOrders starts here
  function unParentAllOtherOrders(orderId, userId, symbol, exchange, order_mode, tab){
-    // console.log("\n=== Inside Uparent Function ===\n")
+    console.log("unParentAllOtherOrders...")
     return new Promise(async (resolve, reject) => {
         const buy_collection = exchange == 'binance' ? 'buy_orders' : `buy_orders_${exchange}`
         const where = {
@@ -22463,73 +22491,48 @@ async function getOpenBalance(user_id, exchange) {
             let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
             var where = {
                 'admin_id': user_id,
-                'application_mode': 'live',
-                // 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
-                // 'is_sell_order': 'yes',
-                // 'is_lth_order': {
-                //     $ne: 'yes'
-                // }
+                'application_mode': 'live'
             }
 
-            where['$or'] = [{
-                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
-                'is_lth_order': { '$ne': 'yes' },
-                'cost_avg': 'yes',
-                'cavg_parent': 'yes',
-                'show_order': 'yes',
-                'avg_orders_ids.0': { '$exists': false },
-                'move_to_cost_avg': { '$ne': 'yes' },
-            },
-            {
-                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
-                'is_lth_order': { '$ne': 'yes' },
-                'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
-            }]
+            where['$or'] = [
+                {
+                    'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                    'is_sell_order': 'yes',
+                    'is_lth_order': { '$ne': 'yes' },
+                    'cost_avg': 'yes',
+                    'cavg_parent': 'yes',
+                    'show_order': 'yes',
+                    'avg_orders_ids.0': { '$exists': false },
+                    'move_to_cost_avg': { '$ne': 'yes' },
+                },
+                {
+                    'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                    'is_sell_order': 'yes',
+                    'is_lth_order': { '$ne': 'yes' },
+                    'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
+                }
+            ]
 
-            // filter['status'] = {
-            //     '$in': ['LTH', 'LTH_ERROR']
-            // };
-            // filter['is_sell_order'] = 'yes';
-            // // filter['cost_avg'] = { '$exists': false }
-            // filter['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+            let openOrders = await db.collection(collectionName).find(where).toArray();
+            if (openOrders.length > 0) {
 
-            let lthOrders = await db.collection(collectionName).find(where).toArray();
-            if (lthOrders.length > 0) {
-
-                let totalLth = lthOrders.length
-
-                // let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
-                // let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+                let totalOrders = openOrders.length
 
                 let pricesObj = await get_current_market_prices(exchange, [])
                 var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
 
-                let LthBtc = 0;
-                let LthUsdWorth = 0;
-
+                let openBtc = 0;
+                let openUsdWorth = 0;
                 let onlyBtc = 0;
                 let onlyUsdt = 0;
 
-                for (let i = 0; i < totalLth; i++) {
-
-                    let order = lthOrders[i]
-
+                for (let i = 0; i < totalOrders; i++) {
+                    let order = openOrders[i]
                     let selectedCoin = order['symbol'];
                     let quantity = order['quantity'];
                     let purchased_price = order['purchased_price'];
-                    // purchased_price = pricesObj[selectedCoin]
                     let currUsd = 0
                     let currBtc = 0
-
-                    // if (typeof order['buy_fraction_filled_order_arr'] != 'undefined') {
-                    //     quantity = 0
-                    //     order['buy_fraction_filled_order_arr'].map(item => {
-                    //         quantity += parseFloat(item['filledQty'])
-                    //         purchased_price = parseFloat(item['filledPrice'])
-                    //     })
-                    // }
 
                     let splitArr = selectedCoin.split('USDT');
                     if (splitArr[1] == '') {
@@ -22545,23 +22548,23 @@ async function getOpenBalance(user_id, exchange) {
                         onlyBtc += !isNaN(currBtc) ? currBtc : 0
                     }
 
-                    LthBtc += currBtc
-                    LthUsdWorth += currUsd
+                    openBtc += currBtc
+                    openUsdWorth += currUsd
 
                 }
 
-                LthBtc = parseFloat(LthBtc.toFixed(6))
-                LthUsdWorth = parseFloat(LthUsdWorth.toFixed(2))
+                openBtc = parseFloat(openBtc.toFixed(6))
+                openUsdWorth = parseFloat(openUsdWorth.toFixed(2))
                 onlyBtc = parseFloat(onlyBtc.toFixed(6))
                 onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
 
-                // // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
+                // // console.log('============== ', onlyBtc, onlyUsdt, openBtc, openUsdWorth)
 
                 let resObj = {
                     'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0,
                     'onlyUsdt': !isNaN(onlyUsdt) ? onlyUsdt : 0,
-                    'OpenBtcWorth': !isNaN(LthBtc) ? LthBtc : 0,
-                    'OpenUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
+                    'OpenBtcWorth': !isNaN(openBtc) ? openBtc : 0,
+                    'OpenUsdWorth': !isNaN(openUsdWorth) ? openUsdWorth : 0,
                 }
 
                 // // console.log('Open balance')
@@ -22976,44 +22979,41 @@ async function getCostAvgBalance(user_id, exchange) {
 
         where = { '_id': { '$in': costAvgIds }, 'status': { '$ne': 'canceled' }}
 
-        let lthOrders = await db.collection(buy_collection).find(where).toArray();
+        let caOrders = await db.collection(buy_collection).find(where).toArray();
 
-        if (lthOrders.length > 0) {
+        if (caOrders.length > 0) {
 
-            let totalLth = lthOrders.length
-
-            // let coinData = await listmarketPriceMinNotationCoinArr('BTCUSDT', exchange)
-            // let BTCUSDTPRICE = coinData['BTCUSDT']['currentmarketPrice']
+            let totalCA = caOrders.length
 
             let pricesObj = await get_current_market_prices(exchange, [])
             var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
+            // console.log("Btc usdt price: ", BTCUSDTPRICE)
 
-
-            let LthBtc = 0;
-            let LthUsdWorth = 0;
-
+            let caBtc = 0;
+            let caUsdWorth = 0;
             let onlyBtc = 0;
             let onlyUsdt = 0;
 
-            for (let i = 0; i < totalLth; i++) {
+            for (let i = 0; i < totalCA; i++) {
 
-                let order = lthOrders[i]
+                let order = caOrders[i]
 
                 let selectedCoin = order['symbol'];
                 let quantity = order['quantity'];
                 let purchased_price = order['purchased_price'];
-                // purchased_price = pricesObj[selectedCoin]
+
                 let currUsd = 0
                 let currBtc = 0
 
+                // console.log('\n'+selectedCoin)
                 let splitArr = selectedCoin.split('USDT');
+                // console.log(splitArr)
+                
                 if (splitArr[1] == '') {
                     let qtyInUsdt = quantity * purchased_price
+                    currBtc = qtyInUsdt * (1 / BTCUSDTPRICE)
                     currUsd = parseFloat(qtyInUsdt.toFixed(2))
-                    currBtc = quantity * purchased_price * (1 / BTCUSDTPRICE)
                     onlyUsdt += !isNaN(currUsd) ? currUsd : 0
-
-                    // // console.log(order._id, '  ------  ', currUsd)
 
                 } else {
                     let calculateBtc = quantity * purchased_price
@@ -23023,27 +23023,118 @@ async function getCostAvgBalance(user_id, exchange) {
                     onlyBtc += !isNaN(currBtc) ? currBtc : 0
                 }
 
-                LthBtc += currBtc
-                LthUsdWorth += currUsd
+                caBtc += currBtc
+                caUsdWorth += currUsd
 
             }
 
-            LthBtc = parseFloat(LthBtc.toFixed(6))
-            LthUsdWorth = parseFloat(LthUsdWorth.toFixed(2))
+            caBtc = parseFloat(caBtc.toFixed(6))
+            caUsdWorth = parseFloat(caUsdWorth.toFixed(2))
             onlyBtc = parseFloat(onlyBtc.toFixed(6))
             onlyUsdt = parseFloat(onlyUsdt.toFixed(6))
-
-            // // console.log('============== ', onlyBtc, onlyUsdt, LthBtc, LthUsdWorth)
 
             let resObj = {
                 'onlyBtc': !isNaN(onlyBtc) ? onlyBtc : 0,
                 'onlyUsdt': !isNaN(onlyUsdt) ? onlyUsdt : 0,
-                'costAvgBtcWorth': !isNaN(LthBtc) ? LthBtc : 0,
-                'costAvgUsdWorth': !isNaN(LthUsdWorth) ? LthUsdWorth : 0,
+                'costAvgBtcWorth': !isNaN(caBtc) ? caBtc : 0,
+                'costAvgUsdWorth': !isNaN(caUsdWorth) ? caUsdWorth : 0,
             }
 
-            // // console.log('CostAvg balance')
-            // // console.log(resObj)
+            resolve(resObj)
+        } else {
+            resolve({})
+        }
+    })
+}
+
+async function getCostAvgBalance_new(user_id, exchange) {
+    return new Promise(async (resolve) => {
+
+        const db = await conn
+
+        let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
+        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+
+        var where = {
+            'admin_id': user_id,
+            'application_mode': 'live',
+            'status': {'$ne': 'canceled'}
+        }
+
+        where['$or'] = [
+            {
+                'cost_avg': { '$in': ['taking_child', 'yes'] },
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': false },
+                'move_to_cost_avg': 'yes',
+            },
+            {
+                'cost_avg': { '$in': ['taking_child', 'yes'] },
+                'cavg_parent': 'yes',
+                'show_order': 'yes',
+                'avg_orders_ids.0': { '$exists': true }
+            },
+        ]
+
+        let p1 = db.collection(buy_collection).find(where).toArray();
+        let p2 = db.collection(sold_collection).find(where).toArray();
+
+        let myPromises = await Promise.all([p1, p2])
+
+        let trades = myPromises[0].concat(myPromises[1])
+        let costAvgIds = trades.map(item=>item._id);
+        let avg_orders_ids = trades.map(item => item.avg_orders_ids);
+        avg_orders_ids = avg_orders_ids.filter(item => typeof item != 'undefined')
+        avg_orders_ids.forEach(item=>{costAvgIds = costAvgIds.concat(item)})
+
+        where = { '_id': { '$in': costAvgIds }, 'status': { '$ne': 'canceled' }}
+
+        let caOrders = await db.collection(buy_collection).find(where).toArray();
+
+        if (caOrders.length > 0) {
+
+            let ca_btc_coins = 0
+            let ca_usdt_coins = 0
+            let caBtc = 0
+            
+            let totalCA = caOrders.length
+
+            let pricesObj = await get_current_market_prices(exchange, [])
+            var BTCUSDTPRICE = parseFloat(pricesObj['BTCUSDT'])
+
+            for (let i = 0; i < totalCA; i++) {
+                let order = caOrders[i]
+                let selectedCoin = order['symbol'];
+                let quantity = order['quantity'];
+                let purchased_price = order['purchased_price'];
+                
+                let coinWorth =  parseFloat(quantity * purchased_price)
+                
+                let splitArr = selectedCoin.split('USDT');
+                
+                // if usdt pair
+                if (splitArr[1] == '') {
+                    ca_usdt_coins += !isNaN(coinWorth) ? coinWorth : 0
+                    let currBtc = coinWorth * (1 / BTCUSDTPRICE)
+                    caBtc += currBtc ? currBtc : 0
+
+                } 
+                // if btc pair
+                else {
+                    ca_btc_coins += !isNaN(coinWorth) ? coinWorth : 0
+                    let currBtc = coinWorth
+                    caBtc += currBtc ? currBtc : 0
+                } 
+                
+            }
+
+            let resObj = {
+                'ca_btc_coins': !isNaN(ca_btc_coins) ? parseFloat(ca_btc_coins.toFixed(6)) : 0,
+                'ca_usdt_coins': !isNaN(ca_usdt_coins) ? parseFloat(ca_usdt_coins.toFixed(2)) : 0,
+                'ca_btc_worth': !isNaN(caBtc) ? parseFloat(caBtc.toFixed(6)) : 0,
+                'ca_btc_worth_in_usd': !isNaN(caBtc) ? parseFloat((caBtc * BTCUSDTPRICE).toFixed(2)) : 0,
+            }
 
             resolve(resObj)
         } else {
@@ -27692,6 +27783,67 @@ router.post('/get_dashboard_wallet', auth_token.required, async (req, res) => {
         })
     }
 })//end get_dashboard_wallet
+
+//get_dashboard_wallet_new
+router.post('/get_dashboard_wallet_new', auth_token.required, async (req, res) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    
+    if(!user_exist){
+        res.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+    let exchange = req.body.exchange
+    let admin_id = req.payload.id;
+
+    // console.log(exchange, admin_id)
+    if (typeof exchange != 'undefined' && typeof exchange != 'undefined' && typeof admin_id != 'undefined' && typeof admin_id != 'undefined') {
+
+        let result = await get_dashboard_wallet_new(admin_id, exchange)
+
+        res.send(result)
+
+    } else {
+        res.send({
+            status: false,
+            message: 'exchange and user_id are required',
+        })
+    }
+})//end get_dashboard_wallet
+
+async function get_dashboard_wallet_new(admin_id, exchange){
+    return new Promise(async resolve =>{
+
+        let openBalance = getOpenBalance(admin_id, exchange)
+        let lthBalance = getLTHBalance(admin_id, exchange)
+        let costAvgBalance = getCostAvgBalance(admin_id, exchange)
+        let costAvgBalance_new = getCostAvgBalance_new(admin_id, exchange)
+
+        let myPromises = await Promise.all([openBalance, lthBalance, costAvgBalance, costAvgBalance_new])
+
+        console.log("Open Balance: ", myPromises[0])
+        console.log("LTH Balance: ", myPromises[1])
+        console.log("CA Balance: ", myPromises[2])
+        console.log("CA Balance New: ", myPromises[3])
+
+        const used_btc_balance = myPromises[0].onlyBtc + myPromises[1].onlyBtc + myPromises[2].onlyBtc
+        const used_usdt_balance = myPromises[0].onlyUsdt + myPromises[1].onlyUsdt + myPromises[2].onlyUsdt
+
+        console.log("Used: ", used_btc_balance, used_usdt_balance)
+        resolve({
+            status: true,
+            data: {
+                'used_btc_balance': used_btc_balance,
+                'used_usdt_balance': used_usdt_balance
+            },
+            message: 'Data found successfully',
+        })
+
+
+    })
+}
 
 //this function is being used on multiple places
 async function get_dashboard_wallet(admin_id, exchange){
