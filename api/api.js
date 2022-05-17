@@ -7059,16 +7059,17 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 if(admin_id){
                     var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], admin_id, exchange, tab)
                 } 
-                console.log("Map Array 1 - Before: ", mapArray1)
+                // console.log("Map Array 1 - Before: ", mapArray1)
                 let mapArrayTemp = mapArray1
                 mapArrayTemp.forEach((o, index) => {
                     if(o == undefined){
+                        console.log("Undefined order found: ")
                         console.log(o)
                         console.log(index)
                         mapArray.splice(index, 1)
                     }
                 })
-                console.log("Map Array 1 - After: ", mapArray1)
+                // console.log("Map Array 1 - After: ", mapArray1)
                 // return
                 let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
                 let myPromises = await Promise.all([promise1]);
