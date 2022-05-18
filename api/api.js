@@ -6847,38 +6847,53 @@ function UpdateChildOrders(order_id, buy_parent_id, exchange) {
         });
     });
   }).catch(err => {
-      // console.log(err);
+      console.log(err);
   });
 }
 
-function UpdateHighestPriceOrder(order_id, costaverageMap, exchange) {
-  return new Promise((resolve, reject) => {
-    conn.then(db => {
-      let searchCriteria = {};
-      searchCriteria["_id"] = new ObjectID(order_id);
-      let updQuery = {
-          $set: {
-              cost_avg_array: costaverageMap,
-              move_to_cost_avg: "yes",
-              cost_avg:         "taking_child",
-              cavg_parent:      "yes",
-              modified_date:     new Date(),
-              status : "FILLED"
-          }
-      };
-      var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-      db.collection(collectionName).updateOne(searchCriteria, updQuery, (err, success) => {
-        if (err) {
-            reject(err);
-        } else {
-            // // console.log(searchCriteria,'searchCriteria UpdateHighestPriceOrder', costaverageMap);
-            resolve(success.result);
-        }
-      });
+async function UpdateHighestPriceOrder(order_id, costaverageMap, exchange, tab='') {
+    const collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    
+
+    return new Promise((resolve, reject) => {
+        conn.then(async db => {
+            let searchCriteria = {};
+            searchCriteria["_id"] = new ObjectID(order_id);
+            const tempOrder = await db.collection(collectionName).findOne(searchCriteria)
+            let updQuery = {
+                $set: {
+                    cost_avg_array: costaverageMap,
+                    move_to_cost_avg: "yes",
+                    cost_avg:         "taking_child",
+                    cavg_parent:      "yes",
+                    modified_date:     new Date(),
+                    status : "FILLED",
+                }
+            };
+
+            if(tab == 'openTab_move_all'){
+                // if move_to_ca_date already exists then don't change it otherwise, generete new
+                tempOrder && tempOrder['move_to_ca_date'] ? updQuery['$set']['move_to_ca_date'] = tempOrder['move_to_ca_date'] : updQuery['$set']['move_to_ca_date'] = new Date()
+            }
+            
+            if(tab == 'merge_all'){
+                // if merge_date already exists then don't change it otherwise, generete new
+                tempOrder && tempOrder['merge_date'] ? updQuery['$set']['merge_date'] = tempOrder['merge_date'] : updQuery['$set']['merge_date'] = new Date()
+            }
+
+            console.log("Update Query: ", updQuery)
+            
+            db.collection(collectionName).updateOne(searchCriteria, updQuery, (err, success) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(success.result);
+                }
+            });
+        });
+    }).catch(err => {
+        console.log(err);
     });
-  }).catch(err => {
-      // console.log(err);
-  });
 }
 
 function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
@@ -6895,7 +6910,7 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
                     {cost_avg: ''}
                 ],
                 status: { $in: [ "LTH", "FILLED", "CA_TAKING_CHILD"]},
-                trigger_type: tab == 'openTab_move_all' ? 'barrier_percentile_trigger' : 'no',
+                trigger_type: (tab == 'openTab_move_all' || tab == 'merge_all') ? 'barrier_percentile_trigger' : 'no',
                 buy_date: {$gte: new Date('2021-01-01')}, // date constraint added because invisible orders are being shown in the pop-up / asim's task pending 
             }
 
@@ -6958,7 +6973,7 @@ function UpdateAllSymbolOrder(symbol, admin_id, exchange, tab){
                 },
                 application_mode: 'live',
                 admin_id: admin_id,
-                trigger_type: tab == 'openTab_move_all_manual' ? 'no' : "barrier_percentile_trigger"
+                trigger_type: (tab == 'openTab_move_all_manual' || tab == 'merge_all_manual') ? 'no' : "barrier_percentile_trigger"
             };
             let updatedCriteria = {
                 parent_pause: 'child_n_costavg',
@@ -7030,8 +7045,6 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
         let db = await conn
         
         var getBuyOrder = await listOrderById(order_id, exchange);
-        // if getBuyOrder object don't have 'order_mode' value then get 'application_mode' otherwise set 'live
-        // const order_mode = (getBuyOrder[0]['order_mode'] && getBuyOrder[0]['order_mode'] !== null && getBuyOrder[0]['order_mode'] !== undefined && getBuyOrder[0]['order_mode'] !== "" ) ? getBuyOrder[0]['order_mode'] : ((getBuyOrder[0]['application_mode'] && getBuyOrder[0]['application_mode'] !== null && getBuyOrder[0]['application_mode'] !== undefined && getBuyOrder[0]['application_mode'] !== "" ) ? getBuyOrder[0]['application_mode'] : 'live')
         
         if (getBuyOrder.length > 0){
             var sell_price = ((parseFloat(getBuyOrder[0]['purchased_price']) * parseFloat(getBuyOrder[0]['defined_sell_percentage'])) / 100) + parseFloat(getBuyOrder[0]['purchased_price']);
@@ -7053,7 +7066,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 }
             }
             
-            if(tab == 'openTab_move_all' || tab == 'openTab_move_all_manual'){
+            if(tab == 'openTab_move_all' || tab == 'openTab_move_all_manual' || tab == 'merge_all' || tab == 'merge_all_manual'){
                 // console.log('check 1')
                 costAverageArr = [];
                 if(admin_id){
@@ -7119,14 +7132,24 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                                     dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
                                     dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
                                     dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
-                                    // // console.log("highestParentOrder:", highestParentOrder)
+                                    if(order_sold_status == 'yes'){
+                                        console.log('\nSold Child Order: ', mapArray1[key], '\n')
+                                        dataToAppend["avg_purchase_price"] = fractionOrderArr[0]["filledPrice"]
+                                        dataToAppend["sell_activated"] = "yes"
+                                        dataToAppend["commissionSell"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['commission']
+                                        dataToAppend["filledPriceSell"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['filledPrice']
+                                        dataToAppend["filledQtySell"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['filledQty']
+                                        dataToAppend["orderFilledIdSell"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['orderFilledId']
+                                        dataToAppend["sellOrderId"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['sellOrderId']
+                                        dataToAppend["sellTimeDate"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['sellTimeDate']
+                                    }
                                     costAverageArr.push(dataToAppend);
                                     console.log("dataToAppend: ", dataToAppend)
                                 } else {
                                     console.log("fractionOrderArr: ", fractionOrderArr)
                                     console.log("order id: ", mapArray1[key]['_id'])
                                     var dataToAppend = {};
-                                    dataToAppend["order_sold"]       = order_sold_status;
+                                    dataToAppend["order_sold"]       = 'no';
                                     dataToAppend["buy_order_id"]     = mapArray1[key]["_id"];
                                     dataToAppend["filledQtyBuy"]     = typeof mapArray1[key]['quantity'] != 'undefined' && mapArray1[key]['quantity'] != '' ? mapArray1[key]['quantity'].toFixed(8) : '';
                                     dataToAppend["commissionBuy"]    = '';
@@ -7149,8 +7172,8 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                         for(let key in mapArray1){
                             await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
                         }
-                        await UpdateHighestPriceOrder(order_id, costAverageArr, exchange)
-                        
+                        await UpdateHighestPriceOrder(order_id, costAverageArr, exchange, tab)
+                        // return
                         await UpdateAllSymbolOrder(getBuyOrder[0]['symbol'], admin_id, exchange, tab);
                         
                         await new Promise(r => setTimeout(r, 4000));
@@ -7321,7 +7344,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             symbol: symbol,
             cavg_parent: "yes",
             application_mode: "live",
-            trigger_type: tab == 'openTab_move_all_manual' ? 'no' : "barrier_percentile_trigger"
+            trigger_type: tab == 'openTab_move_all_manual' || tab == 'merge_all_manual' ? 'no' : "barrier_percentile_trigger"
         }
         const set = {
             $unset: {
