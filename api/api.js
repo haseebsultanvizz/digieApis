@@ -6925,7 +6925,7 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
             let buyPromise = db.collection(buyCollection).find(query).toArray();
             let myPromise = await Promise.all([buyPromise]);
             let tempOrders = myPromise[0];
-
+            // console.log("Temp Orders: ", tempOrders)
             let AllChildOrders = [];
 
             let query2 = where2
@@ -34588,12 +34588,12 @@ router.post('/getIsBalanceUpdatedKraken', auth_token.required, async (req, resp)
     var user_id = req.payload.id;
 
     conn.then(db => {
-        db.collection('users').findOne({_id: ObjectID(user_id)}, async function (err, data) {
+        db.collection('kraken_credentials').findOne({user_id: user_id}, async function (err, data) {
             if (err) throw err;
             if (data != undefined || data != null) {
                 resp.status(200).send({
                     "success": true,
-                    "is_balance_updated_kraken": data['is_balance_updated_kraken'] ? data['is_balance_updated_kraken'] : '',
+                    "history_update": data['history_update'] ? data['history_update'] : '',
                 })
             } else {
                 resp.status(201).send({
