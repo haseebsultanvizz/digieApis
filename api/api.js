@@ -7082,7 +7082,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                         mapArray1.splice(index, 1)
                     }
                 })
-                // console.log("Map Array 1 - After: ", mapArray1)
+                console.log("Map Array 1 - After: ", mapArray1)
                 // return
                 let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
                 let myPromises = await Promise.all([promise1]);
@@ -7181,7 +7181,9 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     await new Promise(r => setTimeout(r, 500));
                     if(costAverageArr.length > 0){
                         for(let key in mapArray1){
-                            await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
+                            if(mapArray1[key] !== undefined){
+                                await UpdateChildOrders(mapArray1[key]["_id"], mapArray1[key]["buy_parent_id"], exchange)
+                            }
                         }
                         await UpdateHighestPriceOrder(order_id, costAverageArr, exchange, tab)
                         // return
