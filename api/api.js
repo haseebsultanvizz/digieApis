@@ -7079,7 +7079,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                         console.log("Undefined order found: ")
                         console.log(o)
                         console.log(index)
-                        mapArray.splice(index, 1)
+                        mapArray1.splice(index, 1)
                     }
                 })
                 // console.log("Map Array 1 - After: ", mapArray1)
