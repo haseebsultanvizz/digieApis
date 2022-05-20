@@ -6897,7 +6897,7 @@ async function UpdateHighestPriceOrder(order_id, costaverageMap, exchange, tab='
 }
 
 function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
-    // console.log('=== Inside PurchasedPriceOrders() ====')
+    console.log('=== Inside PurchasedPriceOrders() ====')
     return new Promise((resolve, reject) => {
         conn.then(async db => {
             let where2 = {
@@ -6911,7 +6911,7 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
                 ],
                 status: { $in: [ "LTH", "FILLED", "CA_TAKING_CHILD"]},
                 trigger_type: (tab == 'openTab_move_all' || tab == 'merge_all') ? 'barrier_percentile_trigger' : 'no',
-                buy_date: {$gte: new Date('2021-01-01')}, // date constraint added because invisible orders are being shown in the pop-up / asim's task pending 
+                created_date: {$gte: new Date('2021-01-01')}, // date constraint added because invisible orders are being shown in the pop-up / asim's task pending 
             }
 
             if(typeof symbol !== 'undefined' && symbol !== ''){
@@ -6919,7 +6919,7 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
             }
 
             let query = where2;
-            // console.log("Query: ", query)
+            console.log("Query: ", query)
 
             let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
             let buyPromise = db.collection(buyCollection).find(query).toArray();
@@ -7123,30 +7123,41 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                             if(mapArray1[key]["buy_fraction_filled_order_arr"]){
                                 const order_sold_status = mapArray1[key]['is_sell_order'] == 'sold' ? 'yes' : 'no'
                                 let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
-                                if(typeof fractionOrderArr != 'undefined'){
+
+                                // convert fractionOrderArr array to Object
+                                var fractionOrderObj = {}
+                                Array.isArray(fractionOrderArr) == true ? fractionOrderObj = fractionOrderArr[0] : fractionOrderObj = fractionOrderArr
+                                console.log("\nfractionOrderObj: ", fractionOrderObj)
+
+                                // convert fractionOrderArr array to Object
+                                var sellFractionOrderObj = {}
+                                Array.isArray(mapArray1[key]['sell_fraction_filled_order_arr']) == true ? sellFractionOrderObj = mapArray1[key]['sell_fraction_filled_order_arr'][0] : sellFractionOrderObj = mapArray1[key]['sell_fraction_filled_order_arr']
+                                console.log("\nsellFractionOrderObj: ", sellFractionOrderObj)
+
+                                if(typeof fractionOrderObj != 'undefined'){
                                     var dataToAppend = {};
                                     dataToAppend["order_sold"]       = order_sold_status
                                     dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
-                                    dataToAppend["filledQtyBuy"]     = fractionOrderArr[0]["filledQty"]
-                                    dataToAppend["commissionBuy"]    = fractionOrderArr[0]["commission"]
-                                    dataToAppend["filledPriceBuy"]   = fractionOrderArr[0]["filledPrice"]
-                                    dataToAppend["orderFilledIdBuy"] = typeof fractionOrderArr[0]["orderFilledId"] != 'undefined' && fractionOrderArr[0]["orderFilledId"] != '' ? fractionOrderArr[0]["orderFilledId"] : '';
-                                    dataToAppend["buyTimeDate"]      = typeof fractionOrderArr[0]["transactTime"] != 'undefined' && fractionOrderArr[0]["transactTime"] != '' ? fractionOrderArr[0]["transactTime"] : new Date(mapArray1[key]['created_date']);
+                                    dataToAppend["filledQtyBuy"]     = fractionOrderObj["filledQty"]
+                                    dataToAppend["commissionBuy"]    = fractionOrderObj["commission"]
+                                    dataToAppend["filledPriceBuy"]   = fractionOrderObj["filledPrice"]
+                                    dataToAppend["orderFilledIdBuy"] = typeof fractionOrderObj["orderFilledId"] != 'undefined' && fractionOrderObj["orderFilledId"] != '' ? fractionOrderObj["orderFilledId"] : '';
+                                    dataToAppend["buyTimeDate"]      = typeof fractionOrderObj["transactTime"] != 'undefined' && fractionOrderObj["transactTime"] != '' ? fractionOrderObj["transactTime"] : new Date(mapArray1[key]['created_date']);
                                     if(order_sold_status == 'yes'){
                                         console.log('\nSold Child Order: ', mapArray1[key], '\n')
-                                        dataToAppend["avg_purchase_price"] = fractionOrderArr[0]["filledPrice"]
+                                        dataToAppend["avg_purchase_price"] = fractionOrderObj["filledPrice"]
                                         dataToAppend["sell_activated"] = "yes"
-                                        dataToAppend["commissionSell"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['commission']
-                                        dataToAppend["filledPriceSell"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['filledPrice']
-                                        dataToAppend["filledQtySell"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['filledQty']
-                                        dataToAppend["orderFilledIdSell"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['orderFilledId']
-                                        dataToAppend["sellOrderId"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['sellOrderId']
-                                        dataToAppend["sellTimeDate"] = mapArray1[key]['sell_fraction_filled_order_arr'][0]['sellTimeDate']
+                                        dataToAppend["commissionSell"] = sellFractionOrderObj['commission']
+                                        dataToAppend["filledPriceSell"] = sellFractionOrderObj['filledPrice']
+                                        dataToAppend["filledQtySell"] = sellFractionOrderObj['filledQty']
+                                        dataToAppend["orderFilledIdSell"] = sellFractionOrderObj['orderFilledId']
+                                        dataToAppend["sellOrderId"] = sellFractionOrderObj['sellOrderId']
+                                        dataToAppend["sellTimeDate"] = sellFractionOrderObj['sellTimeDate']
                                     }
                                     costAverageArr.push(dataToAppend);
-                                    console.log("dataToAppend: ", dataToAppend)
+                                    console.log("\ndataToAppend: ", dataToAppend)
                                 } else {
-                                    console.log("fractionOrderArr: ", fractionOrderArr)
+                                    console.log("fractionOrderObj: ", fractionOrderObj)
                                     console.log("order id: ", mapArray1[key]['_id'])
                                     var dataToAppend = {};
                                     dataToAppend["order_sold"]       = 'no';
@@ -7448,7 +7459,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                     },
                     admin_id: admin_id,
                     application_mode: 'live',
-                    buy_date: {$gte: new Date('2021-01-01')} // date constraint added because invisible orders are being shown in the pop-up / asim's task pending 
+                    created_date: {$gte: new Date('2021-01-01')} // date constraint added because invisible orders are being shown in the pop-up / asim's task pending 
                 }
                 if(typeof symbol !== 'undefined' && symbol !== ''){
                     // where1['symbol'] = symbol
@@ -7457,7 +7468,7 @@ router.post('/getAllLTHOPENOrders', auth_token.required, async (req, res) => {
                     where2['trigger_type'] = 'barrier_percentile_trigger'
                 }
                 let query = where2
-                // console.log("Query: ", query)
+                console.log("Query: ", query)
 
                 let project1 = {
                     'admin_id':1,
@@ -7575,7 +7586,7 @@ router.post('/getUsersSymbolTradesCheck', auth_token.required, async (req,res) =
                                 admin_id: admin_id,
                                 application_mode: 'live',
                                 trigger_type: 'barrier_percentile_trigger',
-                                buy_date: {$gte: new Date('2021-01-01')},
+                                created_date: {$gte: new Date('2021-01-01')},
                                 status: {
                                 $in: ['FILLED','LTH', 'CA_TAKING_CHILD']
                                 },
@@ -7658,7 +7669,7 @@ router.post('/getAllLTHOPENOrdersManual', auth_token.required, async (req, res) 
                     ],
                     admin_id: admin_id,
                     application_mode: 'live',
-                    buy_date: {$gte: new Date('2021-01-01')} // date constraint added because invisible orders are being shown in the pop-up / asim's task pending 
+                    created_date: {$gte: new Date('2021-01-01')} // date constraint added because invisible orders are being shown in the pop-up / asim's task pending 
                 }
                 if(typeof symbol !== 'undefined' && symbol !== ''){
                     where2['symbol'] = symbol
