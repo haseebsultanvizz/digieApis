@@ -6897,7 +6897,7 @@ async function UpdateHighestPriceOrder(order_id, costaverageMap, exchange, tab='
 }
 
 function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
-    console.log('=== Inside PurchasedPriceOrders() ====')
+    console.log('\nPurchasedPriceOrders()...')
     return new Promise((resolve, reject) => {
         conn.then(async db => {
             let where2 = {
@@ -6922,6 +6922,7 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
             console.log("Query: ", query)
 
             let buyCollection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange;
+            
             let buyPromise = db.collection(buyCollection).find(query).toArray();
             let myPromise = await Promise.all([buyPromise]);
             let tempOrders = myPromise[0];
@@ -6937,20 +6938,27 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
             if(cost_avg_array_orders.length > 0){
                 for(let i=0; i<cost_avg_array_orders.length; i++){
                     for(let j=0; j<cost_avg_array_orders[i]['cost_avg_array'].length; j++){
-                    if(j== 0 || cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no'){
-                        continue;
-                    }
-                    let collection_name = cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no' ? 'buy_orders' : 'sold_buy_orders'
-                    collection_name = exchange == 'binance' ? collection_name : collection_name+'_'+exchange;
-                    query2['_id'] = new ObjectID((cost_avg_array_orders[i]['cost_avg_array'][j]['buy_order_id']).toString());
-                    query2['direct_parent_child_id'] = new ObjectID((cost_avg_array_orders[i]['_id']).toString());
-                    let childPromise = await db.collection(collection_name).find(query2).toArray();
-                    AllChildOrders.push(childPromise[0])
+                        // if(j== 0 || cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no'){
+                        //     continue;
+                        // }
+                        let collection_name = cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no' ? 'buy_orders' : 'sold_buy_orders'
+                        collection_name = exchange == 'binance' ? collection_name : collection_name+'_'+exchange;
+                        query2['_id'] = new ObjectID((cost_avg_array_orders[i]['cost_avg_array'][j]['buy_order_id']).toString());
+                        // query2['direct_parent_child_id'] = new ObjectID((cost_avg_array_orders[i]['_id']).toString());
+                        let childPromise = await db.collection(collection_name).find(query2).toArray();
+                        console.log("\n")
+                        if(childPromise[0] !== undefined){
+                            console.log('Order undefined? NO')
+                            AllChildOrders.push(childPromise[0])
+                        } else {
+                            console.log('Order undefined? YES')
+                        }
                     }
                 }
             }
             // Wait for 3 Seconds
             await new Promise(r => setTimeout(r, 1500));
+            // return
             tempOrders = tempOrders.concat(AllChildOrders);
             resolve(tempOrders);
         });
@@ -7067,33 +7075,35 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             }
             
             if(tab == 'openTab_move_all' || tab == 'openTab_move_all_manual' || tab == 'merge_all' || tab == 'merge_all_manual'){
-                // console.log('check 1')
+                
                 costAverageArr = [];
                 if(admin_id){
                     var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], admin_id, exchange, tab)
                 } 
-                // console.log("Map Array 1 - Before: ", mapArray1)
-                let mapArrayTemp = mapArray1
-                mapArrayTemp.forEach((o, index) => {
-                    if(o == undefined){
-                        console.log("Undefined order found: ")
-                        console.log(o)
-                        console.log(index)
-                        mapArray1.splice(index, 1)
-                    }
+
+                console.log("Map Array 1 length: ", mapArray1.length)
+                
+                // incase any order is undefined remove it:
+                mapArray1 = mapArray1.filter(removeUndefined)
+
+                function removeUndefined(o){
+                    return o !== undefined
+                }
+
+                console.log("Map Array 1 - After filteration: \n")
+                mapArray1.forEach(o => {
+                    console.log(o.is_sell_order)
                 })
-                console.log("Map Array 1 - After: ", mapArray1)
-                // return
+                console.log('\n')
+                
                 let promise1 = listmarketPriceMinNotation(getBuyOrder[0]['symbol'], exchange);
                 let myPromises = await Promise.all([promise1]);
                 let coin_Data = myPromises[0];
                 let currentmarketPrice = coin_Data['currentmarketPrice'][0]['price'];
 
-                // console.log("Map Array 1: ", mapArray1)
-                // 627e29a43967ee60d01109ae
+                
                 if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
                     mapArray1.map( x => {
-                        // console.log("X: ", x)
                         if(x){
                             var orderSellPrice = (typeof x.market_sold_price != 'undefined' && x.market_sold_price != '' && !isNaN(parseFloat(x.market_sold_price))) ? parseFloat(x.market_sold_price) : '';
                             if(orderSellPrice != ''){
@@ -7101,15 +7111,14 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                             } else {
                                 x.profitLoss = getPercentageDiff(currentmarketPrice, x['purchased_price']);
                             }
-                            // // console.log(x._id, "x.profitLoss: ", x.profitLoss)
                         }
                     });
 
-                    // return
+                    
                     await new Promise(r => setTimeout(r, 100));
 
                     mapArray1 = [...mapArray1].sort((a, b) => parseFloat(a.profitLoss) - parseFloat(b.profitLoss));
-                    // console.log("Map Array 1 sort: ", mapArray1)
+                    
                     const findParentIndex = (order) => (order["_id"]).toString() == order_id
                     const parentIndex = mapArray1.findIndex(findParentIndex)
                     if(parentIndex != -1){
@@ -7117,68 +7126,71 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                     }
 
                     await new Promise(r => setTimeout(r, 500));
-                    // return false
+                    
                     for (let key in mapArray1) {
-                        if(mapArray1[key] !== undefined){
-                            if(mapArray1[key]["buy_fraction_filled_order_arr"]){
-                                const order_sold_status = mapArray1[key]['is_sell_order'] == 'sold' ? 'yes' : 'no'
-                                let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
+                        let fractionOrderArr = mapArray1[key]["buy_fraction_filled_order_arr"]
 
-                                // convert fractionOrderArr array to Object
-                                var fractionOrderObj = {}
-                                Array.isArray(fractionOrderArr) == true ? fractionOrderObj = fractionOrderArr[0] : fractionOrderObj = fractionOrderArr
-                                console.log("\nfractionOrderObj: ", fractionOrderObj)
+                        // convert fractionOrderArr array to Object
+                        var fractionOrderObj = {}
+                        Array.isArray(fractionOrderArr) == true ? fractionOrderObj = fractionOrderArr[0] : fractionOrderObj = fractionOrderArr
+                        console.log("\nfractionOrderObj: ", fractionOrderObj)
 
-                                // convert fractionOrderArr array to Object
-                                var sellFractionOrderObj = {}
-                                Array.isArray(mapArray1[key]['sell_fraction_filled_order_arr']) == true ? sellFractionOrderObj = mapArray1[key]['sell_fraction_filled_order_arr'][0] : sellFractionOrderObj = mapArray1[key]['sell_fraction_filled_order_arr']
-                                console.log("\nsellFractionOrderObj: ", sellFractionOrderObj)
+                        // convert fractionOrderArr array to Object
+                        var sellFractionOrderObj = {}
+                        Array.isArray(mapArray1[key]['sell_fraction_filled_order_arr']) == true ? sellFractionOrderObj = mapArray1[key]['sell_fraction_filled_order_arr'][0] : sellFractionOrderObj = mapArray1[key]['sell_fraction_filled_order_arr']
+                        console.log("\nsellFractionOrderObj: ", sellFractionOrderObj)
 
-                                if(typeof fractionOrderObj != 'undefined'){
-                                    var dataToAppend = {};
-                                    dataToAppend["order_sold"]       = order_sold_status
-                                    dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
-                                    dataToAppend["filledQtyBuy"]     = fractionOrderObj["filledQty"]
-                                    dataToAppend["commissionBuy"]    = fractionOrderObj["commission"]
-                                    dataToAppend["filledPriceBuy"]   = fractionOrderObj["filledPrice"]
-                                    dataToAppend["orderFilledIdBuy"] = typeof fractionOrderObj["orderFilledId"] != 'undefined' && fractionOrderObj["orderFilledId"] != '' ? fractionOrderObj["orderFilledId"] : '';
-                                    dataToAppend["buyTimeDate"]      = typeof fractionOrderObj["transactTime"] != 'undefined' && fractionOrderObj["transactTime"] != '' ? fractionOrderObj["transactTime"] : new Date(mapArray1[key]['created_date']);
-                                    if(order_sold_status == 'yes'){
-                                        console.log('\nSold Child Order: ', mapArray1[key], '\n')
-                                        dataToAppend["avg_purchase_price"] = fractionOrderObj["filledPrice"]
-                                        dataToAppend["sell_activated"] = "yes"
-                                        dataToAppend["commissionSell"] = sellFractionOrderObj['commission']
-                                        dataToAppend["filledPriceSell"] = sellFractionOrderObj['filledPrice']
-                                        dataToAppend["filledQtySell"] = sellFractionOrderObj['filledQty']
-                                        dataToAppend["orderFilledIdSell"] = sellFractionOrderObj['orderFilledId']
-                                        dataToAppend["sellOrderId"] = sellFractionOrderObj['sellOrderId']
-                                        dataToAppend["sellTimeDate"] = sellFractionOrderObj['sellTimeDate']
-                                    }
-                                    costAverageArr.push(dataToAppend);
-                                    console.log("\ndataToAppend: ", dataToAppend)
-                                } else {
-                                    console.log("fractionOrderObj: ", fractionOrderObj)
-                                    console.log("order id: ", mapArray1[key]['_id'])
-                                    var dataToAppend = {};
-                                    dataToAppend["order_sold"]       = 'no';
-                                    dataToAppend["buy_order_id"]     = mapArray1[key]["_id"];
-                                    dataToAppend["filledQtyBuy"]     = typeof mapArray1[key]['quantity'] != 'undefined' && mapArray1[key]['quantity'] != '' ? mapArray1[key]['quantity'].toFixed(8) : '';
-                                    dataToAppend["commissionBuy"]    = '';
-                                    dataToAppend["filledPriceBuy"]   = typeof mapArray1[key]['purchased_price'] != 'undefined' && mapArray1[key]['purchased_price'] != '' ? mapArray1[key]['purchased_price'].toFixed(8) : '';
-                                    dataToAppend["orderFilledIdBuy"] = typeof mapArray1[key]['tradeId'] != 'undefined' && mapArray1[key]['tradeId'] != '' ? mapArray1[key]['tradeId'] : '';
-                                    dataToAppend["buyTimeDate"]      = new Date(mapArray1[key]['created_date']);
-                                    costAverageArr.push(dataToAppend);
-                                    var dataToAppend = {};
-                                    console.log('DataToAppend: ', dataToAppend)
+                        const order_sold_status = mapArray1[key]['is_sell_order'] == 'sold' ? 'yes' : 'no'
+
+                        if(typeof fractionOrderObj != undefined){
+                            var dataToAppend = {}
+                            dataToAppend["order_sold"]       = order_sold_status
+                            dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
+                            dataToAppend["filledQtyBuy"]     = fractionOrderObj["filledQty"]
+                            dataToAppend["commissionBuy"]    = fractionOrderObj["commission"]
+                            dataToAppend["commissionPercentRatio"] = fractionOrderObj["commissionPercentRatio"]
+                            dataToAppend["filledPriceBuy"]   = fractionOrderObj["filledPrice"]
+                            dataToAppend["orderFilledIdBuy"] = typeof fractionOrderObj["orderFilledId"] != 'undefined' && fractionOrderObj["orderFilledId"] != '' ? fractionOrderObj["orderFilledId"] : '';
+                            dataToAppend["buyTimeDate"]      = typeof fractionOrderObj["transactTime"] != 'undefined' && fractionOrderObj["transactTime"] != '' ? fractionOrderObj["transactTime"] : new Date(mapArray1[key]['created_date']);
+                            
+                            if(order_sold_status == 'yes'){
+                                if(sellFractionOrderObj == undefined){
+                                    // return
+                                    resp.status(404).send({
+                                        status: false, message: `Property not found: 'sell_fraction_filled_order_arr' in this order: ${mapArray1[key]["_id"]}`
+                                    });
                                 }
-                            } else {
-                                console.log(mapArray1[key])
+                                dataToAppend["avg_purchase_price"] = fractionOrderObj["filledPrice"]
+                                dataToAppend["sell_activated"] = "yes"
+                                dataToAppend["commissionSell"] = sellFractionOrderObj['commission']
+                                dataToAppend["filledPriceSell"] = sellFractionOrderObj['filledPrice']
+                                dataToAppend["filledQtySell"] = sellFractionOrderObj['filledQty']
+                                dataToAppend["orderFilledIdSell"] = sellFractionOrderObj['orderFilledId']
+                                dataToAppend["sellOrderId"] = sellFractionOrderObj['sellOrderId']
+                                dataToAppend["sellTimeDate"] = sellFractionOrderObj['sellTimeDate']
                             }
+                            
+                            console.log("\ndataToAppend: ", dataToAppend)
+                            costAverageArr.push(dataToAppend);
+                            console.log('------------------------\n')
+
+                        } else {
+                            console.log(mapArray1[key]["_id"],': fractionOrderObj is undefined for this order')
+                            var dataToAppend = {};
+                            dataToAppend["order_sold"]       = order_sold_status;
+                            dataToAppend["buy_order_id"]     = mapArray1[key]["_id"];
+                            dataToAppend["filledQtyBuy"]     = typeof mapArray1[key]['quantity'] != 'undefined' && mapArray1[key]['quantity'] != '' ? mapArray1[key]['quantity'].toFixed(8) : '';
+                            dataToAppend["commissionBuy"]    = '';
+                            dataToAppend["filledPriceBuy"]   = typeof mapArray1[key]['purchased_price'] != 'undefined' && mapArray1[key]['purchased_price'] != '' ? mapArray1[key]['purchased_price'].toFixed(8) : '';
+                            dataToAppend["orderFilledIdBuy"] = typeof mapArray1[key]['tradeId'] != 'undefined' && mapArray1[key]['tradeId'] != '' ? mapArray1[key]['tradeId'] : '';
+                            dataToAppend["buyTimeDate"]      = new Date(mapArray1[key]['created_date']);
+                            console.log("\nDataToAppend:", dataToAppend)
+                            costAverageArr.push(dataToAppend);
                         }
                     }
-                    console.log('here')
-                    // return
+
                     await new Promise(r => setTimeout(r, 500));
+
                     if(costAverageArr.length > 0){
                         for(let key in mapArray1){
                             if(mapArray1[key] !== undefined){
@@ -7359,7 +7371,10 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             application_mode: "live",
             trigger_type: tab == 'openTab_move_all_manual' || tab == 'merge_all_manual' ? 'no' : "barrier_percentile_trigger"
         }
-        const set = {
+        const update = {
+            $set: {
+                direct_parent_child_id: new ObjectID(orderId)
+            },
             $unset: {
                 cavg_parent: 1,
                 cost_avg_array: 1,
@@ -7390,7 +7405,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             // tempParentOrders = []
             // let check = await db.collection(buy_collection).findOne(where)
             // // console.log("CHECK: ", check)
-            await db.collection(buy_collection).updateMany(where, set, (err, result) => {
+            await db.collection(buy_collection).updateMany(where, update, (err, result) => {
                 if(err){
                     // console.log("ERROR: ", err)
                     reject(err)
