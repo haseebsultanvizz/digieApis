@@ -6853,7 +6853,6 @@ function UpdateChildOrders(order_id, buy_parent_id, exchange) {
 
 async function UpdateHighestPriceOrder(order_id, costaverageMap, exchange, tab='') {
     const collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-    
 
     return new Promise((resolve, reject) => {
         conn.then(async db => {
@@ -6938,9 +6937,9 @@ function PurchasedPriceOrders(symbol, admin_id, exchange, tab){
             if(cost_avg_array_orders.length > 0){
                 for(let i=0; i<cost_avg_array_orders.length; i++){
                     for(let j=0; j<cost_avg_array_orders[i]['cost_avg_array'].length; j++){
-                        // if(j== 0 || cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no'){
-                        //     continue;
-                        // }
+                        if(j== 0 || cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no'){
+                            continue;
+                        }
                         let collection_name = cost_avg_array_orders[i]['cost_avg_array'][j]['order_sold'] == 'no' ? 'buy_orders' : 'sold_buy_orders'
                         collection_name = exchange == 'binance' ? collection_name : collection_name+'_'+exchange;
                         query2['_id'] = new ObjectID((cost_avg_array_orders[i]['cost_avg_array'][j]['buy_order_id']).toString());
@@ -7142,7 +7141,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
 
                         const order_sold_status = mapArray1[key]['is_sell_order'] == 'sold' ? 'yes' : 'no'
 
-                        if(typeof fractionOrderObj != undefined){
+                        if(fractionOrderObj != undefined){
                             var dataToAppend = {}
                             dataToAppend["order_sold"]       = order_sold_status
                             dataToAppend["buy_order_id"]     = mapArray1[key]["_id"]
