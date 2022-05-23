@@ -34531,11 +34531,11 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
 
     conn.then(db => {
 
-        if(exchange == 'binance'){
+        // if(exchange == 'binance'){
           var search_arr = {
               "_id": ObjectID(user_id)
           };
-        }
+        // }
 
         let array = {}
         var collectionName = 'users'
