@@ -34531,18 +34531,22 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
 
     conn.then(db => {
 
-        // if(exchange == 'binance'){
+        if(exchange == 'binance'){
           var search_arr = {
               "_id": ObjectID(user_id)
           };
-        // }
+        } else{
+          var search_arr = {
+            "user_id": user_id
+          };
+        }
 
         let array = {}
-        var collectionName = 'users'
+        var collectionName = exchange == 'binance' ? 'users' : 'kraken_credentials'
 
         // // console.log(collectionName, exchange)
         db.collection(collectionName).findOne(search_arr, async function (err, data) {
-            console.log("\nUSER DATA: ", data)
+            // console.log("DATA: ", data)
 
             if (err) throw err;
             if (data != undefined || data != null) {
