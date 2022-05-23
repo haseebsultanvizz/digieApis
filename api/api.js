@@ -34535,18 +34535,14 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
           var search_arr = {
               "_id": ObjectID(user_id)
           };
-        } else{
-          var search_arr = {
-            "user_id": user_id
-          };
         }
 
         let array = {}
-        var collectionName = exchange == 'binance' ? 'users' : 'kraken_credentials';
+        var collectionName = 'users'
 
         // // console.log(collectionName, exchange)
         db.collection(collectionName).findOne(search_arr, async function (err, data) {
-            // // console.log("HURRAH DATA: ", data)
+            console.log("\nUSER DATA: ", data)
 
             if (err) throw err;
             if (data != undefined || data != null) {
@@ -34590,7 +34586,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                     })
                 }
             } else {
-                resp.status(201).send({
+                resp.status(400).send({
                     "success": false,
                     "message": "Something Went Wrong"
                 })
