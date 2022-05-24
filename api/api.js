@@ -34602,6 +34602,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
 }) //End of updateUserTradeHistory
 
 router.post('/getIsBalanceUpdatedKraken', auth_token.required, async (req, resp) => {
+    console.log('getIsBalanceUpdatedKraken()...')
 
     var user_exist = await getUserByID(req.payload.id);
     
@@ -34615,12 +34616,13 @@ router.post('/getIsBalanceUpdatedKraken', auth_token.required, async (req, resp)
     var user_id = req.payload.id;
 
     conn.then(db => {
-        db.collection('kraken_credentials').findOne({user_id: user_id}, async function (err, data) {
+        db.collection('users').findOne({_id: new ObjectID(user_id)}, async function (err, data) {
             if (err) throw err;
             if (data != undefined || data != null) {
+                // console.log(data)
                 resp.status(200).send({
                     "success": true,
-                    "history_update": data['history_update'] ? data['history_update'] : '',
+                    "is_balance_updated_kraken": data['is_balance_updated_kraken'] ? data['is_balance_updated_kraken'] : '',
                 })
             } else {
                 resp.status(201).send({
