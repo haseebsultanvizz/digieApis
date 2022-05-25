@@ -13622,7 +13622,7 @@ async function get_api_secret(user_ip, admin_id, auth_token){
         ip = 'ip5-kraken.digiebot.com/api/user'
       } else if(user_ip == '54.157.102.20'){
         ip = 'ip6-kraken.digiebot.com/api/user'
-      } else if(trading_ip == '182.180.129.241'){
+      } else if(user_ip == '182.180.129.241'){
         ip = 'ip6-kraken.digiebot.com/api/user'
       }
 
