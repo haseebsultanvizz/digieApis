@@ -32489,7 +32489,7 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
             $lookup: {
                 from: 'sold_buy_orders',
                 localField: 'orderId',
-                foreignField: 'binance_order_id',
+                foreignField: 'sell_fraction_filled_order_arr.sellOrderId',
                 as: 'sold_order'
             }
         },
