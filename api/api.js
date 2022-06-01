@@ -22538,7 +22538,7 @@ router.post('/getOpenBalance', auth_token.required, async (req, res) => {
 
 })//end getOpenBalance
 
-async function getOpenBalance(user_id, exchange) {
+async function getOpenBalance(user_id, exchange, trigger_type='') {
     return new Promise(async (resolve)=>{
         conn.then(async (db) => {
             let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
@@ -22565,6 +22565,8 @@ async function getOpenBalance(user_id, exchange) {
                     'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
                 }
             ]
+
+            if(trigger_type != '') { where['trigger_type'] = trigger_type }
 
             let openOrders = await db.collection(collectionName).find(where).toArray();
             if (openOrders.length > 0) {
@@ -22989,7 +22991,7 @@ async function getOpenBalance_current_market(user_id, exchange) {
     })
 }
 
-async function getCostAvgBalance(user_id, exchange) {
+async function getCostAvgBalance(user_id, exchange, trigger_type='') {
     return new Promise(async (resolve) => {
 
         const db = await conn
@@ -23018,6 +23020,8 @@ async function getCostAvgBalance(user_id, exchange) {
                 'avg_orders_ids.0': { '$exists': true }
             },
         ]
+
+        if(trigger_type != '') { where['trigger_type'] = trigger_type }
 
         let p1 = db.collection(buy_collection).find(where).toArray();
         let p2 = db.collection(sold_collection).find(where).toArray();
@@ -23100,7 +23104,8 @@ async function getCostAvgBalance(user_id, exchange) {
     })
 }
 
-async function getCostAvgBalance_new(user_id, exchange) {
+async function getCostAvgBalance_new(user_id, exchange, trigger_type='') {
+    
     return new Promise(async (resolve) => {
 
         const db = await conn
@@ -23129,6 +23134,8 @@ async function getCostAvgBalance_new(user_id, exchange) {
                 'avg_orders_ids.0': { '$exists': true }
             },
         ]
+
+        if(trigger_type != '') { where['trigger_type'] = trigger_type }
 
         let p1 = db.collection(buy_collection).find(where).toArray();
         let p2 = db.collection(sold_collection).find(where).toArray();
@@ -23344,7 +23351,7 @@ router.post('/getLTHBalance', auth_token.required, async (req, res) => {
 
 })//end getLTHBalance
 
-async function getLTHBalance(user_id, exchange) {
+async function getLTHBalance(user_id, exchange, trigger_type='') {
     return new Promise(async (resolve) => {
         conn.then(async (db) => {
             let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
@@ -23355,6 +23362,9 @@ async function getLTHBalance(user_id, exchange) {
                 'is_sell_order': 'yes',
                 'cost_avg': { '$nin': ['taking_child', 'yes', 'completed'] }
             }
+
+            if(trigger_type != '') { where['trigger_type'] = trigger_type }
+            
             let lthOrders = await db.collection(collectionName).find(where).toArray();
             if (lthOrders.length > 0) {
 
@@ -27873,23 +27883,66 @@ async function get_dashboard_wallet_new(admin_id, exchange){
         let lthBalance = getLTHBalance(admin_id, exchange)
         let costAvgBalance = getCostAvgBalance(admin_id, exchange)
         let costAvgBalance_new = getCostAvgBalance_new(admin_id, exchange)
+        let availableBalance = getBtcUsdtBalance(admin_id, exchange)
 
-        let myPromises = await Promise.all([openBalance, lthBalance, costAvgBalance, costAvgBalance_new])
+        let myPromises = await Promise.all([openBalance, lthBalance, costAvgBalance, costAvgBalance_new, availableBalance])
 
         console.log("Open Balance: ", myPromises[0])
         console.log("LTH Balance: ", myPromises[1])
         console.log("CA Balance: ", myPromises[2])
         console.log("CA Balance New: ", myPromises[3])
+        console.log("Available Balance New: ", myPromises[4])
 
         const used_btc_balance = myPromises[0].onlyBtc + myPromises[1].onlyBtc + myPromises[2].onlyBtc
         const used_usdt_balance = myPromises[0].onlyUsdt + myPromises[1].onlyUsdt + myPromises[2].onlyUsdt
+        const available_balance = myPromises[4]
 
         console.log("Used: ", used_btc_balance, used_usdt_balance)
+
+        let openBalanceAuto = getOpenBalance(admin_id, exchange, 'barrier_percentile_trigger')
+        let lthBalanceAuto = getLTHBalance(admin_id, exchange, 'barrier_percentile_trigger')
+        let costAvgBalanceAuto = getCostAvgBalance(admin_id, exchange, 'barrier_percentile_trigger')
+        let costAvgBalance_newAuto = getCostAvgBalance_new(admin_id, exchange, 'barrier_percentile_trigger')
+
+
+        let myPromisesAuto = await Promise.all([openBalanceAuto, lthBalanceAuto, costAvgBalanceAuto, costAvgBalance_newAuto])
+
+        console.log("Open Balance Auto: ", myPromisesAuto[0])
+        console.log("LTH Balance Auto: ", myPromisesAuto[1])
+        console.log("CA Balance Auto: ", myPromisesAuto[2])
+        console.log("CA Balance New Auto: ", myPromisesAuto[3])
+
+        const used_btc_balance_auto = (myPromisesAuto[0].onlyBtc ? myPromisesAuto[0].onlyBtc : 0) + (myPromisesAuto[1].onlyBtc ? myPromisesAuto[1].onlyBtc : 0) +(myPromisesAuto[2].onlyBtc ? myPromisesAuto[2].onlyBtc : 0)
+        const used_usdt_balance_auto = (myPromisesAuto[0].onlyUsdt ? myPromisesAuto[0].onlyUsdt : 0) + (myPromisesAuto[1].onlyUsdt ? myPromisesAuto[1].onlyUsdt : 0) + (myPromisesAuto[1].onlyUsdt ? myPromisesAuto[1].onlyUsdt : 0)
+
+        console.log("Used Auto: ", used_btc_balance_auto, used_usdt_balance_auto)
+
+        let openBalanceManual = getOpenBalance(admin_id, exchange, 'no')
+        let lthBalanceManual = getLTHBalance(admin_id, exchange, 'no')
+        let costAvgBalanceManual = getCostAvgBalance(admin_id, exchange, 'no')
+        let costAvgBalance_newManual = getCostAvgBalance_new(admin_id, exchange, 'no')
+
+
+        let myPromisesManual = await Promise.all([openBalanceManual, lthBalanceManual, costAvgBalanceManual, costAvgBalance_newManual])
+
+        console.log("Open Balance Manual: ", myPromisesManual[0])
+        console.log("LTH Balance Manual: ", myPromisesManual[1])
+        console.log("CA Balance Manual: ", myPromisesManual[2])
+        console.log("CA Balance New Manual: ", myPromisesManual[3])
+
+        const used_btc_balance_manual = (myPromisesManual[0].onlyBtc ? myPromisesManual[0].onlyBtc : 0) + (myPromisesManual[1].onlyBtc ? myPromisesManual[1].onlyBtc : 0) +(myPromisesManual[2].onlyBtc ? myPromisesManual[2].onlyBtc : 0)
+        const used_usdt_balance_manual = (myPromisesManual[0].onlyUsdt ? myPromisesManual[0].onlyUsdt : 0) + (myPromisesManual[1].onlyUsdt ? myPromisesManual[1].onlyUsdt : 0) + (myPromisesManual[1].onlyUsdt ? myPromisesManual[1].onlyUsdt : 0)
+
+        console.log("Used Manual: ", used_btc_balance_manual, used_usdt_balance_manual)
+
         resolve({
             status: true,
             data: {
-                'used_btc_balance': used_btc_balance,
-                'used_usdt_balance': used_usdt_balance
+                'used_btc_balance': used_btc_balance_auto,
+                'used_usdt_balance': used_usdt_balance_auto,
+                'used_btc_balance_manual': used_btc_balance_manual,
+                'used_usdt_balance_manual': used_usdt_balance_manual,
+                'available_balance': available_balance
             },
             message: 'Data found successfully',
         })
