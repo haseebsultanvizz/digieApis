@@ -20876,7 +20876,8 @@ async function createAutoTradeParents(settings){
 
         // return
 
-        let coinsWorthArr = settings.settings.step_4.coinsCategoryWorth //await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
+        // let coinsWorthArr = await settings.settings.step_4.coinsCategoryWorth
+        let coinsWorthArr = await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
         console.log('\nCoinsWorthArr: ', coinsWorthArr)
         // process.exit(0)
 
@@ -21354,7 +21355,8 @@ async function createAutoTradeParents_test(settings) {
         let cancel_previous_parents = step4.cancel_previous_parents
         let remove_duplicates = step4.remove_duplicates
 
-        let coinsWorthArr = settings.settings.step_4.coinsCategoryWorth // (step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
+        // let coinsWorthArr = settings.settings.step_4.coinsCategoryWorth
+        let coinsWorthArr = await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
         console.log('coinsWorthArr ', coinsWorthArr)
         // process.exit(0)
 
