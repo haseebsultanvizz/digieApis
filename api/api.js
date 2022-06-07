@@ -5419,9 +5419,10 @@ async function listOrderListing(postDAta3, dbConnection) {
         tempWhere['$or'] = [
             {
                 username_lowercase: postDAta.user_name.toLowerCase()
-            }, {
-                email_address: postDAta.user_name
-            }
+            } 
+            // {
+            //     email_address: postDAta.user_name
+            // }
         ]
 
 
@@ -20322,6 +20323,10 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
     let trading_ip = req.body.trading_ip
     // let exchangesArr = ['binance', 'bam', 'kraken']
 
+    console.log("Data Arr: ", dataArr)
+
+    // return
+
     if (typeof user_id != 'undefined' && user_id != '' && typeof exchange != 'undefined' && exchange != '' && typeof application_mode != 'undefined' && application_mode != '') {
 
         dataArr['step_1'] = {'exchange': exchange}
@@ -20382,12 +20387,16 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
                     await createAutoTradeParents_test(autoTradeData)
                 }
 
+                // return 
+
                 res.send({
                     status: true,
                     message: 'Auto trade settings updated successfully'
                 })
 
             }else{
+
+                // return 
 
                 //Insert auto trade settings
                 let data = dataArr
@@ -20835,6 +20844,9 @@ async function listmarketPriceMinNotationCoinArr(coin, exchange) {
 } //End of listmarketPriceMinNotationCoinArr
 
 async function createAutoTradeParents(settings){
+    console.log('createAutoTradeParents()...')
+    console.log("Settings: ", settings)
+    console.log("\ncoinsCategoryWorth: ", settings.settings.step_4.coinsCategoryWorth)
     return new Promise(async (resolve) => {
         // resolve(true)
 
@@ -20862,8 +20874,10 @@ async function createAutoTradeParents(settings){
         let cancel_previous_parents = step4.cancel_previous_parents
         let remove_duplicates = step4.remove_duplicates
 
-        let coinsWorthArr = await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
-        // // console.log('coinsWorthArr ', coinsWorthArr)
+        // return
+
+        let coinsWorthArr = settings.settings.step_4.coinsCategoryWorth //await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
+        console.log('\nCoinsWorthArr: ', coinsWorthArr)
         // process.exit(0)
 
         let whereCoins = { '$in': coins}
@@ -21311,6 +21325,7 @@ async function createAutoTradeParents(settings){
 }
 
 async function createAutoTradeParents_test(settings) {
+    console.log('createAutoTradeParents_test()...')
     return new Promise(async (resolve) => {
         // resolve(true)
 
@@ -21339,8 +21354,8 @@ async function createAutoTradeParents_test(settings) {
         let cancel_previous_parents = step4.cancel_previous_parents
         let remove_duplicates = step4.remove_duplicates
 
-        let coinsWorthArr = await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
-        // // console.log('coinsWorthArr ', coinsWorthArr)
+        let coinsWorthArr = settings.settings.step_4.coinsCategoryWorth // (step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
+        console.log('coinsWorthArr ', coinsWorthArr)
         // process.exit(0)
 
         let whereCoins = { '$in': coins }
