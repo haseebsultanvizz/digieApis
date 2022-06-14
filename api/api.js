@@ -7603,7 +7603,7 @@ router.post('/getUsersSymbolTradesCheck', auth_token.required, async (req,res) =
                                 admin_id: admin_id,
                                 application_mode: 'live',
                                 trigger_type: 'barrier_percentile_trigger',
-                                created_date: {$gte: new Date('2021-01-01')},
+                                // created_date: {$gte: new Date('2021-01-01')},
                                 status: {
                                 $in: ['FILLED','LTH', 'CA_TAKING_CHILD']
                                 },
