@@ -20850,6 +20850,7 @@ async function createAutoTradeParents(settings){
         // return
 
         // let coinsWorthArr = await settings.settings.step_4.coinsCategoryWorth
+        // ^ for new atg version comment this line use this (upper one)
         let coinsWorthArr = await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
         console.log('\nCoinsWorthArr: ', coinsWorthArr)
         // process.exit(0)
@@ -21329,6 +21330,7 @@ async function createAutoTradeParents_test(settings) {
         let remove_duplicates = step4.remove_duplicates
 
         // let coinsWorthArr = settings.settings.step_4.coinsCategoryWorth
+        // ^ for new atg version comment this line use this (upper one)
         let coinsWorthArr = await findCoinsTradeWorth(step4.totalTradeAbleInUSD, step4.dailyTradeableBTC, step4.dailyTradeableUSDT, coins, exchange)
         console.log('coinsWorthArr ', coinsWorthArr)
         // process.exit(0)
@@ -34608,6 +34610,8 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                         "last_key_updated_date": data['info_modified_date'],
                         "last_key_updated_date_2": data['info_modified_date_secondary'],
                         "last_key_updated_date_3": data['info_modified_date_third_key'],
+                        "key1_disable_date": data['key1_disable_date'],
+                        "key2_disable_date": data['key2_disable_date'],
                         "api_key_1": typeof data['api_key_1'] != 'undefined' && data['api_key_1'] != '' ? data['api_key_1'] : 'no',
                         "api_key_2": typeof data['api_key_2'] != 'undefined' && data['api_key_2'] != '' ? data['api_key_2'] : 'no',
                         "api_key_3": typeof data['api_key_3'] != 'undefined' && data['api_key_3'] != '' ? data['api_key_3'] : 'no',
@@ -34624,9 +34628,11 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                     "is_api_key_valid": data['is_api_key_valid'],
                     "is_api_key_valid_secondary": data['is_api_key_valid_secondary'],
                     "is_api_key_valid_third": data['is_api_key_valid_third'],
-                    "last_key_updated_date_kraken1": data['modified_date'],
-                    "last_key_updated_date_kraken2": data['modified_date_secondary'],
-                    "last_key_updated_date_kraken3": data['modified_date_third_key'],
+                    "last_key_updated_date": data['modified_date'],
+                    "last_key_updated_date_2": data['modified_date_secondary'],
+                    "last_key_updated_date_3": data['modified_date_third_key'],
+                    "key1_disable_date": data['key1_disable_date'],
+                    "key2_disable_date": data['key2_disable_date'],
                     "api_key_1": typeof data['api_key_1'] != 'undefined' && data['api_key_1'] != '' ? data['api_key_1'] : 'no',
                     "api_key_2": typeof data['api_key_2'] != 'undefined' && data['api_key_2'] != '' ? data['api_key_2'] : 'no',
                     "api_key_3": typeof data['api_key_3'] != 'undefined' && data['api_key_3'] != '' ? data['api_key_3'] : 'no',
