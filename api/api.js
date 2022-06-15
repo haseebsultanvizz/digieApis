@@ -735,21 +735,23 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
             });
             return false;
         }
-        let exchange = typeof req.body.exchange !="undefined"?req.body.exchange : ""
+        let exchange = typeof req.body.exchange != "undefined" ? req.body.exchange : ""
         // by default we will show previous 3 months from the last closing month.
-        let type = typeof req.body.type!="undefined"?Number(req.body.type):3
         
-        // e.g., suppose its April 15 today then we will start from December 31st to March 31st.
+        // convert months to milliseconds
+        let type = typeof req.body.type != "undefined" ? Number(req.body.type) * 30 * 86400000 : 3 * 30 * 86400000
+        
+        // e.g., suppose its April 15 today then we will start from December 31st to March 31st (Dismissed)
         currentDate = new Date();
         // // console.log(currentDate)
-        const dateTo = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1); 
-        const dateFrom = new Date(currentDate.getFullYear(), currentDate.getMonth() - type, 1); 
+        const dateTo = currentDate // new Date(currentDate.getFullYear(), currentDate.getMonth(), 1); 
+        const dateFrom = new Date(currentDate - type) // new Date(currentDate.getFullYear(), currentDate.getMonth() - type, 1); 
 
-        console.log('\n')
-        console.log('MONTHS: ', type)
-        console.log('DATE FROM: ', dateFrom)
-        console.log('DATE TO: ', dateTo)
-        console.log('\n')
+        // console.log('\n')
+        // console.log('MONTHS: ', type)
+        // console.log('DATE FROM: ', dateFrom)
+        // console.log('DATE TO: ', dateTo)
+        // console.log('\n')
 
         let errors = []
         let hasError = 0
@@ -852,7 +854,7 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
             ];
             
             let accumulationData1 = (user_id == ObjectID('5eb5a5a628914a45246bacc6') ? await fetchUserAccumulations(collection, pipeline0) : await fetchUserAccumulations(collection, pipeline))
-            console.log("Accumulations Data 1: ", accumulationData1)
+            // console.log("Accumulations Data 1: ", accumulationData1)
 
             var collection2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
             let pipeline2 = [
@@ -934,7 +936,7 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
 
             // console.log("\nPipeline2: ", pipeline2)
             let accumulationData2 = await fetchUserAccumulations(collection2, pipeline2);
-            console.log("Accumulations Data 2: ", accumulationData2)
+            // console.log("Accumulations Data 2: ", accumulationData2)
 
             let btc1 = accumulationData1.find(ele => ele['_id'] == 'BTC')
             let btc2 = accumulationData2.find(ele => ele['_id'] == 'BTC')
@@ -946,7 +948,7 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
                 SDT: (sdt1 ? sdt1 .accumulations : 0) + (sdt2 ? sdt2.accumulations : 0)
             }
             
-            console.log("\nTOTAL: ", accumulationData)
+            // console.log("\nTOTAL: ", accumulationData)
 
             if(!accumulationData){
                 resp.status(203).send({
@@ -986,6 +988,83 @@ router.post('/listTrades', auth_token.required , async (req, resp) => {
             status:500,
             success:false,
             results:[],
+            errors:[],
+        });
+        return false;
+    }
+});
+// End of List Trades Handler
+
+// list trades
+router.post('/listTradesCount', auth_token.required , async (req, resp) => {
+    try {
+            
+        var user_id = req.payload.id
+        
+        var user_exist = await getUserByID(user_id);
+        if(!user_exist){
+            resp.status(401).send({
+                message: 'User Does not Exist!',
+                status:400,
+                results:[],
+                errors:[],
+                success:false,
+            });
+            return false;
+        }
+
+        let exchange = typeof req.body.exchange != "undefined" ? req.body.exchange : ""
+        let errors = []
+        let hasError = 0
+
+        if(exchange == ""){
+            hasError = 1
+            errors.push('Exchange Is required');
+        }
+
+        if(hasError == 0) {
+            let query = {
+                    admin_id:user_id,
+                    // sell_date:{$gte: new Date(dateFrom), $lte: new Date(dateTo) },
+                    application_mode:"live", 
+                    parent_status:{$ne: "parent"}, 
+                    status:{$nin: ['canceled', 'archive', 'APIKEY_ERROR',"COIN_BAN_ERROR"]},
+                    symbol: {$nin:["POEBTC","NCASHBTC"]}
+                }
+
+            conn.then(async (db) => {
+                var collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+                let trades1 = await db.collection(collection).find(query).count(); // await fetchUserAccumulations(collection, query)
+                
+                var collection2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+                let trades2 = await db.collection(collection2).find(query).count(); // await fetchUserAccumulations(collection2, query);
+                
+                resp.status(200).send({
+                    message: "Accumulation Data Returned Successfully.",
+                    errors: [],
+                    result: trades1 + trades2,
+                    status: 200,
+                    success: true,
+                });
+            })
+            
+        } else{
+            resp.status(201).send({
+                message: "Required Params are Missing",
+                errors:errors,
+                success:false,
+                result:[],
+                status:201
+            });
+            return false;
+        }
+    } catch (error) {
+        console.log("Error: ", error)
+        resp.status(500).send({
+            message: "Unable To Handle The Request. Please Try in a While",
+            status:500,
+            success:false,
+            result:[],
             errors:[],
         });
         return false;
@@ -28447,917 +28526,916 @@ async function getAllTabFilter(){
 }
 
 async function getOrderStats(postData2){
+    console.log('getOrderStats()...')
+    console.log("Post Data 2: ", postData2)
 
-        // application_mode = "live"
-        // admin_id = "5c0912b7fc9aadaac61dd072"
-        // exchange = "binance"
+    let postData = Object.assign({}, postData2)
 
-        let postData = Object.assign({}, postData2)
+    if (typeof postData['status'] != 'undefined' && postData['status'] != ''){
+        //use values from the postData filter
+    }else{
+        postData['skip'] = 0
+        postData['limit'] = 20
+        postData['coins'] = []
+        postData['order_type'] = ""
+        postData['trigger_type'] = ""
+        postData['order_level'] = ""
+        postData['start_date'] = ""
+        postData['end_date'] = ""
+        postData['status'] = "open"
+    }
 
-        if (typeof postData['status'] != 'undefined' && postData['status'] != ''){
-            //use values from the postData filter
-        }else{
-            postData['skip'] = 0
-            postData['limit'] = 20
-            postData['coins'] = []
-            postData['order_type'] = ""
-            postData['trigger_type'] = ""
-            postData['order_level'] = ""
-            postData['start_date'] = ""
-            postData['end_date'] = ""
-            postData['status'] = "open"
+    var admin_id = postData.admin_id;
+    var application_mode = postData.application_mode;
+    var postDAta = postData;
+    var search = {};
+    var exchange = postDAta.exchange;
+
+
+
+    //if filter values exist for order list create filter on the base of selected filters
+    if (postDAta.coins != '') {
+        //search on the bases of coins
+        search['symbol'] = {
+            '$in': postDAta.coins
         }
+    }
 
-        var admin_id = postData.admin_id;
-        var application_mode = postData.application_mode;
-        var postDAta = postData;
-        var search = {};
-        var exchange = postDAta.exchange;
+    if (postDAta.order_type != '') {
+        //search on the base of order type mean manual order or trigger order
+        search['order_type'] = postDAta.order_type
+    }
+
+    if (postDAta.trigger_type != '') {
+        //seatch on the base of specific trigger
+        search['trigger_type'] = postDAta.trigger_type
+    }
+
+    if (postDAta.order_level != '') {
+        //search on the base of order level for auto trading
+        search['order_level'] = postDAta.order_level
+    }
 
 
+    if (typeof postDAta.user_name != 'undefined' && postDAta.user_name != '') {
 
-        //if filter values exist for order list create filter on the base of selected filters
-        if (postDAta.coins != '') {
-            //search on the bases of coins
-            search['symbol'] = {
-                '$in': postDAta.coins
+        let tempWhere = {}
+        tempWhere['$or'] = [
+            {
+                username_lowercase: postDAta.user_name.toLowerCase()
+            }, {
+                email_address: postDAta.user_name
             }
-        }
+        ]
 
-        if (postDAta.order_type != '') {
-            //search on the base of order type mean manual order or trigger order
-            search['order_type'] = postDAta.order_type
-        }
+        let user = await get_user_id_using_user_name('users', tempWhere)
+        var user_id = user.length > 0 ? String(user[0]['_id']) : user_id
+        search['admin_id'] = user_id;
+        admin_id = user_id;
 
-        if (postDAta.trigger_type != '') {
-            //seatch on the base of specific trigger
-            search['trigger_type'] = postDAta.trigger_type
-        }
-
-        if (postDAta.order_level != '') {
-            //search on the base of order level for auto trading
-            search['order_level'] = postDAta.order_level
-        }
-
-
-        if (typeof postDAta.user_name != 'undefined' && postDAta.user_name != '') {
-
-          let tempWhere = {}
-          tempWhere['$or'] = [
-              {
-                  username_lowercase: postDAta.user_name.toLowerCase()
-              }, {
-                  email_address: postDAta.user_name
-              }
-          ]
-
-          let user = await get_user_id_using_user_name('users', tempWhere)
-          var user_id = user.length > 0 ? String(user[0]['_id']) : user_id
-          search['admin_id'] = user_id;
-          admin_id = user_id;
-
-        }
+    }
 
 
 
 
-        // Check Added to Count Total Trades Must be Made in ATG Starts here
-        var atg_collection = (exchange == 'binance') ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange;
+    // Check Added to Count Total Trades Must be Made in ATG Starts here
+    var atg_collection = (exchange == 'binance') ? 'auto_trade_settings' : 'auto_trade_settings_' + exchange;
 
 
-        var pipeline_atg = [
-            {
-              '$match': {
-                'user_id': {'$in':[admin_id, ObjectID(admin_id)]},
-                'application_mode': application_mode
-              }
-            },
-            {
-              '$project': {
-                '_id': 0,
-                'total': {
-                  '$multiply': [
-                    {
-                      '$size': '$step_2.coins'
-                    }, {
-                      '$size': '$step_3.bots'
-                    }
-                  ]
+    var pipeline_atg = [
+        {
+            '$match': {
+            'user_id': {'$in':[admin_id, ObjectID(admin_id)]},
+            'application_mode': application_mode
+            }
+        },
+        {
+            '$project': {
+            '_id': 0,
+            'total': {
+                '$multiply': [
+                {
+                    '$size': '$step_2.coins'
+                }, {
+                    '$size': '$step_3.bots'
                 }
-              }
+                ]
             }
-        ];
-        var totalAtgCountPromise = await countATGExpectedOrders(atg_collection, pipeline_atg);
-
-        // Check Added to Count Total Trades Must be Made in ATG End here
-
-
-        var count = 0;
-        var i;
-        for (i in search) {
-            if (search.hasOwnProperty(i)) {
-                count++;
             }
         }
+    ];
+    var totalAtgCountPromise = await countATGExpectedOrders(atg_collection, pipeline_atg);
+
+    // Check Added to Count Total Trades Must be Made in ATG End here
 
 
-        var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        //::::::::::::::::::::::::::::::::::::::::::::::::
-        //Filter_1 part for count number of parent orders
-        var filter_1 = {};
-        filter_1['parent_status'] = 'parent';
-        filter_1['admin_id'] = admin_id;
-        filter_1['application_mode'] = application_mode;
-        filter_1['status'] = {
-            '$in': ['new', 'takingOrder']
+    var count = 0;
+    var i;
+    for (i in search) {
+        if (search.hasOwnProperty(i)) {
+            count++;
         }
+    }
 
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_1['created_date'] = obj;
+
+    var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    //::::::::::::::::::::::::::::::::::::::::::::::::
+    //Filter_1 part for count number of parent orders
+    var filter_1 = {};
+    filter_1['parent_status'] = 'parent';
+    filter_1['admin_id'] = admin_id;
+    filter_1['application_mode'] = application_mode;
+    filter_1['status'] = {
+        '$in': ['new', 'takingOrder']
+    }
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_1['modified_date'] = obj;
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
+        filter_1['created_date'] = obj;
+    }
 
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_1[key] = value;
-            }
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
         }
-        //:::::::::::::::::::::: End of count parent ordes Filter ::::::::::::::
-        //count parent orders Promise
-        var parentCountPromise = countCollection(collectionName, filter_1);
-
-
-
-
-
-
-
-        //Filter_atg part for count number of atg orders
-        var filter_atg = {};
-        filter_atg['parent_status'] = 'parent';
-        filter_atg['auto_trade_generator'] = 'yes';
-        filter_atg['admin_id'] = admin_id;
-        filter_atg['application_mode'] = application_mode;
-        filter_atg['status'] = {
-            '$in': ['new', 'takingOrder']
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
         }
+        filter_1['modified_date'] = obj;
+    }
 
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_atg['created_date'] = obj;
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_1[key] = value;
         }
+    }
+    //:::::::::::::::::::::: End of count parent ordes Filter ::::::::::::::
+    //count parent orders Promise
+    var parentCountPromise = countCollection(collectionName, filter_1);
 
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_atg['modified_date'] = obj;
+
+
+
+
+
+
+    //Filter_atg part for count number of atg orders
+    var filter_atg = {};
+    filter_atg['parent_status'] = 'parent';
+    filter_atg['auto_trade_generator'] = 'yes';
+    filter_atg['admin_id'] = admin_id;
+    filter_atg['application_mode'] = application_mode;
+    filter_atg['status'] = {
+        '$in': ['new', 'takingOrder']
+    }
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_atg[key] = value;
-            }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
-        //:::::::::::::::::::::: End of count atg ordes Filter ::::::::::::::
-        //count atg orders Promise
-        var atg_CountPromise = countCollection(collectionName, filter_atg);
+        filter_atg['created_date'] = obj;
+    }
 
-
-
-        //::::::::::::: filter_2 count new orders for order listing ::::::::::::
-        var filter_2 = {};
-        filter_2['status'] = {
-            '$in': ['new', 'new_ERROR', 'BUY_ID_ERROR']
-        };
-        filter_2['price'] = {
-            '$nin': ['', null]
-        };
-        filter_2['admin_id'] = admin_id;
-        filter_2['application_mode'] = application_mode;
-
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_2['created_date'] = obj;
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
         }
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_2['modified_date'] = obj;
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
         }
+        filter_atg['modified_date'] = obj;
+    }
 
-
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_2[key] = value;
-            }
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_atg[key] = value;
         }
-        //:::::::::: End of filter_2 for couting new orders :::::::::::::
-        //Promise for count new orders
-        var newCountPromise = countCollection(collectionName, filter_2);
+    }
+    //:::::::::::::::::::::: End of count atg ordes Filter ::::::::::::::
+    //count atg orders Promise
+    var atg_CountPromise = countCollection(collectionName, filter_atg);
 
 
 
-        //:::::::::::::::: filter_3 for count open order :::::::::::::::::
-        var filter_3 = {};
-        // filter_3['status'] = {
-        //     '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
-        // }
-        // filter_3['is_sell_order'] = 'yes';
-        // filter_3['is_lth_order'] = {
-        //     $ne: 'yes'
-        // };
-        // // filter_3['cost_avg'] = { '$exists': false }
-        // filter_3['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+    //::::::::::::: filter_2 count new orders for order listing ::::::::::::
+    var filter_2 = {};
+    filter_2['status'] = {
+        '$in': ['new', 'new_ERROR', 'BUY_ID_ERROR']
+    };
+    filter_2['price'] = {
+        '$nin': ['', null]
+    };
+    filter_2['admin_id'] = admin_id;
+    filter_2['application_mode'] = application_mode;
 
-        filter_3['$or'] = [
-            {
-                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
-                'is_lth_order': { '$ne': 'yes' },
-                'cost_avg': 'yes',
-                'cavg_parent': 'yes',
-                'show_order': 'yes',
-                'avg_orders_ids.0': {'$exists': false},
-                'move_to_cost_avg': {'$ne': 'yes'},
-            },
-            {
-                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-                'is_sell_order': 'yes',
-                'is_lth_order': { '$ne': 'yes' },
-                'cost_avg': {'$nin': ['yes', 'taking_child', 'completed']}
-            },
-        ]
-
-        // filter_3['$or'] = [
-        //     {
-        //         'status': {'$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
-        //         'is_sell_order': 'yes',
-        //         'is_lth_order': {'$ne': 'yes'}
-        //     },
-        //     {
-        //         'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
-        //         'is_sell_order': 'yes',
-        //         'is_lth_order': { '$ne': 'yes' },
-        //         // 'cost_avg': { '$exists': true },
-        //         'cost_avg': { '$ne': '' },
-        //         'show_order': 'yes'
-        //         // 'avg_orders_ids': { '$exists': true }
-        //     },
-        // ]
-        filter_3['admin_id'] = admin_id;
-        filter_3['application_mode'] = application_mode;
-
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_3['created_date'] = obj;
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_3['modified_date'] = obj;
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
-
-
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_3[key] = value;
-            }
+        filter_2['created_date'] = obj;
+    }
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
         }
-        //::::::::::::::::End of filter_3 for count open order :::::::::::::::::
-
-        //::::::::: Open-orders count Promise :::::::::::::::::::::::::::::::::
-        var openCountPromise = countCollection(collectionName, filter_3);
-
-
-        //::::::::::::::: filter_33 for count filled orders :::::::::::::
-        var filter_33 = {};
-        // filter_33['status'] = {
-        //     '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
-        // }
-        // // filter_33['cost_avg'] = { '$exists': false }
-        // filter_33['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
-
-        filter_33['$or'] = [
-            {
-                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
-                // 'is_sell_order': 'yes',
-                'is_sell_order': {'$ne' : 'sold'},
-                'is_lth_order': { '$ne': 'yes' },
-                'cost_avg': 'yes',
-                'cavg_parent': 'yes',
-                'show_order': 'yes',
-                'avg_orders_ids.0': { '$exists': false },
-                'move_to_cost_avg': { '$ne': 'yes' },
-            },
-            {
-                'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
-                // 'is_sell_order': 'yes',
-                'is_sell_order': {'$ne' : 'sold'},
-                'is_lth_order': { '$ne': 'yes' },
-                'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
-            },
-        ]
-        filter_33['admin_id'] = admin_id;
-        filter_33['application_mode'] = application_mode;
-
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_33['created_date'] = obj;
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
         }
+        filter_2['modified_date'] = obj;
+    }
 
 
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_33['modified_date'] = obj;
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_2[key] = value;
         }
+    }
+    //:::::::::: End of filter_2 for couting new orders :::::::::::::
+    //Promise for count new orders
+    var newCountPromise = countCollection(collectionName, filter_2);
 
 
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_33[key] = value;
-            }
+
+    //:::::::::::::::: filter_3 for count open order :::::::::::::::::
+    var filter_3 = {};
+    // filter_3['status'] = {
+    //     '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']
+    // }
+    // filter_3['is_sell_order'] = 'yes';
+    // filter_3['is_lth_order'] = {
+    //     $ne: 'yes'
+    // };
+    // // filter_3['cost_avg'] = { '$exists': false }
+    // filter_3['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+
+    filter_3['$or'] = [
+        {
+            'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+            'is_sell_order': 'yes',
+            'is_lth_order': { '$ne': 'yes' },
+            'cost_avg': 'yes',
+            'cavg_parent': 'yes',
+            'show_order': 'yes',
+            'avg_orders_ids.0': {'$exists': false},
+            'move_to_cost_avg': {'$ne': 'yes'},
+        },
+        {
+            'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+            'is_sell_order': 'yes',
+            'is_lth_order': { '$ne': 'yes' },
+            'cost_avg': {'$nin': ['yes', 'taking_child', 'completed']}
+        },
+    ]
+
+    // filter_3['$or'] = [
+    //     {
+    //         'status': {'$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR']},
+    //         'is_sell_order': 'yes',
+    //         'is_lth_order': {'$ne': 'yes'}
+    //     },
+    //     {
+    //         'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+    //         'is_sell_order': 'yes',
+    //         'is_lth_order': { '$ne': 'yes' },
+    //         // 'cost_avg': { '$exists': true },
+    //         'cost_avg': { '$ne': '' },
+    //         'show_order': 'yes'
+    //         // 'avg_orders_ids': { '$exists': true }
+    //     },
+    // ]
+    filter_3['admin_id'] = admin_id;
+    filter_3['application_mode'] = application_mode;
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-        //:::::::::::::::End of  filter_33 for count filled orders :::::::::::::
-        //promise of count filled orders
-        var filledCountPromise = countCollection(collectionName, filter_33);
-
-
-
-
-        //:::::::::::; filter_4 for count all canceled orders ::::::::::::;
-        var filter_4 = {};
-        filter_4['status'] = 'canceled';
-        filter_4['admin_id'] = admin_id;
-        filter_4['application_mode'] = application_mode;
-        // filter_4['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };
-
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_4['created_date'] = obj;
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
+        filter_3['created_date'] = obj;
+    }
 
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_4['modified_date'] = obj;
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
         }
-
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_4[key] = value;
-            }
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
         }
-        //:::::::::::: End of  filter_4 for count all canceled orders ::::::::::::;
-        //Promise for canceled count orders :::::::::::::::::
-        var cancelCountPromise = countCollection(collectionName, filter_4);
+        filter_3['modified_date'] = obj;
+    }
 
 
-        //:::::::::::; filter_errors for count all Errors orders ::::::::::::;
-        var filter_errors = {};
-        filter_errors['status'] = { '$nin': ['new', 'FILLED', 'fraction_submitted_buy', 'canceled', 'LTH', 'submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'CA_TAKING_CHILD'] }
-        filter_errors['parent_status'] = { '$exists': false };
-        filter_errors['admin_id'] = admin_id;
-        filter_errors['application_mode'] = application_mode;
-
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_errors['created_date'] = obj;
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_3[key] = value;
         }
+    }
+    //::::::::::::::::End of filter_3 for count open order :::::::::::::::::
+
+    //::::::::: Open-orders count Promise :::::::::::::::::::::::::::::::::
+    var openCountPromise = countCollection(collectionName, filter_3);
 
 
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_errors['modified_date'] = obj;
+    //::::::::::::::: filter_33 for count filled orders :::::::::::::
+    var filter_33 = {};
+    // filter_33['status'] = {
+    //     '$in': ['FILLED', 'fraction_submitted_buy', 'FILLED_ERROR']
+    // }
+    // // filter_33['cost_avg'] = { '$exists': false }
+    // filter_33['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+
+    filter_33['$or'] = [
+        {
+            'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
+            // 'is_sell_order': 'yes',
+            'is_sell_order': {'$ne' : 'sold'},
+            'is_lth_order': { '$ne': 'yes' },
+            'cost_avg': 'yes',
+            'cavg_parent': 'yes',
+            'show_order': 'yes',
+            'avg_orders_ids.0': { '$exists': false },
+            'move_to_cost_avg': { '$ne': 'yes' },
+        },
+        {
+            'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR', 'fraction_submitted_buy'] },
+            // 'is_sell_order': 'yes',
+            'is_sell_order': {'$ne' : 'sold'},
+            'is_lth_order': { '$ne': 'yes' },
+            'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
+        },
+    ]
+    filter_33['admin_id'] = admin_id;
+    filter_33['application_mode'] = application_mode;
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_errors[key] = value;
-            }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
-        //:::::::::::: End of  filter_errors for count all Errors orders ::::::::::::;
-        //Promise for Errors count orders :::::::::::::::::
-        var errorsCountPromise = countCollection(collectionName, filter_errors);
+        filter_33['created_date'] = obj;
+    }
 
 
-        //::::::: filter_5  for count all error orders :::::::::::::::::::::::
-        var filter_5 = {};
-        filter_5['status'] = 'error';
-        filter_5['admin_id'] = admin_id;
-        filter_5['application_mode'] = application_mode;
-        filter_5['status'] = {
-          $nin: ['CA_TAKING_CHILD']
-        };
-
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_5['created_date'] = obj;
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
         }
-
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_5['modified_date'] = obj;
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
         }
+        filter_33['modified_date'] = obj;
+    }
 
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_5[key] = value;
-            }
+
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_33[key] = value;
         }
-        //::::::: End of  filter_5  for count all error orders :::::::::::::::::::::::
-        //Promise for count error orders ::::::::::
-        var errorCountPromise = countCollection(collectionName, filter_5);
-
-        //::::::::::::: filter_6 for count all lth order :::::::::::::::::::
-        var filter_6 = {};
-        filter_6['status'] = {
-            $in: ['LTH', 'LTH_ERROR']
-        };
-        filter_6['admin_id'] = admin_id;
-        filter_6['application_mode'] = application_mode;
-        filter_6['is_sell_order'] = 'yes';
-        // filter_6['cost_avg'] = { '$exists': false }
-        filter_6['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+    }
+    //:::::::::::::::End of  filter_33 for count filled orders :::::::::::::
+    //promise of count filled orders
+    var filledCountPromise = countCollection(collectionName, filter_33);
 
 
 
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_6['created_date'] = obj;
+
+    //:::::::::::; filter_4 for count all canceled orders ::::::::::::;
+    var filter_4 = {};
+    filter_4['status'] = 'canceled';
+    filter_4['admin_id'] = admin_id;
+    filter_4['application_mode'] = application_mode;
+    // filter_4['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_6['modified_date'] = obj;
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
+        filter_4['created_date'] = obj;
+    }
 
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_6[key] = value;
-            }
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
         }
-        //::::::::::::: End of filter_6 for count all lth order :::::::::::::::::::
-        //Promise for count lth orders
-        var lthCountPromise = countCollection(collectionName, filter_6);
-
-
-
-        //:::::::::::::  filter_7 for count all submitted order :::::::::::::::::::
-        var filter_7 = {};
-        filter_7['status'] = {
-            '$in': ['submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'submitted_ERROR']
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
         }
-        filter_7['admin_id'] = admin_id;
-        filter_7['application_mode'] = application_mode;
-        filter_7['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };;
+        filter_4['modified_date'] = obj;
+    }
 
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_7['created_date'] = obj;
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_4[key] = value;
         }
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_7['modified_date'] = obj;
+    }
+    //:::::::::::: End of  filter_4 for count all canceled orders ::::::::::::;
+    //Promise for canceled count orders :::::::::::::::::
+    var cancelCountPromise = countCollection(collectionName, filter_4);
+
+
+    //:::::::::::; filter_errors for count all Errors orders ::::::::::::;
+    var filter_errors = {};
+    filter_errors['status'] = { '$nin': ['new', 'FILLED', 'fraction_submitted_buy', 'canceled', 'LTH', 'submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'CA_TAKING_CHILD'] }
+    filter_errors['parent_status'] = { '$exists': false };
+    filter_errors['admin_id'] = admin_id;
+    filter_errors['application_mode'] = application_mode;
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_7[key] = value;
-            }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
-        //::::::::::::: End of filter_7 for count all submitted order :::::::::::::::::::
-        //promise for count submitted orders
-        var submittedCountPromise = countCollection(collectionName, filter_7);
+        filter_errors['created_date'] = obj;
+    }
 
 
-        var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
-
-        //::::::::::::: filter_8 for count all sold order :::::::::::::::::::
-        var filter_8 = {};
-        filter_8['admin_id'] = admin_id;
-        filter_8['application_mode'] = application_mode;
-        // filter_8['$or'] = [
-        //     { 'resume_status': 'completed', 'trading_status': 'complete' },
-        //     { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
-        // ];
-        // filter_8['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
-
-        filter_8['$or'] = [
-            { 'resume_status': 'completed', 'trading_status': 'complete' },
-            { 'cost_avg': 'completed', 'cavg_parent': 'yes', 'show_order': 'yes' },
-            // { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false }, 'cost_avg': { '$exists': false } },
-            { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false }, 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] } },
-        ];
-        filter_8['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
-        filter_8['status'] = { '$nin': ['CA_SOLD_COMPLETE'] }
-        if (!digie_admin_ids.includes(admin_id)) {
-            filter_8['$or'][0]['show_order'] = 'yes'
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
         }
-
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_8['created_date'] = obj;
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
         }
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_8['modified_date'] = obj;
+        filter_errors['modified_date'] = obj;
+    }
+
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_errors[key] = value;
         }
+    }
+    //:::::::::::: End of  filter_errors for count all Errors orders ::::::::::::;
+    //Promise for Errors count orders :::::::::::::::::
+    var errorsCountPromise = countCollection(collectionName, filter_errors);
 
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_8[key] = value;
-            }
+
+    //::::::: filter_5  for count all error orders :::::::::::::::::::::::
+    var filter_5 = {};
+    filter_5['status'] = 'error';
+    filter_5['admin_id'] = admin_id;
+    filter_5['application_mode'] = application_mode;
+    filter_5['status'] = {
+        $nin: ['CA_TAKING_CHILD']
+    };
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
         }
-        //::::::::::::: End of filter_8 for count all sold order :::::::::::::::::::
-        //Promise for count all sold orders
-        var soldCountPromise = countCollection(collectionName, filter_8);
-
-
-        //::::::::::::: filter_12 for count all costAvgTab order :::::::::::::::::::
-        var filter_12 = {};
-        filter_12['admin_id'] = admin_id;
-        filter_12['application_mode'] = application_mode;
-
-        // // filter_12['is_sell_order'] = 'sold'
-        // filter_12['cost_avg'] = { '$exists': true }
-        // // filter_12['cost_avg'] = { '$ne': '' }
-        // filter_12['show_order'] = 'yes'
-        // // filter_12['avg_orders_ids'] = { '$exists': true }
-        // // if (!digie_admin_ids.includes(admin_id)) {
-        // //     filter_12['$or'][0]['show_order'] = 'yes'
-        // // }
-
-        // if (admin_id != superAdmin) {
-        //     filter_12['cavg_parent'] = 'yes'
-        //     // filter_12['avg_orders_ids'] = { '$exists': true }
-        // }
-
-
-        filter_12['$or'] = [
-            {
-                'cost_avg': { '$in': ['taking_child', 'yes'] },
-                'cavg_parent': 'yes',
-                'show_order': 'yes',
-                'avg_orders_ids.0': { '$exists': false },
-                'move_to_cost_avg': 'yes',
-            },
-            {
-                'cost_avg': { '$in': ['taking_child', 'yes'] },
-                'cavg_parent': 'yes',
-                'show_order': 'yes',
-                'avg_orders_ids.0': { '$exists': true }
-            },
-        ]
-        filter_12['status'] = {'$ne': 'canceled'}
-
-        // if (admin_id == superAdmin) {
-        //     filter_12['$or'][1] = {
-        //         'cost_avg': { '$exists': true },
-        //         'show_order': 'yes'
-        //     }
-        // }
-
-
-
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_12['created_date'] = obj;
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
         }
+        filter_5['created_date'] = obj;
+    }
 
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_12['modified_date'] = obj;
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
         }
-
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_12[key] = value;
-            }
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
         }
-        //::::::::::::: End of filter_12 for count all costAvgTab order :::::::::::::::::::
-        //Promise for count all costAvgTab orders
-        var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        let costAvgTabCountPromise1 = countCollection(buyOrdercollection, filter_12);
+        filter_5['modified_date'] = obj;
+    }
 
-        var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
-        let costAvgTabCountPromise2 = countCollection(soldOrdercollection, filter_12);
-        // var costAvgTabCountPromise1 = countCollection(collectionName, filter_12);
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_5[key] = value;
+        }
+    }
+    //::::::: End of  filter_5  for count all error orders :::::::::::::::::::::::
+    //Promise for count error orders ::::::::::
+    var errorCountPromise = countCollection(collectionName, filter_5);
+
+    //::::::::::::: filter_6 for count all lth order :::::::::::::::::::
+    var filter_6 = {};
+    filter_6['status'] = {
+        $in: ['LTH', 'LTH_ERROR']
+    };
+    filter_6['admin_id'] = admin_id;
+    filter_6['application_mode'] = application_mode;
+    filter_6['is_sell_order'] = 'yes';
+    // filter_6['cost_avg'] = { '$exists': false }
+    filter_6['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
 
 
-        //::::::::::::: filter_9 for count all lth_pause order :::::::::::::::::::
-        var filter_9 = {};
-        filter_9['admin_id'] = admin_id;
-        filter_9['application_mode'] = application_mode;
-        filter_9['status'] = { '$in': ['FILLED', 'pause'] };
-        filter_9['is_sell_order'] = {
-            '$in': ['pause', 'resume_pause']
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter_6['created_date'] = obj;
+    }
+
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
+        }
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
+        }
+        filter_6['modified_date'] = obj;
+    }
+
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_6[key] = value;
+        }
+    }
+    //::::::::::::: End of filter_6 for count all lth order :::::::::::::::::::
+    //Promise for count lth orders
+    var lthCountPromise = countCollection(collectionName, filter_6);
+
+
+
+    //:::::::::::::  filter_7 for count all submitted order :::::::::::::::::::
+    var filter_7 = {};
+    filter_7['status'] = {
+        '$in': ['submitted', 'submitted_for_sell', 'fraction_submitted_sell', 'submitted_ERROR']
+    }
+    filter_7['admin_id'] = admin_id;
+    filter_7['application_mode'] = application_mode;
+    filter_7['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] };;
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter_7['created_date'] = obj;
+    }
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
+        }
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
+        }
+        filter_7['modified_date'] = obj;
+    }
+
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_7[key] = value;
+        }
+    }
+    //::::::::::::: End of filter_7 for count all submitted order :::::::::::::::::::
+    //promise for count submitted orders
+    var submittedCountPromise = countCollection(collectionName, filter_7);
+
+
+    var collectionName = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+
+    //::::::::::::: filter_8 for count all sold order :::::::::::::::::::
+    var filter_8 = {};
+    filter_8['admin_id'] = admin_id;
+    filter_8['application_mode'] = application_mode;
+    // filter_8['$or'] = [
+    //     { 'resume_status': 'completed', 'trading_status': 'complete' },
+    //     { 'is_sell_order': 'sold', 'resume_order_id': {'$exists':false}}
+    // ];
+    // filter_8['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+
+    filter_8['$or'] = [
+        { 'resume_status': 'completed', 'trading_status': 'complete' },
+        { 'cost_avg': 'completed', 'cavg_parent': 'yes', 'show_order': 'yes' },
+        // { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false }, 'cost_avg': { '$exists': false } },
+        { 'is_sell_order': 'sold', 'resume_order_id': { '$exists': false }, 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] } },
+    ];
+    filter_8['cost_avg'] = { '$nin': ['taking_child', 'yes'] }
+    filter_8['status'] = { '$nin': ['CA_SOLD_COMPLETE'] }
+    if (!digie_admin_ids.includes(admin_id)) {
+        filter_8['$or'][0]['show_order'] = 'yes'
+    }
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter_8['created_date'] = obj;
+    }
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
+        }
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
+        }
+        filter_8['modified_date'] = obj;
+    }
+
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_8[key] = value;
+        }
+    }
+    //::::::::::::: End of filter_8 for count all sold order :::::::::::::::::::
+    //Promise for count all sold orders
+    var soldCountPromise = countCollection(collectionName, filter_8);
+
+
+    //::::::::::::: filter_12 for count all costAvgTab order :::::::::::::::::::
+    var filter_12 = {};
+    filter_12['admin_id'] = admin_id;
+    filter_12['application_mode'] = application_mode;
+
+    // // filter_12['is_sell_order'] = 'sold'
+    // filter_12['cost_avg'] = { '$exists': true }
+    // // filter_12['cost_avg'] = { '$ne': '' }
+    // filter_12['show_order'] = 'yes'
+    // // filter_12['avg_orders_ids'] = { '$exists': true }
+    // // if (!digie_admin_ids.includes(admin_id)) {
+    // //     filter_12['$or'][0]['show_order'] = 'yes'
+    // // }
+
+    // if (admin_id != superAdmin) {
+    //     filter_12['cavg_parent'] = 'yes'
+    //     // filter_12['avg_orders_ids'] = { '$exists': true }
+    // }
+
+
+    filter_12['$or'] = [
+        {
+            'cost_avg': { '$in': ['taking_child', 'yes'] },
+            'cavg_parent': 'yes',
+            'show_order': 'yes',
+            'avg_orders_ids.0': { '$exists': false },
+            'move_to_cost_avg': 'yes',
+        },
+        {
+            'cost_avg': { '$in': ['taking_child', 'yes'] },
+            'cavg_parent': 'yes',
+            'show_order': 'yes',
+            'avg_orders_ids.0': { '$exists': true }
+        },
+    ]
+    filter_12['status'] = {'$ne': 'canceled'}
+
+    // if (admin_id == superAdmin) {
+    //     filter_12['$or'][1] = {
+    //         'cost_avg': { '$exists': true },
+    //         'show_order': 'yes'
+    //     }
+    // }
+
+
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter_12['created_date'] = obj;
+    }
+
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
+        }
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
+        }
+        filter_12['modified_date'] = obj;
+    }
+
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_12[key] = value;
+        }
+    }
+    //::::::::::::: End of filter_12 for count all costAvgTab order :::::::::::::::::::
+    //Promise for count all costAvgTab orders
+    var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    let costAvgTabCountPromise1 = countCollection(buyOrdercollection, filter_12);
+
+    var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+    let costAvgTabCountPromise2 = countCollection(soldOrdercollection, filter_12);
+    // var costAvgTabCountPromise1 = countCollection(collectionName, filter_12);
+
+
+    //::::::::::::: filter_9 for count all lth_pause order :::::::::::::::::::
+    var filter_9 = {};
+    filter_9['admin_id'] = admin_id;
+    filter_9['application_mode'] = application_mode;
+    filter_9['status'] = { '$in': ['FILLED', 'pause'] };
+    filter_9['is_sell_order'] = {
+        '$in': ['pause', 'resume_pause']
+        // '$in': ['pause', 'resume_pause', 'resume_complete']
+    };
+    filter_9['resume_status'] = { '$ne': 'completed' }
+    filter_9['show_order'] = { '$ne': 'no' };
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter_9['created_date'] = obj;
+    }
+
+
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
+        }
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
+        }
+        filter_9['modified_date'] = obj;
+    }
+
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_9[key] = value;
+        }
+    }
+    //::::::::::::: End of filter_9 for count all lth_pause  order :::::::::::::::::::
+    //Promise for count all lth_pause orders
+    var lthPauseCountPromise = countCollection(collectionName, filter_9);
+
+
+    //Count all tab
+    let filter_all = {};
+    filter_all['application_mode'] = postDAta.application_mode
+    filter_all['admin_id'] = admin_id
+    filter_all['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+
+    if (postDAta.start_date != '' || postDAta.end_date != '') {
+        let obj = {}
+        if (postDAta.start_date != '') {
+            obj['$gte'] = new Date(postDAta.start_date);
+        }
+        if (postDAta.end_date != '') {
+            obj['$lte'] = new Date(postDAta.end_date);
+        }
+        filter_all['created_date'] = obj
+    }
+
+    if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
+        let obj = {}
+        if (postDAta.modified_start_date != '') {
+            obj['$gte'] = new Date(postDAta.modified_start_date);
+        }
+        if (postDAta.modified_end_date != '') {
+            obj['$lte'] = new Date(postDAta.modified_end_date);
+        }
+        filter_all['modified_date'] = obj;
+    }
+
+    let tempAllFilter = await getAllTabFilter()
+    let filter_all_2 = Object.assign(tempAllFilter, filter_all)
+    delete filter_all_2['cost_avg']
+
+    //Sold tab extra dynamic check
+    if (!digie_admin_ids.includes(admin_id)) {
+        filter_all_2['$or'][4]['show_order'] = 'yes'
+    }
+
+    //CostAvg tab extra dynamic check
+    if (admin_id == superAdmin) {
+        filter_all_2['$or'][8]['show_order'] = {
+            'cost_avg': { '$exists': true },
+            'show_order': 'yes'
+        }
+    }
+
+
+    if (!digie_admin_ids.includes(admin_id)) {
+        filter_all['is_sell_order'] = {
+            '$nin': ['pause', 'resume_pause']
             // '$in': ['pause', 'resume_pause', 'resume_complete']
         };
-        filter_9['resume_status'] = { '$ne': 'completed' }
-        filter_9['show_order'] = { '$ne': 'no' };
+        filter_all['resume_status'] = { '$ne': 'complete' }
+        filter_all['resume_order_id'] = { '$exists': false };
+        filter_all['resumed_parent_buy_order_id'] = { '$exists': false }
+    }
 
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_9['created_date'] = obj;
+    if (count > 0) {
+        for (let [key, value] of Object.entries(search)) {
+            filter_all[key] = value;
+            filter_all_2[key] = value;
         }
+    }
+    var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+    // let all1Promise = countCollection(soldOrdercollection, filter_all);
+    console.log("filter_all_2: ", filter_all_2)
+    let all1Promise = countCollection(soldOrdercollection, filter_all_2);
+
+    // filter_all['parent_status'] = {'$exists': false}
+    var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+    // let all2Promise = countCollection(buyOrdercollection, filter_all);
+
+    let all2Promise = countCollection(buyOrdercollection, filter_all_2);
+    //End count All tab
 
 
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_9['modified_date'] = obj;
-        }
+    //Resolve promised for count order for all tabs
+    var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise, errorsCountPromise, costAvgTabCountPromise1, costAvgTabCountPromise2, totalAtgCountPromise, atg_CountPromise]);
 
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_9[key] = value;
-            }
-        }
-        //::::::::::::: End of filter_9 for count all lth_pause  order :::::::::::::::::::
-        //Promise for count all lth_pause orders
-        var lthPauseCountPromise = countCollection(collectionName, filter_9);
+    var parentCount = PromiseResponse[0];
+    var newCount = PromiseResponse[1];
+    var openCount = PromiseResponse[2];
+    var cancelCount = PromiseResponse[3];
+    var errorCount = PromiseResponse[4];
+    var lthCount = PromiseResponse[5];
+    var submitCount = PromiseResponse[6];
+    var soldCount = PromiseResponse[7];
+    var filledCount = PromiseResponse[8];
+    var lthPauseCount = PromiseResponse[9];
+    var all1Count = PromiseResponse[10];
+    var all2Count = PromiseResponse[11];
+    var errorsCount = PromiseResponse[12];
+    var costAvgTabBuyCount = PromiseResponse[13];
+    var costAvgTabSoldCount = PromiseResponse[14];
+    var totalatgCount = PromiseResponse[15];
+    var atgCount = PromiseResponse[16];
 
+    // var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
 
-        //Count all tab
-        let filter_all = {};
-        filter_all['application_mode'] = postDAta.application_mode
-        filter_all['admin_id'] = admin_id
-        filter_all['cost_avg'] = { '$nin': ['taking_child', 'yes', 'completed'] }
+    var totalCount = parseFloat(all1Count) + parseFloat(all2Count);
 
-        if (postDAta.start_date != '' || postDAta.end_date != '') {
-            let obj = {}
-            if (postDAta.start_date != '') {
-                obj['$gte'] = new Date(postDAta.start_date);
-            }
-            if (postDAta.end_date != '') {
-                obj['$lte'] = new Date(postDAta.end_date);
-            }
-            filter_all['created_date'] = obj
-        }
+    var totalCostAvgCount = parseFloat(costAvgTabBuyCount) + parseFloat(costAvgTabSoldCount);
 
-        if ((typeof postDAta.modified_start_date != 'undefined' && postDAta.modified_start_date != '') || (typeof postDAta.modified_end_date != 'undefined' && postDAta.modified_end_date != '')) {
-            let obj = {}
-            if (postDAta.modified_start_date != '') {
-                obj['$gte'] = new Date(postDAta.modified_start_date);
-            }
-            if (postDAta.modified_end_date != '') {
-                obj['$lte'] = new Date(postDAta.modified_end_date);
-            }
-            filter_all['modified_date'] = obj;
-        }
-
-        let tempAllFilter = await getAllTabFilter()
-        let filter_all_2 = Object.assign(tempAllFilter, filter_all)
-        delete filter_all_2['cost_avg']
-
-        //Sold tab extra dynamic check
-        if (!digie_admin_ids.includes(admin_id)) {
-            filter_all_2['$or'][4]['show_order'] = 'yes'
-        }
-
-        //CostAvg tab extra dynamic check
-        if (admin_id == superAdmin) {
-            filter_all_2['$or'][8]['show_order'] = {
-                'cost_avg': { '$exists': true },
-                'show_order': 'yes'
-            }
-        }
-
-
-        if (!digie_admin_ids.includes(admin_id)) {
-            filter_all['is_sell_order'] = {
-                '$nin': ['pause', 'resume_pause']
-                // '$in': ['pause', 'resume_pause', 'resume_complete']
-            };
-            filter_all['resume_status'] = { '$ne': 'complete' }
-            filter_all['resume_order_id'] = { '$exists': false };
-            filter_all['resumed_parent_buy_order_id'] = { '$exists': false }
-        }
-
-        if (count > 0) {
-            for (let [key, value] of Object.entries(search)) {
-                filter_all[key] = value;
-                filter_all_2[key] = value;
-            }
-        }
-        var soldOrdercollection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
-        // let all1Promise = countCollection(soldOrdercollection, filter_all);
-        let all1Promise = countCollection(soldOrdercollection, filter_all_2);
-
-        // filter_all['parent_status'] = {'$exists': false}
-        var buyOrdercollection = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
-        // let all2Promise = countCollection(buyOrdercollection, filter_all);
-
-        let all2Promise = countCollection(buyOrdercollection, filter_all_2);
-        //End count All tab
-
-
-        //Resolve promised for count order for all tabs
-        var PromiseResponse = await Promise.all([parentCountPromise, newCountPromise, openCountPromise, cancelCountPromise, errorCountPromise, lthCountPromise, submittedCountPromise, soldCountPromise, filledCountPromise, lthPauseCountPromise, all1Promise, all2Promise, errorsCountPromise, costAvgTabCountPromise1, costAvgTabCountPromise2, totalAtgCountPromise, atg_CountPromise]);
-
-        var parentCount = PromiseResponse[0];
-        var newCount = PromiseResponse[1];
-        var openCount = PromiseResponse[2];
-        var cancelCount = PromiseResponse[3];
-        var errorCount = PromiseResponse[4];
-        var lthCount = PromiseResponse[5];
-        var submitCount = PromiseResponse[6];
-        var soldCount = PromiseResponse[7];
-        var filledCount = PromiseResponse[8];
-        var lthPauseCount = PromiseResponse[9];
-        var all1Count = PromiseResponse[10];
-        var all2Count = PromiseResponse[11];
-        var errorsCount = PromiseResponse[12];
-        var costAvgTabBuyCount = PromiseResponse[13];
-        var costAvgTabSoldCount = PromiseResponse[14];
-        var totalatgCount = PromiseResponse[15];
-        var atgCount = PromiseResponse[16];
-
-        // var totalCount = parseFloat(parentCount) + parseFloat(newCount) + parseFloat(openCount) + parseFloat(cancelCount) + parseFloat(errorCount) + parseFloat(lthCount) + parseFloat(submitCount) + parseFloat(soldCount) + parseFloat(lthPauseCount);
-
-        var totalCount = parseFloat(all1Count) + parseFloat(all2Count);
-
-        var totalCostAvgCount = parseFloat(costAvgTabBuyCount) + parseFloat(costAvgTabSoldCount);
-
-        var countArr = {};
-        countArr['totalCount'] = totalCount;
-        countArr['parentCount'] = parentCount;
-        countArr['newCount'] = newCount;
-        countArr['openCount'] = openCount;
-        countArr['canceledCount'] = cancelCount;
-        countArr['errorsCount'] = errorsCount;
-        countArr['errorCount'] = errorCount;
-        countArr['lthCount'] = lthCount;
-        countArr['submitCount'] = submitCount;
-        countArr['soldCount'] = soldCount;
-        countArr['filledCount'] = filledCount;
-        countArr['lthPauseCount'] = lthPauseCount;
-        countArr['totalBuyCount'] = all2Count;
-        countArr['totalSoldCount'] = all1Count;
-        countArr['costAvgTabBuyCount'] = costAvgTabBuyCount;
-        countArr['costAvgTabSoldCount'] = costAvgTabSoldCount;
-        countArr['costAvgTabCount'] = totalCostAvgCount;
-        countArr['atgCount'] = atgCount;
-        countArr['totalatgCount'] = totalatgCount;
-        //get user balance for listing on list-order page
-        return countArr
+    var countArr = {};
+    countArr['totalCount'] = totalCount;
+    countArr['parentCount'] = parentCount;
+    countArr['newCount'] = newCount;
+    countArr['openCount'] = openCount;
+    countArr['canceledCount'] = cancelCount;
+    countArr['errorsCount'] = errorsCount;
+    countArr['errorCount'] = errorCount;
+    countArr['lthCount'] = lthCount;
+    countArr['submitCount'] = submitCount;
+    countArr['soldCount'] = soldCount;
+    countArr['filledCount'] = filledCount;
+    countArr['lthPauseCount'] = lthPauseCount;
+    countArr['totalBuyCount'] = all2Count;
+    countArr['totalSoldCount'] = all1Count;
+    countArr['costAvgTabBuyCount'] = costAvgTabBuyCount;
+    countArr['costAvgTabSoldCount'] = costAvgTabSoldCount;
+    countArr['costAvgTabCount'] = totalCostAvgCount;
+    countArr['atgCount'] = atgCount;
+    countArr['totalatgCount'] = totalatgCount;
+    //get user balance for listing on list-order page
+    return countArr
 
 }
 
