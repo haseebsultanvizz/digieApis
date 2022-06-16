@@ -32762,6 +32762,102 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     return resultObj
 }
 
+// refreshTradeHistory
+router.post('/refreshTradeHistory', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+    var user_id = req.payload.id;
+    var exchange = req.body.exchange; 
+
+    conn.then(async db => {
+
+        if(exchange == 'binance'){
+            // console.log("\nBINANCE")
+            var where = {
+                "_id": ObjectID(user_id)
+            }
+            var set = {
+                $set: {
+                    'binance_trade_hisoty_imported': 'no',
+                    'binance_trade_history_updated_date': new Date(new Date() - (2 * 86400000)) // 2 days before date
+                }
+            }
+
+            // console.log("Where: ", where)
+            // console.log("Set: ", set)
+
+            let b_res = await db.collection('users').updateOne(where, set)
+            
+            if(b_res.result.ok == 1){
+                resp.status(200).send({
+                    status: true,
+                    message: 'Properties set in users collection Successfully!'
+                })
+            } else {
+                resp.status(401).send({
+                    status: false,
+                    message: "Properties couldn't be set in users collection!"
+                })
+            }
+
+        } else{
+            // console.log("\nKRAKEN")
+            var where1 = {
+                "_id": ObjectID(user_id)
+            }
+            var set1 = {
+                $set: {
+                    'tradeHistory_updated': false
+                }
+            }
+            // console.log("Where 1: ", where1)
+            // console.log("Set 1: ", set1)
+            
+            let k_res1 = await db.collection('users').updateOne(where1, set1)
+            if(k_res1.result.ok == 1){
+                var where2 = {
+                    "user_id": user_id
+                }
+                var set2 = {
+                    $set: {
+                        'tradeHistory_updated_kraken':  false,
+                        'is_modified_trade_history_kraken': new Date(new Date() - (2 * 86400000)) // 2 days before date 
+                    }
+                }
+                // console.log("Where 2: ", where2)
+                // console.log("Set 2: ", set2)
+                let k_res2 = await db.collection('kraken_credentials').updateOne(where2, set2)
+                
+                if(k_res2.result.ok == 1){
+                    resp.status(200).send({
+                        status: true,
+                        message: 'Properties set in users collection Successfully!'
+                    })
+                } else {
+                    resp.status(401).send({
+                        status: false,
+                        message: "Properties couldn't be set in kraken_credentials collection!"
+                    })
+                }
+            } else {
+                resp.status(401).send({
+                    status: false,
+                    message: "Properties couldn't be set in users collection!"
+                })
+            }
+        }
+
+    })
+})
+
 router.post('/mapTrade', auth_token.required, async (req, res) => {
 
 
