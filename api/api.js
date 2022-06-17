@@ -20351,7 +20351,6 @@ async function getAllCostAvgParentSymbols(user_id, exchange, application_mode){
     });
 }
 
-//saveAutoTradeSettings
 router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
 
 
@@ -20405,6 +20404,8 @@ router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
                 dataArr['modified_date'] = new Date()
                 let set = {};
                 set['$set'] = dataArr
+                // set is_parent_paused_by_script to 0 in auto_trade_settings collection
+                set['$set']['is_parent_paused_by_script'] = 0
                 let settings = await db.collection(collectionName).updateOne(where, set);
 
                 if (application_mode == 'live') {
@@ -20909,6 +20910,7 @@ async function createAutoTradeParents(settings){
         let exchange = settings.settings.step_1.exchange
         let coins = settings.settings.step_2.coins
         let bots = settings.settings.step_3.bots
+        console.log("Bots: ", bots)
         let step4 = settings.settings.step_4
         let cost_avg_symbols = settings.cost_avg_symbols;
 
