@@ -32791,7 +32791,8 @@ router.post('/refreshTradeHistory', auth_token.required, async (req, resp) => {
             var set = {
                 $set: {
                     'binance_trade_hisoty_imported': 'no',
-                    'binance_trade_history_updated_date': new Date(new Date() - (2 * 86400000)) // 2 days before date
+                    'binance_trade_history_updated_date': undefined
+                    // new Date(new Date() - (2 * 86400000)) // 2 days before date
                 }
             }
 
@@ -32833,7 +32834,8 @@ router.post('/refreshTradeHistory', auth_token.required, async (req, resp) => {
                 var set2 = {
                     $set: {
                         'tradeHistory_updated_kraken':  false,
-                        'is_modified_trade_history_kraken': new Date(new Date() - (2 * 86400000)) // 2 days before date 
+                        'is_modified_trade_history_kraken': undefined
+                        // new Date(new Date() - (2 * 86400000)) // 2 days before date 
                     }
                 }
                 // console.log("Where 2: ", where2)
@@ -32887,7 +32889,8 @@ router.post('/refreshManageCoinsPage', auth_token.required, async (req, resp) =>
             var set = {
                 $set: {
                     'is_balance_updated_binance': false,
-                    'balance_modified_time': new Date(new Date() - (2 * 86400000)) // 2 days before date
+                    'balance_modified_time': undefined
+                    // new Date(new Date() - (2 * 86400000)) // 2 days before date
                 }
             }
 
@@ -32916,7 +32919,8 @@ router.post('/refreshManageCoinsPage', auth_token.required, async (req, resp) =>
             var set1 = {
                 $set: {
                     'balance_updated': false,
-                    'balance_modified_time_kraken': new Date(new Date() - (2 * 86400000)) // 2 days before date
+                    'balance_modified_time_kraken': undefined
+                    // new Date(new Date() - (2 * 86400000)) // 2 days before date
                 }
             }
             // console.log("Where 1: ", where1)
