@@ -1629,6 +1629,8 @@ router.get('/test_test', async (req,res)=>{
 
 //fetchUserAccumulations
 function fetchUserAccumulations(collectionName, filter) {
+    // console.log("\nCollection: ", collectionName)
+    // console.log("Pipeline: ", filter)
     return new Promise((resolve) => {
         conn.then(async (db) => {
 
@@ -32860,6 +32862,104 @@ router.post('/refreshTradeHistory', auth_token.required, async (req, resp) => {
     })
 })
 
+// refreshManageCoinsPage
+router.post('/refreshManageCoinsPage', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+    var user_id = req.payload.id;
+    var exchange = req.body.exchange; 
+
+    conn.then(async db => {
+
+        if(exchange == 'binance'){
+            // console.log("\nBINANCE")
+            var where = {
+                "_id": ObjectID(user_id)
+            }
+            var set = {
+                $set: {
+                    'is_balance_updated_binance': false,
+                    'balance_modified_time': new Date(new Date() - (2 * 86400000)) // 2 days before date
+                }
+            }
+
+            // console.log("Where: ", where)
+            // console.log("Set: ", set)
+
+            let b_res = await db.collection('users').updateOne(where, set)
+            
+            if(b_res.result.ok == 1){
+                resp.status(200).send({
+                    status: true,
+                    message: 'Properties set in users collection Successfully!'
+                })
+            } else {
+                resp.status(401).send({
+                    status: false,
+                    message: "Properties couldn't be set in users collection!"
+                })
+            }
+
+        } else{
+            // console.log("\nKRAKEN")
+            var where1 = {
+                "_id": ObjectID(user_id)
+            }
+            var set1 = {
+                $set: {
+                    'balance_updated': false,
+                    'balance_modified_time_kraken': new Date(new Date() - (2 * 86400000)) // 2 days before date
+                }
+            }
+            // console.log("Where 1: ", where1)
+            // console.log("Set 1: ", set1)
+            
+            let k_res1 = await db.collection('users').updateOne(where1, set1)
+            
+            if(k_res1.result.ok == 1){
+                var where2 = {
+                    "user_id": user_id
+                }
+                var set2 = {
+                    $set: {
+                        'balance_updated': false,
+                    }
+                }
+                // console.log("Where 2: ", where2)
+                // console.log("Set 2: ", set2)
+
+                let k_res2 = await db.collection('kraken_credentials').updateOne(where2, set2)
+                
+                if(k_res2.result.ok == 1){
+                    resp.status(200).send({
+                        status: true,
+                        message: "Properties set in 'kraken_credentials' collection Successfully!"
+                    })
+                } else {
+                    resp.status(401).send({
+                        status: false,
+                        message: "Properties couldn't be set in 'kraken_credentials' collection!"
+                    })
+                }
+            } else {
+                resp.status(401).send({
+                    status: false,
+                    message: "Properties couldn't be set in users collection!"
+                })
+            }
+        }
+
+    })
+})
+
 router.post('/mapTrade', auth_token.required, async (req, res) => {
 
 
@@ -34800,7 +34900,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                     resp.status(200).send({
                     "success": true,
                     "history_updated_time": data['history_update'] ? data['history_update'] : '',
-                    "is_balance_updated_kraken": data['is_balance_updated_kraken'] ? data['is_balance_updated_kraken'] : '',
+                    "balance_modified_time_kraken": data['balance_modified_time_kraken'] ? data['balance_modified_time_kraken'] : '',
                     "is_api_key_valid": data['is_api_key_valid'],
                     "is_api_key_valid_secondary": data['is_api_key_valid_secondary'],
                     "is_api_key_valid_third": data['is_api_key_valid_third'],
@@ -34851,7 +34951,7 @@ router.post('/getIsBalanceUpdatedKraken', auth_token.required, async (req, resp)
                 // console.log(data)
                 resp.status(200).send({
                     "success": true,
-                    "is_balance_updated_kraken": data['is_balance_updated_kraken'] ? data['is_balance_updated_kraken'] : '',
+                    "balance_modified_time_kraken": data['balance_modified_time_kraken'] ? data['balance_modified_time_kraken'] : '',
                 })
             } else {
                 resp.status(201).send({
