@@ -32964,6 +32964,112 @@ router.post('/refreshManageCoinsPage', auth_token.required, async (req, resp) =>
     })
 })
 
+// mergeCostAvgCoins
+router.post('/mergeCostAvgCoins', async (req, resp) => {
+    // console.log('/mergeCostAvgCoins...')
+
+    var user_exist = await getUserByID(req.body.user_id);
+    // console.log(user_exist)
+    
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+    var user_id = req.body.user_id;
+    var exchange = req.body.exchange; 
+    var user_ip = req.body.temp_ip;
+    // console.log("User ID: ", user_id)
+    // console.log("Exchange: ", exchange)
+    // console.log("User IP: ", user_ip)
+
+    conn.then(async db => {
+
+        const promiseValue = await new Promise(async function (resolve, reject) {
+
+            let ip = '';
+
+            if(exchange == 'binance'){
+                if(user_ip == '3.227.143.115'){
+                    ip = 'ip1.digiebot.com'
+                } else if(user_ip == '3.228.180.22'){
+                    ip = 'ip2.digiebot.com'
+                } else if(user_ip == '3.226.226.217'){
+                    ip = 'ip3.digiebot.com'
+                } else if(user_ip == '3.228.245.92'){
+                    ip = 'ip4.digiebot.com'
+                } else if(user_ip == '35.153.9.225'){
+                    ip = 'ip5.digiebot.com'
+                } else if(user_ip == '54.157.102.20'){
+                    ip = 'ip6.digiebot.com'
+                }
+            } else {
+                if(user_ip == '3.227.143.115'){
+                    ip = 'ip1-kraken.digiebot.com/api/user'
+                } else if(user_ip == '3.228.180.22'){
+                    ip = 'ip2-kraken.digiebot.com/api/user'
+                } else if(user_ip == '3.226.226.217'){
+                    ip = 'ip3-kraken.digiebot.com/api/user'
+                } else if(user_ip == '3.228.245.92'){
+                    ip = 'ip4-kraken.digiebot.com/api/user'
+                } else if(user_ip == '35.153.9.225'){
+                    ip = 'ip5-kraken.digiebot.com/api/user'
+                } else if(user_ip == '54.157.102.20'){
+                    ip = 'ip6-kraken.digiebot.com/api/user'
+                } 
+            }
+        
+            let url = 'https://'+ip+'/mergecoins';
+
+            // console.log("URL: ", url)
+    
+            request.post({
+                url: url,
+                json: {
+                    "user_id": user_id,
+                    "trading_ip": user_ip,
+                },
+                headers: {
+                    'content-type': 'application/json',
+                    'Token': 'vizzwebsolutions12345678910',
+                    'Authorization': auth_token
+                }
+            }, function (error, response, body) {
+                // console.log("\nResponse: ", response)
+                if (!error && response.statusCode == 200) {
+                    console.log("\nResponse Body: ", body)
+                    if(body.success){
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                } else {
+                    // console.log("\nResponse Error: ", error)
+                    resolve(false)
+                }
+            });
+        });
+
+        // console.log("Promise Value: ", promiseValue)
+        if (promiseValue){
+            resp.status(200).send({
+                status: true,
+                message: "Request Sent Successfully!"
+            })
+        } else {
+            {
+                resp.status(200).send({
+                    status: false,
+                    message: "An error occured while sending the request!"
+                })
+            }
+        }
+
+    })
+})
+
 router.post('/mapTrade', auth_token.required, async (req, res) => {
 
 
