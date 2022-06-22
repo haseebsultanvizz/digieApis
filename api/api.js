@@ -6954,6 +6954,11 @@ async function UpdateHighestPriceOrder(order_id, costaverageMap, exchange, tab='
                     cavg_parent:      "yes",
                     modified_date:     new Date(),
                     status : "FILLED",
+                    lth_functionality: 'no'
+                },
+                $unset: {
+                    lth_profit: 1,
+                    is_lth_order: 1
                 }
             };
 
@@ -7161,19 +7166,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             }
             
             if(tab == 'openTab_move_all' || tab == 'openTab_move_all_manual' || tab == 'merge_all' || tab == 'merge_all_manual'){
-                var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
-                
-                //Unset Fields
-                update['$unset'] = {};
-                update['$unset']['lth_functionality'] = 1
-                update['$unset']['lth_profit'] = 1
-                update['$unset']['is_lth_order'] = 1
-    
-                // remove lth properties from the cost_avg order
-                let result = await db.collection(collectionName).updateOne(where, update)
 
-                if(result) console.log('\n UPDATED')
-                
                 costAverageArr = [];
                 if(admin_id){
                     var mapArray1 = await PurchasedPriceOrders(getBuyOrder[0]['symbol'], admin_id, exchange, tab)
