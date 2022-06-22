@@ -7156,6 +7156,18 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
             }
             
             if(tab == 'openTab_move_all' || tab == 'openTab_move_all_manual' || tab == 'merge_all' || tab == 'merge_all_manual'){
+                var collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
+                
+                //Unset Fields
+                update['$unset'] = {};
+                update['$unset']['lth_functionality'] = 1
+                update['$unset']['lth_profit'] = 1
+                update['$unset']['is_lth_order'] = 1
+    
+                // remove lth properties from the cost_avg order
+                let result = await db.collection(collectionName).updateOne(where, update)
+
+                if(result) console.log('\n UPDATED')
                 
                 costAverageArr = [];
                 if(admin_id){
@@ -7182,7 +7194,7 @@ router.post('/makeCostAvg', auth_token.required, async (req, resp) => {
                 let coin_Data = myPromises[0];
                 let currentmarketPrice = coin_Data['currentmarketPrice'][0]['price'];
 
-                
+
                 if (typeof mapArray1 !== 'undefined' && mapArray1.length > 0) {
                     mapArray1.map( x => {
                         if(x){
