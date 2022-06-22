@@ -32830,7 +32830,9 @@ router.post('/refreshTradeHistory', auth_token.required, async (req, resp) => {
             }
             var set1 = {
                 $set: {
-                    'tradeHistory_updated': false
+                    'tradeHistory_updated_kraken':  false,
+                    'is_modified_trade_history_kraken': undefined
+                    // new Date(new Date() - (2 * 86400000)) // 2 days before date 
                 }
             }
             // console.log("Where 1: ", where1)
@@ -32843,9 +32845,7 @@ router.post('/refreshTradeHistory', auth_token.required, async (req, resp) => {
                 }
                 var set2 = {
                     $set: {
-                        'tradeHistory_updated_kraken':  false,
-                        'is_modified_trade_history_kraken': undefined
-                        // new Date(new Date() - (2 * 86400000)) // 2 days before date 
+                        'tradeHistory_updated': false
                     }
                 }
                 // console.log("Where 2: ", where2)
