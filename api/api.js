@@ -6901,9 +6901,9 @@ function UpdateChildOrders(order_id, buy_parent_id, exchange) {
             $set: {
                 cost_avg: "yes",
                 show_order: "yes",
+                lth_functionality: "no"
             },
             $unset: {
-                lth_functionality: 1,
                 lth_profit: 1,
                 is_lth_order: 1
             }
