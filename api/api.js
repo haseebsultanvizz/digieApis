@@ -35019,7 +35019,7 @@ router.post('/getUserData', auth_token.required, async (req, resp) => {
                 } else {
                     resp.status(200).send({
                     "success": true,
-                    "history_updated_time": data['history_update'] ? data['history_update'] : '',
+                    "history_updated_time": data['is_modified_trade_history_kraken'] ? data['is_modified_trade_history_kraken'] : '',
                     "balance_modified_time_kraken": data['balance_modified_time_kraken'] ? data['balance_modified_time_kraken'] : '',
                     "is_api_key_valid": data['is_api_key_valid'],
                     "is_api_key_valid_secondary": data['is_api_key_valid_secondary'],
