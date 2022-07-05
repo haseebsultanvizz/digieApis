@@ -6901,7 +6901,8 @@ function UpdateChildOrders(order_id, buy_parent_id, exchange) {
             $set: {
                 cost_avg: "yes",
                 show_order: "yes",
-                lth_functionality: "no"
+                lth_functionality: "no",
+                merged_in_parent_date: new Date()
             },
             $unset: {
                 lth_profit: 1,
@@ -20364,7 +20365,7 @@ async function getAllCostAvgParentSymbols(user_id, exchange, application_mode){
 }
 
 router.post('/saveAutoTradeSettings', auth_token.required, async (req, res) => {
-
+    console.log('saveAutoTradeSettings()...')
 
     var user_exist = await getUserByID(req.payload.id);
     // // console.log(user_exist)
@@ -23082,38 +23083,41 @@ async function getCostAvgBalance(user_id, exchange, trigger_type='') {
         const db = await conn
 
         let buy_collection = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
-        let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
+        // let sold_collection = exchange == 'binance' ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange
 
         var where = {
             'admin_id': user_id,
             'application_mode': 'live',
-            'status': {'$ne': 'canceled'}
+            'is_sell_order': 'yes',
+            'trigger_type': 'barrier_percentile_trigger',
+            'status': {'$in': ['FILLED','CA_TAKING_CHILD','LTH']},
+            'cost_avg': {'$in': ['yes', 'taking_child','ca_taking_child']}
         }
 
-        where['$or'] = [
-            {
-                'cost_avg': { '$in': ['taking_child', 'yes'] },
-                'cavg_parent': 'yes',
-                'show_order': 'yes',
-                'avg_orders_ids.0': { '$exists': false },
-                'move_to_cost_avg': 'yes',
-            },
-            {
-                'cost_avg': { '$in': ['taking_child', 'yes'] },
-                'cavg_parent': 'yes',
-                'show_order': 'yes',
-                'avg_orders_ids.0': { '$exists': true }
-            },
-        ]
+        // where['$or'] = [
+        //     {
+        //         'cost_avg': { '$in': ['taking_child', 'yes'] },
+        //         'cavg_parent': 'yes',
+        //         'show_order': 'yes',
+        //         'avg_orders_ids.0': { '$exists': false },
+        //         'move_to_cost_avg': 'yes',
+        //     },
+        //     {
+        //         'cost_avg': { '$in': ['taking_child', 'yes'] },
+        //         'cavg_parent': 'yes',
+        //         'show_order': 'yes',
+        //         'avg_orders_ids.0': { '$exists': true }
+        //     },
+        // ]
 
         if(trigger_type != '') { where['trigger_type'] = trigger_type }
 
         let p1 = db.collection(buy_collection).find(where).toArray();
-        let p2 = db.collection(sold_collection).find(where).toArray();
+        // let p2 = db.collection(sold_collection).find(where).toArray();
 
-        let myPromises = await Promise.all([p1, p2])
+        let myPromises = await Promise.all([p1])
 
-        let trades = myPromises[0].concat(myPromises[1])
+        let trades = myPromises[0]
         let costAvgIds = trades.map(item=>item._id);
         let avg_orders_ids = trades.map(item => item.avg_orders_ids);
         avg_orders_ids = avg_orders_ids.filter(item => typeof item != 'undefined')
@@ -27018,6 +27022,7 @@ function findFrequentOccuringVal(arr) {
 
 router.post('/find_available_btc_usdt_atg', auth_token.required, async (req, res)=>{
 
+    console.log('find_available_btc_usdt_atg...')
     var user_exist = await getUserByID(req.payload.id);
     // // console.log(user_exist)
     if(!user_exist){
@@ -27057,6 +27062,7 @@ router.post('/find_available_btc_usdt_atg', auth_token.required, async (req, res
 })
 
 async function newAtgApiCall(payload, req=''){
+    console.log('newAtgApiCall()...')
 
     var auth_token = req.headers.authorization;
 
@@ -27085,9 +27091,9 @@ async function newAtgApiCall(payload, req=''){
             'payload': payload,
         }
 
-        // // console.log(payload)
+        console.log("Payload: ", payload)
         let apiResult = await customApiRequest(reqObj)
-        // // console.log(apiResult)
+        console.log("ApiResult: ", apiResult)
         resolve(apiResult.status ? apiResult.body : false)
     })
 }
