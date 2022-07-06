@@ -27724,6 +27724,22 @@ router.post('/get_latest_buy_sell_details', auth_token.required, async (req, res
             let orders = []
             tempOrders.map(order=>{
                 order['t_date'] = typeof order['sell_date'] != 'undefined' ? order['sell_date'] : order['buy_date']
+                // get order's tab
+                if(order.cost_avg && (order.cost_avg == 'yes' || order.cost_avg == 'completed') ){
+                    order.tab= 'CA'
+                } else {
+                    if(order.status && order.status == 'LTH'){
+                    order.tab = 'LTH'
+                    } else if(order.status && order.status == 'FILLED'){
+                    // if its sell history tab than show 'Sold' instead of 'Open' as Tab Status
+                    if(order.is_sell_order && order.is_sell_order == 'sold'){
+                        order.tab = 'Sold'
+                    } else {
+                        order.tab = 'Open'
+                    }
+                    }
+                }
+
                 orders.push(order)
             })
             orders.sort(function (a, b) {
