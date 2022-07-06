@@ -2933,8 +2933,6 @@ router.post('/createManualOrder', auth_token.required, async (req, resp) => {
 }) //End of createManualOrder
 
 router.post('/createManualChild', auth_token.required, async (req, resp) => {
-    // console.log("\ncreateManualChild REQ PAYLOAD: ", req.payload)
-    // console.log("\ncreateManualChild REQ BODY: ", req.body)
     var user_exist = await getUserByID(req.payload.id);
     
     if(!user_exist){
@@ -2946,47 +2944,148 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
 
     conn.then(async (db) => {
         let newOrder = req.body.newOrder
-        let childOrder = req.body.orderObj;
         let orderId = req.body.orderId;
-
+        let interfaceType = (typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'from ' + req.body.interface : '');
+        var price = parseFloat(newOrder['price']);
         let exchange = newOrder['exchange'];
 
         let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_'+exchange
-        // console.log(collectionName)
 
         newOrder.buy_date = new Date()
+        newOrder.created_date = new Date()
+        newOrder.modified_date = new Date()
         newOrder.buy_parent_id = ObjectID(newOrder.buy_parent_id)
 
-        db.collection(collectionName).insertOne(newOrder, (err, result) => {
+        const sellOrder = {
+            "admin_id": newOrder.admin_id,
+            "application_mode": newOrder.application_mode,
+            "auto_sell": newOrder.auto_sell,
+            "buy_order_check": newOrder.buy_order_check,
+            "buy_order_id": newOrder.buy_order_id,
+            "custom_stop_loss_percentage": newOrder.custom_stop_loss_percentage,
+            "defined_sell_percentage": newOrder.defined_sell_percentage,
+            "iniatial_trail_stop": newOrder.iniatial_trail_stop,
+            "loss_percentage": newOrder.loss_percentage,
+            "lth_functionality": newOrder.lth_functionality,
+            "lth_profit": newOrder.lth_profit,
+            "order_type": newOrder.order_type,
+            "profit_type": newOrder.profit_type,
+            "purchased_price": newOrder.purchased_price,
+            "quantity": newOrder.quantity,
+            "sell_price": newOrder.sell_price,
+            "sell_profit_percent": newOrder.sell_profit_percent,
+            "sell_trail_percentage": newOrder.sell_trail_percentage,
+            "status": newOrder.status,
+            "stop_loss": newOrder.stop_loss,
+            "symbol": newOrder.symbol,
+            "trail_check": newOrder.trail_check,
+            "trail_interval": newOrder.trail_interval,
+            "trigger_type": newOrder.trigger_type,
+        }
+
+        const orders_collection = exchange == 'binance' ? 'orders' : 'orders_'+exchange
+
+        db.collection(orders_collection).insertOne(sellOrder, (err, result) => {
             if(err){
                 resp.status(403).send({
                     message: err
                 });
             } else if(result){
+                console.log(`\nInserted in ${orders_collection} Collection Successfully!`)
+
                 let insertedOrder = result.ops[0]
-                // console.log("Insert Query Result: ", insertedOrder)
-                if(result.result.ok == 1){
-                    childOrder['buy_order_id'] = insertedOrder._id
-                    db.collection(collectionName).updateOne({_id: ObjectID(orderId)}, { $push: { cost_avg_array: childOrder } }, (err, output) => {
-                        if(err){
+                console.log("\nInserted Order: ", insertedOrder)
+
+                newOrder.sell_order_id = insertedOrder['_id']
+
+                db.collection(collectionName).insertOne(newOrder, (err, result) => {
+                    if(err){
+                        resp.status(403).send({
+                            message: err
+                        });
+                    } else if(result){
+                        console.log(`\nInserted In ${collectionName} collection successfully!\n`)
+                        console.log('\nInserted Buy Order: ', result.ops[0])
+                        var buyOrderId = result.insertedId
+
+                        var log_msg = "Buy Order was Created " + interfaceType + " at Price " + parseFloat(price).toFixed(8);
+                        let profit_percent = newOrder.profit_percent;
+
+                        if (newOrder.auto_sell == 'yes' && profit_percent != '') {
+                            log_msg += ' with auto sell ' + profit_percent + '%';
+                        }
+                        if (newOrder.buy_on_buy_hit == 'yes' && newOrder.buy_on_buy_hit != '' && typeof newOrder.buy_on_buy_hit != 'undefined') {
+                        log_msg += ', Buy on Digie Signal was "Enabled" ';
+                        }
+                        if (newOrder.sell_on_sell_hit == 'yes' && newOrder.sell_on_sell_hit != '' && typeof newOrder.sell_on_sell_hit != 'undefined') {
+                        log_msg += ', Sell on Digie Signal was "Enabled" ';
+                        }
+                        if (newOrder.buy_trail_check == 'yes' && newOrder.buy_trail_check != '' && typeof newOrder.buy_trail_check != 'undefined') {
+                        log_msg += ', Trail Buy was Enabled and Buy Trail Perc was : '+ newOrder.buy_trail_interval;
+                        }
+                        if (newOrder.sell_trail_check == 'yes' && newOrder.sell_trail_check != '' && typeof newOrder.sell_trail_check != 'undefined') {
+                        log_msg += ', Trail Sell was Enabled and Sell Trail Perc was : '+ newOrder.sell_trail_interval;
+                        }
+                        if (newOrder.stop_loss == 'yes' && newOrder.stop_loss != '' && typeof newOrder.stop_loss != 'undefined') {
+                        log_msg += ', Stop Loss was Enabled and Stop Loss Perc was : '+ newOrder.loss_percentage;
+                        }
+                        if (newOrder.lth_functionality == 'yes' && newOrder.lth_functionality != '' && typeof newOrder.lth_functionality != 'undefined') {
+                        log_msg += ', LTH was Enabled and LTH Perc was : '+ newOrder.lth_profit;
+                        }
+                        let show_hide_log = 'yes';
+                        let type = 'Order_created';
+                        // var promiseLog = recordOrderLog(buyOrderId, log_msg, type, show_hide_log, exchange)
+                        let order_mode = newOrder.application_mode;
+                        var order_created_date = new Date();
+                        console.log("\nLog msg: ", log_msg)
+                        var promiseLog = create_orders_history_log(buyOrderId, log_msg, type, show_hide_log, exchange, order_mode, order_created_date)
+                        promiseLog.then((callback) => {})
+
+                        //Send Notification
+                        send_notification(newOrder.admin_id, 'news_alerts', 'medium', log_msg, buyOrderId, exchange, newOrder.symbol, newOrder.application_mode, '')
+
+                        if(result.result.ok == 1){
+                            // NEW:
+                            const readyOrder = {
+                                cost_parent_id: newOrder.buy_parent_id,
+                                buy_order_id:   newOrder._id,
+                                buy_quantity:   parseFloat(newOrder.quantity),
+                                market_value:   parseFloat(newOrder.price),
+                                coin_symbol:    newOrder.symbol,
+                                trading_ip:     newOrder.trading_ip, //"35.153.9.225"
+                                trigger_type:   "no",
+                                order_type:     "buy_market_order",
+                                order_status:   "ready",
+                                global:         "global",
+                                cost_avg:       "ready"
+                            }
+
+                            const readyCollection = exchange == 'binance' ? 'ready_orders_for_buy_ip_based_cost' : 'ready_orders_for_buy_ip_based_cost_'+exchange
+
+                            db.collection(readyCollection).insertOne(readyOrder, (err, result) => {
+                                if(err){
+                                    resp.status(403).send({
+                                        message: err
+                                    });
+                                } else if(result){
+                                    let insertedReadyOrder = result.ops[0]
+                                    console.log(`\nInserted in ${readyCollection} Collection Successfully!`)
+                                    console.log("\nInserted Ready Order: ", insertedReadyOrder)
+                                    resp.status(200).send({
+                                        message: `Inserted in ${readyCollection} Collection Successfully!`,
+                                        data: insertedReadyOrder
+                                    });
+                                }
+                            })
+
+                        } else {
                             resp.status(403).send({
-                                message: err
+                                message: 'Something went wrong!'
                             });
                         }
-                        else if(output){
-                            output.result.ok == 1 ? console.log("Updated Successfully!") : // console.log("Couldn't Update")
-                            resp.status(200).send({
-                                message: 'Child order successfully added!',
-                                data: req.payload.id
-                            });
-                        }
-                    })
-                } else {
-                    resp.status(403).send({
-                        message: 'Something went wrong!'
-                    });
-                }
-                
+                        
+                    }
+                })
             }
         })
 
@@ -16617,6 +16716,7 @@ router.post('/is_trading_points_exceeded', auth_token.required, async (req, resp
 
 
 function create_orders_history_log(order_id, log_msg, type, show_hide_log, exchange, order_mode, order_created_date) {
+    console.log('create_orders_history_log()...')
     return new Promise((resolve, reject) => {
         conn.then((db) => {
 
