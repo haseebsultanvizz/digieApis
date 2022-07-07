@@ -2955,6 +2955,7 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
         newOrder.created_date = new Date()
         newOrder.modified_date = new Date()
         newOrder.buy_parent_id = ObjectID(newOrder.buy_parent_id)
+        newOrder.direct_parent_child_id = ObjectID(newOrder.direct_parent_child_id)
 
         var newBuyOrderMongoID = new ObjectID();
         console.log("newBuyOrderMongoID: ", newBuyOrderMongoID)
@@ -3058,7 +3059,7 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
                             // NEW:
                             const readyOrder = {
                                 cost_parent_id: newBuyOrder._id,
-                                buy_order_id:   newOrder.direct_parent_child_id ? ObjectID(newOrder.direct_parent_child_id) : newOrder._id,
+                                buy_order_id:   newOrder.direct_parent_child_id ? ObjectID(newOrder.direct_parent_child_id) : newOrder.buy_parent_id,
                                 admin_id:       newBuyOrder.admin_id,
                                 buy_quantity:   parseFloat(newOrder.quantity),
                                 market_value:   parseFloat(newOrder.price),
