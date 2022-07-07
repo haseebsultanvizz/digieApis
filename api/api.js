@@ -2956,12 +2956,15 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
         newOrder.modified_date = new Date()
         newOrder.buy_parent_id = ObjectID(newOrder.buy_parent_id)
 
+        var newBuyOrderMongoID = new ObjectID();
+        console.log("newBuyOrderMongoID: ", newBuyOrderMongoID)
+
         const sellOrder = {
             "admin_id": newOrder.admin_id,
             "application_mode": newOrder.application_mode,
             "auto_sell": newOrder.auto_sell,
             "buy_order_check": newOrder.buy_order_check,
-            "buy_order_id": newOrder.buy_order_id,
+            "buy_order_id": newBuyOrderMongoID,
             "custom_stop_loss_percentage": newOrder.custom_stop_loss_percentage,
             "defined_sell_percentage": newOrder.defined_sell_percentage,
             "iniatial_trail_stop": newOrder.iniatial_trail_stop,
@@ -2975,12 +2978,14 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
             "sell_price": newOrder.sell_price,
             "sell_profit_percent": newOrder.sell_profit_percent,
             "sell_trail_percentage": newOrder.sell_trail_percentage,
-            "status": newOrder.status,
+            "status": 'FILLED',
             "stop_loss": newOrder.stop_loss,
             "symbol": newOrder.symbol,
             "trail_check": newOrder.trail_check,
             "trail_interval": newOrder.trail_interval,
             "trigger_type": newOrder.trigger_type,
+            "created_date": new Date(),
+            "modified_date": new Date()
         }
 
         const orders_collection = exchange == 'binance' ? 'orders' : 'orders_'+exchange
@@ -2997,6 +3002,7 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
                 console.log("\nInserted Order: ", insertedOrder)
 
                 newOrder.sell_order_id = insertedOrder['_id']
+                newOrder['_id'] = newBuyOrderMongoID
 
                 db.collection(collectionName).insertOne(newOrder, (err, result) => {
                     if(err){
@@ -3006,6 +3012,7 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
                     } else if(result){
                         console.log(`\nInserted In ${collectionName} collection successfully!\n`)
                         console.log('\nInserted Buy Order: ', result.ops[0])
+                        const newBuyOrder = result.ops[0]
                         var buyOrderId = result.insertedId
 
                         var log_msg = "Buy Order was Created " + interfaceType + " at Price " + parseFloat(price).toFixed(8);
@@ -3045,10 +3052,14 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
                         send_notification(newOrder.admin_id, 'news_alerts', 'medium', log_msg, buyOrderId, exchange, newOrder.symbol, newOrder.application_mode, '')
 
                         if(result.result.ok == 1){
+
+                            // update the newly inserted order in the 'Orders' collection -> add newBuyOrder's _id in buy_parent_id field
+                            // await db.collection().updateOne({_id: ObjectID(newOrder.sell_order_id)}, {$set: {buy_order_id: newBuyOrder._id}})
                             // NEW:
                             const readyOrder = {
-                                cost_parent_id: newOrder.buy_parent_id,
-                                buy_order_id:   newOrder._id,
+                                cost_parent_id: newBuyOrder._id,
+                                buy_order_id:   newOrder.direct_parent_child_id ? newOrder.direct_parent_child_id : newOrder._id,
+                                admin_id:       newBuyOrder.admin_id,
                                 buy_quantity:   parseFloat(newOrder.quantity),
                                 market_value:   parseFloat(newOrder.price),
                                 coin_symbol:    newOrder.symbol,
@@ -3057,7 +3068,9 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
                                 order_type:     "buy_market_order",
                                 order_status:   "ready",
                                 global:         "global",
-                                cost_avg:       "ready"
+                                cost_avg:       "ready",
+                                created_date:   new Date(),
+                                modified_date:  new Date()
                             }
 
                             const readyCollection = exchange == 'binance' ? 'ready_orders_for_buy_ip_based_cost' : 'ready_orders_for_buy_ip_based_cost_'+exchange
