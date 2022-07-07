@@ -3058,7 +3058,7 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
                             // NEW:
                             const readyOrder = {
                                 cost_parent_id: newBuyOrder._id,
-                                buy_order_id:   newOrder.direct_parent_child_id ? newOrder.direct_parent_child_id : newOrder._id,
+                                buy_order_id:   newOrder.direct_parent_child_id ? ObjectID(newOrder.direct_parent_child_id) : newOrder._id,
                                 admin_id:       newBuyOrder.admin_id,
                                 buy_quantity:   parseFloat(newOrder.quantity),
                                 market_value:   parseFloat(newOrder.price),
