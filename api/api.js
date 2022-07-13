@@ -1303,8 +1303,16 @@ router.post('/authenticate', async function (req, resp, next) {
                                 respObj.trading_ip = userArr['trading_ip'];
                                 // respObj.google_auth = userArr['google_auth'];
 
+                                // show popup on frontend if user is disabled
+                                if(
+                                    (userArr.account_block && userArr.account_block == 'yes') 
+                                    && (userArr.is_api_key_valid && userArr.is_api_key_valid == 'no') 
+                                    && (userArr.count_invalid_api && userArr.count_invalid_api == 5) 
+                                    && (userArr.trading_status && userArr.trading_status == 'off')
+                                ){
+                                    respObj.showDisablePopup = true
+                                }
 
-                                // console.log(userArr['google_auth'], 'in DB')
                                 // if(userArr['google_auth'] != 'yes'){
                                     var google_auth = await getUserGoogleAuth(String(userArr['_id']))
                                     // set google_auth functionality
@@ -1355,6 +1363,7 @@ router.post('/authenticate', async function (req, resp, next) {
 
                                 // send_notification(respObj.id, 'security_alerts', 'high', 'Your account is just logged In ', '', '', '', 'web')
 
+                                console.log("RespObj: ", respObj)
                                 resp.send(respObj);
                             }
                         } else {
