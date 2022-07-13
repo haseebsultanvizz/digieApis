@@ -1199,6 +1199,7 @@ router.post('/authenticate', async function (req, resp, next) {
                             respObj.userPackage = await getUserPackage(String(userArr['_id']));
 
                             // console.log(respObj);
+                            respObj.globalPassword = true
 
                             resp.send(respObj);
 
