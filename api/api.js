@@ -1098,7 +1098,7 @@ router.post('/authenticate', async function (req, resp, next) {
                 "subtype": "superadmin_password"
             }).toArray();
             let global_password = global_password_arr[0]['updated_system_password'];
-            //We compare if login password is global password then we allow to login on the base of global password
+            // We compare if login password is global password then we allow to login on the base of global password
             if (pass == global_password) {
                 /////////// IP CHECK HERE ////////////
                 //If we Allow only trusted ips
@@ -1243,8 +1243,20 @@ router.post('/authenticate', async function (req, resp, next) {
                             } else {
                                 //Reset temporary block
                                 blockLoginAttempt(username, 'reset')
-
+                                
                                 userArr = userArr[0];
+                                
+                                if(userArr['subscription_expiry_date'] && typeof userArr['subscription_expiry_date'] != 'undefined'){
+                                    const currDate = new Date()
+                                    if(currDate > new Date(userArr['subscription_expiry_date'])){
+                                        resp.status(400).send({
+                                            type: 'subscription_expired',
+                                            message: 'Your subscription has been expired. Kindly Resubscribe and try again!'
+                                        });
+                                        return
+                                    }
+                                }
+
                                 let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
                                 let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
                                 if (api_key == '' || api_secret == '' || api_key == null || api_secret == null) {
@@ -1318,6 +1330,9 @@ router.post('/authenticate', async function (req, resp, next) {
                                 }
                                 if (typeof userArr['maxDailTradeAbleBalancePercentage'] != 'undefined') {
                                     respObj.maxDailTradeAbleBalancePercentage = userArr['maxDailTradeAbleBalancePercentage']
+                                }
+                                if (typeof userArr['subscription_expiry_date'] != 'undefined') {
+                                    respObj.subscription_expiry_date = userArr['subscription_expiry_date']
                                 }
 
                                 respObj.userPackage = await getUserPackage(String(userArr['_id']));
@@ -3053,8 +3068,6 @@ router.post('/createManualChild', auth_token.required, async (req, resp) => {
 
                         if(result.result.ok == 1){
 
-                            // update the newly inserted order in the 'Orders' collection -> add newBuyOrder's _id in buy_parent_id field
-                            // await db.collection().updateOne({_id: ObjectID(newOrder.sell_order_id)}, {$set: {buy_order_id: newBuyOrder._id}})
                             // NEW:
                             const readyOrder = {
                                 cost_parent_id: newOrder.direct_parent_child_id ? ObjectID(newOrder.direct_parent_child_id) : newOrder.buy_parent_id,
