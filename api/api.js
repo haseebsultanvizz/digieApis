@@ -6629,6 +6629,74 @@ router.post('/manageCoins', auth_token.required, async (req, resp) => {
     });
 }) //End of manageCoins
 
+router.post('/get_manage_coins_backup', auth_token.required, async (req, resp) => {
+    var user_exist = await getUserByID(req.payload.id);
+    
+    if(!user_exist){
+        resp.status(401).send({
+            success: false,
+            message: 'User Does Not Exist!'
+        });
+        return false;
+    }
+
+    if(!req.body.searchDate || req.body.searchDate == ''){
+        resp.status(401).send({
+            success: false,
+            message: 'Please Enter Search Date!'
+        });
+        return false;
+    }   
+
+    try {
+        conn.then(async (db) => {
+            let pipeline = [
+                {    
+                    $match: {
+                        user_id: '5eb5a5a628914a45246bacc6' // req.payload.id,
+                    }
+                },
+                {
+                    $project: {
+                        time_dist: {
+                            $abs: [
+                                {
+                                    $subtract: ["$created_date", new Date(req.body.searchDate)]
+                                }
+                            ]
+                        }, 
+                        document: "$$ROOT",
+                    }
+                },
+                {
+                    $sort: {time_dist: 1}
+                },
+                {
+                    $limit: 1
+                }
+            ]
+            
+            let collectionName = 'manage_coin_mirror'
+            let result = await db.collection(collectionName).aggregate(pipeline).toArray();
+            if(result && result.length > 0){
+                let output = result[0].document
+                output.time_dist = result[0]['time_dist']
+                resp.status(200).send({
+                    success: true,
+                    message: 'Manage-coins Backup Data Fetched Successfully!',
+                    data: output
+                });
+
+            }
+        })
+    } catch (e) {
+        resp.status(401).send({
+            success: false,
+            message: e
+        });
+    }
+})
+
 router.post('/get_user_coins', auth_token.required, async (req, resp) => {
     console.log("Req body: ", req.body)
 
