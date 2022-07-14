@@ -6653,7 +6653,7 @@ router.post('/get_manage_coins_backup', auth_token.required, async (req, resp) =
             let pipeline = [
                 {    
                     $match: {
-                        user_id: '5eb5a5a628914a45246bacc6' // req.payload.id,
+                        user_id: req.payload.id,
                     }
                 },
                 {
@@ -6687,6 +6687,12 @@ router.post('/get_manage_coins_backup', auth_token.required, async (req, resp) =
                     data: output
                 });
 
+            } else {
+                resp.status(200).send({
+                    success: false,
+                    message: 'Manage-coins Backup Data Not Found!',
+                    data: []
+                });
             }
         })
     } catch (e) {
