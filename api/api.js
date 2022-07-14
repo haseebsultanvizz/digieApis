@@ -6675,8 +6675,8 @@ router.post('/get_manage_coins_backup', auth_token.required, async (req, resp) =
                     $limit: 1
                 }
             ]
-            
-            let collectionName = 'manage_coin_mirror'
+            let exchange = req.body.exchange
+            var collectionName = (exchange == 'binance') ? 'manage_coin_mirror' : 'manage_coin_mirror_' + exchange;
             let result = await db.collection(collectionName).aggregate(pipeline).toArray();
             if(result && result.length > 0){
                 let output = result[0].document
