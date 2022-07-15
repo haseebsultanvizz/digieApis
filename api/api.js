@@ -13601,13 +13601,13 @@ async function get_market_price(coin) {
 
 
 async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id='', auth_token){
+    console.log('verify_user_info()...')
     return new Promise(async function (resolve, reject) {
 
-
       let ip ='';
-      let port = 2500;
       let url;
       let data = {}
+
       // If Binance
       if(exchange == 'binance'){
         if(user_ip == '3.227.143.115'){
@@ -13697,17 +13697,35 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
         }
         url = 'https://'+ ip +'/validateKeyAndSecret'
       }
+      // If OKX
+      else if(exchange == 'okx') {
 
+        if(kraken_id == 'second'){
+            data =  {
+                "user_id": admin_id,
+                "exchange": exchange,
+                "secret_2": api_key
+            }
+        } else if(kraken_id == 'third'){
+            data =  {
+                "user_id": admin_id,
+                "exchange": exchange,
+                "secret_3": api_key
+            }
+        } else {
+            data =  {
+                "user_id": admin_id,
+                "exchange": exchange,
+                "secret_1": api_key
+            }
+        }
+        url = 'http://44.206.125.3:3001/v1/api/user/validateKeyAndSecret'
+      }
 
-
-      // console.log(url)
+      console.log("URL: ", url)
+      console.log('Data: ', data)
         request.post({
             url: url,
-            // json: {
-            //     "user_id": admin_id,
-            //     "exchange": exchange,
-            //     "api_key":api_key
-            // },
             json: data,
             headers: {
                 'content-type': 'application/json',
@@ -13716,12 +13734,13 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
             }
         }, function (error, response, body) {
             if (!error && response.statusCode == 200) {
-              // console.log(body,api_key, exchange, 'BODY in user info')
+                console.log("Validate Response: ", body)
                 resolve(body);
             } else {
               if(body){
                 resolve(body)
               } else {
+                console.log("Error: ", error)
                 resolve(false)
               }
             }
@@ -13731,9 +13750,8 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
 //post call for verify user info
 router.post('/verify_user_info', auth_token.required, async function (req, res, next) {
 
-
     var user_exist = await getUserByID(req.payload.id);
-    // // console.log(user_exist)
+   
     if(!user_exist){
         resp.status(401).send({
             message: 'User Not exist'
@@ -13759,12 +13777,9 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
       "user_id": user_id
     };
 
-
-
     kraken_collection = 'kraken_credentials'
     binance_collection = 'users'
     investment_collection = 'user_investment_'+exchange
-
 
     if(kraken_id == 'second'){
       var updateArray = {
@@ -13798,29 +13813,24 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
       };
     }
 
-
-
-
-      var data = await verify_user_info(api_key, user_ip, user_id, exchange, kraken_id, auth_token)
-      // console.log(data, '-=-=--=-=-=-=-=-=-=')
-      if(data.success){
-
-
+    var data = await verify_user_info(api_key, user_ip, user_id, exchange, kraken_id, auth_token)
+    
+    if(data.success){
         conn.then(async db => {
             if(exchange == 'binance' ){
             var update_on_user_investment_binance_collection = await db.collection(investment_collection).updateOne(search_arr_investment, {$set: {'exchange_enabled':'yes'}});
             // await update_user_wallet_binance(user_id, user_ip)
             var update_on_binance_collection = await db.collection(binance_collection).updateOne(search_arr, {$set: updateArray});
-          } else {
+            } else {
             var update_on_kraken_collection = await db.collection(kraken_collection).updateOne(search_arr_kraken_credentials, {$set: updateArray});
-          }
-          res.status(200).send({
-              "success": true,
-              "status": 200,
-              "message": "Valid Api Key"
-          })
+            }
+            res.status(200).send({
+                "success": true,
+                "status": 200,
+                "message": "Valid Api Key"
+            })
         })
-      } else {
+    } else {
         conn.then(async db => {
             if(exchange == 'binance' ){
                 var update_on_user_investment_binance_collection = await db.collection(investment_collection).updateOne(search_arr_investment, {$set: {'exchange_enabled':'no'}});
@@ -13831,30 +13841,15 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
                         "status": 201,
                         "message":data.error
                     })
-                  } else {
+                    } else {
                     res.status(201).send(data)
-                  }
+                    }
             } else {
                 var update_on_kraken_collection = await db.collection(kraken_collection).updateOne(search_arr_kraken_credentials, {$set: updateArrayinValid});
                 res.status(201).send(data)
             }
         })
-        // if(exchange == 'binance'){
-        //   if(data.error){
-        //     res.status(201).send({
-        //         "success": false,
-        //         "status": 201,
-        //         "message":data.error
-        //     })
-        //   } else {
-        //     res.status(201).send(data)
-        //   }
-        // } else {
-        //   res.status(201).send(data)
-        // }
-      }
-
-
+    }
 
 })
 
@@ -15930,94 +15925,6 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
     })
 } //End of validate_bam_credentials
 
-
-//post call for validating okx credentials
-router.post('/validate_okx_credentials', auth_token.required, async (req, resp) => {
-
-    var user_exist = await getUserByID(req.payload.id);
-    // // console.log(user_exist)
-    if(!user_exist){
-        resp.status(401).send({
-            message: 'User Not exist'
-        });
-        return false;
-    }
-    let APIKEY = req.body.APIKEY;
-    let APISECRET = req.body.APISECRET;
-    var credentials = await validate_okx_credentials(APIKEY, APISECRET);
-    resp.status(200).send({
-        message: credentials
-    });
-}) //End of validate_okx_credentials
-
-function validate_okx_credentials(APIKEY, APISECRET, user_id = '') {
-
-    APIKEY = APIKEY.trim()
-    APISECRET = APISECRET.trim()
-
-    return new Promise((resolve, reject) => {
-        binance = require('node-binance-api')().options({
-            APIKEY: APIKEY,
-            APISECRET: APISECRET,
-            useServerTime: true
-        });
-        binance.balance((error, balances) => {
-            if (error) {
-
-
-                //invalid Credentials
-                let where = {
-                    'api_key': APIKEY,
-                    'api_secret': APISECRET
-                }
-                if (user_id != '') {
-                    where['user_id'] = user_id
-                }
-                let set = {
-                    '$set': {
-                        'status': 'credentials_error'
-                    }
-                }
-                conn.then(async (db) => {
-                    await db.collection('bam_credentials').updateOne(where, set)
-                })
-
-                let message = {};
-                message['status'] = 'error';
-                message['message'] = error.body;
-                resolve(message);
-            } else {
-
-                // // console.log(' balances +++++++++++++++++++++++++++++++++++++++++++ ', balances)
-
-                //valid Credentials
-                let where = {
-                    'api_key': APIKEY,
-                    'api_secret': APISECRET
-                }
-                if (user_id != '') {
-                    where['user_id'] = user_id
-                }
-                let set = {
-                    '$set': {
-                        'status': 'active'
-                    }
-                }
-                conn.then(async (db) => {
-                    await db.collection('bam_credentials').updateOne(where, set)
-                })
-
-                let updateWallet = update_user_balance(user_id)
-
-                let message = {};
-                message['status'] = 'success';
-                message['message'] = balances;
-                resolve(message);
-            }
-        });
-    })
-}
-
 //post call for validating kraken credentials
 router.post('/validate_kraken_credentials', auth_token.required, async (req, resp) => {
 
@@ -16037,14 +15944,13 @@ router.post('/validate_kraken_credentials', auth_token.required, async (req, res
     let exchange = req.body.exchange;
     let kraken_id = req.body.kraken_id;
 
-    // var credentials = await validate_kraken_credentials(APIKEY, APISECRET, user_id);
-
     var credentials = await verify_user_info(APIKEY, trading_ip, user_id, exchange, kraken_id, auth_token);
-    // console.log(credentials, 'credentials')
-
+    console.log(credentials, 'credentials')
+    
     resp.status(200).send({
         message: credentials
     });
+    
 }) //End of validate_kraken_credentials
 
 function validate_kraken_credentials(APIKEY, APISECRET, user_id = '') {
