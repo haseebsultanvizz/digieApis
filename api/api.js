@@ -14784,7 +14784,47 @@ router.post('/saveBamCredentials', auth_token.required, async(req, resp) => {
 
 }) //End of saveBamCredentials
 
+async function add_user_info_okx1(user_ip, admin_id, api_key, api_secret, interface, auth_token){
+    return new Promise(async function (resolve, reject) {
 
+      let ip = '';
+  
+      ip = '44.206.125.3:3001/v1/api/user'
+  
+      let url = 'http://'+ip+'/saveSecretTrading';
+  
+        console.log(url)
+        request.post({
+            url: url,
+            json: {
+                "user_id": admin_id,
+                "trading_ip": user_ip,
+                "api_key": api_key,
+                "secret_1": api_secret,
+                "secret_2": '',
+                "secret_3": '',
+                "source":interface
+            },
+            headers: {
+                'content-type': 'application/json',
+                'Token': 'vizzwebsolutions12345678910',
+                'Authorization': auth_token
+            }
+        }, function (error, response, body) {
+            console.log("Body: ", body)
+            if (!error && response.statusCode == 200) {
+                // console.log(body, "get User API");
+                if(body.success){
+                  resolve(body);
+                } else {
+                  resolve(false);
+                }
+            } else {
+                resolve(false)
+            }
+        });
+    });
+  }
 
 async function add_user_info_kraken1(user_ip, admin_id, api_key, api_secret, interface, auth_token){
   return new Promise(async function (resolve, reject) {
@@ -14963,8 +15003,6 @@ async function add_user_info_kraken3(user_ip, admin_id, api_key, api_secret, int
 
 //save kraken credentials from setting component
 router.post('/saveKrakenCredentials', auth_token.required, async(req, resp) => {
-
-
 
     var user_exist = await getUserByID(req.payload.id);
     // // console.log(user_exist)
@@ -15272,6 +15310,90 @@ router.post('/saveKrakenCredentialsThirdKey', auth_token.required, async(req, re
 
 }) //End of saveKrakenCredentialsThirdKey
 
+//save okx credentials from setting component
+router.post('/saveOkxCredentials', auth_token.required, async(req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+    var auth_token = req.headers.authorization;
+    var user_id = req.payload.id;
+    var api_key = req.body.api_key;
+    var api_secret = req.body.api_secret;
+    console.log(api_secret)
+    var trading_ip = req.body.trading_ip;
+    var source = req.body.source;
+    var interface = typeof req.body.interface != 'undefined' && req.body.interface != '' ? 'ios' : 'other';
+    if(source == 'web'){
+      interface = source
+    }
+
+    api_key = api_key.trim()
+    api_secret = api_secret.trim()
+
+    var data = await add_user_info_okx1(trading_ip, user_id, api_key, api_secret, interface, auth_token);
+    console.log(data, "DATA")
+
+    if(data.success){
+      // Update okx_credentials Document
+      conn.then(async (db) => {
+        let insertArr = {};
+        insertArr['user_id'] = user_id;
+        // insertArr['api_key'] = api_key.substring(0, 5);
+        insertArr['api_secret'] = api_secret.substring(0, 5);
+        insertArr['modified_date'] = new Date();
+        insertArr['modified_date_primary'] = new Date();
+        insertArr['is_api_key_valid'] = 'yes';
+        insertArr['api_key_valid_checking'] = new Date();
+        insertArr['count_invalid_api'] = 0;
+        insertArr['account_block'] = 'no';
+        let set = {};
+        set['$set'] = insertArr;
+        let where = {};
+        where['user_id'] = user_id;
+        let upsert = {
+            upsert: true
+        };
+
+        let search_arr_investment = {
+          "admin_id": user_id
+        };
+
+        var update_on_user_investment_binance_collection = await db.collection("user_investment_okx").updateOne(search_arr_investment, {$set: {'exchange_enabled': 'yes'}});
+        db.collection('okx_credentials').updateOne(where, set, upsert, async (err, result) => {
+          if(err){
+            // console.log(err);
+            resp.status(200).send({
+              "success": false,
+              "message": "Credentials Not Saved on Okx Credentials"
+            });
+          } else {
+            resp.status(200).send({
+              "success": true,
+              "status": 200,
+              "message": "Credentials Saved Successfully"
+            });
+          }
+        });
+      });
+
+    } else {
+      resp.status(200).send({
+        "success": false,
+        "message": "Credentials Not Saved on Shahzad End"
+      });
+    }
+
+    return false
+}) //End of saveOkxCredentials
+
+
 router.post('/getBamCredentials', auth_token.required, async (req, resp) => {
     var user_exist = await getUserByID(req.payload.id);
     // // console.log(user_exist)
@@ -15514,15 +15636,97 @@ function getKrakenCredentials_new(trading_ip, user_id, auth_token) {
     })
 } //End of getKrakenCredentials_new
 
-function getKrakenCredentials(trading_ip, user_id) {
+
+router.post('/getOkxCredentials', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+    var auth_token = req.headers.authorization;
+    var user_id = req.payload.id;
+    var trading_ip = req.body.trading_ip;
+    var interface = typeof (req.body.interface != 'undefined') ? req.body.interface : 'web';
+
+    var okx_data = await getOkxCredentials_new(trading_ip, user_id, auth_token);
+    console.log("OKX Data: ", okx_data)
+
+
+    // console.log(okx_data)
+
+    var obj = {}
+    obj['api_secret'] = '';
+    obj['api_secret_secondary'] = '';
+    obj['api_secret_third_key'] = '';
+    obj['api_key'] = '';
+    obj['api_key_secondary'] = '';
+    obj['api_key_third_key'] = '';
+    // Source:
+    okx_data.key ? obj['sourceKey'] = okx_data.key : console.log('okx_data dont have key')
+    okx_data.secret ? obj['sourceSecret'] = okx_data.secret : console.log('okx_data dont have secret')
+
+    // First Secret Key
+    if(okx_data != false){
+        if(okx_data.secret_1 == ''){
+          obj['api_secret'] = '';
+          obj['api_key'] = '';
+        } else {
+          obj['api_secret'] = okx_data.secret_1;
+          obj['api_key'] = okx_data.api_key_1;
+        }
+
+        // Second Secret Key
+        if(okx_data.secret_2 == ''){
+            obj['api_secret_secondary'] = '';
+            obj['api_key_secondary'] = '';
+        } else {
+            obj['api_secret_secondary'] = okx_data.secret_2;
+            obj['api_key_secondary'] = okx_data.api_key_2;
+        }
+
+        // Third Secret Key
+        if(okx_data.secret_3 == ''){
+            obj['api_secret_third_key'] = '';
+            obj['api_key_third_key'] = '';
+        } else {
+            obj['api_secret_third_key'] = okx_data.secret_3;
+            obj['api_key_third_key'] = okx_data.api_key_3;
+        }
+
+    }
+
+
+    var arr = [];
+    arr.push(obj);
+
+
+
+
+    if(interface == 'mobile'){
+        resp.status(200).send({
+            response: arr
+        })
+    } else {
+        resp.status(200).send({
+            response: arr
+        })
+    }
+    
+    return false;
+
+}) //End of getOkxCredentials
+
+
+function getOkxCredentials_new(trading_ip, user_id, auth_token) {
+    console.log("\nInside getOkxCredentials_new() function...")
     return new Promise((resolve, reject) => {
 
-
-
-
         let ip = '';
-        let port = 2500
-
 
         if(trading_ip == '3.227.143.115'){
           ip = 'ip1-kraken.digiebot.com/api/user'
@@ -15536,11 +15740,12 @@ function getKrakenCredentials(trading_ip, user_id) {
           ip = 'ip5-kraken.digiebot.com/api/user'
         } else if(trading_ip == '54.157.102.20'){
           ip = 'ip6-kraken.digiebot.com/api/user'
+        } else if(trading_ip == '182.180.129.241'){
+          ip = 'ip6-kraken.digiebot.com/api/user'
         }
 
-        let url1 = 'https://'+ip+'/getapiKeySecretKraken';
-
-        // let url1 = 'http://35.153.9.225:3006/getapiKeySecretKraken';
+        let url1 = 'https://'+ip+'/getApiSecretBalanceTrading';
+        console.log("\nURL: ", url1)
         request.post({
             url: url1,
             json: {
@@ -15548,13 +15753,15 @@ function getKrakenCredentials(trading_ip, user_id) {
             },
             headers: {
                 'content-type': 'application/json',
-                'Token': 'vizzwebsolutions12345678910'
+                'Token': 'vizzwebsolutions12345678910',
+                'Authorization': auth_token
             }
         }, function (error, response, body) {
+            // // console.log(error,body)
             if (!error && response.statusCode == 200) {
                 // console.log(body, "get User API1");
                 if(body.success){
-                  resolve(body.api_key);
+                  resolve(body);
                 } else {
                   resolve(false);
                 }
@@ -15562,121 +15769,8 @@ function getKrakenCredentials(trading_ip, user_id) {
                 resolve(false)
             }
         });
-
-        // conn.then((db) => {
-        //     let where = {};
-        //     where['user_id'] = user_id;
-        //     db.collection('kraken_credentials').find(where).toArray((err, result) => {
-        //         if (err) {
-        //             reject(err);
-        //         } else {
-        //             resolve(result);
-        //         }
-        //     })
-        // })
     })
-} //End of getKrakenCredentials
-function getKrakenCredentials2(trading_ip, user_id) {
-  return new Promise((resolve, reject) => {
-
-
-
-    let ip = '';
-    let port = 2500
-
-
-    if(trading_ip == '3.227.143.115'){
-      ip = 'ip1-kraken.digiebot.com/api/user'
-    } else if(trading_ip == '3.228.180.22'){
-      ip = 'ip2-kraken.digiebot.com/api/user'
-    } else if(trading_ip == '3.226.226.217'){
-      ip = 'ip3-kraken.digiebot.com/api/user'
-    } else if(trading_ip == '3.228.245.92'){
-      ip = 'ip4-kraken.digiebot.com/api/user'
-    } else if(trading_ip == '35.153.9.225'){
-      ip = 'ip5-kraken.digiebot.com/api/user'
-    } else if(trading_ip == '54.157.102.20'){
-      ip = 'ip6-kraken.digiebot.com/api/user'
-    }
-
-    let url2 = 'https://'+ip+'/getapiKeySecretKraken2';
-
-
-
-      // let url2 = 'http://35.153.9.225:3006/getapiKeySecretKraken2';
-      request.post({
-          url: url2,
-          json: {
-              "user_id": user_id,
-          },
-          headers: {
-            'content-type': 'application/json',
-            'Token': 'vizzwebsolutions12345678910'
-          }
-      }, function (error, response, body) {
-          if (!error && response.statusCode == 200) {
-              // console.log(body, "get User API2");
-              if(body.success){
-                resolve(body.api_key);
-              } else {
-                resolve(false);
-              }
-          } else {
-              resolve(false)
-          }
-      });
-  })
-} //End of getKrakenCredentials
-function getKrakenCredentials3(trading_ip, user_id) {
-  return new Promise((resolve, reject) => {
-
-    let ip = '';
-    let port = 2500
-
-
-    if(trading_ip == '3.227.143.115'){
-      ip = 'ip1-kraken.digiebot.com/api/user'
-    } else if(trading_ip == '3.228.180.22'){
-      ip = 'ip2-kraken.digiebot.com/api/user'
-    } else if(trading_ip == '3.226.226.217'){
-      ip = 'ip3-kraken.digiebot.com/api/user'
-    } else if(trading_ip == '3.228.245.92'){
-      ip = 'ip4-kraken.digiebot.com/api/user'
-    } else if(trading_ip == '35.153.9.225'){
-      ip = 'ip5-kraken.digiebot.com/api/user'
-    } else if(trading_ip == '54.157.102.20'){
-      ip = 'ip6-kraken.digiebot.com/api/user'
-    }
-
-    let url3 = 'https://'+ip+'/getapiKeySecretKraken3';
-
-
-
-
-      // let url3 = 'http://35.153.9.225:3006/getapiKeySecretKraken3';
-      request.post({
-          url: url3,
-          json: {
-              "user_id": user_id,
-          },
-          headers: {
-            'content-type': 'application/json',
-            'Token': 'vizzwebsolutions12345678910'
-          }
-      }, function (error, response, body) {
-          if (!error && response.statusCode == 200) {
-              // console.log(body, "get User API3");
-              if(body.success){
-                resolve(body.api_key);
-              } else {
-                resolve(false);
-              }
-          } else {
-              resolve(false)
-          }
-      });
-  })
-} //End of getKrakenCredentials
+} //End of getOkxCredentials_new
 
 
 //post call for calculating average profit for order listing
@@ -15835,6 +15929,94 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
         });
     })
 } //End of validate_bam_credentials
+
+
+//post call for validating okx credentials
+router.post('/validate_okx_credentials', auth_token.required, async (req, resp) => {
+
+    var user_exist = await getUserByID(req.payload.id);
+    // // console.log(user_exist)
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+    let APIKEY = req.body.APIKEY;
+    let APISECRET = req.body.APISECRET;
+    var credentials = await validate_okx_credentials(APIKEY, APISECRET);
+    resp.status(200).send({
+        message: credentials
+    });
+}) //End of validate_okx_credentials
+
+function validate_okx_credentials(APIKEY, APISECRET, user_id = '') {
+
+    APIKEY = APIKEY.trim()
+    APISECRET = APISECRET.trim()
+
+    return new Promise((resolve, reject) => {
+        binance = require('node-binance-api')().options({
+            APIKEY: APIKEY,
+            APISECRET: APISECRET,
+            useServerTime: true
+        });
+        binance.balance((error, balances) => {
+            if (error) {
+
+
+                //invalid Credentials
+                let where = {
+                    'api_key': APIKEY,
+                    'api_secret': APISECRET
+                }
+                if (user_id != '') {
+                    where['user_id'] = user_id
+                }
+                let set = {
+                    '$set': {
+                        'status': 'credentials_error'
+                    }
+                }
+                conn.then(async (db) => {
+                    await db.collection('bam_credentials').updateOne(where, set)
+                })
+
+                let message = {};
+                message['status'] = 'error';
+                message['message'] = error.body;
+                resolve(message);
+            } else {
+
+                // // console.log(' balances +++++++++++++++++++++++++++++++++++++++++++ ', balances)
+
+                //valid Credentials
+                let where = {
+                    'api_key': APIKEY,
+                    'api_secret': APISECRET
+                }
+                if (user_id != '') {
+                    where['user_id'] = user_id
+                }
+                let set = {
+                    '$set': {
+                        'status': 'active'
+                    }
+                }
+                conn.then(async (db) => {
+                    await db.collection('bam_credentials').updateOne(where, set)
+                })
+
+                let updateWallet = update_user_balance(user_id)
+
+                let message = {};
+                message['status'] = 'success';
+                message['message'] = balances;
+                resolve(message);
+            }
+        });
+    })
+}
 
 //post call for validating kraken credentials
 router.post('/validate_kraken_credentials', auth_token.required, async (req, resp) => {
