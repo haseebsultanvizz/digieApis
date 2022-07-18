@@ -33297,7 +33297,7 @@ router.post('/refreshManageCoinsPage', auth_token.required, async (req, resp) =>
 
 // mergeCostAvgCoins
 router.post('/mergeCostAvgCoins', async (req, resp) => {
-    // console.log('/mergeCostAvgCoins...')
+    console.log('/mergeCostAvgCoins...')
 
     var user_exist = await getUserByID(req.body.user_id);
     // console.log(user_exist)
@@ -33311,7 +33311,7 @@ router.post('/mergeCostAvgCoins', async (req, resp) => {
 
     var user_id = req.body.user_id;
     var exchange = req.body.exchange; 
-    var user_ip = req.body.temp_ip;
+    var user_ip = req.body.trading_ip;
     // console.log("User ID: ", user_id)
     // console.log("Exchange: ", exchange)
     // console.log("User IP: ", user_ip)
@@ -33325,17 +33325,17 @@ router.post('/mergeCostAvgCoins', async (req, resp) => {
             if(exchange == 'binance'){
                 if(user_ip == '3.227.143.115'){
                     ip = 'ip1.digiebot.com'
-                } else if(user_ip == '3.228.180.22'){
+                  } else if(user_ip == '3.228.180.22'){
                     ip = 'ip2.digiebot.com'
-                } else if(user_ip == '3.226.226.217'){
+                  } else if(user_ip == '3.226.226.217'){
                     ip = 'ip3.digiebot.com'
-                } else if(user_ip == '3.228.245.92'){
+                  } else if(user_ip == '3.228.245.92'){
                     ip = 'ip4.digiebot.com'
-                } else if(user_ip == '35.153.9.225'){
+                  } else if(user_ip == '35.153.9.225'){
                     ip = 'ip5.digiebot.com'
-                } else if(user_ip == '54.157.102.20'){
+                  } else if(user_ip == '54.157.102.20'){
                     ip = 'ip6.digiebot.com'
-                }
+                  }
             } else {
                 if(user_ip == '3.227.143.115'){
                     ip = 'ip1-kraken.digiebot.com/api/user'
@@ -33354,7 +33354,7 @@ router.post('/mergeCostAvgCoins', async (req, resp) => {
         
             let url = 'https://'+ip+'/mergeCoinOrdersCostAvg';
 
-            // console.log("URL: ", url)
+            console.log("URL: ", url)
     
             request.post({
                 url: url,
