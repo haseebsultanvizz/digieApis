@@ -27347,6 +27347,7 @@ router.post('/find_available_btc_usdt_atg', auth_token.required, async (req, res
         'dailTradeAbleBalancePercentage': dailTradeAbleBalancePercentage,
     }
 
+    console.log("Data: ", data)
     let result = await newAtgApiCall(data, req)
 
     if (result){
@@ -33351,7 +33352,7 @@ router.post('/mergeCostAvgCoins', async (req, resp) => {
                 } 
             }
         
-            let url = 'https://'+ip+'/mergecoins';
+            let url = 'https://'+ip+'/mergeCoinOrdersCostAvg';
 
             // console.log("URL: ", url)
     
