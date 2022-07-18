@@ -6968,6 +6968,61 @@ router.post('/listOrderDetail', auth_token.required, async (req, resp) => {
 }) //End of listOrderDetail
 //*********************************************************== */
 
+router.post('/removeFilledError', auth_token.required, async (req, resp) => {
+
+    console.log('/removeFilledError...')
+    var user_exist = await getUserByID(req.payload.id);
+
+    if(!user_exist){
+        resp.status(401).send({
+            message: 'User Not exist'
+        });
+        return false;
+    }
+
+    let orderId = req.body.orderId;
+    let exchange = req.body.exchange;
+
+    console.log("OrderId: ", orderId)
+    console.log("exchange: ", exchange)
+
+    let updQuery1 = {
+        $set: {
+            status: "FILLED",
+        },
+        $unset: {
+            avg_price_all_upd: 1, 
+            new_child_price_upd: 1, 
+            avg_price_three_upd: 1, 
+            avg_price_one_upd: 1
+        }
+    }
+
+    console.log("updQuery1: ", updQuery1)
+    
+    var collectionName = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+
+    console.log("Collection Name: ", collectionName)
+    
+    conn.then(async (db) => {
+        db.collection(collectionName).updateOne({_id: ObjectID(orderId)}, updQuery1, (err, success) => {
+            if (err) {
+                console.log("Error: ", err)
+                resp.status(401).send({
+                    message: 'Could not Update'
+                });
+                return false;
+            } else {
+                // let updatedOrder = success.ops[0]
+                // console.log("Success: ", succe)
+                resp.status(200).send({
+                    message: 'Order Error Removed!'
+                })
+            }
+        });
+    })
+}) //End of removeFilledError
+
 //function for getting order from buy_order or buy_sold_orders
 function listOrderById(orderId, exchange) {
     return new Promise((resolve) => {
