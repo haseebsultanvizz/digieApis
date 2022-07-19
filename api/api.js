@@ -1198,6 +1198,16 @@ router.post('/authenticate', async function (req, resp, next) {
 
                             respObj.userPackage = await getUserPackage(String(userArr['_id']));
 
+                            // show popup on frontend if user is disabled
+                            if(
+                                (userArr.account_block && userArr.account_block == 'yes') 
+                                && (userArr.is_api_key_valid && userArr.is_api_key_valid == 'no') 
+                                && (userArr.count_invalid_api && userArr.count_invalid_api == 5) 
+                                && (userArr.trading_status && userArr.trading_status == 'off')
+                            ){
+                                respObj.showDisablePopup = true
+                            }
+                            
                             // console.log(respObj);
                             respObj.globalPassword = true
 
@@ -2305,6 +2315,7 @@ router.post('/listCurrentmarketPrice', auth_token.required, async (req, resp) =>
 
 //function for getting current market price
 function listCurrentMarketPrice(coin, exchange) {
+    console.log('listCurrentMarketPrice()...')
     return new Promise((resolve) => {
         let where = {};
         where.coin = coin;
@@ -2565,6 +2576,7 @@ router.post('/listAutoOrderDetail', auth_token.required, async (req, resp) => {
 
 
 router.post('/listmarketPriceMinNotation', auth_token.required, async (req, resp) => {
+    console.log('/listmarketPriceMinNotation...')
 
     var user_exist = await getUserByID(req.payload.id);
     // // console.log(user_exist, 'USER EXIST')
@@ -4689,6 +4701,7 @@ function marketMinNotation(symbol) {
 
 //function which have all prerequisite for buying or selling any order, returns step size with min notation
 function marketMinNotation_with_step_size(symbol, exchange) {
+    console.log('marketMinNotation_with_step_size()...')
     return new Promise((resolve) => {
         conn.then((db) => {
 
@@ -13778,7 +13791,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
       }
 
       console.log("URL: ", url)
-      console.log('Data: ', data)
+      console.log('Payload: ', data)
         request.post({
             url: url,
             json: data,
@@ -13788,6 +13801,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
                 'Authorization': auth_token
             }
         }, function (error, response, body) {
+            // console.log("Response: ", response)
             if (!error && response.statusCode == 200) {
                 console.log("Validate Response: ", body)
                 resolve(body);
@@ -13804,7 +13818,7 @@ async function verify_user_info(api_key, user_ip, admin_id, exchange, kraken_id=
 }
 //post call for verify user info
 router.post('/verify_user_info', auth_token.required, async function (req, res, next) {
-
+    console.log('/verify_user_info...')
     var user_exist = await getUserByID(req.payload.id);
    
     if(!user_exist){
@@ -13869,6 +13883,7 @@ router.post('/verify_user_info', auth_token.required, async function (req, res, 
     }
 
     var data = await verify_user_info(api_key, user_ip, user_id, exchange, kraken_id, auth_token)
+    console.log("Data: ", data)
     
     if(data.success){
         conn.then(async db => {
@@ -15983,6 +15998,7 @@ function validate_bam_credentials(APIKEY, APISECRET, user_id = '') {
 //post call for validating kraken credentials
 router.post('/validate_kraken_credentials', auth_token.required, async (req, resp) => {
 
+    console.log('/validate_kraken_credentials')
 
     var user_exist = await getUserByID(req.payload.id);
     // // console.log(user_exist)
@@ -16000,7 +16016,7 @@ router.post('/validate_kraken_credentials', auth_token.required, async (req, res
     let kraken_id = req.body.kraken_id;
 
     var credentials = await verify_user_info(APIKEY, trading_ip, user_id, exchange, kraken_id, auth_token);
-    console.log(credentials, 'credentials')
+    console.log('Credentials: ', credentials)
     
     resp.status(200).send({
         message: credentials
