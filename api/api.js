@@ -22994,12 +22994,17 @@ router.post('/getOpenBalance', auth_token.required, async (req, res) => {
 })//end getOpenBalance
 
 async function getOpenBalance(user_id, exchange, trigger_type='') {
+    // console.log("getOpenBalance()...")
     return new Promise(async (resolve)=>{
         conn.then(async (db) => {
             let collectionName = exchange == 'binance' ? 'buy_orders' : 'buy_orders_' + exchange
             var where = {
                 'admin_id': user_id,
-                'application_mode': 'live'
+                'application_mode': 'live',
+                // 'status': { '$in': ['FILLED', 'FILLED_ERROR', 'SELL_ID_ERROR'] },
+                // 'is_sell_order': 'yes',
+                // 'is_lth_order': { '$ne': 'yes' },
+                // 'cost_avg': { '$nin': ['yes', 'taking_child', 'completed'] }
             }
 
             where['$or'] = [
@@ -23021,6 +23026,7 @@ async function getOpenBalance(user_id, exchange, trigger_type='') {
                 }
             ]
 
+            // console.log("Where: ", where)
             if(trigger_type != '') { where['trigger_type'] = trigger_type }
 
             let openOrders = await db.collection(collectionName).find(where).toArray();
@@ -29375,6 +29381,8 @@ async function getOrderStats(postData2){
     filter_errors['parent_status'] = { '$exists': false };
     filter_errors['admin_id'] = admin_id;
     filter_errors['application_mode'] = application_mode;
+    // hide cost avg orders count from errors tab
+    filter_errors['cost_avg'] = { '$nin': ['yes', 'taking_child', 'completed']}
 
     if (postDAta.start_date != '' || postDAta.end_date != '') {
         let obj = {}
