@@ -33136,15 +33136,15 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
     trades = trades.map(item => {
 
         let timeZoneTime = item.trades.value.time * timeMultiplyer;
-        try {
-            timeZoneTime = new Date(timeZoneTime).toLocaleString("en-US", {
-                timeZone: timezone
-            });
-            timeZoneTime = new Date(timeZoneTime);
-        } catch (e) {
-            // console.log(e);
-        }
-        let date = timeZoneTime.toLocaleString() + ' ' + timezone;
+        // try {
+        // timeZoneTime = new Date(timeZoneTime).toLocaleString("en-US", {
+        //         timeZone: timezone
+        //     });
+        //     timeZoneTime = new Date(timeZoneTime);
+        // } catch (e) {
+        //     // console.log(e);
+        // }
+        let date = new Date(timeZoneTime).toLocaleString() + ' ' + timezone;
 
         item['trades']['value']['formattedDate'] = date
         return item
