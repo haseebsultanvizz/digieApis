@@ -49,7 +49,7 @@ const cron = require("node-cron");
 //                 // console.log(data)
 //                 user = data[0]
 //                 // data.forEach(user => {
-//                     const user_id = ObjectID('5eb5a5a628914a45246bacc6')// user._id
+//                     const user_id = '5eb5a5a628914a45246bacc6'// user._id
 //                     console.log("User_id: ", user_id)
 //                     // now for every user get the accumulation of previous 7 days
 //                     let exchange = 'binance'
@@ -107,8 +107,8 @@ const cron = require("node-cron");
         
 //                     ];
                     
-//                     let accumulationData1 = await fetchUserAccumulations(collection, pipeline0)
-//                     console.log("Accumulations Data 1: ", accumulationData1)
+//                     let accumulationData_sold = await fetchUserAccumulations(collection, pipeline0)
+//                     console.log("Accumulations Data 1: ", accumulationData_sold)
         
 //                     var collection2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
 //                     let pipeline2 = [
@@ -189,13 +189,13 @@ const cron = require("node-cron");
 //                     ];
         
 //                     // console.log("\nPipeline2: ", pipeline2)
-//                     let accumulationData2 = await fetchUserAccumulations(collection2, pipeline2);
-//                     // console.log("Accumulations Data 2: ", accumulationData2)
+//                     let accumulationData_buy_ca = await fetchUserAccumulations(collection2, pipeline2);
+//                     console.log("Accumulations Data 2: ", accumulationData_buy_ca)
         
-//                     let btc1 = accumulationData1.find(ele => ele['_id'] == 'BTC')
-//                     let btc2 = accumulationData2.find(ele => ele['_id'] == 'BTC')
-//                     let sdt1 = accumulationData1.find(ele => ele['_id'] == 'SDT')
-//                     let sdt2 = accumulationData2.find(ele => ele['_id'] == 'SDT')
+//                     let btc1 = accumulationData_sold.find(ele => ele['_id'] == 'BTC')
+//                     let btc2 = accumulationData_buy_ca.find(ele => ele['_id'] == 'BTC')
+//                     let sdt1 = accumulationData_sold.find(ele => ele['_id'] == 'SDT')
+//                     let sdt2 = accumulationData_buy_ca.find(ele => ele['_id'] == 'SDT')
         
 //                     const accumulationData = {
 //                         BTC: (btc1 ? btc1.accumulations : 0) + (btc2 ? btc2.accumulations : 0),
@@ -203,6 +203,20 @@ const cron = require("node-cron");
 //                     }
                     
 //                     console.log("\nTOTAL: ", accumulationData)
+
+//                     // console.log( user['_id'])
+//                     // SAVE IN USERS DB
+//                     db.collection('users').updateOne({_id: ObjectID(user_id)}, {$set: {week_one_accumulations: accumulationData}}, (err, result) => {
+//                         if (err) {
+//                             console.log("Error while saving this week's accumulation for user: "+user._id)
+//                             console.log(err)
+//                         } else {
+//                             console.log("Accumulation Saved!")
+//                             console.log("Matched count: ", result.matchedCount)
+//                             console.log("Modified count: ", result.modifiedCount)
+//                         }
+//                     })
+
 //                 // })
 //             }
             
@@ -33305,14 +33319,13 @@ async function getTradeHistoryAsim(filter, exchange, timezone) {
 
         if (start_date != '') {
             start_date += ' 00:00:00.000'
-            condObj['$gte'] = Math.floor(new Date(start_date).getTime())
-            // condObj['$gte'] = Math.floor(new Date(start_date).getTime() / 1000)
+            // for kraken divide the milliseconds by 1000 -> because for kraken trade history it's save in the db like that
+            condObj['$gte'] = (exchange == 'binance') ? Math.floor(new Date(start_date).getTime()) : Math.floor(new Date(start_date).getTime() / 1000)
         }
         if (end_date != '') {
             end_date += ' 23:59:59.000'
-            condObj['$lte'] = Math.floor(new Date(end_date).getTime())
-            // condObj['$lte'] = Math.floor(new Date(end_date).getTime() / 1000)
-            // condObj['$lte'] = new Date(end_date)
+            // for kraken divide the milliseconds by 1000 -> because for kraken trade history it's save in the db like that
+            condObj['$lte'] = (exchange == 'binance') ? Math.floor(new Date(end_date).getTime()) : Math.floor(new Date(end_date).getTime() / 1000)
         }
 
         if (condObj && Object.keys(condObj).length === 0 && condObj.constructor === Object) {
