@@ -36,6 +36,181 @@ var digie_admin_ids = [
     '5c0915befc9aadaac61dd1b8', //vizzdeveloper
 ];
 
+const cron = require("node-cron");
+// cron-job for every user in the db to add the accumulation of one week
+// cron.schedule("*/10 * * * * *", function() {
+//     // console.log("running a task every 10 second");
+//     conn.then(async (db) => {
+//         // fetch all users
+//         db.collection('users').find({}).toArray(async (err, data) => {
+//             if(err){
+//                 console.log("err: ", err)
+//             } else if (data.length > 1){
+//                 // console.log(data)
+//                 user = data[0]
+//                 // data.forEach(user => {
+//                     const user_id = ObjectID('5eb5a5a628914a45246bacc6')// user._id
+//                     console.log("User_id: ", user_id)
+//                     // now for every user get the accumulation of previous 7 days
+//                     let exchange = 'binance'
+                    
+//                     // convert days to milliseconds
+//                     let type = 7 * 86400000 // 7 days
+                    
+//                     currentDate = new Date();
+//                     // console.log(currentDate)
+//                     const dateTo = currentDate // new Date(currentDate.getFullYear(), currentDate.getMonth(), 1); 
+//                     const dateFrom = new Date(currentDate - type) // new Date(currentDate.getFullYear(), currentDate.getMonth() - type, 1); 
+            
+//                     console.log('\n')
+//                     console.log('MONTHS: ', type)
+//                     console.log('DATE FROM: ', dateFrom)
+//                     console.log('DATE TO: ', dateTo)
+//                     console.log('\n')
+            
+            
+//                     var collection = (exchange == 'binance') ? 'sold_buy_orders' : 'sold_buy_orders_' + exchange;
+                    
+//                     // that is: instead of calculating accumulation by formula, use the already added accumulations property
+//                     let pipeline0 = [
+//                         // Match Clause
+//                         {
+//                             $match: {
+//                                 admin_id: user_id,
+//                                 sell_date:{$gte: new Date(dateFrom), $lte: new Date(dateTo) },
+//                                 application_mode: "live", 
+//                                 status: {$nin: ['canceled', 'archive', 'APIKEY_ERROR',"COIN_BAN_ERROR"]},
+//                                 symbol: {$nin: ["POEBTC","NCASHBTC"]},
+//                                 is_accumulated: 1,
+//                                 accumulations: {$exists: true}
+//                             }
+//                         },
+//                         // Project again
+//                         {
+//                             $project: {
+//                                 admin_id: 1,
+//                                 accumulations: 1,
+//                                 is_accumulated: 1,
+//                                 // making last three Characters to calculate STD or BTC accordingly.
+//                                 cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ] },
+//                             }
+//                         },
+//                         // Finally Use Group Clause
+//                         {
+//                             $group: {
+//                                 _id: '$cointype',
+//                                 accumulations: {
+//                                     '$sum': '$accumulations.profit'
+//                                 }
+//                             }
+//                         }
+        
+//                     ];
+                    
+//                     let accumulationData1 = await fetchUserAccumulations(collection, pipeline0)
+//                     console.log("Accumulations Data 1: ", accumulationData1)
+        
+//                     var collection2 = (exchange == 'binance') ? 'buy_orders' : 'buy_orders_' + exchange;
+//                     let pipeline2 = [
+//                         {
+//                             $match: {
+//                                 admin_id: user_id,
+//                                 sell_date: {$gte: new Date(dateFrom), $lte: new Date(dateTo)},
+//                                 application_mode: "live", 
+//                                 status: {$nin: ['canceled', 'archive', 'APIKEY_ERROR',"COIN_BAN_ERROR"]},
+//                                 symbol: {$nin: ["POEBTC","NCASHBTC"]},
+//                                 cost_avg: {$in: ['taking_child', 'yes']},
+//                                 cost_avg_array: {$exists: true},
+//                             }
+//                         },
+//                         {
+//                             $project:
+//                             {
+//                                 admin_id: 1,
+//                                 accumulations: 1,
+//                                 is_accumulated: 1,
+//                                 // making last three Characters to calculate STD or BTC accordingly.
+//                                 cointype: { $substr: [ "$symbol", { $subtract: [ {"$strLenCP": "$symbol"}, 3 ] }, -1 ] },
+//                                 purchased_price: 1,
+//                                 market_sold_price: 1,
+//                                 quantity: 1, 
+//                                 cost_avg_array: 1,
+//                             }
+//                         },
+//                         {
+//                             $unwind: {
+//                                 path: '$cost_avg_array'
+//                             }
+//                         },
+//                         {
+//                             $match: {
+//                                 'cost_avg_array.order_sold': 'yes'
+//                             }
+//                         },
+//                         {
+//                             $project: 
+//                             {
+//                                 invested: { $multiply: [
+//                                     {$toDouble: "$cost_avg_array.filledPriceBuy"},
+//                                     {$toDouble: "$cost_avg_array.filledQtyBuy"}
+//                                     ]
+//                                 },
+//                                 returned: { $multiply: [
+//                                     {$toDouble: "$cost_avg_array.filledPriceSell"},
+//                                     {$toDouble: "$cost_avg_array.filledQtyBuy"}
+//                                     ]
+//                                 },
+//                                 admin_id: 1,
+//                                 accumulations: 1,
+//                                 is_accumulated: 1,
+//                                 cointype: 1
+//                             }
+//                         },
+//                         {
+//                             $project: 
+//                             {
+//                                 profit: {
+//                                     $subtract: ['$returned', '$invested']
+//                                 },
+//                                 admin_id: 1,
+//                                 accumulations: 1,
+//                                 is_accumulated: 1,
+//                                 cointype: 1
+//                             }
+//                         },
+//                         {
+//                             $group: {
+//                                 _id: '$cointype',
+//                                 accumulations: {
+//                                     $sum: '$profit'
+//                                 }
+//                             }
+//                         }
+//                     ];
+        
+//                     // console.log("\nPipeline2: ", pipeline2)
+//                     let accumulationData2 = await fetchUserAccumulations(collection2, pipeline2);
+//                     // console.log("Accumulations Data 2: ", accumulationData2)
+        
+//                     let btc1 = accumulationData1.find(ele => ele['_id'] == 'BTC')
+//                     let btc2 = accumulationData2.find(ele => ele['_id'] == 'BTC')
+//                     let sdt1 = accumulationData1.find(ele => ele['_id'] == 'SDT')
+//                     let sdt2 = accumulationData2.find(ele => ele['_id'] == 'SDT')
+        
+//                     const accumulationData = {
+//                         BTC: (btc1 ? btc1.accumulations : 0) + (btc2 ? btc2.accumulations : 0),
+//                         SDT: (sdt1 ? sdt1 .accumulations : 0) + (sdt2 ? sdt2.accumulations : 0)
+//                     }
+                    
+//                     console.log("\nTOTAL: ", accumulationData)
+//                 // })
+//             }
+            
+//         })
+//     })
+
+
+//   });
 
 //TODO: verify old password
 //verifyOldPassword //Umer Abbas [6-1-2020]
@@ -1120,6 +1295,11 @@ router.post('/authenticate', async function (req, resp, next) {
                         let respObj = {};
                         if (userArr.length > 0) {
                             userArr = userArr[0];
+                            // get kraken_credentials data
+                            let userArr_kraken = await db.collection('kraken_credentials').find({user_id: userArr['_id'].toString()}).toArray();
+                            // console.log("userArr_kraken: ", userArr_kraken)
+                            userArr_kraken = userArr_kraken[0]
+
                             let api_key = (typeof userArr['api_key'] == 'undefined') ? '' : userArr['api_key'];
                             let api_secret = (typeof userArr['api_secret'] == 'undefined') ? '' : userArr['api_secret'];
                             if (api_key == '' || api_secret == '' || api_key == null || api_secret == null) {
@@ -1198,7 +1378,7 @@ router.post('/authenticate', async function (req, resp, next) {
 
                             respObj.userPackage = await getUserPackage(String(userArr['_id']));
 
-                            // show popup on frontend if user is disabled
+                            // show popup on frontend for binance if user is disabled
                             if(
                                 (userArr.account_block && userArr.account_block == 'yes') 
                                 && (userArr.is_api_key_valid && userArr.is_api_key_valid == 'no') 
@@ -1206,6 +1386,16 @@ router.post('/authenticate', async function (req, resp, next) {
                                 && (userArr.trading_status && userArr.trading_status == 'off')
                             ){
                                 respObj.showDisablePopup = true
+                            }
+
+                            // show popup on frontend for kraken if user is disabled
+                            if(
+                                (userArr_kraken.account_block && userArr_kraken.account_block == 'yes') 
+                                && (userArr_kraken.is_api_key_valid && userArr_kraken.is_api_key_valid == 'no') 
+                                && (userArr_kraken.count_invalid_api && userArr_kraken.count_invalid_api == 5) 
+                                && (userArr_kraken.trading_status && userArr_kraken.trading_status == 'off')
+                            ){
+                                respObj.showDisablePopupKraken = true
                             }
                             
                             // console.log(respObj);
@@ -1256,6 +1446,10 @@ router.post('/authenticate', async function (req, resp, next) {
                                 blockLoginAttempt(username, 'reset')
                                 
                                 userArr = userArr[0];
+                                // get kraken_credentials data    
+                                let userArr_kraken = await db.collection('kraken_credentials').find({user_id: userArr['_id'].toString()}).toArray();
+                                // console.log("userArr_kraken: ", userArr_kraken)
+                                userArr_kraken = userArr_kraken[0]
                                 
                                 if(userArr['subscription_expiry_date'] && typeof userArr['subscription_expiry_date'] != 'undefined'){
                                     const currDate = new Date()
@@ -1322,6 +1516,16 @@ router.post('/authenticate', async function (req, resp, next) {
                                     && (userArr.trading_status && userArr.trading_status == 'off')
                                 ){
                                     respObj.showDisablePopup = true
+                                }
+
+                                // show popup on frontend for kraken if user is disabled
+                                if(
+                                    (userArr_kraken.account_block && userArr_kraken.account_block == 'yes') 
+                                    && (userArr_kraken.is_api_key_valid && userArr_kraken.is_api_key_valid == 'no') 
+                                    && (userArr_kraken.count_invalid_api && userArr_kraken.count_invalid_api == 5) 
+                                    && (userArr_kraken.trading_status && userArr_kraken.trading_status == 'off')
+                                ){
+                                    respObj.showDisablePopupKraken = true
                                 }
 
                                 // if(userArr['google_auth'] != 'yes'){
@@ -2315,7 +2519,7 @@ router.post('/listCurrentmarketPrice', auth_token.required, async (req, resp) =>
 
 //function for getting current market price
 function listCurrentMarketPrice(coin, exchange) {
-    console.log('listCurrentMarketPrice()...')
+    // console.log('listCurrentMarketPrice()...')
     return new Promise((resolve) => {
         let where = {};
         where.coin = coin;
